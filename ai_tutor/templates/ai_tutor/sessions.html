@@ -1,0 +1,195 @@
+{% extends "student_profile/bases.html" %}
+
+{% block title %}AI Tutor Session History{% endblock %}
+
+{% block content %}
+<style>
+  .ai-page {
+    --ai-primary: var(--primary, #88D0C5);
+    --ai-accent: var(--secondary, #8BC740);
+    --ai-muted: #6c757d;
+    --ai-border: #e9ecef;
+    margin: 18px;
+    color: #343a40;
+    font-weight: 400;
+  }
+  .ai-card {
+    background: #fff;
+    border: 1px solid var(--ai-border);
+    border-radius: 8px;
+    padding: 18px;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, .04);
+    margin-bottom: 16px;
+  }
+  .ai-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+  .ai-head h3, .ai-card h4 { margin: 0; color: #343a40; font-weight: 500; }
+  .ai-muted { color: var(--ai-muted); }
+  .ai-link-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .ai-pill {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    border-radius: 999px;
+    padding: 4px 10px;
+    background: rgba(136, 208, 197, .18);
+    color: #495057;
+    font-size: 12px;
+    font-weight: 500;
+    text-decoration: none;
+    border: 1px solid #dfe7ef;
+  }
+  .ai-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+  .ai-stat { background: #fff; border: 1px solid var(--ai-border); border-radius: 8px; padding: 14px; }
+  .ai-stat span { display: block; color: var(--ai-muted); font-size: 12px; }
+  .ai-stat strong { display: block; color: #343a40; font-size: 22px; font-weight: 500; margin-top: 4px; }
+  .ai-filter-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; align-items: end; }
+  .ai-filter-grid label { display: block; color: #343a40; font-weight: 500; margin-bottom: 6px; }
+  .ai-filter-grid select {
+    width: 100%;
+    min-height: 40px;
+    border: 1px solid #d8dde3;
+    border-radius: 8px;
+    padding: 8px 10px;
+    background: #fff;
+  }
+  .ai-button {
+    min-height: 40px;
+    border: 0;
+    border-radius: 8px;
+    padding: 8px 14px;
+    background: var(--ai-primary);
+    color: #fff;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .ai-button.secondary { background: rgba(139, 199, 64, .12); color: #495057; border: 1px solid var(--ai-border); }
+  .ai-table { width: 100%; border-collapse: collapse; }
+  .ai-table th, .ai-table td { border-bottom: 1px solid #edf0f2; padding: 11px; text-align: left; vertical-align: top; }
+  .ai-table th { color: #6c757d; font-size: 12px; text-transform: uppercase; font-weight: 500; }
+  .ai-table td { color: #343a40; }
+  .ai-table-wrap { overflow-x: auto; }
+  @media (max-width: 1050px) {
+    .ai-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .ai-filter-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 640px) {
+    .ai-page { margin: 10px; }
+    .ai-stats, .ai-filter-grid { grid-template-columns: 1fr; }
+  }
+</style>
+
+<div class="ai-page">
+  <section class="ai-card">
+    <div class="ai-head">
+      <div>
+        <h3>AI Tutor Session History</h3>
+        <p class="ai-muted" style="margin:4px 0 0;">All AI Tutor sessions for {{ student.name }}.</p>
+      </div>
+      <div class="ai-link-row">
+        <a class="ai-pill" href="{% url 'ai_tutor_dashboard' %}">AI Home</a>
+        <a class="ai-pill" href="{% url 'ai_tutor_progress' %}">My Progress</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="ai-stats" aria-label="Session summary">
+    <div class="ai-stat"><span>Total Sessions</span><strong>{{ total_sessions }}</strong></div>
+    <div class="ai-stat"><span>Active Sessions</span><strong>{{ active_sessions }}</strong></div>
+    <div class="ai-stat"><span>Total Messages</span><strong>{{ total_messages }}</strong></div>
+    <div class="ai-stat">
+      <span>Most Recent</span>
+      <strong>{{ latest_session.subject.name|default:"General" }}</strong>
+      <div class="ai-muted">{{ latest_session.topic|default:"No session yet" }}</div>
+    </div>
+  </section>
+
+  <section class="ai-card">
+    <h4>Filters</h4>
+    <form method="get" class="ai-filter-grid" style="margin-top:14px;">
+      <div>
+        <label for="subject_id">Subject</label>
+        <select id="subject_id" name="subject_id">
+          <option value="">All subjects</option>
+          {% for subject in subjects %}
+            <option value="{{ subject.id }}" {% if subject.id|stringformat:"s" == selected_subject_id %}selected{% endif %}>{{ subject.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label for="session_type">Mode</label>
+        <select id="session_type" name="session_type">
+          <option value="">All modes</option>
+          {% for value,label in session_types %}
+            <option value="{{ value }}" {% if value == selected_session_type %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label for="language">Language</label>
+        <select id="language" name="language">
+          <option value="">All languages</option>
+          <option value="English" {% if selected_language == "English" %}selected{% endif %}>English</option>
+          <option value="Urdu" {% if selected_language == "Urdu" %}selected{% endif %}>Urdu</option>
+          <option value="Bilingual" {% if selected_language == "Bilingual" %}selected{% endif %}>Bilingual</option>
+        </select>
+      </div>
+      <div>
+        <label for="status">Status</label>
+        <select id="status" name="status">
+          <option value="">All statuses</option>
+          {% for value,label in statuses %}
+            <option value="{{ value }}" {% if value == selected_status %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="ai-link-row">
+        <button class="ai-button" type="submit">Apply</button>
+        <a class="ai-button secondary" href="{% url 'ai_tutor_sessions' %}">Reset</a>
+      </div>
+    </form>
+  </section>
+
+  <section class="ai-card">
+    <div class="ai-head" style="margin-bottom:12px;">
+      <h4>Sessions</h4>
+      <span class="ai-muted">{{ sessions|length }} shown</span>
+    </div>
+    <div class="ai-table-wrap">
+      <table class="ai-table">
+        <thead>
+          <tr>
+            <th>Started</th>
+            <th>Subject</th>
+            <th>Topic</th>
+            <th>Mode</th>
+            <th>Language</th>
+            <th>Messages</th>
+            <th>Status</th>
+            <th>Open</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for session in sessions %}
+            <tr>
+              <td>{{ session.started_at|date:"d M Y, h:i A" }}</td>
+              <td>{{ session.subject.name|default:"General" }}</td>
+              <td>{{ session.topic|default:"-" }}</td>
+              <td>{{ session.get_session_type_display }}</td>
+              <td>{{ session.language }}</td>
+              <td>{{ session.total_messages }}</td>
+              <td><span class="ai-pill">{{ session.get_status_display }}</span></td>
+              <td><a class="ai-pill" href="{% url 'ai_tutor_chat' session.id %}">Open</a></td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="8">No AI Tutor sessions match these filters.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+{% endblock %}

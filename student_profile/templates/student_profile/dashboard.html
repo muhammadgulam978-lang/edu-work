@@ -11,6 +11,24 @@
 {% block content %}
 
 <div class="col-12">
+  <div class="card" style="background:#ffffff; margin: 20px 20px 0;">
+    <div class="card-body" style="display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;">
+      <div style="display:flex; align-items:center; gap:14px;">
+        <div style="width:48px; height:48px; border-radius:8px; display:flex; align-items:center; justify-content:center; background:rgba(136,208,197,.18); color:#495057; font-weight:500; border:1px solid #e9ecef;">AI</div>
+        <div>
+          <h4 class="card-title mb-1" style="color:#343a40; font-weight:500;">AI Tutor</h4>
+          <p class="mb-0" style="color:#6c757d;">Need help with today's lesson? Ask AI Tutor or practice weak topics.</p>
+        </div>
+      </div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <a href="{% url 'ai_tutor_dashboard' %}" style="background:#88D0C5; color:#fff; border-radius:8px; padding:10px 14px; font-weight:500; text-decoration:none;">Ask AI Tutor</a>
+        <a href="{% url 'ai_tutor_progress' %}" style="background:rgba(139,199,64,.12); color:#495057; border:1px solid #e9ecef; border-radius:8px; padding:10px 14px; font-weight:500; text-decoration:none;">Practice Weak Topics</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="col-12">
   <div class="card" style="background: #f8f9fa; margin-left: 20px; margin-right: 20px;">
 
     <!-- Card Header -->

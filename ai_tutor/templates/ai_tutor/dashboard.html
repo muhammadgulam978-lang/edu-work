@@ -1,0 +1,576 @@
+{% extends "student_profile/bases.html" %}
+
+{% block title %}AI Tutor{% endblock %}
+
+{% block content %}
+<style>
+  .ai-portal {
+    --ai-primary: var(--primary, #88D0C5);
+    --ai-accent: var(--secondary, #8BC740);
+    --ai-success: var(--secondary, #8BC740);
+    --ai-bg: #F5F5FD;
+    --ai-soft: #bab4e21f;
+    --ai-muted: #6c757d;
+    --ai-border: #e9ecef;
+    --ai-white: #ffffff;
+    color: #343a40;
+    margin: 18px;
+    font-weight: 400;
+  }
+  .ai-topbar, .ai-feature-tabs, .ai-card, .ai-hero, .ai-recommendations, .ai-start-panel {
+    background: var(--ai-white);
+    border: 1px solid var(--ai-border);
+    border-radius: 8px;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, .04);
+  }
+  .ai-topbar {
+    display: grid;
+    grid-template-columns: minmax(240px, 1fr) minmax(280px, 520px) minmax(190px, auto);
+    gap: 18px;
+    align-items: center;
+    padding: 18px;
+    margin-bottom: 14px;
+  }
+  .ai-title-wrap { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .ai-bot-icon, .ai-icon-box {
+    width: 46px;
+    height: 46px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    background: rgba(136, 208, 197, .18);
+    color: #495057;
+    font-weight: 500;
+    border: 1px solid var(--ai-border);
+  }
+  .ai-title-wrap h2, .ai-card h4, .ai-hero h3 { margin: 0; color: #343a40; font-weight: 500; }
+  .ai-portal strong { font-weight: 500; }
+  .ai-muted { color: var(--ai-muted); }
+  .ai-subtitle { margin: 3px 0 0; color: var(--ai-muted); font-size: 13px; }
+  .ai-command {
+    min-height: 48px;
+    border: 1px solid #dfe7ef;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 12px;
+    background: #fbfdff;
+  }
+  .ai-command input {
+    border: 0;
+    outline: 0;
+    background: transparent;
+    width: 100%;
+    color: #343a40;
+  }
+  .ai-kbd { border: 1px solid #d8dde3; border-radius: 6px; padding: 4px 8px; color: #6c757d; font-size: 12px; background: #fff; }
+  .ai-student-chip { display: flex; justify-content: flex-end; align-items: center; gap: 12px; }
+  .ai-notify, .ai-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 1px solid var(--ai-border);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--ai-bg);
+    color: #495057;
+    font-weight: 500;
+  }
+  .ai-student-name { font-weight: 500; color: #343a40; }
+
+  .ai-feature-tabs {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 10px;
+    margin-bottom: 18px;
+  }
+  .ai-feature-tab {
+    border: 1px solid transparent;
+    background: transparent;
+    color: #495057;
+    border-radius: 8px;
+    padding: 11px 13px;
+    white-space: nowrap;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+  }
+  .ai-feature-tab.active, .ai-feature-tab:hover {
+    background: rgba(136, 208, 197, .18);
+    border-color: #dfe7ef;
+    color: #343a40;
+  }
+
+  .ai-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+    align-items: start;
+  }
+  .ai-main-stack { display: grid; gap: 16px; }
+  .ai-hero {
+    display: grid;
+    grid-template-columns: 130px minmax(0, 1fr) minmax(260px, 380px);
+    gap: 22px;
+    align-items: center;
+    padding: 24px;
+    background: #fff;
+  }
+  .ai-robot {
+    width: 112px;
+    height: 112px;
+    border-radius: 50%;
+    background: #fff;
+    border: 1px solid var(--ai-border);
+    display: grid;
+    place-items: center;
+    box-shadow: inset 0 0 0 10px rgba(136, 208, 197, .12);
+  }
+  .ai-robot-face {
+    width: 72px;
+    height: 48px;
+    border-radius: 18px;
+    background: #495057;
+    position: relative;
+  }
+  .ai-robot-face:before, .ai-robot-face:after {
+    content: "";
+    position: absolute;
+    top: 16px;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--ai-accent);
+  }
+  .ai-robot-face:before { left: 18px; }
+  .ai-robot-face:after { right: 18px; }
+  .ai-hero-copy p { margin: 9px 0 0; color: #495057; }
+  .ai-hero-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  .ai-action-card {
+    min-height: 118px;
+    background: #fff;
+    border: 1px solid #dfe7ef;
+    border-radius: 8px;
+    padding: 14px;
+    display: grid;
+    align-content: center;
+    justify-items: center;
+    gap: 10px;
+    color: #343a40;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, .04);
+  }
+  .ai-action-card span:first-child { color: #6c757d; font-size: 22px; }
+  .ai-action-card:hover { border-color: var(--ai-accent); transform: translateY(-1px); }
+
+  .ai-recommendations { padding: 16px; }
+  .ai-section-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+  .ai-section-head h4 { margin: 0; }
+  .ai-rec-grid { display: grid; grid-template-columns: repeat(5, minmax(145px, 1fr)); gap: 12px; }
+  .ai-rec-card {
+    border: 1px solid #e3e9ef;
+    border-radius: 8px;
+    padding: 13px;
+    background: #fbfdff;
+    cursor: pointer;
+    min-height: 86px;
+  }
+  .ai-rec-card.teal { background: rgba(136, 208, 197, .13); }
+  .ai-rec-card.green { background: rgba(139, 199, 64, .11); }
+  .ai-rec-card.navy { background: #fff; }
+  .ai-rec-label { color: #6c757d; font-size: 12px; font-weight: 500; }
+  .ai-rec-title { margin-top: 4px; font-weight: 500; color: #343a40; }
+  .ai-rec-meta { margin-top: 8px; color: var(--ai-muted); font-size: 12px; }
+
+  .ai-middle-grid { display: grid; grid-template-columns: 1fr 1fr 1.25fr; gap: 16px; }
+  .ai-card { padding: 16px; }
+  .ai-card-list { display: grid; gap: 10px; margin-top: 13px; }
+  .ai-mini-row {
+    display: grid;
+    grid-template-columns: 38px minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #edf0f2;
+  }
+  .ai-mini-row:last-child { border-bottom: 0; }
+  .ai-mini-title { font-weight: 500; color: #343a40; }
+  .ai-mini-meta { color: var(--ai-muted); font-size: 12px; margin-top: 2px; }
+  .ai-pill {
+    display: inline-flex;
+    align-items: center;
+    min-height: 25px;
+    border-radius: 999px;
+    padding: 4px 9px;
+    background: rgba(136, 208, 197, .18);
+    color: #495057;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .ai-primary-btn {
+    background: var(--ai-primary);
+    border: 0;
+    color: #fff;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .ai-primary-btn:hover { color: #fff; background: var(--ai-accent); }
+  .ai-progress-line { height: 7px; background: #e9eef4; border-radius: 999px; overflow: hidden; margin-top: 12px; }
+  .ai-progress-line span { display: block; height: 100%; background: var(--ai-success); border-radius: inherit; }
+
+  .ai-side-column { display: grid; gap: 16px; }
+  .ai-progress-card { text-align: center; }
+  .ai-progress-ring {
+    width: 112px;
+    height: 112px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    margin: 12px auto;
+    background: conic-gradient(var(--ai-primary) 0 72%, #e9eef4 72% 100%);
+  }
+  .ai-progress-ring > div {
+    width: 82px;
+    height: 82px;
+    border-radius: 50%;
+    background: #fff;
+    display: grid;
+    place-items: center;
+    color: #343a40;
+    font-weight: 500;
+  }
+  .ai-progress-ring strong { display: block; font-size: 25px; line-height: 1; font-weight: 500; }
+  .ai-side-stat { display: flex; align-items: center; justify-content: space-between; border-top: 1px solid #edf0f2; padding-top: 10px; margin-top: 10px; }
+  .ai-streak { font-size: 28px; font-weight: 500; color: #343a40; }
+  .ai-topic-row { display: grid; grid-template-columns: minmax(0, 1fr) 58px; gap: 10px; align-items: center; margin-top: 12px; }
+  .ai-topic-bar { height: 7px; border-radius: 999px; background: #e9eef4; overflow: hidden; }
+  .ai-topic-bar span { display: block; height: 100%; background: var(--ai-accent); }
+  .ai-achievement { display: grid; grid-template-columns: 38px minmax(0, 1fr); gap: 10px; align-items: center; margin-top: 13px; }
+
+  .ai-start-panel { padding: 16px; scroll-margin-top: 20px; }
+  .ai-form-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+  .ai-form-grid label { display: block; font-weight: 500; color: #343a40; margin-bottom: 6px; }
+  .ai-form-grid input, .ai-form-grid select {
+    width: 100%;
+    min-height: 42px;
+    border: 1px solid #d8dde3;
+    border-radius: 8px;
+    padding: 8px 10px;
+    background: #fff;
+  }
+  .ai-quick-actions { display: grid; grid-template-columns: repeat(9, minmax(92px, 1fr)); gap: 12px; }
+  .ai-quick-card {
+    border: 1px solid #e3e9ef;
+    border-radius: 8px;
+    background: #fff;
+    min-height: 88px;
+    padding: 11px;
+    display: grid;
+    place-items: center;
+    text-align: center;
+    font-weight: 500;
+    color: #343a40;
+    cursor: pointer;
+  }
+  .ai-quick-card span { color: #6c757d; font-size: 20px; }
+  .ai-nav-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+
+  @media (max-width: 1180px) {
+    .ai-topbar, .ai-layout, .ai-hero { grid-template-columns: 1fr; }
+    .ai-student-chip { justify-content: flex-start; }
+    .ai-rec-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .ai-middle-grid { grid-template-columns: 1fr; }
+    .ai-form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .ai-quick-actions, .ai-nav-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
+  @media (max-width: 640px) {
+    .ai-portal { margin: 10px; }
+    .ai-hero-actions, .ai-rec-grid, .ai-form-grid { grid-template-columns: 1fr; }
+    .ai-quick-actions, .ai-nav-cards { grid-template-columns: 1fr; }
+  }
+</style>
+
+<div class="ai-portal">
+  <section class="ai-topbar">
+    <div class="ai-title-wrap">
+      <div class="ai-bot-icon">AI</div>
+      <div>
+        <h2>Your AI Tutor</h2>
+        <p class="ai-subtitle">Your personalized learning companion</p>
+      </div>
+    </div>
+    <div class="ai-command">
+      <span class="ai-muted">Ask</span>
+      <input id="ai-command-input" type="text" placeholder="Ask anything or type a command...">
+      <span class="ai-kbd">Ctrl + K</span>
+    </div>
+    <div class="ai-student-chip">
+      <div class="ai-notify">N</div>
+      <div class="ai-avatar">{{ student.name|slice:":1" }}</div>
+      <div>
+        <div class="ai-student-name">{{ student.name }}</div>
+        <div class="ai-subtitle">
+          {{ student.class_fk.class_name|default:"No Class" }}{% if student.section %} - Section {{ student.section.section_name }}{% endif %}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <nav class="ai-feature-tabs" aria-label="AI Tutor features">
+    <button class="ai-feature-tab active" type="button">AI Home</button>
+    <button class="ai-feature-tab" type="button" data-focus-form data-mode="ask">Ask AI Tutor</button>
+    <button class="ai-feature-tab" type="button" data-focus-form data-mode="learn">Learn</button>
+    <button class="ai-feature-tab" type="button" data-focus-form data-mode="practice">Practice</button>
+    <button class="ai-feature-tab" type="button" data-focus-form data-mode="homework_help">Homework Assistant</button>
+    <button class="ai-feature-tab" type="button" data-focus-form data-mode="exam_prep">Exam Preparation</button>
+    <button class="ai-feature-tab" type="button" data-scroll="#study-plan-card">Study Plan</button>
+    <a class="ai-feature-tab" href="{% url 'ai_tutor_progress' %}">My Progress</a>
+    <button class="ai-feature-tab" type="button">More</button>
+  </nav>
+
+  <div class="ai-layout">
+    <main class="ai-main-stack">
+      <section class="ai-hero">
+        <div class="ai-robot" aria-hidden="true"><div class="ai-robot-face"></div></div>
+        <div class="ai-hero-copy">
+          <h3>
+            {% if current_hour < 12 %}Good morning{% elif current_hour < 17 %}Good afternoon{% else %}Good evening{% endif %}, {{ student.name }}
+          </h3>
+          <p>You have {{ subjects|length }} subject{{ subjects|length|pluralize }} available for AI-supported learning today.</p>
+          <p>{{ latest_session.topic|default:"Photosynthesis" }} was your recent AI Tutor topic.</p>
+          <p>Shall we revise together?</p>
+        </div>
+        <div class="ai-hero-actions">
+          <button class="ai-action-card" type="button" data-focus-form data-mode="revise">
+            <span>Play</span><span>Start Revision</span>
+          </button>
+          <button class="ai-action-card" type="button" data-focus-form data-mode="ask">
+            <span>Ask</span><span>Ask a Question</span>
+          </button>
+          <button class="ai-action-card" type="button" data-scroll="#study-plan-card">
+            <span>Plan</span><span>View Study Plan</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="ai-recommendations">
+        <div class="ai-section-head">
+          <h4>Today's AI Recommendations</h4>
+          <span class="ai-muted">Personalized from sessions, practice, and class work</span>
+        </div>
+        <div class="ai-rec-grid">
+          {% for card in recommendation_cards %}
+            <button class="ai-rec-card {{ card.tone }}" type="button" data-focus-form data-mode="{{ card.session_type }}" data-topic="{{ card.title }}" data-subject="{{ card.subject_id }}">
+              <div class="ai-rec-label">{{ card.label }}</div>
+              <div class="ai-rec-title">{{ card.title }}</div>
+              <div class="ai-rec-meta">{{ card.meta }}</div>
+            </button>
+          {% endfor %}
+        </div>
+      </section>
+
+      <section class="ai-card">
+        <div class="ai-section-head"><h4>AI Tutor Navigation</h4><span class="ai-muted">Open the right screen for each task</span></div>
+        <div class="ai-nav-cards">
+          <button class="ai-action-card" type="button" data-focus-form data-mode="ask">
+            <span>Ask</span><span>Ask AI Tutor</span>
+          </button>
+          <a class="ai-action-card" href="{% url 'ai_tutor_progress' %}">
+            <span>MP</span><span>My Progress</span>
+          </a>
+          <a class="ai-action-card" href="{% url 'ai_tutor_sessions' %}">
+            <span>SH</span><span>Session History</span>
+          </a>
+        </div>
+      </section>
+
+      <section class="ai-middle-grid">
+        <div class="ai-card">
+          <div class="ai-section-head"><h4>Continue Learning</h4></div>
+          <div class="ai-mini-row">
+            <div class="ai-icon-box">CL</div>
+            <div>
+              <div class="ai-mini-title">{{ latest_session.topic|default:"Photosynthesis" }}</div>
+              <div class="ai-mini-meta">{{ latest_session.subject.name|default:"Science" }} - Chapter/Topic</div>
+            </div>
+            <span class="ai-pill">70%</span>
+          </div>
+          <div class="ai-progress-line"><span style="width: 70%;"></span></div>
+          {% if latest_session %}
+            <a class="ai-primary-btn" style="width:100%;margin-top:16px;" href="{% url 'ai_tutor_chat' latest_session.id %}">Continue</a>
+          {% else %}
+            <button class="ai-primary-btn" style="width:100%;margin-top:16px;" type="button" data-focus-form data-mode="learn">Start Learning</button>
+          {% endif %}
+        </div>
+
+        <div class="ai-card">
+          <div class="ai-section-head"><h4>Upcoming Assessments</h4></div>
+          <div class="ai-card-list">
+            {% for quiz in quizzes %}
+              <div class="ai-mini-row">
+                <div class="ai-icon-box">Q</div>
+                <div>
+                  <div class="ai-mini-title">{{ quiz.title }}</div>
+                  <div class="ai-mini-meta">{{ quiz.subject.name }} - Due {{ quiz.due_date|date:"d M" }}</div>
+                </div>
+                <span class="ai-pill">{{ quiz.due_date|timeuntil }}</span>
+              </div>
+            {% empty %}
+              <div class="ai-mini-row">
+                <div class="ai-icon-box">Q</div>
+                <div><div class="ai-mini-title">Science Quiz</div><div class="ai-mini-meta">AI prep available</div></div>
+                <span class="ai-pill">Soon</span>
+              </div>
+              <div class="ai-mini-row">
+                <div class="ai-icon-box">T</div>
+                <div><div class="ai-mini-title">Mathematics Test</div><div class="ai-mini-meta">Practice weak topics</div></div>
+                <span class="ai-pill">Plan</span>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="ai-card">
+          <div class="ai-section-head"><h4>Recent Activity</h4><a href="{% url 'ai_tutor_sessions' %}">View All</a></div>
+          <div class="ai-card-list">
+            {% for session in sessions %}
+              <div class="ai-mini-row">
+                <div class="ai-icon-box">AI</div>
+                <div>
+                  <div class="ai-mini-title">{{ session.get_session_type_display }} - {{ session.topic|default:"General Help" }}</div>
+                  <div class="ai-mini-meta">{{ session.subject.name|default:"General" }} - {{ session.started_at|date:"d M, h:i A" }}</div>
+                </div>
+                <a class="ai-pill" href="{% url 'ai_tutor_chat' session.id %}">Open</a>
+              </div>
+            {% empty %}
+              <div class="ai-muted">No AI Tutor activity yet. Start a session below to build your history.</div>
+            {% endfor %}
+          </div>
+        </div>
+      </section>
+
+      <section id="start-session-panel" class="ai-start-panel">
+        <div class="ai-section-head">
+          <div>
+            <h4>Ask AI Tutor</h4>
+            <div class="ai-muted">Start a secure session linked only to your own student profile.</div>
+          </div>
+        </div>
+        <form id="ai-start-form" method="post" action="{% url 'ai_tutor_start_session' %}">
+          {% csrf_token %}
+          <div class="ai-form-grid">
+            <div>
+              <label for="subject_id">Subject</label>
+              <select id="subject_id" name="subject_id" required>
+                <option value="">Select subject</option>
+                {% for subject in subjects %}
+                  <option value="{{ subject.id }}">{{ subject.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div>
+              <label for="topic">Topic</label>
+              <input id="topic" name="topic" placeholder="Photosynthesis, fractions, grammar..." required>
+            </div>
+            <div>
+              <label for="session_type">Learning mode</label>
+              <select id="session_type" name="session_type">
+                <option value="learn">Learn</option>
+                <option value="revise">Revise</option>
+                <option value="practice">Practice</option>
+                <option value="homework_help">Homework Help</option>
+                <option value="exam_prep">Exam Preparation</option>
+                <option value="ask">Ask a Question</option>
+              </select>
+            </div>
+            <div>
+              <label for="language">Language</label>
+              <select id="language" name="language">
+                <option {% if preference.preferred_language == "English" %}selected{% endif %}>English</option>
+                <option {% if preference.preferred_language == "Urdu" %}selected{% endif %}>Urdu</option>
+                <option {% if preference.preferred_language == "Bilingual" %}selected{% endif %}>Bilingual</option>
+              </select>
+            </div>
+          </div>
+          <button class="ai-primary-btn" style="margin-top:14px;" type="submit">Start Learning</button>
+        </form>
+      </section>
+
+      <section id="study-plan-card" class="ai-card">
+        <div class="ai-section-head"><h4>Quick Actions</h4><span class="ai-muted">One tap to launch common AI Tutor workflows</span></div>
+        <div class="ai-quick-actions">
+          <button class="ai-quick-card" type="button" data-focus-form data-mode="learn"><span>EX</span>Explain</button>
+          <button class="ai-quick-card" type="button" data-focus-form data-mode="practice"><span>PR</span>Practice</button>
+          <button class="ai-quick-card" type="button" data-focus-form data-mode="revise"><span>RV</span>Revise</button>
+          <button class="ai-quick-card" type="button" data-focus-form data-mode="homework_help"><span>HW</span>Homework Help</button>
+          <button class="ai-quick-card" type="button" data-focus-form data-mode="practice" data-topic="Quiz me"><span>QM</span>Quiz Me</button>
+          <button class="ai-quick-card" type="button" data-focus-form data-mode="learn" data-topic="Flashcards"><span>FC</span>Flashcards</button>
+          <button class="ai-quick-card" type="button" data-focus-form data-mode="learn" data-topic="Study plan"><span>SP</span>Study Plan</button>
+          <button class="ai-quick-card" type="button" data-focus-form data-mode="learn" data-topic="Translate explanation"><span>TR</span>Translate</button>
+          <button class="ai-quick-card" type="button" data-focus-form data-mode="ask"><span>...</span>More</button>
+        </div>
+      </section>
+    </main>
+
+  </div>
+</div>
+
+<script>
+  const startPanel = document.getElementById("start-session-panel");
+  const modeSelect = document.getElementById("session_type");
+  const topicInput = document.getElementById("topic");
+  const subjectSelect = document.getElementById("subject_id");
+  const commandInput = document.getElementById("ai-command-input");
+
+  function focusStartForm(button) {
+    const mode = button.dataset.mode;
+    const topic = button.dataset.topic;
+    const subject = button.dataset.subject;
+    if (mode) modeSelect.value = mode;
+    if (topic) topicInput.value = topic;
+    if (subject && subjectSelect.querySelector("option[value='" + subject + "']")) subjectSelect.value = subject;
+    startPanel.scrollIntoView({behavior: "smooth", block: "start"});
+    setTimeout(function() { topicInput.focus(); }, 350);
+  }
+
+  document.querySelectorAll("[data-focus-form]").forEach(function(button) {
+    button.addEventListener("click", function() { focusStartForm(button); });
+  });
+
+  document.querySelectorAll("[data-scroll]").forEach(function(button) {
+    button.addEventListener("click", function() {
+      const target = document.querySelector(button.dataset.scroll);
+      if (target) target.scrollIntoView({behavior: "smooth", block: "start"});
+    });
+  });
+
+  commandInput.addEventListener("keydown", function(event) {
+    if (event.key === "Enter" && commandInput.value.trim()) {
+      topicInput.value = commandInput.value.trim();
+      modeSelect.value = "ask";
+      startPanel.scrollIntoView({behavior: "smooth", block: "start"});
+      topicInput.focus();
+    }
+  });
+
+  document.addEventListener("keydown", function(event) {
+    if (event.ctrlKey && event.key.toLowerCase() === "k") {
+      event.preventDefault();
+      commandInput.focus();
+    }
+  });
+</script>
+{% endblock %}

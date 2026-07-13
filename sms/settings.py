@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "exam_system",
     'django_apscheduler',
     'edupilot_core',
+    'ai_tutor',
     
 ]
 
@@ -74,6 +75,7 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 'teacher_dashboard.context_processors.lms_sidebar_context',
                 'admin_panel.context_processors.user_permissions',
+                'ai_tutor.context_processors.ai_tutor_fab',
             ],
         },
     },
@@ -155,5 +157,11 @@ EMAIL_TIMEOUT = 30
 # Groq API KEY
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")  
+
+# AI Tutor LLM configuration
+AI_TUTOR_PROVIDER = os.getenv("AI_TUTOR_PROVIDER", "openai")
+AI_TUTOR_MODEL = os.getenv("AI_TUTOR_MODEL", "gpt-5.6-terra")
+AI_TUTOR_FALLBACK_MODEL = os.getenv("AI_TUTOR_FALLBACK_MODEL", "llama-3.3-70b-versatile")
+AI_TUTOR_API_KEY = os.getenv("AI_TUTOR_API_KEY", "")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

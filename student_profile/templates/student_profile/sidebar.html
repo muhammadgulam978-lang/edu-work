@@ -24,6 +24,18 @@
                      <!-- 🔹 New Lesson Plan Section -->
             <li class="has-menu">
                 <a class="has-arrow ai-icon" href="javascript:void()" aria-expanded="false">
+                    <i class="flaticon-381-networking"></i>
+                    <span class="nav-text">AI Tutor</span>
+                </a>
+                <ul aria-expanded="false">
+                    <li><a href="{% url 'ai_tutor_dashboard' %}">Dashboard</a></li>
+                    <li><a href="{% url 'ai_tutor_sessions' %}">Session History</a></li>
+                    <li><a href="{% url 'ai_tutor_progress' %}">My Progress</a></li>
+                </ul>
+            </li>
+
+            <li class="has-menu">
+                <a class="has-arrow ai-icon" href="javascript:void()" aria-expanded="false">
                     <i class="flaticon-381-notepad"></i>
                     <span class="nav-text">Fees Voucher</span>
                 </a>

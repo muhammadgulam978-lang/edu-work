@@ -1,7 +1,7 @@
 # student_profile/urls.py mein ye URLs add karo
 # =====================================================
 
-from django.urls import path
+from django.urls import include, path
 from student_profile import views
 
 urlpatterns = [
@@ -10,6 +10,7 @@ urlpatterns = [
     path('dashboard/',
          views.student_dashboard,
          name='student_dashboard'),
+    path('ai-tutor/', include('ai_tutor.urls')),
     
  
 
