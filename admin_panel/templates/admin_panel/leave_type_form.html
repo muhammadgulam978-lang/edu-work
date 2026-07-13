@@ -1,0 +1,80 @@
+{% extends "admin_panel/bases.html" %}
+{% block title %}Add Leave Type{% endblock %}
+
+{% block content %}
+
+<style>
+/* ===== Custom Tick-Only Checkbox ===== */
+.custom-check {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.custom-check input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border: 2px solid #444;
+    border-radius: 3px;
+    cursor: pointer;
+    position: relative;
+    background: transparent;
+}
+
+/* Tick */
+.custom-check input[type="checkbox"]:checked::after {
+    content: "✔";
+    position: absolute;
+    top: -2px;
+    left: 2px;
+    font-size: 14px;
+    font-weight: bold;
+    color: #000;
+}
+
+/* Hover */
+.custom-check input[type="checkbox"]:hover {
+    border-color: #000;
+}
+
+.custom-check label {
+    cursor: pointer;
+    font-weight: 500;
+}
+</style>
+
+<div class="container-fluid mt-4">
+    <h3 class="mb-4">Add Leave Type</h3>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="mb-3">
+            <label class="form-label">Leave Name</label>
+            {{ form.name }}
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Yearly Quota</label>
+            {{ form.yearly_quota }}
+        </div>
+
+        <div class="custom-check">
+            {{ form.is_paid }}
+            <label>Paid Leave</label>
+        </div>
+
+        <div class="custom-check">
+            {{ form.is_active }}
+            <label>Active</label>
+        </div>
+
+        <button type="submit" class="btn btn-success">Save</button>
+        <a href="{% url 'leave_type_list' %}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+
+{% endblock %}

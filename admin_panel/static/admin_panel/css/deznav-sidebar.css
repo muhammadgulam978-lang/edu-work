@@ -1,0 +1,194 @@
+/* =============================================================
+   DEZNAV SIDEBAR — EduPilot theme (matches admin_panel/sidebar.html)
+   Add this file as: admin_panel/css/deznav-sidebar.css
+   ============================================================= */
+
+:root {
+  --dz-sidebar-width: 260px;
+  --dz-bg: #0f7d6c;          /* teal — change to match your exact brand color */
+  --dz-bg-darker: #0c6759;
+  --dz-text: rgba(255,255,255,.82);
+  --dz-text-active: #ffffff;
+  --dz-active-bg: rgba(255,255,255,.14);
+  --dz-hover-bg: rgba(255,255,255,.08);
+  --dz-border: rgba(  255,255,255,.12);
+}
+
+/* ── Sidebar container ─────────────────────────────────────── */
+.deznav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: var(--dz-sidebar-width);
+  background: var(--dz-bg);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 2px 0 12px rgba(0,0,0,.08);
+}
+
+.deznav-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 22px;
+  border-bottom: 1px solid var(--dz-border);
+  flex-shrink: 0;
+}
+.deznav-brand-icon {
+  width: 34px; height: 34px;
+  background: rgba(255,255,255,.15);
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 16px;
+}
+.deznav-brand-text {
+  color: #fff;
+  font-weight: 700;
+  font-size: 17px;
+  letter-spacing: .02em;
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+}
+
+.deznav-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 0 20px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,.25) transparent;
+}
+.deznav-scroll::-webkit-scrollbar { width: 5px; }
+.deznav-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,.25); border-radius: 10px; }
+
+/* ── Menu ──────────────────────────────────────────────────── */
+.deznav ul.metismenu {
+  list-style: none;
+  margin: 0;
+  padding: 0 12px;
+}
+.deznav ul.metismenu > li {
+  margin-bottom: 3px;
+}
+
+.deznav ul.metismenu a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  color: var(--dz-text);
+  text-decoration: none;
+  font-size: 13.5px;
+  font-weight: 500;
+  border-radius: 8px;
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  transition: background .15s, color .15s;
+  cursor: pointer;
+}
+.deznav ul.metismenu a i {
+  width: 18px;
+  text-align: center;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+.deznav ul.metismenu a:hover {
+  background: var(--dz-hover-bg);
+  color: var(--dz-text-active);
+}
+.deznav ul.metismenu > li > a.mm-active,
+.deznav ul.metismenu > li.mm-active > a {
+  background: var(--dz-active-bg);
+  color: var(--dz-text-active);
+}
+
+/* ── Dropdown arrow ────────────────────────────────────────── */
+.deznav ul.metismenu a.has-arrow::after {
+  content: '';
+  margin-left: auto;
+  width: 7px; height: 7px;
+  border-right: 1.6px solid currentColor;
+  border-bottom: 1.6px solid currentColor;
+  transform: rotate(45deg);
+  transition: transform .2s;
+  opacity: .7;
+  flex-shrink: 0;
+}
+.deznav li.mm-active > a.has-arrow::after {
+  transform: rotate(-135deg);
+}
+
+/* ── Submenu ───────────────────────────────────────────────── */
+.deznav ul.metismenu ul {
+  list-style: none;
+  margin: 0;
+  padding: 2px 0 4px 14px;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height .25s ease;
+}
+.deznav li.mm-active > ul {
+  max-height: 800px; /* large enough for any submenu */
+}
+.deznav ul.metismenu ul li a {
+  padding: 9px 14px 9px 30px;
+  font-size: 13px;
+  font-weight: 400;
+  position: relative;
+  border-radius: 7px;
+}
+.deznav ul.metismenu ul li a::before {
+  content: '';
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: .6;
+}
+.deznav ul.metismenu ul li a:hover,
+.deznav ul.metismenu ul li a.active-link {
+  background: var(--dz-hover-bg);
+  color: var(--dz-text-active);
+}
+
+.deznav .menu-title {
+  padding: 14px 14px 6px;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: rgba(255,255,255,.5);
+}
+
+/* ── Footer ────────────────────────────────────────────────── */
+.deznav .copyright {
+  padding: 14px 22px;
+  border-top: 1px solid var(--dz-border);
+  flex-shrink: 0;
+}
+.deznav .copyright p {
+  margin: 0;
+  font-size: 11.5px;
+  color: rgba(255,255,255,.55);
+}
+
+/* ── Push main content beside the sidebar ─────────────────── */
+.main-content {
+  margin-left: var(--dz-sidebar-width);
+  width: calc(100% - var(--dz-sidebar-width));
+  box-sizing: border-box;
+  min-height: 100vh;
+  background: #f5f7fb;
+}
+
+/* ── Mobile ────────────────────────────────────────────────── */
+@media (max-width: 992px) {
+  .deznav {
+    transform: translateX(-100%);
+    transition: transform .25s ease;
+  }
+  .deznav.deznav-open { transform: translateX(0); }
+  .main-content { margin-left: 0; width: 100%; }
+}

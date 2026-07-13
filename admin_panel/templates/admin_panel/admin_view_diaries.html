@@ -1,0 +1,82 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block navbar %}{% endblock %}
+
+{% block head %}
+{% load static %}
+<link rel="stylesheet" href="{% static 'admin_panel/css/lms_sidebar.css' %}">
+{% endblock %}
+
+{% block sidebar %}
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+{% include 'admin_panel/sidebar.html' %}
+{% endblock %}
+
+{% block content %}
+<div class="lms-topbar">
+    <button class="hamburger-btn" onclick="toggleSidebar()">
+        <span></span><span></span><span></span>
+    </button>
+    <span class="lms-topbar-title">📔 Diaries</span>
+</div>
+
+<div class="lms-page-content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="card-title">📔 Diary Entries</h4>
+                        <form method="GET" class="d-flex gap-2">
+                            <select name="class_id" class="form-control w-auto" onchange="this.form.submit()">
+                                <option value="">-- All Classes --</option>
+                                {% for c in classes %}
+                                <option value="{{ c.id }}"
+                                    {% if request.GET.class_id == c.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ c.class_name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </form>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped">
+                                <thead class="thead-dark">
+                                    <tr>
+                                        <th>#</th><th>Class</th><th>Section</th>
+                                        <th>Subject</th><th>Date</th><th>Content</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for d in diaries %}
+                                    <tr>
+                                        <td>{{ forloop.counter }}</td>
+                                        <td>{{ d.class_fk.class_name }}</td>
+                                        <td>{{ d.section.section_name }}</td>
+                                        <td>{{ d.subject.name }}</td>
+                                        <td>{{ d.date }}</td>
+                                        <td>{{ d.content|truncatewords:20 }}</td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="6" class="text-center text-muted">No diary entries found.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleSidebar() {
+    document.querySelector('.deznav').classList.toggle('open');
+    document.getElementById('sidebarOverlay').classList.toggle('open');
+}
+</script>
+{% endblock %}

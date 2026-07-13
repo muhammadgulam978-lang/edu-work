@@ -1,0 +1,528 @@
+{% extends "admin_panel/base.html" %}
+{% load static %}
+
+{% block title %}Upload Book — {{ bank.subject.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #f5f7fb;
+    --surface: #ffffff;
+    --surface2: #eef6ef;
+    --border: #e0e6ea;
+    --accent: #2e7d32;
+    --accent-blue: #264c84;
+    --accent-orange: #e65100;
+    --text: #212121;
+    --text-muted: #6c7a89;
+    --danger: #d32f2f;
+    --radius: 10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Sora', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  .page-wrapper {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+  }
+
+  /* ── Header ── */
+  .page-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 36px;
+  }
+
+  .back-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 13px;
+    transition: all .2s;
+  }
+  .back-btn:hover { color: var(--text); border-color: #6c7a89; }
+
+  .header-info h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .header-info p {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+    background: rgba(56,139,253,.12);
+    color: var(--accent-blue);
+    border: 1px solid rgba(56,139,253,.25);
+    margin-top: 6px;
+  }
+
+  /* ── Messages ── */
+  .messages { margin-bottom: 20px; }
+  .alert {
+    padding: 12px 16px;
+    border-radius: var(--radius);
+    font-size: 13.5px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .alert-success { background: rgba(46,160,67,.12); border: 1px solid rgba(46,160,67,.3); color: #2e7d32; }
+  .alert-error   { background: rgba(248,81,73,.1);  border: 1px solid rgba(248,81,73,.3);  color: var(--danger); }
+  .alert-warning { background: rgba(240,136,62,.1); border: 1px solid rgba(240,136,62,.3); color: var(--accent-orange); }
+
+  /* ── Card ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    margin-bottom: 24px;
+  }
+  .card-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-title svg { color: var(--accent-blue); }
+
+  /* ── Drop Zone ── */
+  .drop-zone {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 48px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all .25s;
+    background: var(--surface2);
+    position: relative;
+  }
+  .drop-zone:hover,
+  .drop-zone.dragover {
+    border-color: var(--accent-blue);
+    background: rgba(56,139,253,.05);
+  }
+  .drop-zone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+  .drop-icon {
+    width: 52px;
+    height: 52px;
+    margin: 0 auto 14px;
+    background: rgba(56,139,253,.1);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent-blue);
+  }
+  .drop-zone h3 {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+  .drop-zone p {
+    font-size: 12.5px;
+    color: var(--text-muted);
+  }
+  .file-chosen {
+    margin-top: 14px;
+    padding: 10px 14px;
+    background: rgba(46,160,67,.1);
+    border: 1px solid rgba(46,160,67,.25);
+    border-radius: 8px;
+    font-size: 13px;
+    color: #2e7d32;
+    display: none;
+    align-items: center;
+    gap: 8px;
+  }
+  .file-chosen.show { display: flex; }
+
+  /* ── Form Grid ── */
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 20px;
+  }
+  @media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } }
+
+  .form-group label {
+    display: block;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    margin-bottom: 8px;
+  }
+
+  .form-group select,
+  .form-group input[type="number"] {
+    width: 100%;
+    padding: 10px 14px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'Sora', sans-serif;
+    font-size: 13.5px;
+    outline: none;
+    transition: border-color .2s;
+    appearance: none;
+  }
+  .form-group select:focus,
+  .form-group input[type="number"]:focus {
+    border-color: var(--accent-blue);
+  }
+  .form-group select option { background: #eef6ef; }
+
+  /* ── Question Count Row ── */
+  .count-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-top: 4px;
+  }
+  @media (max-width: 600px) { .count-row { grid-template-columns: 1fr; } }
+
+  .count-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    text-align: center;
+    transition: border-color .2s;
+  }
+  .count-card:hover { border-color: #6c7a89; }
+  .count-card .type-label {
+    font-size: 11px;
+    font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin-bottom: 8px;
+  }
+  .count-card .type-label.mcq   { color: var(--accent-blue); }
+  .count-card .type-label.short { color: var(--accent); }
+  .count-card .type-label.long  { color: var(--accent-orange); }
+
+  .count-card input[type="number"] {
+    width: 72px;
+    padding: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 18px;
+    font-weight: 600;
+    text-align: center;
+    outline: none;
+    transition: border-color .2s;
+  }
+  .count-card input[type="number"]:focus { border-color: var(--accent-blue); }
+
+  /* ── Submit Btn ── */
+  .submit-btn {
+    width: 100%;
+    margin-top: 24px;
+    padding: 14px;
+    background: var(--accent);
+    border: none;
+    border-radius: var(--radius);
+    color: #fff;
+    font-family: 'Sora', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all .2s;
+  }
+  .submit-btn:hover { background: #2e7d32; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(46,160,67,.3); }
+  .submit-btn:disabled { background: #238636; opacity: .5; cursor: not-allowed; transform: none; }
+
+  /* ── Spinner ── */
+  .spinner {
+    width: 18px; height: 18px;
+    border: 2px solid rgba(255,255,255,.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+    display: none;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Info Box ── */
+  .info-box {
+    background: rgba(56,139,253,.07);
+    border: 1px solid rgba(56,139,253,.2);
+    border-radius: 8px;
+    padding: 14px 16px;
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.7;
+    margin-top: 20px;
+  }
+  .info-box strong { color: var(--accent-blue); }
+
+  /* ── Steps ── */
+  .steps {
+    display: flex;
+    gap: 0;
+    margin-bottom: 28px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .step {
+    flex: 1;
+    padding: 14px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-muted);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+  }
+  .step:last-child { border-right: none; }
+  .step.active { background: rgba(56,139,253,.08); color: var(--accent-blue); }
+  .step-num {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .step.active .step-num { background: var(--accent-blue); border-color: var(--accent-blue); color: #fff; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+
+  <!-- Header -->
+  <div class="page-header">
+    <a href="{% url 'question_bank_detail' bank.id %}" class="back-btn">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      Back
+    </a>
+    <div class="header-info">
+      <h1>📚 Book Upload — AI Question Generator</h1>
+      <p>{{ bank.subject.name }} &nbsp;·&nbsp; Class {{ bank.class_fk.class_name }}</p>
+      <span class="badge">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+        AI Powered
+      </span>
+    </div>
+  </div>
+
+  <!-- Steps -->
+  <div class="steps">
+    <div class="step active">
+      <div class="step-num">1</div>
+      <span>PDF Upload</span>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <span>AI Generate</span>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <span>Review & Edit</span>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <span>Approve</span>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  {% if messages %}
+  <div class="messages">
+    {% for msg in messages %}
+    <div class="alert alert-{{ msg.tags }}">
+      {% if 'success' in msg.tags %}✅{% elif 'error' in msg.tags %}❌{% else %}⚠️{% endif %}
+      {{ msg }}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Upload Form -->
+  <div class="card">
+    <div class="card-title">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+      </svg>
+      PDF Book Upload
+    </div>
+
+    <form method="POST" enctype="multipart/form-data" id="uploadForm">
+      {% csrf_token %}
+
+      <!-- Drop Zone -->
+      <div class="drop-zone" id="dropZone">
+        <input type="file" name="pdf_file" id="pdfInput" accept=".pdf" required>
+        <div class="drop-icon">
+          <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/>
+            <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
+          </svg>
+        </div>
+        <h3>Drag and drop the PDF book here, or click to browse</h3>
+        <p>Maximum file size: 15MB &nbsp;·&nbsp; Sirf text-based PDF</p>
+        <div class="file-chosen" id="fileChosen">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          </svg>
+          <span id="fileName">—</span>
+        </div>
+      </div>
+
+      <!-- Settings -->
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Difficulty Level</label>
+          <select name="difficulty">
+            <option value="EASY">🟢 Easy</option>
+            <option value="MEDIUM" selected>🟡 Medium</option>
+            <option value="HARD">🔴 Hard</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Question Counts -->
+      <div style="margin-top: 20px;">
+        <label style="display:block; font-size:12.5px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em; margin-bottom:10px;">
+          Questions Kitne Generate Karein?
+        </label>
+        <div class="count-row">
+          <div class="count-card">
+            <div class="type-label mcq">MCQ</div>
+            <input type="number" name="mcq_count" value="10" min="0" max="30">
+          </div>
+          <div class="count-card">
+            <div class="type-label short">Short Answer</div>
+            <input type="number" name="short_count" value="7" min="0" max="20">
+          </div>
+          <div class="count-card">
+            <div class="type-label long">Long Answer</div>
+            <input type="number" name="long_count" value="5" min="0" max="10">
+          </div>
+        </div>
+      </div>
+
+      <!-- Info -->
+      <div class="info-box">
+        <strong>Kaise kaam karta hai:</strong><br>
+        PDF upload hogi → AI text read karega → Questions generate honge → 
+        Question Bank mein <strong>unapproved</strong> status ke saath save honge → 
+        Aap review, edit aur approve kar sakte hain.
+      </div>
+
+      <button type="submit" class="submit-btn" id="submitBtn">
+        <span class="spinner" id="spinner"></span>
+        <svg id="uploadIcon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        <span id="btnText">Upload &amp; Generate Questions</span>
+      </button>
+    </form>
+  </div>
+
+</div>
+
+<script>
+  // File input feedback
+  const input    = document.getElementById('pdfInput');
+  const chosen   = document.getElementById('fileChosen');
+  const nameSpan = document.getElementById('fileName');
+  const dropZone = document.getElementById('dropZone');
+
+  input.addEventListener('change', () => {
+    if (input.files[0]) {
+      nameSpan.textContent = input.files[0].name;
+      chosen.classList.add('show');
+    }
+  });
+
+  // Drag & drop visual
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    if (e.dataTransfer.files[0]) {
+      input.files = e.dataTransfer.files;
+      nameSpan.textContent = e.dataTransfer.files[0].name;
+      chosen.classList.add('show');
+    }
+  });
+
+  // Loading state
+  document.getElementById('uploadForm').addEventListener('submit', function() {
+    const btn    = document.getElementById('submitBtn');
+    const spin   = document.getElementById('spinner');
+    const icon   = document.getElementById('uploadIcon');
+    const text   = document.getElementById('btnText');
+    btn.disabled = true;
+    spin.style.display = 'block';
+    icon.style.display = 'none';
+    text.textContent   = 'Generating Questions…';
+  });
+</script>
+{% endblock %}

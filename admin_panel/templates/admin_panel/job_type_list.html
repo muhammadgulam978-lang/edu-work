@@ -1,0 +1,33 @@
+{% extends 'admin_panel/bases.html' %}
+{% block content %}
+<div class="card" style="margin: 20px;">
+  <div class="card-header d-flex justify-content-between">
+    <h4>Job Types</h4>
+    <a href="{% url 'job_type_create' %}" class="btn btn-primary btn-sm">+ Add Job Type</a>
+  </div>
+  <div class="card-body">
+    <table class="table table-hover">
+      <thead class="table-light">
+        <tr>
+          <th>Name</th>
+          <th>Probation (Months)</th>
+          <th>Leave Eligible</th>
+          <th>Benefits</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for job in job_types %}
+        <tr>
+          <td>{{ job.name }}</td>
+          <td>{{ job.probation_months }}</td>
+          <td>{{ job.is_leave_eligible|yesno:"Yes,No" }}</td>
+          <td>{{ job.has_benefits|yesno:"Yes,No" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4" class="text-center">No job types found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

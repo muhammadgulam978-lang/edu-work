@@ -1,0 +1,75 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Add Parent</title>
+    <link rel="stylesheet" href="{% static 'admin_panel/css/add_parent.css' %}" />
+    <!-- Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+<!-- jQuery (required by Select2) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- Select2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="{% static 'admin_panel/js/add_parent.js' %}"></script>
+
+</head>
+<body>
+    <div class="container">
+        <h2>Add New Parent</h2>
+        <form method="POST" action="{% url 'add_parent' %}">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="full_name">Full Name:</label>
+                <input type="text" id="full_name" name="full_name" required />
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" />
+            </div>
+
+            <div class="form-group">
+                <label for="phone">Phone Number:</label>
+                <input type="text" id="phone" name="phone" />
+            </div>
+
+            <div class="form-group">
+                <label for="address">Address:</label>
+                <textarea id="address" name="address" rows="2" cols="7"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="occupation">Occupation:</label>
+                <input type="text" id="occupation" name="occupation" />
+            </div>
+
+            <!-- Here: Multi-select dropdown for students -->
+            <div class="form-group">
+  <label for="students">Select Students:</label>
+  <select id="students" name="students" multiple>
+    {% for student in students %}
+      <option value="{{ student.id }}">
+        {{ student.name }} (Class: {{ student.class_name }})
+      </option>
+    {% endfor %}
+  </select>
+</div>
+
+
+
+
+            <button type="submit" class="btn">Submit</button>
+        </form>
+
+        <!-- Show error if exists -->
+        {% if error_message %}
+            <p style="color:red;">{{ error_message }}</p>
+        {% endif %}
+    </div>
+</body>
+</html>

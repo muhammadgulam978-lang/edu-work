@@ -1,0 +1,10 @@
+{% extends "admin/change_list.html" %}
+
+{% block object-tools %}
+    <div class="object-tools">
+        <a href="generate-all-fees/" class="addlink">
+            Generate Monthly Fees
+        </a>
+    </div>
+    {{ block.super }}
+{% endblock %}

@@ -1,0 +1,63 @@
+{% extends 'automation/base_automation.html' %}
+{% block page_title %}Dashboard{% endblock %}
+{% block content %}
+<div class="stats-row">
+    <div class="stat-card"><div class="ic" style="background:#22c55e;"><i class="fa fa-user-graduate"></i></div><div><div class="num">{{ total_students }}</div><div class="lbl">Total Students</div></div></div>
+    <div class="stat-card"><div class="ic" style="background:#3b82f6;"><i class="fa fa-chalkboard-teacher"></i></div><div><div class="num">{{ total_teachers }}</div><div class="lbl">Total Teachers</div></div></div>
+    <div class="stat-card"><div class="ic" style="background:#a855f7;"><i class="fa fa-users"></i></div><div><div class="num">{{ total_parents }}</div><div class="lbl">Total Parents</div></div></div>
+    <div class="stat-card"><div class="ic" style="background:#f59e0b;"><i class="fa fa-envelope"></i></div><div><div class="num">{{ notifications_today }}</div><div class="lbl">Notifications Today</div></div></div>
+</div>
+
+<div class="card" style="margin-bottom:22px;">
+    <h3>Automation Status</h3>
+    <div class="stats-row">
+        <div><b>Fee Automation</b><br><span class="badge badge-green">Enabled</span><br>Last Run: {{ fee_last_run }}<br>Next Run: {{ fee_next_run }}<br>Status: <span class="badge badge-green">{{ fee_status }}</span></div>
+        <div><b>Salary Automation</b><br><span class="badge badge-green">Enabled</span><br>Last Run: {{ salary_last_run }}<br>Next Run: {{ salary_next_run }}<br>Status: <span class="badge badge-yellow">{{ salary_status }}</span></div>
+        <div><b>Notification Automation</b><br><span class="badge badge-green">Enabled</span><br>Last Run: {{ notif_last_run }}<br>Next Run: {{ notif_next_run }}<br>Status: <span class="badge badge-green">{{ notif_status }}</span></div>
+    </div>
+</div>
+
+<div class="grid-2">
+    <div class="card">
+        <h3>Fee Collection Overview</h3>
+        <canvas id="feeChart" height="120"></canvas>
+    </div>
+    <div class="card">
+        <h3>Fee Collection Summary</h3>
+        <p>Total Collected: <b>PKR {{ total_collected }}</b></p>
+        <p>Total Pending: <b style="color:#c0392b;">PKR {{ total_pending }}</b></p>
+        <p>Collection Rate: <b style="color:#137a4c;">{{ collection_rate }}%</b></p>
+    </div>
+</div>
+
+<div class="grid-2">
+    <div class="card">
+        <h3>Recent Automation Jobs</h3>
+        <table>
+            <tr><th>Job Type</th><th>Started</th><th>Status</th><th>Success</th><th>Failed</th></tr>
+            {% for job in recent_jobs %}
+            <tr>
+                <td>{{ job.type }}</td><td>{{ job.started }}</td>
+                <td><span class="badge {% if job.status == 'Completed' %}badge-green{% else %}badge-red{% endif %}">{{ job.status }}</span></td>
+                <td>{{ job.success }}</td><td>{{ job.failed }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+    <div class="card">
+        <h3>Recent Notifications</h3>
+        {% for n in recent_notifications %}
+        <p style="margin-bottom:10px;"><b>{{ n.title }}</b><br><small style="color:#888;">{{ n.type }} · {{ n.time }}</small></p>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+new Chart(document.getElementById('feeChart'), {
+    type: 'line',
+    data: { labels: ['Jan','Feb','Mar','Apr','May','Jun'],
+        datasets: [{ label:'Collection', data:[40,55,45,70,65,80], borderColor:'#2dd4bf', backgroundColor:'rgba(45,212,191,0.15)', fill:true, tension:0.4 }] },
+    options: { plugins:{ legend:{ display:false } } }
+});
+</script>
+{% endblock %}

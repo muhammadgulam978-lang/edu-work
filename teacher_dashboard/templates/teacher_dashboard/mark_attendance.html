@@ -1,0 +1,82 @@
+{% extends "teacher_dashboard/bases.html" %}
+{% load static %}
+
+{% block title %}Mark Attendance{% endblock %}
+
+{% block extra_css %}
+<!-- Datatable -->
+<link href="{% static 'teacher_dashboard/vendor/datatables/css/jquery.dataTables.min.css' %}" rel="stylesheet">
+<!-- Bootstrap Select -->
+<link href="{% static 'teacher_dashboard/vendor/bootstrap-select/dist/css/bootstrap-select.min.css' %}" rel="stylesheet">
+<!-- Custom Style -->
+<link href="{% static 'teacher_dashboard/css/style.css' %}" rel="stylesheet">
+<style>
+  img.avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-right: 10px;
+  }
+  .radio-group input[type="radio"] {
+    margin-right: 5px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+  <div class="col-lg-12">
+    <div class="card">
+      <div class="card-header">
+        <h4 class="card-title">
+          Mark Attendance for {{ assigned_period.class_fk.class_name }} - {{ assigned_period.section.section_name }} -
+          {{ assigned_period.subject.subject_name }} ({{ assigned_period.period.period_name }})
+        </h4>
+      </div>
+      <div class="card-body">
+        <form method="POST">
+          {% csrf_token %}
+          <div class="table-responsive">
+            <table class="table table-responsive-md">
+              <thead>
+                <tr>
+                  <th><strong>PHOTO</strong></th>
+                  <th><strong>NAME</strong></th>
+                  <th><strong>ROLL NO.</strong></th>
+                  <th><strong>GENDER</strong></th>
+                  <th><strong>PRESENT</strong></th>
+                  <th><strong>ABSENT</strong></th>
+                  <th><strong>LEAVE</strong></th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for student in students %}
+                <tr>
+                  <td>
+                    {% if student.photo %}
+                      <img src="{{ student.photo.url }}" alt="Photo" class="avatar">
+                    {% else %}
+                      N/A
+                    {% endif %}
+                  </td>
+                  <td>{{ student.name }}</td>
+                  <td>{{ student.roll_no }}</td>
+                  <td>{{ student.gender }}</td>
+                  <td><input type="radio" name="status_{{ student.id }}" value="present" required></td>
+                  <td><input type="radio" name="status_{{ student.id }}" value="absent"></td>
+                  <td><input type="radio" name="status_{{ student.id }}" value="leave"></td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          <button type="submit" class="btn btn-success mt-3">
+            <i class="fas fa-check-circle me-1"></i> Submit Attendance
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

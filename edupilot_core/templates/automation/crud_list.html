@@ -1,0 +1,38 @@
+{% extends 'automation/base_automation.html' %}
+{% block page_title %}{{ label }}{% endblock %}
+{% block content %}
+<div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <h3 style="margin:0;">{{ label }} <span style="font-weight:400; color:#888; font-size:13px;">({{ total_count }} records)</span></h3>
+        <a href="{% url 'crud-create' model_name=model_name %}" class="btn-teal" style="text-decoration:none;">
+            <i class="fa fa-plus"></i> Add New
+        </a>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="badge {% if message.tags == 'success' %}badge-green{% else %}badge-red{% endif %}" style="display:block; margin-bottom:12px; padding:10px 14px;">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <table>
+        <tr>
+            {% for f in list_fields %}<th>{{ f|title }}</th>{% endfor %}
+            <th>Actions</th>
+        </tr>
+        {% for row in rows %}
+        <tr>
+            {% for v in row.values %}<td>{{ v|default:"—" }}</td>{% endfor %}
+            <td>
+                <a href="{% url 'crud-update' model_name=model_name pk=row.id %}" style="color:#0ea5e9; margin-right:14px;" title="Edit"><i class="fa fa-pen"></i></a>
+                <a href="{% url 'crud-delete' model_name=model_name pk=row.id %}" style="color:#c0392b;" title="Delete"><i class="fa fa-trash"></i></a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="10" style="text-align:center;color:#999; padding:20px;">No records found. Click "Add New" to create one.</td></tr>
+        {% endfor %}
+    </table>
+</div>
+{% endblock %}

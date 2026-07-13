@@ -1,0 +1,63 @@
+{% extends "teacher_dashboard/bases.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+
+  <!-- ================= HEADER ================= -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h3 class="mb-1">{{ book.title }}</h3>
+      <p class="text-muted mb-0">
+        Chapters inside this book
+      </p>
+    </div>
+
+    <!-- Upload Chapter (BOOK CONTEXT) -->
+    <a class="btn btn-primary"
+       href="{% url 'lesson_upload_chapter' %}?book={{ book.id }}">
+      + Upload Chapter PDF
+    </a>
+  </div>
+
+  <!-- ================= CHAPTER LIST ================= -->
+  {% if chapters %}
+    <div class="card">
+      <div class="card-body">
+        <table class="table table-bordered table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th style="width: 70%">Chapter Title</th>
+              <th style="width: 30%">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for chapter in chapters %}
+              <tr>
+                <td>{{ chapter.title }}</td>
+                <td>
+                  <a class="btn btn-sm btn-outline-primary"
+                     href="{{ chapter.pdf_file.url }}"
+                     target="_blank">
+                    View PDF
+                  </a>
+
+                  <a class="btn btn-sm btn-outline-secondary"
+                     href="{% url 'lms_chapter_lesson_plans' chapter.id %}">
+                    Lesson Plans
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% else %}
+    <div class="alert alert-info">
+      No chapters uploaded for this book yet.
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

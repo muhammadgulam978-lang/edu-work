@@ -1,0 +1,170 @@
+{% extends "admin_panel/bases.html" %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Preview & Generate Timetable{% endblock %}
+
+{% block content %}
+<style>
+    .timetable-container {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .timetable-table th {
+        background-color: #0d6efd;
+        color: white;
+        padding: 12px;
+        text-align: center;
+        border-bottom: 2px solid #fff;
+    }
+    .timetable-table td {
+        padding: 10px;
+        vertical-align: middle;
+        text-align: center;
+        min-height: 70px;
+        border: 1px solid #dee2e6;
+    }
+    .day-column {
+        background-color: #e9ecef;
+        font-weight: bold;
+        width: 150px;
+        border-right: 2px solid #fff;
+    }
+    .assigned-slot {
+        background-color: #d1e7dd;
+        color: #0f5132;
+        font-weight: 500;
+    }
+    .empty-slot {
+        background-color: #fff;
+        color: #6c757d;
+    }
+    .header-row {
+        font-size: 1.1rem;
+    }
+    @media (max-width: 768px) {
+        .timetable-table th, .timetable-table td {
+            font-size: 12px;
+            padding: 5px;
+        }
+        .day-column {
+            width: 100px;
+        }
+        .header-row {
+            font-size: 1rem;
+        }
+    }
+</style>
+
+<div class="card" style="background: #f8f9fa; margin-left: 20px; margin-right: 20px;">
+    <div class="card-header">
+        <h4 class="card-title">Preview &amp; Generate Timetable</h4>
+    </div>
+    <div class="card-body">
+        <form method="get" action="." class="needs-validation mb-4" novalidate>
+            <div class="row align-items-end">
+                <!-- Class -->
+                <div class="col-lg-4 mb-3">
+                    <label class="form-label">Class</label>
+                    <select name="class_id" id="id_class" class="form-control">
+                        <option value="">-- Select Class --</option>
+                        {% for cls in classes %}
+                            <option value="{{ cls.id }}" {% if class_info and cls.id == class_info.id %}selected{% endif %}>
+                                {{ cls.class_name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Section -->
+                <div class="col-lg-4 mb-3">
+                    <label for="id_section" class="form-label">Section</label>
+                    <select name="section_id" id="id_section" class="form-control">
+                        <option value="">-- Select Section --</option>
+                        {% if section_info %}
+                            <option value="{{ section_info.id }}" selected>{{ section_info.section_name }}</option>
+                        {% endif %}
+                    </select>
+                </div>
+
+                <!-- Buttons -->
+                <div class="col-lg-4 mb-3 text-center">
+                    <button type="submit" class="btn btn-primary w-100 mb-2">
+                        Preview Timetable
+                    </button>
+                    {% if timetable_data %}
+                        <a href="{% url 'timetable_pdf' %}?class_id={{ class_info.id }}&section_id={{ section_info.id }}" 
+                           class="btn btn-success w-100">
+                            Generate PDF
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </form>
+
+        {% if timetable_data %}
+            <div class="timetable-container mt-4">
+                <h4 class="text-success mb-3">
+                    Class: {{ class_info.class_name }},
+                    Section: {{ section_info.section_name }},
+                    Class Teacher:
+                    {% if teacher_name %}
+                        <span class="text-info">{{ teacher_name }}</span>
+                    {% else %}
+                        <span class="text-danger">Not Assigned</span>
+                    {% endif %}
+                </h4>
+
+                <table class="table timetable-table">
+                    <thead>
+                        <tr class="header-row">
+                            <th class="day-column">Day</th>
+                            {% for pname in timetable_data.period_order %}
+                                <th>{{ pname }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for day in timetable_data.days %}
+                            <tr>
+                                <td class="day-column">{{ day }}</td>
+                                {% for pname in timetable_data.period_order %}
+                                    {% with slot=timetable_data.slots|dict_get:day|dict_get:pname %}
+                                        <td class="{% if slot != '---' %}assigned-slot{% else %}empty-slot{% endif %}">
+                                            {{ slot|safe }}
+                                        </td>
+                                    {% endwith %}
+                                {% endfor %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-warning mt-3">Please select a class and section to preview the timetable.</p>
+        {% endif %}
+    </div>
+</div>
+
+
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $('#id_class').change(function () {
+        const classId = $(this).val();
+        if (classId) {
+            $.get("{% url 'get_sections' %}", { class_id: classId }, function (data) {
+                let options = '<option value="">-- Select Section --</option>';
+                data.sections.forEach(sec => {
+                    options += `<option value="${sec.id}">${sec.section_name}</option>`;
+                });
+                $('#id_section').html(options);
+            });
+        } else {
+            $('#id_section').html('<option value="">-- Select Section --</option>');
+        }
+    });
+</script>
+{% endblock %}

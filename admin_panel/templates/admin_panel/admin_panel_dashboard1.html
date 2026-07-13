@@ -1,0 +1,145 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+ <link rel="stylesheet" href="{% static 'admin_panel/css/admin_panel_dashboard.css' %}">
+ <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<head>
+    
+</head>
+<body>
+    <nav class="navbar">
+        <a class="navbar-brand" href="#">
+            <div class="icon-container">
+                <img class="icon hexagon" />
+            </div>
+            <span class="name">School Management System</span>
+        </a>
+        <ul class="navbar-nav">
+            <li>
+                <a class="active" href="#"><img class="icon home" /><span>Home</span></a>
+            </li>
+            <li>
+                <a href="#"><img class="icon statistics" /><span>Student</span></a>
+            </li>
+            <li>
+                <a href="{% url 'teacher_list' %}"><img class="icon mail" /><span>Teacher</span></a>
+            </li>
+            <li>
+                <a href="{% url 'parent_list' %}"><img class="icon user" /><span>Parent</span></a>
+            </li>
+            <!-- Admissions dropdown -->
+<li class="dropdown">
+    <a href="javascript:void(0);" onclick="toggleDropdown('Admissions', event)" id="dropdownToggleAdmissions">
+        <img class="icon file" /><span>Admissions</span>
+        
+    </a>
+    <ul class="dropdown-menu" id="dropdownMenuAdmissions">
+        <li><a href="{% url 'registration' %}">Registration for Admission</a></li>
+        <li><a href="{% url 'query' %}">Query</a></li>
+        <li><a href="{% url 'admission_list' %}">Assessment for Admission</a></li>
+        <li><a href="#">Open Admission</a></li>
+        <li><a href="{% url 'registration' %}">Receive Admission Form</a></li>
+        <li><a href="#">Issue Admission Form</a></li>
+        <li><a href="#">Admission Test Configuration</a></li>
+        <li><a href="{% url 'student_id_card_list'%}">ID card Generate </a><li>
+    </ul>
+</li>
+
+<!-- Academic Year dropdown -->
+<li class="dropdown">
+    <a href="javascript:void(0);" onclick="toggleDropdown('AcademicYear', event)" id="dropdownToggleAcademicYear">
+        <img class="icon file" /><span>Academics</span>
+    </a>
+    <ul class="dropdown-menu" id="dropdownMenuAcademicYear">
+        <li><a href="{%url 'academic_year_list'%}">Academic year Data</a></li>
+        <li><a href="{% url 'class_list' %}">Classes</a></li>
+        <li><a href="{%url 'teacher_list' %}">Faculty</a></li>
+        <li><a href="{% url 'section_list' %}">Section/configration</a></li>
+        <li><a href="{% url 'subject_list' %}">Subjects</a></li>
+        <li><a href="{%url 'class_teacher_list' %}">class teacher</a></li>
+        <li><a href="{% url 'add_class_group' %}">class Groups</a></li>
+        <li><a href="{% url 'period_list' %}">Create Period</a></li>
+        <li><a href="{% url 'timetable_view' %}">Period Planning timetable</a></li>
+        <li><a href="{% url 'assign_period' %}">Period planning assign</a></li>
+        <li><a href="{% url 'portfolio_timetable' %}">Portfolio timetable Pdf</a></li>
+        <!-- baaki links -->
+    </ul>
+</li>
+
+        <div class="navbar-footer">
+            <img class="image-documents" src="https://ozcanzaferayan.github.io/financial-crm/img/documents.svg" alt="documents" />
+            <div class="container">
+                <h2>Hi isra</h2>
+                <span>Develoepd By isra </span>
+                <a href="#">Logout</a>
+            </div>
+        </div>
+    </nav>
+    <main>
+        <header>
+            <section role="search">
+                <form action="#" method="get">
+                    <div class="form-inline">
+                        <img class="icon search" />
+                        <input type="search" placeholder="Search" />
+                    </div>
+                </form>
+            </section>
+
+            <section role="application">
+                <button class="change-view">
+                    <img class="icon layout" />Change view
+                </button>
+                <button class="notification">
+                    <img class="icon notification" />
+                </button>
+
+               <button class="menu" onclick="toggleNavbar()">
+                <img class="icon menu" />
+               </button>
+            </section>
+        </header>
+        <h1>Dashboard</h1>
+        <div class="charts-wrapper">
+            <section role="credit-card">
+                <div class="top">
+                    <img src="https://ozcanzaferayan.github.io/financial-crm/img/mastercard.svg" />
+                    <img src="https://ozcanzaferayan.github.io/financial-crm/img/apple_pay.svg" class="apple_pay" />
+                </div>
+                <div class="ccNumber">
+                    <span>˙˙˙˙ ˙˙˙˙ ˙˙˙˙ 5610</span>
+                </div>
+                <div class="ccBottom">
+                    <div class="ccValidThru">
+                        <label>VALID THRU</label>
+                        <span>05/21</span>
+                    </div>
+                    <div class="ccCardHolder">
+                        <label>CARD HOLDER</label>
+                        <span>Robert</span>
+                    </div>
+                </div>
+            </section>
+            <section role="chart" class="exchange-rates">
+                <h3 class="title">Exchange rates</h3>
+                <canvas id="exchangeRates"></canvas>
+            </section>
+            <section role="chart" class="last-costs">
+                <h3 class="title">Last Costs</h3>
+                <canvas id="last_costs"></canvas>
+
+            </section>
+            <section role="chart" class="efficiency">
+                <h3 class="title">Efficiency</h3>
+                <canvas id="efficiency"></canvas>
+
+            </section>
+        </div>
+    </main>
+</body>
+
+ 
+        
+   <script src="{% static 'admin_panel/js/admin_panel_dashboard.js' %}"></script>
+</html>
+

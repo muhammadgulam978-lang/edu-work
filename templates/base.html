@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{% block title %}Exam System{% endblock %}</title>
+  {% load static %}
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ── Global Reset & Variables ──────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:           #0d1117;
+      --surface:      #161b22;
+      --surface2:     #1c2128;
+      --border:       #30363d;
+      --accent:       #2ea043;
+      --accent-hover: #3fb950;
+      --accent-blue:  #388bfd;
+      --accent-orange:#f0883e;
+      --text:         #e6edf3;
+      --text-muted:   #8b949e;
+      --danger:       #f85149;
+      --radius:       10px;
+      --sidebar-w:    230px;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'Sora', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    /* ── Layout ────────────────────────────────────── */
+    .layout {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ── Sidebar ───────────────────────────────────── */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0; left: 0;
+      height: 100vh;
+      z-index: 100;
+      overflow-y: auto;
+    }
+
+    .sidebar-brand {
+      padding: 22px 20px 18px;
+      border-bottom: 1px solid var(--border);
+    }
+    .sidebar-brand .brand-logo {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -.3px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .sidebar-brand .brand-logo .logo-icon {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent));
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    .sidebar-brand .brand-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 3px;
+      margin-left: 42px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Nav sections */
+    .nav-section { padding: 14px 12px 6px; }
+    .nav-section-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      padding: 0 8px;
+      margin-bottom: 6px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 10px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+      transition: background .15s, color .15s;
+      cursor: pointer;
+    }
+    .nav-item:hover {
+      background: var(--surface2);
+      color: var(--text);
+    }
+    .nav-item.active {
+      background: rgba(56,139,253,.12);
+      color: var(--accent-blue);
+      font-weight: 600;
+    }
+    .nav-item .nav-icon { font-size: 15px; flex-shrink: 0; }
+    .nav-item .nav-badge {
+      margin-left: auto;
+      background: rgba(248,81,73,.2);
+      color: var(--danger);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 7px;
+      border-radius: 20px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Sidebar footer */
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 14px 12px;
+      border-top: 1px solid var(--border);
+    }
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 10px;
+      border-radius: 8px;
+      background: var(--surface2);
+    }
+    .user-avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700;
+      flex-shrink: 0;
+      color: #fff;
+    }
+    .user-name { font-size: 13px; font-weight: 600; }
+    .user-role { font-size: 11px; color: var(--text-muted); }
+
+    /* ── Main content ──────────────────────────────── */
+    .main {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* Top bar */
+    .topbar {
+      height: 56px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      gap: 16px;
+    }
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 0;
+    }
+    .topbar-title {
+      font-size: 14px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .topbar-breadcrumb {
+      font-size: 12px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .topbar-breadcrumb a:hover { color: var(--accent-blue); }
+    .topbar-breadcrumb span { color: var(--border); }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    /* topbar icon button */
+    .icon-btn {
+      width: 34px; height: 34px;
+      border-radius: 8px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px;
+      cursor: pointer;
+      transition: background .15s, border-color .15s;
+      color: var(--text-muted);
+    }
+    .icon-btn:hover { background: rgba(56,139,253,.12); border-color: rgba(56,139,253,.3); color: var(--accent-blue); }
+
+    /* Logout link */
+    .logout-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 13px;
+      border-radius: 8px;
+      background: rgba(248,81,73,.08);
+      border: 1px solid rgba(248,81,73,.2);
+      color: var(--danger);
+      font-size: 12.5px;
+      font-weight: 600;
+      transition: background .15s;
+      cursor: pointer;
+    }
+    .logout-btn:hover { background: rgba(248,81,73,.15); }
+
+    /* Content area */
+    .content {
+      flex: 1;
+      padding: 32px 28px 60px;
+    }
+
+    /* ── Django Messages ───────────────────────────── */
+    .django-messages { margin-bottom: 20px; }
+    .alert {
+      padding: 11px 14px;
+      border-radius: 8px;
+      font-size: 13.5px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .alert-success { background: rgba(46,160,67,.12); border: 1px solid rgba(46,160,67,.3); color: #3fb950; }
+    .alert-error,
+    .alert-danger   { background: rgba(248,81,73,.1);  border: 1px solid rgba(248,81,73,.3);  color: var(--danger); }
+    .alert-warning  { background: rgba(240,136,62,.1); border: 1px solid rgba(240,136,62,.3); color: var(--accent-orange); }
+    .alert-info     { background: rgba(56,139,253,.1); border: 1px solid rgba(56,139,253,.3); color: var(--accent-blue); }
+
+    /* ── Utility ───────────────────────────────────── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 9px 18px; border-radius: 8px;
+      font-family: 'Sora', sans-serif;
+      font-size: 13.5px; font-weight: 600;
+      cursor: pointer; border: none;
+      text-decoration: none;
+      transition: all .2s;
+    }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: var(--accent-hover); box-shadow: 0 3px 12px rgba(46,160,67,.35); }
+    .btn-blue { background: rgba(56,139,253,.15); border: 1px solid rgba(56,139,253,.3); color: var(--accent-blue); }
+    .btn-blue:hover { background: rgba(56,139,253,.25); }
+    .btn-danger { background: rgba(248,81,73,.12); border: 1px solid rgba(248,81,73,.3); color: var(--danger); }
+    .btn-danger:hover { background: rgba(248,81,73,.22); }
+    .btn-sm { padding: 6px 12px; font-size: 12px; }
+
+    /* ── Responsive: hide sidebar on small ────────── */
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .main { margin-left: 0; }
+      .content { padding: 20px 16px 40px; }
+    }
+
+    /* ── Extra blocks ──────────────────────────────── */
+    {% block extra_css %}{% endblock %}
+  </style>
+
+  {% block head_extra %}{% endblock %}
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- ═══════════ SIDEBAR ═══════════ -->
+  <aside class="sidebar">
+
+    <!-- Brand -->
+    <div class="sidebar-brand">
+      <div class="brand-logo">
+        <div class="logo-icon">🎓</div>
+        ExamSystem
+      </div>
+      <div class="brand-sub">v1.0 · Academic Portal</div>
+    </div>
+
+    <!-- Main Navigation -->
+    <div class="nav-section">
+      <div class="nav-section-label">Main</div>
+
+      <a href="{% url 'question_bank_list' %}" class="nav-item {% block nav_question_banks %}{% endblock %}">
+        <span class="nav-icon">📚</span> Question Banks
+      </a>
+
+      <a href="{% url 'exam_plan_list' %}" class="nav-item {% block nav_exam_plans %}{% endblock %}">
+        <span class="nav-icon">📋</span> Exam Plans
+      </a>
+
+      <a href="{% url 'analytics_dashboard' %}" class="nav-item {% block nav_analytics %}{% endblock %}">
+        <span class="nav-icon">📊</span> Analytics
+      </a>
+    </div>
+
+    <!-- Question Management -->
+    <div class="nav-section">
+      <div class="nav-section-label">Questions</div>
+
+      <a href="{% url 'question_bank_list' %}" class="nav-item">
+        <span class="nav-icon">🗂️</span> All Banks
+      </a>
+    </div>
+
+    <!-- Admin-only links -->
+    {% if user.is_staff %}
+    <div class="nav-section">
+      <div class="nav-section-label">Admin</div>
+      <a href="/admin/" class="nav-item">
+        <span class="nav-icon">⚙️</span> Django Admin
+      </a>
+    </div>
+    {% endif %}
+
+    <!-- Footer / User -->
+    <div class="sidebar-footer">
+      {% if user.is_authenticated %}
+      <div class="user-info">
+        <div class="user-avatar">
+          {{ user.first_name|first|upper|default:user.username|first|upper }}
+        </div>
+        <div>
+          <div class="user-name">{{ user.get_full_name|default:user.username }}</div>
+          <div class="user-role">
+            {% if user.is_superuser %}Super Admin
+            {% elif user.is_staff %}Staff
+            {% else %}Teacher{% endif %}
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+  </aside>
+  <!-- ═══════════ END SIDEBAR ═══════════ -->
+
+  <!-- ═══════════ MAIN ═══════════ -->
+  <div class="main">
+
+    <!-- Top Bar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-breadcrumb">
+          <a href="/">🏠 Home</a>
+          {% block breadcrumb %}{% endblock %}
+        </div>
+      </div>
+      <div class="topbar-right">
+        {% if user.is_authenticated %}
+          <form method="POST" action="{% url 'logout' %}" style="margin:0;">
+            {% csrf_token %}
+            <button type="submit" class="logout-btn">
+              🚪 Logout
+            </button>
+          </form>
+        {% else %}
+          <a href="{% url 'login' %}" class="btn btn-primary btn-sm">Login</a>
+        {% endif %}
+      </div>
+    </header>
+
+    <!-- Django Messages (global) -->
+    <div class="content">
+      {% if messages %}
+      <div class="django-messages">
+        {% for msg in messages %}
+        <div class="alert alert-{{ msg.tags }}">
+          {% if 'success' in msg.tags %}✅
+          {% elif 'error' in msg.tags %}❌
+          {% elif 'warning' in msg.tags %}⚠️
+          {% else %}ℹ️{% endif %}
+          {{ msg }}
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <!-- ═══ PAGE CONTENT ═══ -->
+      {% block content %}{% endblock %}
+      <!-- ═══ END PAGE CONTENT ═══ -->
+    </div>
+
+  </div>
+  <!-- ═══════════ END MAIN ═══════════ -->
+
+</div>
+
+{% block extra_js %}{% endblock %}
+</body>
+</html>

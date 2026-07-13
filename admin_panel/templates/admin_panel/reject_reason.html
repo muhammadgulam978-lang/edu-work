@@ -1,0 +1,33 @@
+{% extends "admin_panel/bases.html" %}
+{% load static %}
+
+{% block title %}My Page{% endblock %}
+
+{% block head %}
+<!-- Custom Stylesheet -->
+{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-center align-items-center" style="min-height: 80vh; background-color: #f8f9fa; padding: 20px;">
+    <div class="col-xl-6 col-lg-6" style="background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+        <div class="card w-100">
+            <div class="card-header">
+                <h4 class="card-title">Provide Rejection Reason for {{ admission.name }}</h4>
+            </div>
+            <div class="card-body">
+                <div class="basic-form">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <textarea class="form-control" rows="4" id="comment" name="reason" style="background-color: white;"></textarea>
+                        </div>
+                        <input type="submit" class="btn btn-primary" value="Submit" />
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

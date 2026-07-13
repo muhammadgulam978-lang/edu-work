@@ -1,0 +1,62 @@
+{% extends "student_profile/base.html" %}
+{% load dict_filters %}
+
+{% block content %}
+
+<div class="container" style="margin-top: 40px; text-align: center;">
+    <h2 style="font-weight: bold; margin-bottom: 20px;">
+        {{ student.class_fk.class_name }} – {{ term|title }} Result
+    </h2>
+
+    <!-- Term Switcher -->
+    <form method="get" style="margin-bottom: 20px;">
+        <select name="term" onchange="this.form.submit()" class="form-control" style="width: 200px; margin: auto;">
+            <option value="midterm" {% if term == 'midterm' %}selected{% endif %}>Midterm</option>
+            <option value="final" {% if term == 'final' %}selected{% endif %}>Final Term</option>
+        </select>
+    </form>
+
+    <div style="display: flex; justify-content: center;">
+        <table class="table table-bordered"
+               style="width: 80%; text-align: center; background: white; border-radius: 10px;">
+
+            <thead class="thead-dark">
+                <tr>
+                    <th>Subject</th>
+                    <th>Marks Obtained</th>
+                    <th>Total Marks</th>
+                    <th>Teacher Comments</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for subject in subjects %}
+                    {% if subject.id in result_dict %}
+                        {% with result=result_dict|dictget:subject.id %}
+                        <tr>
+                            <td>{{ subject.name }}</td>
+                            <td>{{ result.marks_obtained }}</td>
+                            <td>{{ result.total_marks }}</td>
+                            <td>
+                                {% if subject.id in comments_dict %}
+                                    {{ comments_dict|dictget:subject.id }}
+                                {% else %}
+                                    <span style="color: gray;">No Comments</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endwith %}
+                    {% else %}
+                        <tr>
+                            <td>{{ subject.name }}</td>
+                            <td colspan="3" style="color: gray;">Result Not Uploaded</td>
+                        </tr>
+                    {% endif %}
+                {% endfor %}
+            </tbody>
+
+        </table>
+    </div>
+</div>
+
+{% endblock %}

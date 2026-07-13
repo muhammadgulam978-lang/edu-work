@@ -1,0 +1,864 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Admin Dashboard — EDUPILOT</title>
+
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'admin_panel/images/favicon.png' %}">
+    <link href="{% static 'admin_panel/vendor/jqvmap/css/jqvmap.min.css' %}" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'admin_panel/vendor/chartist/css/chartist.min.css' %}">
+    <link href="{% static 'admin_panel/vendor/bootstrap-select/dist/css/bootstrap-select.min.css' %}" rel="stylesheet">
+    <link href="{% static 'admin_panel/vendor/owl-carousel/owl.carousel.css' %}" rel="stylesheet">
+    <link href="https://cdn.lineicons.com/2.0/LineIcons.css" rel="stylesheet">
+    <link href="{% static 'admin_panel/css/style.css' %}" rel="stylesheet">
+
+    <style>
+        /* ── BULK UPLOAD CARDS ── */
+        .bulk-upload-section {
+            margin-bottom: 30px;
+        }
+
+        .bulk-section-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #3d4465;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .bulk-card {
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            transition: transform 0.25s, box-shadow 0.25s;
+            border: none;
+            height: 100%;
+        }
+
+        .bulk-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.14);
+        }
+
+        /* Student card — teal (matches dashboard theme) */
+        .bulk-card-student {
+            background: linear-gradient(135deg, #3ecfcf 0%, #2ab5b5 100%);
+        }
+
+        /* Teacher card — blue (matches Teachers stat card) */
+        .bulk-card-teacher {
+            background: linear-gradient(135deg, #4d7cfe 0%, #3562e0 100%);
+        }
+
+        .bulk-card-body {
+            padding: 28px 24px 22px;
+            color: white;
+        }
+
+        .bulk-card-icon {
+            width: 56px;
+            height: 56px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+        }
+
+        .bulk-card-icon svg { width: 28px; height: 28px; }
+
+        .bulk-card-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 6px;
+        }
+
+        .bulk-card-desc {
+            font-size: 13px;
+            color: rgba(255,255,255,0.82);
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .bulk-card-footer {
+            padding: 14px 24px;
+            background: rgba(0,0,0,0.12);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .bulk-col-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        .bulk-tag {
+            background: rgba(255,255,255,0.18);
+            color: white;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 9px;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .bulk-upload-btn {
+            background: white;
+            border: none;
+            border-radius: 10px;
+            padding: 10px 22px;
+            font-size: 13.5px;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            text-decoration: none;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .bulk-upload-btn-student { color: #2ab5b5; }
+        .bulk-upload-btn-teacher { color: #3562e0; }
+
+        .bulk-upload-btn:hover {
+            transform: scale(1.04);
+            box-shadow: 0 4px 14px rgba(0,0,0,0.2);
+            text-decoration: none;
+        }
+
+        .bulk-upload-btn svg {
+            width: 15px; height: 15px;
+        }
+
+        /* Stats row bottom strip */
+        .bulk-stat-strip {
+            padding: 10px 24px 0;
+            display: flex;
+            gap: 20px;
+        }
+
+        .bulk-stat-item {
+            text-align: center;
+        }
+
+        .bulk-stat-num {
+            font-size: 22px;
+            font-weight: 800;
+            color: white;
+            line-height: 1;
+        }
+
+        .bulk-stat-label {
+            font-size: 11px;
+            color: rgba(255,255,255,0.75);
+            margin-top: 2px;
+        }
+
+        .bulk-stat-divider {
+            width: 1px;
+            background: rgba(255,255,255,0.2);
+            margin: 0 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Preloader -->
+    <div id="preloader">
+        <div class="sk-three-bounce">
+            <div class="sk-child sk-bounce1"></div>
+            <div class="sk-child sk-bounce2"></div>
+            <div class="sk-child sk-bounce3"></div>
+        </div>
+    </div>
+
+    <div id="main-wrapper">
+
+        <!-- Nav Header -->
+        <div class="nav-header">
+            <a href="{% url 'admin_panel_dashboard' %}" class="brand-logo">
+                <img class="logo-abbr" src="{% static 'admin_panel/images/final final.png' %}" alt="Logo">
+            </a>
+            <div class="nav-control">
+                <div class="hamburger">
+                    <span class="line"></span><span class="line"></span><span class="line"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <div class="header-content">
+                <nav class="navbar navbar-expand">
+                    <div class="collapse navbar-collapse justify-content-between">
+                        <div class="header-left">
+                            <div class="dashboard_bar">Dashboard</div>
+                        </div>
+                        <ul class="navbar-nav header-right">
+                            <li class="nav-item">
+                                <div class="input-group search-area d-xl-inline-flex d-none">
+                                    <input type="text" class="form-control" placeholder="Search something here...">
+                                    <div class="input-group-append">
+                                        <button class="input-group-text"><i class="flaticon-381-search-2"></i></button>
+                                    </div>
+                                </div>
+                            </li>
+                            <li class="nav-item dropdown notification_dropdown">
+                                <a class="nav-link ai-icon" href="#" role="button" data-bs-toggle="dropdown">
+                                    <svg width="26" height="28" viewBox="0 0 26 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M9.45251 25.6682C10.0606 27.0357 11.4091 28 13.0006 28C14.5922 28 15.9407 27.0357 16.5488 25.6682C15.4266 25.7231 14.2596 25.76 13.0006 25.76C11.7418 25.76 10.5748 25.7231 9.45251 25.6682Z" fill="#3E4954"/>
+                                        <path d="M25.3531 19.74C23.8769 17.8785 21.3995 14.2195 21.3995 10.64C21.3995 7.09073 19.1192 3.89758 15.7995 2.72382C15.7592 1.21406 14.5183 0 13.0006 0C11.4819 0 10.2421 1.21406 10.2017 2.72382C6.88095 3.89758 4.60064 7.09073 4.60064 10.64C4.60064 14.2207 2.12434 17.8785 0.647062 19.74C0.154273 20.3616 0.00191325 21.1825 0.240515 21.9363C0.473484 22.6721 1.05361 23.2422 1.79282 23.4595C3.08755 23.8415 5.20991 24.2715 8.44676 24.491C9.84785 24.5851 11.3543 24.64 13.0007 24.64C14.646 24.64 16.1524 24.5851 17.5535 24.491C20.7914 24.2715 22.9127 23.8415 24.2085 23.4595C24.9477 23.2422 25.5268 22.6722 25.7597 21.9363C25.9983 21.1825 25.8448 20.3616 25.3531 19.74Z" fill="#3E4954"/>
+                                    </svg>
+                                    <span class="badge light text-white bg-primary rounded-circle">52</span>
+                                </a>
+                                <div class="dropdown-menu dropdown-menu-end">
+                                    <div id="DZ_W_Notification1" class="widget-media dz-scroll p-3 height380">
+                                        <ul class="timeline">
+                                            <li>
+                                                <div class="timeline-panel">
+                                                    <div class="media me-2 media-info">AD</div>
+                                                    <div class="media-body">
+                                                        <h6 class="mb-1">New admission registered</h6>
+                                                        <small class="d-block">Just now</small>
+                                                    </div>
+                                                </div>
+                                            </li>
+                                            <li>
+                                                <div class="timeline-panel">
+                                                    <div class="media me-2 media-success"><i class="fa fa-user"></i></div>
+                                                    <div class="media-body">
+                                                        <h6 class="mb-1">Teacher profile updated</h6>
+                                                        <small class="d-block">2 hours ago</small>
+                                                    </div>
+                                                </div>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    <a class="all-notification" href="#">See all notifications <i class="ti-arrow-right"></i></a>
+                                </div>
+                            </li>
+                            <li class="nav-item dropdown header-profile">
+                                <a class="nav-link" href="#" role="button" data-bs-toggle="dropdown">
+                                   
+                                        <div class="me-2 text-end">
+                <span class="text-black d-block fw-bold">Miss Rose</span>
+                <small class="text-muted">Super Admin</small>
+            </div>
+             <img src="{% static 'admin_panel/images/dummy-profile.png' %}"
+                 width="40"
+                 height="40"
+                 class="rounded-circle"
+                 alt="Profile">
+
+                                </a>
+                                <div class="dropdown-menu dropdown-menu-end">
+                                    <a href="#" class="dropdown-item ai-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="text-primary" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                        <span class="ms-2">Profile</span>
+                                    </a>
+                                    <a href="{% url 'custom_logout' %}" class="dropdown-item ai-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="text-danger" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                                        <span class="ms-2">Logout</span>
+                                    </a>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="deznav">
+            <div class="deznav-scroll">
+                <ul class="metismenu" id="menu">
+
+                    <li>
+                        <a href="{% url 'admin_panel_dashboard' %}" class="ai-icon">
+                            <i class="flaticon-381-networking"></i>
+                            <span class="nav-text">Dashboard</span>
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="{% url 'automation-dashboard' %}" class="ai-icon">
+                            <i class="flaticon-381-controls-3"></i>
+                            <span class="nav-text">Account Automation</span>
+                        </a>
+                    </li>
+
+                    {% if perms.teacher_dashboard.view_teacher or perms.teacher_dashboard.add_teacher %}
+                    <li class="has-menu">
+                        <a class="has-arrow ai-icon" href="javascript:void(0)">
+                            <i class="flaticon-381-networking"></i>
+                            <span class="nav-text">Teachers Gateway</span>
+                        </a>
+                        <ul>
+                            {% if perms.teacher_dashboard.view_teacher %}
+                                <li><a href="{% url 'teacher_list' %}">Teacher List</a></li>
+                            {% endif %}
+                            {% if perms.teacher_dashboard.add_teacher %}
+                                <li><a href="{% url 'teacher_add' %}">Create Teacher</a></li>
+                                
+                            {% endif %}
+                        </ul>
+                    </li>
+                    {% endif %}
+
+                    {% if perms.auth.add_group or perms.auth.view_group or perms.auth.change_user %}
+                    <li class="has-menu">
+                        <a class="has-arrow ai-icon" href="javascript:void(0)">
+                            <i class="flaticon-381-settings-2"></i>
+                            <span class="nav-text">User Role Management</span>
+                        </a>
+                        <ul>
+                            {% if perms.auth.add_group %}
+                                <li><a href="{% url 'create_role' %}">Create Role</a></li>
+                            {% endif %}
+                            {% if perms.auth.view_group %}
+                                <li><a href="{% url 'list_roles' %}">View Roles</a></li>
+                            {% endif %}
+                            {% if perms.auth.change_user %}
+                                <li><a href="{% url 'assign_role' %}">Assign Role</a></li>
+                            {% endif %}
+                        </ul>
+                    </li>
+                    {% endif %}
+
+                    <li class="has-menu">
+                        <a class="has-arrow ai-icon" href="javascript:void(0)">
+                            <i class="flaticon-381-networking"></i>
+                            <span class="nav-text">Student Gateway</span>
+                        </a>
+                        <ul>
+                            <li><a href="{% url 'academic_year_list' %}">Academic Year</a></li>
+                            {% if perms.admin_panel.add_student %}
+                                <li><a href="{% url 'registration' %}">Registration</a></li>
+                        
+                              
+                            {% endif %}
+                            {% if perms.student_profile.view_studentidcard %}
+                                <li><a href="{% url 'student_id_card_list' %}">ID Card Generate</a></li>
+                            {% endif %}
+                        </ul>
+                    </li>
+
+                    {% if perms.admin_panel.view_class %}
+                    <li class="has-menu">
+                        <a class="has-arrow ai-icon" href="javascript:void(0)">
+                            <i class="flaticon-381-controls-3"></i>
+                            <span class="nav-text">Academics</span>
+                        </a>
+                        <ul>
+                            <li><a href="{% url 'class_list' %}">Classes</a></li>
+                            {% if perms.admin_panel.view_section %}
+                                <li><a href="{% url 'section_list' %}">Sections Capacity</a></li>
+                            {% endif %}
+                            {% if perms.admin_panel.view_subject %}
+                                <li><a href="{% url 'subject_list' %}">Subjects</a></li>
+                            {% endif %}
+                            {% if perms.admin_panel.view_classgroup %}
+                                <li><a href="{% url 'class_group_list' %}">Class Groups</a></li>
+                            {% endif %}
+                            {% if perms.admin_panel.view_subjectperiod %}
+                                <li><a href="{% url 'timetable_view' %}">Timetable Allocation</a></li>
+                            {% endif %}
+                            {% if perms.admin_panel.view_createperiod %}
+                                <li><a href="{% url 'period_list' %}">Create Period</a></li>
+                            {% endif %}
+                            {% if perms.admin_panel.add_assignedperiod %}
+                                <li><a href="{% url 'assign_period' %}">Assign Period Teachers</a></li>
+                            {% endif %}
+                            {% if perms.admin_panel.view_classteacher %}
+                                <li><a href="{% url 'class_teacher_list' %}">Class Teacher</a></li>
+                            {% endif %}
+                            {% if perms.admin_panel.view_assignedperiod %}
+                                <li><a href="{% url 'portfolio_timetable' %}">PDF Timetable</a></li>
+                            {% endif %}
+                        </ul>
+                    </li>
+                    {% endif %}
+
+                    {% if perms.admin_panel.view_department or perms.admin_panel.view_employee %}
+                    <li class="has-menu">
+                        <a class="has-arrow ai-icon" href="javascript:void(0)">
+                            <i class="flaticon-381-user-7"></i>
+                            <span class="nav-text">HR</span>
+                        </a>
+                        <ul>
+                            {% if perms.admin_panel.view_department %}
+                                <li><a href="{% url 'department_list' %}">Departments</a></li>
+                            {% endif %}
+                            {% if perms.admin_panel.view_designation %}
+                                <li><a href="{% url 'designation_list' %}">Designations</a></li>
+                            {% endif %}
+                            {% if perms.admin_panel.view_all_employee %}
+                                <li><a href="{% url 'employee_list' %}">Employees</a></li>
+                            {% endif %}
+                            {% if perms.admin_panel.add_employee %}
+                                <li><a href="{% url 'employee_create' %}">Create Employee</a></li>
+                            {% endif %}
+                            {% if perms.admin_panel.view_leaveapplication %}
+                                <li><a href="{% url 'leave_list' %}">Leave Applications</a></li>
+                            {% endif %}
+                            {% if perms.admin_panel.add_leaveapplication %}
+                                <li><a href="{% url 'leave_create' %}">Apply Leave</a></li>
+                            {% endif %}
+                        </ul>
+                    </li>
+                    {% endif %}
+
+                    <li class="has-menu">
+                        <a class="has-arrow ai-icon" href="javascript:void(0)">
+                            <i class="flaticon-381-analytics"></i>
+                            <span class="nav-text">Appraisal</span>
+                        </a>
+                        <ul>
+                            <li><a href="{% url 'admin_kpi_builder' %}">KPI Builder</a></li>
+                            <li><a href="{% url 'admin_appraisal_list' %}">All Submissions</a></li>
+                            <!-- <li><a href="{% url 'teacher_appraisal_submit' %}">My Appraisal</a></li> -->
+                        </ul>
+                    </li>
+
+                    <li>
+                        <a href="{% url 'academic_calendar_page' %}" class="ai-icon">
+                            <i class="flaticon-381-calendar-1"></i>
+                            <span class="nav-text">Academic Calendar</span>
+                        </a>
+                    </li>
+
+                    {% if perms.admin_panel.view_examformat %}
+                    <li class="has-menu">
+                        <a class="has-arrow ai-icon" href="javascript:void(0)">
+                            <i class="flaticon-381-edit"></i>
+                            <span class="nav-text">Exam Management</span>
+                        </a>
+                        <ul>
+                            <li><a href="{% url 'staff_category_list' %}">Staff Categories</a></li>
+                            <li><a href="{% url 'job_type_list' %}">Job Types</a></li>
+                            {% if perms.admin_panel.view_examformat %}
+                                <li><a href="{% url 'format_list' %}">Exam Formats</a></li>
+                            {% endif %}
+                            {% if perms.admin_panel.add_examformat %}
+                                <li><a href="{% url 'create_format' %}">Create Format</a></li>
+                            {% endif %}
+                            {% if perms.admin_panel.view_question %}
+                                <li><a href="{% url 'all_questions' %}">All Questions</a></li>
+                            {% endif %}
+                        </ul>
+                    </li>
+                    {% endif %}
+
+                </ul>
+                <!-- <div class="copyright">
+                    <p>EDUPILOT Dashboard</p>
+                </div> -->
+            </div>
+        </div>
+        <!-- Sidebar End -->
+
+        <!-- Content Body -->
+        <div class="content-body">
+            <div class="container-fluid">
+                <div class="row justify-content-center">
+
+                    <!-- ── STAT CARDS ── -->
+                    <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6">
+                        <div class="card bg-primary">
+                            <div class="card-body">
+                                <div class="media align-items-center">
+                                    <span class="p-2 me-3 feature-icon rounded">
+                                        <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M30.25 5.75H28.5V2.25C28.5 1.78587 28.3156 1.34075 27.9874 1.01256C27.6593 0.684374 27.2141 0.5 26.75 0.5C26.2859 0.5 25.8407 0.684374 25.5126 1.01256C25.1844 1.34075 25 1.78587 25 2.25V5.75H11V2.25C11 1.78587 10.8156 1.34075 10.4874 1.01256C10.1592 0.684374 9.71413 0.5 9.25 0.5C8.78587 0.5 8.34075 0.684374 8.01256 1.01256C7.68437 1.34075 7.5 1.78587 7.5 2.25V5.75H5.75C4.35761 5.75 3.02226 6.30312 2.03769 7.28769C1.05312 8.27226 0.5 9.60761 0.5 11V12.75H35.5V11C35.5 9.60761 34.9469 8.27226 33.9623 7.28769C32.9777 6.30312 31.6424 5.75 30.25 5.75Z" fill="white"/>
+                                            <path d="M0.5 30.25C0.5 31.6424 1.05312 32.9777 2.03769 33.9623C3.02226 34.9469 4.35761 35.5 5.75 35.5H30.25C31.6424 35.5 32.9777 34.9469 33.9623 33.9623C34.9469 32.9777 35.5 31.6424 35.5 30.25V16.25H0.5V30.25Z" fill="white"/>
+                                        </svg>
+                                    </span>
+                                    <div class="media-body text-end feature-icon-text">
+                                        <p class="fs-18 text-white mb-2">Students</p>
+                                        <span class="fs-48 text-white font-w600">86</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6">
+                        <div class="card bg-info overflow-hidden">
+                            <div class="card-body">
+                                <div class="media align-items-center">
+                                    <span class="p-2 me-3 feature-icon rounded">
+                                        <svg width="36" height="36" viewBox="0 0 42 42" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M38.4998 10.4995H35.0002V38.4999H38.4998C40.4245 38.4999 42 36.9238 42 34.9992V13.9992C42 12.075 40.4245 10.4995 38.4998 10.4995Z" fill="white"/>
+                                            <path d="M27.9998 10.4995V6.9998C27.9998 5.07515 26.4243 3.49963 24.5001 3.49963H17.4998C15.5756 3.49963 14.0001 5.07515 14.0001 6.9998V10.4995H10.5V38.4998H31.5V10.4995H27.9998ZM24.5001 10.4995H17.4998V6.99929H24.5001V10.4995Z" fill="white"/>
+                                            <path d="M3.50017 10.4995C1.57551 10.4995 0 12.075 0 13.9997V34.9997C0 36.9243 1.57551 38.5004 3.50017 38.5004H6.99983V10.4995H3.50017Z" fill="white"/>
+                                        </svg>
+                                    </span>
+                                    <div class="media-body text-end feature-icon-text">
+                                        <p class="fs-18 text-white mb-2">Teachers</p>
+                                        <span class="fs-48 text-white font-w600">75</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    
+                    <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6">
+                        <div class="card bg-secondary">
+                            <div class="card-body">
+                                <div class="media align-items-center">
+                                    <span class="p-2 me-3 feature-icon rounded">
+                                        <svg width="36" height="36" viewBox="0 0 42 42" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M40.614 9.36994C40.443 8.22658 39.8679 7.18234 38.9932 6.4265C38.1184 5.67067 37.0018 5.25328 35.8457 5.25H6.1543C4.99822 5.25328 3.88159 5.67067 3.00681 6.4265C2.13203 7.18234 1.55701 8.22658 1.38599 9.36994L21 22.0618L40.614 9.36994Z" fill="white"/>
+                                            <path d="M21.7127 24.7274C21.5003 24.8647 21.2529 24.9378 21 24.9378C20.7471 24.9378 20.4997 24.8647 20.2873 24.7274L1.3125 12.4503V31.9081C1.31389 33.1918 1.82445 34.4225 2.73217 35.3302C3.63988 36.238 4.87061 36.7485 6.15431 36.7499H35.8457C37.1294 36.7485 38.3601 36.238 39.2678 35.3302C40.1755 34.4225 40.6861 33.1918 40.6875 31.9081V12.449L21.7127 24.7274Z" fill="white"/>
+                                        </svg>
+                                    </span>
+                                    <div class="media-body text-end feature-icon-text">
+                                        <p class="fs-18 text-white mb-2">Admins</p>
+                                        <span class="fs-48 text-white font-w600">93</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ── LEFT COLUMN: CEO Profile ── -->
+                    <div class="col-xl-3 col-xxl-4">
+                        <div class="row">
+                            <div class="col-xl-12">
+                                <div class="card d-flex flex-xl-column flex-sm-column flex-md-row flex-column">
+                                    <div class="card-body text-center profile-bx">
+                                        <div class="profile-image mb-4">
+                                            <img src="images/avatar/1.jpg" class="rounded-circle" alt="">
+                                        </div>
+                                        <h4 class="fs-22 text-black mb-1">Ceo</h4>
+                                        <p class="mb-4">Mr John</p>
+                                        <div class="row">
+                                            <div class="col-4 p-0">
+                                                <div class="d-inline-block mb-2 relative donut-chart-sale">
+                                                    <span class="donut" data-peity='{ "fill": ["rgb(255, 142, 38)", "rgba(236, 236, 236, 1)"], "innerRadius": 27, "radius": 10}'>7/9</span>
+                                                    <small class="text-black">66%</small>
+                                                </div>
+                                                <span class="d-block">Html</span>
+                                            </div>
+                                            <div class="col-4 p-0">
+                                                <div class="d-inline-block mb-2 relative donut-chart-sale">
+                                                    <span class="donut" data-peity='{ "fill": ["rgb(62, 168, 52)", "rgba(236, 236, 236, 1)"], "innerRadius": 27, "radius": 10}'>4/9</span>
+                                                    <small class="text-black">31%</small>
+                                                </div>
+                                                <span class="d-block">Javascript</span>
+                                            </div>
+                                            <div class="col-4 p-0">
+                                                <div class="d-inline-block mb-2 relative donut-chart-sale">
+                                                    <span class="donut" data-peity='{ "fill": ["rgb(34, 172, 147)", "rgba(236, 236, 236, 1)"], "innerRadius": 27, "radius": 10}'>2/9</span>
+                                                    <small class="text-black">7%</small>
+                                                </div>
+                                                <span class="d-block">Python</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ── RIGHT COLUMN: Chart ── -->
+                    <div class="col-xl-9 col-xxl-8">
+                        <div class="row">
+                            <div class="col-xl-12">
+                                <div class="card">
+                                    <div class="card-header border-0 pb-0 flex-wrap">
+                                        <h4 class="fs-20 text-black me-4 mb-2">Charts Representation</h4>
+                                        <div class="form-check custom-checkbox mb-3">
+                                            <input type="checkbox" class="form-check-input" id="customCheckBox1">
+                                            <label class="form-check-label" for="customCheckBox1">Student</label>
+                                        </div>
+                                        <div class="form-check custom-checkbox mb-3">
+                                            <input type="checkbox" class="form-check-input" id="customCheck1">
+                                            <label class="form-check-label" for="customCheck1">Teacher</label>
+                                        </div>
+                                        <div class="form-check custom-checkbox mb-3">
+                                            <input type="checkbox" class="form-check-input" id="customCheck2">
+                                            <label class="form-check-label" for="customCheck2">Parent</label>
+                                        </div>
+                                        <select class="form-control style-1 default-select mt-3 mt-sm-0">
+                                            <option>Monthly</option>
+                                            <option>Weekly</option>
+                                            <option>Daily</option>
+                                        </select>
+                                    </div>
+                                    <div class="card-body">
+                                        <canvas id="lineChart" class="Vacancy-chart"></canvas>
+                                        <div class="d-flex flex-wrap align-items-center justify-content-center mt-3">
+                                            <div class="fs-14 text-black me-4">
+                                                <svg class="me-2" width="19" height="19" viewBox="0 0 19 19"><rect width="19" height="19" rx="9.5" fill="#4E36E2"/></svg>Student
+                                            </div>
+                                            <div class="fs-14 text-black me-4">
+                                                <svg class="me-2" width="19" height="19" viewBox="0 0 19 19"><rect width="19" height="19" rx="9.5" fill="#1BD084"/></svg>Teachers
+                                            </div>
+                                            <div class="fs-14 text-black">
+                                                <svg class="me-2" width="19" height="19" viewBox="0 0 19 19"><rect width="19" height="19" rx="9.5" fill="#FF424D"/></svg>Parents
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ══════════════════════════════════════════════ -->
+                    <!-- ────── BULK UPLOAD SECTION ──────────────────── -->
+                    <!-- ══════════════════════════════════════════════ -->
+                    <div class="col-xl-12 bulk-upload-section">
+                        <div class="d-sm-flex align-items-center mb-3">
+                            <h4 class="bulk-section-title me-auto">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3d4465" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                    <polyline points="17 8 12 3 7 8"/>
+                                    <line x1="12" y1="3" x2="12" y2="15"/>
+                                </svg>
+                                Bulk Data Upload
+                            </h4>
+                        </div>
+
+                        <div class="row">
+
+                            <!-- ── STUDENT BULK UPLOAD ── -->
+                            <div class="col-xl-6 col-lg-6 col-md-12 mb-4">
+                                <div class="card bulk-card bulk-card-student">
+                                    <div class="bulk-card-body">
+                                        <div class="bulk-card-icon">
+                                            <!-- Student / graduation icon -->
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+                                                <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+                                            </svg>
+                                        </div>
+                                        <div class="bulk-card-title">Bulk Upload Students</div>
+                                        <div class="bulk-card-desc">
+                                           Upload 50+ students add at a time <br>
+                                            Duplicates automatically remove
+                                        </div>
+
+                                        <div class="bulk-stat-strip mb-3">
+                                            <div class="bulk-stat-item">
+                                                <div class="bulk-stat-num">21</div>
+                                                <div class="bulk-stat-label">Columns</div>
+                                            </div>
+                                            <div class="bulk-stat-divider"></div>
+                                            <div class="bulk-stat-item">
+                                                <div class="bulk-stat-num">.xlsx</div>
+                                                <div class="bulk-stat-label">Format</div>
+                                            </div>
+                                            <div class="bulk-stat-divider"></div>
+                                            <div class="bulk-stat-item">
+                                                <div class="bulk-stat-num">10MB</div>
+                                                <div class="bulk-stat-label">Max Size</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="bulk-card-footer">
+                                        <div class="bulk-col-tags">
+                                            <span class="bulk-tag">Student_Id</span>
+                                            <span class="bulk-tag">Name</span>
+                                            <span class="bulk-tag">Gender</span>
+                                            <span class="bulk-tag">Email</span>
+                                            <span class="bulk-tag">+17 more</span>
+                                        </div>
+                                        <a href="{% url 'bulk_upload_students' %}" class="bulk-upload-btn bulk-upload-btn-student">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                                <polyline points="17 8 12 3 7 8"/>
+                                                <line x1="12" y1="3" x2="12" y2="15"/>
+                                            </svg>
+                                            Upload Students
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- ── TEACHER BULK UPLOAD ── -->
+                            <div class="col-xl-6 col-lg-6 col-md-12 mb-4">
+                                <div class="card bulk-card bulk-card-teacher">
+                                    <div class="bulk-card-body">
+                                        <div class="bulk-card-icon">
+                                            <!-- Teacher / briefcase icon -->
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+                                                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+                                            </svg>
+                                        </div>
+                                        <div class="bulk-card-title">Bulk Upload Teachers</div>
+                                        <div class="bulk-card-desc">
+                                            Excel file se ek saath multiple teachers add karein.<br>
+                                            Har teacher ka account aur login automatically ban jaata hai.
+                                        </div>
+
+                                        <div class="bulk-stat-strip mb-3">
+                                            <div class="bulk-stat-item">
+                                                <div class="bulk-stat-num">15</div>
+                                                <div class="bulk-stat-label">Columns</div>
+                                            </div>
+                                            <div class="bulk-stat-divider"></div>
+                                            <div class="bulk-stat-item">
+                                                <div class="bulk-stat-num">.xlsx</div>
+                                                <div class="bulk-stat-label">Format</div>
+                                            </div>
+                                            <div class="bulk-stat-divider"></div>
+                                            <div class="bulk-stat-item">
+                                                <div class="bulk-stat-num">10MB</div>
+                                                <div class="bulk-stat-label">Max Size</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="bulk-card-footer">
+                                        <div class="bulk-col-tags">
+                                            <span class="bulk-tag">Id</span>
+                                            <span class="bulk-tag">Name</span>
+                                            <span class="bulk-tag">Email</span>
+                                            <span class="bulk-tag">Department</span>
+                                            <span class="bulk-tag">+11 more</span>
+                                        </div>
+                                        <a href="{% url 'bulk_upload_teachers' %}" class="bulk-upload-btn bulk-upload-btn-teacher">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                                <polyline points="17 8 12 3 7 8"/>
+                                                <line x1="12" y1="3" x2="12" y2="15"/>
+                                            </svg>
+                                            Upload Teachers
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                    <!-- ══════════════════════════════════════════════ -->
+                    <!-- ────── BULK UPLOAD SECTION END ──────────────── -->
+                    <!-- ══════════════════════════════════════════════ -->
+
+                    <!-- ── OUR CAMPUSES ── -->
+                    <div class="col-xl-12">
+                        <div class="d-sm-flex align-items-center mb-3 mt-sm-0 mt-2">
+                            <h4 class="text-black fs-20 me-auto">Our campuses</h4>
+                            <a href="#" class="btn btn-primary light btn-rounded">View More
+                                <svg class="ms-3" width="24" height="14" viewBox="0 0 24 14" fill="none">
+                                    <path d="M23.5607 5.93941L18.2461 0.62482C17.9532 0.331898 17.5693 0.185461 17.1854 0.185461C16.8015 0.185461 16.4176 0.331898 16.1247 0.62482C15.539 1.21062 15.539 2.16035 16.1247 2.74615L18.8787 5.50005L1.5 5.50005C0.671578 5.50005 0 6.17163 0 7.00005C0 7.82848 0.671578 8.50005 1.5 8.50005L18.8787 8.50005L16.1247 11.254C15.539 11.8398 15.539 12.7895 16.1247 13.3753C16.7106 13.9611 17.6602 13.9611 18.2461 13.3753L23.5607 8.06069C24.1464 7.47495 24.1464 6.52516 23.5607 5.93941Z" fill="#40189D"/>
+                                </svg>
+                            </a>
+                        </div>
+                        <div class="testimonial-two owl-carousel">
+                            <div class="items">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="media">
+                                            <svg class="me-3" width="80" height="80" viewBox="0 0 80 80" fill="none"><rect width="80" height="80" rx="11.6" fill="#40C7CF"/><path d="M20.6 20.6C25.7 15.5 32.6 12.7 39.8 12.7C47 12.7 53.9 15.5 59 20.6C64.1 25.7 67 32.6 67 39.8C67 47 64.1 53.9 59 59L49.4 49.4C52 46.9 53.4 43.4 53.4 39.8C53.4 36.2 52 32.8 49.4 30.2C46.9 27.7 43.4 26.2 39.8 26.2C36.2 26.2 32.8 27.7 30.2 30.2L20.6 20.6Z" fill="#8FD7FF"/><path d="M20.6 59C15.5 53.9 12.7 47 12.7 39.8C12.7 32.6 15.5 25.7 20.6 20.6C25.7 15.5 32.6 12.7 39.8 12.7C47 12.7 53.9 15.5 59 20.6L49.4 30.2C46.9 27.7 43.4 26.2 39.8 26.2C36.2 26.2 32.8 27.7 30.2 30.2C27.7 32.8 26.2 36.2 26.2 39.8C26.2 43.4 27.7 46.9 30.2 49.4L20.6 59Z" fill="white"/></svg>
+                                            <div class="media-body">
+                                                <h6 class="fs-16 text-black font-w600">Herman-Carter</h6>
+                                                <span class="text-primary font-w500">21 Vacancy</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="items">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="media">
+                                            <svg class="me-3" width="80" height="80" viewBox="0 0 80 80" fill="none"><rect width="80" height="80" rx="11.6" fill="#6EC061"/><path d="M39.8 67C36.2 67 32.7 66.3 29.4 64.9C26.1 63.5 23.1 61.5 20.6 59C18.1 56.5 16.1 53.5 14.7 50.2C13.4 46.9 12.7 43.4 12.7 39.8L26.2 39.8C26.2 41.6 26.6 43.4 27.3 45C28 46.7 29 48.2 30.2 49.4C31.5 50.7 32.97 51.7 34.6 52.4C36.3 53.1 38 53.4 39.8 53.4L39.8 67Z" fill="white"/><path d="M20.6 59C15.5 53.9 12.7 47 12.7 39.8C12.7 32.6 15.5 25.7 20.6 20.6C25.7 15.5 32.6 12.7 39.8 12.7L39.8 26.2C36.2 26.2 32.8 27.7 30.2 30.2C27.7 32.8 26.2 36.2 26.2 39.8C26.2 43.4 27.7 46.9 30.2 49.4L20.6 59Z" fill="white"/></svg>
+                                            <div class="media-body">
+                                                <h6 class="fs-16 text-black font-w600">Funk Inc.</h6>
+                                                <span class="text-primary font-w500">21 Vacancy</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="items">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="media">
+                                            <svg class="me-3" width="80" height="80" viewBox="0 0 80 80" fill="none"><rect width="80" height="80" rx="11.6" fill="#F3C831"/><path d="M20.6 20.6C25.7 15.5 32.6 12.7 39.8 12.7C47 12.7 53.9 15.5 59 20.6C64.1 25.7 67 32.6 67 39.8C67 47 64.1 53.9 59 59L49.4 49.4C52 46.9 53.4 43.4 53.4 39.8C53.4 36.2 52 32.8 49.4 30.2C46.9 27.7 43.4 26.2 39.8 26.2C36.2 26.2 32.8 27.7 30.2 30.2L20.6 20.6Z" fill="white"/><path d="M20.6 59C15.5 53.9 12.7 47 12.7 39.8C12.7 32.6 15.5 25.7 20.6 20.6C25.7 15.5 32.6 12.7 39.8 12.7C47 12.7 53.9 15.5 59 20.6L49.4 30.2C46.9 27.7 43.4 26.2 39.8 26.2C36.2 26.2 32.8 27.7 30.2 30.2C27.7 32.8 26.2 36.2 26.2 39.8C26.2 43.4 27.7 46.9 30.2 49.4L20.6 59Z" fill="white"/></svg>
+                                            <div class="media-body">
+                                                <h6 class="fs-16 text-black font-w600">Williamson Inc</h6>
+                                                <span class="text-primary font-w500">21 Vacancy</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="items">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="media">
+                                            <svg class="me-3" width="80" height="80" viewBox="0 0 80 80" fill="none"><rect width="80" height="80" rx="11.6" fill="#9B70A1"/><path d="M20.6 20.6C25.7 15.5 32.6 12.7 39.8 12.7C47 12.7 53.9 15.5 59 20.6C64.1 25.7 67 32.6 67 39.8C67 47 64.1 53.9 59 59L49.4 49.4C52 46.9 53.4 43.4 53.4 39.8C53.4 36.2 52 32.8 49.4 30.2C46.9 27.7 43.4 26.2 39.8 26.2C36.2 26.2 32.8 27.7 30.2 30.2L20.6 20.6Z" fill="white"/><path d="M20.6 59C15.5 53.9 12.7 47 12.7 39.8C12.7 32.6 15.5 25.7 20.6 20.6C25.7 15.5 32.6 12.7 39.8 12.7C47 12.7 53.9 15.5 59 20.6L49.4 30.2C46.9 27.7 43.4 26.2 39.8 26.2C36.2 26.2 32.8 27.7 30.2 30.2C27.7 32.8 26.2 36.2 26.2 39.8C26.2 43.4 27.7 46.9 30.2 49.4L20.6 59Z" fill="white"/></svg>
+                                            <div class="media-body">
+                                                <h6 class="fs-16 text-black font-w600">Donnelly Ltd.</h6>
+                                                <span class="text-primary font-w500">21 Vacancy</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Campuses End -->
+
+                </div>
+            </div>
+        </div>
+        <!-- Content Body End -->
+
+        <!-- Footer -->
+        <div class="footer">
+            <div class="copyright">
+                <p>Copyright © Designed &amp; Developed by <a href="#" target="_blank">Synergy Integrated Solution</a> 2025</p>
+            </div>
+        </div>
+
+    </div>
+    <!-- Main Wrapper End -->
+
+    <!-- Scripts -->
+    <script src="{% static 'admin_panel/vendor/global/global.min.js' %}"></script>
+    <script src="{% static 'admin_panel/vendor/bootstrap-select/dist/js/bootstrap-select.min.js' %}"></script>
+    <script src="{% static 'admin_panel/vendor/chart.js/Chart.bundle.min.js' %}"></script>
+    <script src="{% static 'admin_panel/vendor/owl-carousel/owl.carousel.js' %}"></script>
+    <script src="{% static 'admin_panel/vendor/peity/jquery.peity.min.js' %}"></script>
+    <script src="{% static 'admin_panel/js/dashboard/dashboard-1.js' %}"></script>
+    <script src="{% static 'admin_panel/js/custom.min.js' %}"></script>
+    <script src="{% static 'admin_panel/js/deznav-init.js' %}"></script>
+
+    <script>
+        function carouselReview() {
+            function checkDirection() {
+                var htmlClassName = document.getElementsByTagName('html')[0].getAttribute('class');
+                return htmlClassName == 'rtl';
+            }
+            jQuery('.testimonial-two').owlCarousel({
+                loop: true, autoplay: true, margin: 15, nav: false, dots: true,
+                rtl: checkDirection(),
+                responsive: { 0: {items:1}, 600: {items:2}, 991: {items:3}, 1200: {items:3}, 1600: {items:4} }
+            });
+        }
+        jQuery(window).on('load', function () {
+            setTimeout(function () { carouselReview(); }, 1000);
+        });
+    </script>
+
+</body>
+</html>

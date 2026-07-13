@@ -1,0 +1,51 @@
+{% extends "admin_panel/bases.html" %}
+{% load static %}
+
+{% block title %}Period List{% endblock %}
+
+{% block content %}
+<div class="card" style="margin-left:20px; margin-right:20px; background-color: #ffffff">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h4 class="card-title">All Periods</h4>
+    <a href="{% url 'create_period' %}" class="btn btn-primary btn-sm">
+      <i class="fas fa-plus"></i> Add New
+    </a>
+  </div>
+
+  <div class="card-body">
+    {% if periods %}
+      <div class="table-responsive">
+        <table class="table table-responsive-md">
+          <thead>
+            <tr>
+              <th><strong>#</strong></th>
+              <th><strong>Period</strong></th>
+              <th><strong>Actions</strong></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for period in periods %}
+              <tr>
+                <td><strong>{{ forloop.counter|stringformat:"02d" }}</strong></td>
+                <td>{{ period }}</td>
+                <td>
+                  <div class="d-flex">
+                    <a href="{% url 'update_period' period.pk %}" class="btn btn-primary shadow btn-xs sharp me-1" title="Edit">
+                      <i class="fas fa-pencil-alt"></i>
+                    </a>
+                    <a href="{% url 'delete_period' period.pk %}" class="btn btn-danger shadow btn-xs sharp" title="Delete">
+                      <i class="fa fa-trash"></i>
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="text-center text-muted mt-3">No periods found.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "teacher_dashboard/lms_action_base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h3>Select Exam Format - {{ subject_obj.name }}</h3>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Format Name</th>
+                <th>MCQs</th>
+                <th>Short</th>
+                <th>Long</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for f in formats %}
+            <tr>
+                <td>{{ f.name }}</td>
+                <td>{{ f.mcq_count }}</td>
+                <td>{{ f.short_count }}</td>
+                <td>{{ f.long_count }}</td>
+                <td>
+                    <a href="{% url 'add_questions' class_obj.id section_obj.id subject_obj.id f.id %}"
+                       class="btn btn-sm btn-primary">Select</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" class="text-center">No formats available. Please create one first.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+<<<<<<< HEAD
+{% endblock %}
+=======
+{% endblock %}
+>>>>>>> 5adcb6db6342198875d876beeda42729cde4d7e0

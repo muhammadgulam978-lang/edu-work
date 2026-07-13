@@ -1,0 +1,437 @@
+/* =========================
+   GLOBAL DASHBOARD STYLE
+========================= */
+body {
+    background: #f5f7fb;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.container-fluid {
+    padding: 25px;
+}
+
+/* Page Title */
+.page-titles h4 {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+/* =========================
+   CARD DESIGN
+========================= */
+.card {
+    border: none;
+    border-radius: 16px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.05);
+    background: #ffffff;
+}
+
+/* Card Header */
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: transparent;
+    border-bottom: 1px solid #eef1f4;
+    padding: 18px 20px;
+}
+
+.card-title {
+    font-weight: 600;
+    font-size: 18px;
+}
+
+/* =========================
+   FILTER DROPDOWN
+========================= */
+.card-header form select {
+    border-radius: 10px;
+    padding: 8px 12px;
+    border: 1px solid #dfe5ec;
+    background: #f9fbfd;
+    transition: 0.3s;
+}
+
+.card-header form select:focus {
+    border-color: #6fc1b7;
+    outline: none;
+}
+
+/* =========================
+   TABLE DESIGN
+========================= */
+.table {
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 0;
+}
+
+/* Table Head */
+.table thead {
+    background: #6fc1b7;
+    color: #fff;
+}
+
+.table thead th {
+    border: none;
+    font-weight: 500;
+    padding: 12px;
+}
+
+/* Table Body */
+.table tbody tr {
+    transition: 0.2s;
+}
+
+.table tbody tr:hover {
+    background: #f5f9fc;
+}
+
+.table td {
+    vertical-align: middle;
+    padding: 12px;
+    color: #444;
+}
+
+/* =========================
+   BUTTONS
+========================= */
+.btn {
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 13px;
+    border: none;
+}
+
+/* Download Button */
+.btn-primary {
+    background: #3bb3a4;
+}
+
+.btn-primary:hover {
+    background: #2aa394;
+}
+
+/* View Button */
+.btn-info {
+    background: #5c9ded;
+}
+
+.btn-info:hover {
+    background: #4a8ad9;
+}
+
+/* =========================
+   TEXT STYLES
+========================= */
+.text-muted {
+    font-size: 13px;
+}
+
+/* =========================
+   EMPTY STATE
+========================= */
+.table td[colspan] {
+    padding: 25px;
+    font-size: 14px;
+    color: #888;
+}
+
+
+
+
+/* =========================
+   Assignment Modern UI
+========================= */
+
+.assignment-page {
+    padding: 20px;
+    background: #f4f6fb;
+    min-height: 100vh;
+}
+
+/* Topbar */
+.assignment-topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.page-title {
+    font-size: 26px;
+    font-weight: 700;
+    color: #2c3e50;
+}
+
+.page-subtitle {
+    font-size: 13px;
+    color: #7f8c8d;
+}
+
+.search-box input {
+    padding: 10px 15px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    width: 250px;
+}
+
+/* Stats */
+.assignment-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.stat-card {
+    background: #fff;
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.06);
+    text-align: center;
+}
+
+.stat-card h4 {
+    font-size: 14px;
+    color: #777;
+}
+
+.stat-card p {
+    font-size: 22px;
+    font-weight: bold;
+    color: #4e73df;
+}
+
+/* List Card */
+.assignment-list-card {
+    background: #fff;
+    padding: 20px;
+    border-radius: 14px;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.06);
+}
+
+.list-header h3 {
+    margin-bottom: 15px;
+    color: #2c3e50;
+}
+
+/* Assignment Card */
+.assignment-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f9fafc;
+    border: 1px solid #eee;
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 12px;
+    transition: 0.3s;
+}
+
+.assignment-card:hover {
+    transform: translateY(-2px);
+    background: #fff;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+}
+
+.assignment-info h4 {
+    margin: 0;
+    font-size: 18px;
+    color: #333;
+}
+
+.due-date {
+    font-size: 12px;
+    color: #e67e22;
+    display: block;
+    margin-top: 5px;
+}
+
+.desc {
+    font-size: 13px;
+    color: #666;
+    margin-top: 5px;
+}
+
+/* Button */
+.btn-download {
+    background: #4e73df;
+    color: #fff;
+    padding: 8px 14px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 13px;
+    transition: 0.3s;
+}
+
+.btn-download:hover {
+    background: #2e59d9;
+}
+
+.no-file {
+    color: #aaa;
+    font-size: 12px;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 40px;
+    color: #888;
+}
+
+
+/* =========================
+   Assignment Modern UI
+========================= */
+
+.assignment-page {
+    padding: 20px;
+    background: #f4f6fb;
+    min-height: 100vh;
+}
+
+/* Topbar */
+.assignment-topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.page-title {
+    font-size: 26px;
+    font-weight: 700;
+    color: #2c3e50;
+}
+
+.page-subtitle {
+    font-size: 13px;
+    color: #7f8c8d;
+}
+
+.search-box input {
+    padding: 10px 15px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    width: 250px;
+}
+
+/* Stats */
+.assignment-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.stat-card {
+    background: #fff;
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.06);
+    text-align: center;
+}
+
+.stat-card h4 {
+    font-size: 14px;
+    color: #777;
+}
+
+.stat-card p {
+    font-size: 22px;
+    font-weight: bold;
+    color: #4e73df;
+}
+
+/* List Card */
+.assignment-list-card {
+    background: #fff;
+    padding: 20px;
+    border-radius: 14px;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.06);
+}
+
+.list-header h3 {
+    margin-bottom: 15px;
+    color: #2c3e50;
+}
+
+/* Assignment Card */
+.assignment-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f9fafc;
+    border: 1px solid #eee;
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 12px;
+    transition: 0.3s;
+}
+
+.assignment-card:hover {
+    transform: translateY(-2px);
+    background: #fff;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+}
+
+.assignment-info h4 {
+    margin: 0;
+    font-size: 18px;
+    color: #333;
+}
+
+.due-date {
+    font-size: 12px;
+    color: #e67e22;
+    display: block;
+    margin-top: 5px;
+}
+
+.desc {
+    font-size: 13px;
+    color: #666;
+    margin-top: 5px;
+}
+
+/* Button */
+.btn-download {
+    background: #4e73df;
+    color: #fff;
+    padding: 8px 14px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 13px;
+    transition: 0.3s;
+}
+
+.btn-download:hover {
+    background: #2e59d9;
+}
+
+.no-file {
+    color: #aaa;
+    font-size: 12px;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 40px;
+    color: #888;
+}
+
+
+
+/* =========================
+   RESPONSIVE
+========================= */
+@media (max-width: 768px) {
+    .card-header {
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start;
+    }
+}

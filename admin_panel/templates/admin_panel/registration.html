@@ -1,0 +1,248 @@
+{% extends 'admin_panel/bases.html' %}
+{% load static %}
+
+{% block title %}Registration Admission Form{% endblock %}
+
+{% block content %}
+
+<div class="card" style="background: #f8f9fa; margin-left: 20px; margin-right: 20px;">
+    <div class="card-header">
+        <h4 class="card-title">Student Admission Form</h4>
+        <a href="{% url 'admission_list' %}" class="btn btn-primary me-2">
+  <span class="me-2"><i class="fa fa-arrow-left"></i></span>Back to List
+</a>
+    </div>
+    <div class="card-body">
+        <div class="form-validation">
+            <form method="POST" action="{% url 'registration' %}" class="needs-validation" novalidate>
+                {% csrf_token %}
+                <div class="row">
+                    <!-- Left Column -->
+                    <div class="col-xl-6">
+
+                        <!-- Campus -->
+                        <div class="mb-3 row">
+                            <label class="col-lg-4 col-form-label" for="campus">Campus</label>
+                            <div class="col-lg-6">
+                                <select class="form-control" id="campus" name="campus" required>
+                                    <option value="">Select Campus</option>
+                                    <option value="main">Main Campus</option>
+                                    <option value="city">City Campus</option>
+                                    <option value="boys">Boys Campus</option>
+                                    <option value="girls">Girls Campus</option>
+                                </select>
+                                <div class="invalid-feedback">Please select a campus.</div>
+                            </div>
+                        </div>
+
+                        <!-- Branch -->
+                        <div class="mb-3 row">
+                            <label class="col-lg-4 col-form-label" for="branch">Branch</label>
+                            <div class="col-lg-6">
+                                <select class="form-control" id="branch" name="branch" required>
+                                    <option value="">Select Branch</option>
+                                    <option value="main">Main Campus</option>
+                                    <option value="city">City Campus</option>
+                                    <option value="boys">Boys Campus</option>
+                                    <option value="girls">Girls Campus</option>
+                                </select>
+                                <div class="invalid-feedback">Please select a branch.</div>
+                            </div>
+                        </div>
+
+                        <!-- Student Name -->
+                        <div class="mb-3 row">
+                            <label class="col-lg-4 col-form-label" for="name">Student Name</label>
+                            <div class="col-lg-6">
+                                <input type="text" class="form-control" id="name" name="name" required>
+                                <div class="invalid-feedback">Please enter the student name.</div>
+                            </div>
+                        </div>
+
+                        <!-- Date of Birth -->
+                        <div class="mb-3 row">
+                            <label class="col-lg-4 col-form-label" for="dob">Date of Birth</label>
+                            <div class="col-lg-6">
+                                <input type="date" class="form-control" id="dob" name="dob" required>
+                                <div class="invalid-feedback">Please select a date of birth.</div>
+                            </div>
+                        </div>
+
+                        <!-- Email -->
+                        <div class="mb-3 row">
+                            <label class="col-lg-4 col-form-label" for="email">Email</label>
+                            <div class="col-lg-6">
+                                <input type="email" class="form-control" id="email" name="email">
+                            </div>
+                        </div>
+
+                        <!-- Address -->
+                        <div class="mb-3 row">
+                            <label class="col-lg-4 col-form-label" for="address">Address</label>
+                            <div class="col-lg-6">
+                                <textarea class="form-control" id="address" name="address" placeholder="Enter full address"></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Father's Name -->
+                        <div class="mb-3 row">
+                            <label class="col-lg-4 col-form-label" for="father_name">Father's Name</label>
+                            <div class="col-lg-6">
+                                <input type="text" class="form-control" id="father_name" name="father_name" required>
+                                <div class="invalid-feedback">Please enter father's name.</div>
+                            </div>
+                        </div>
+
+                        <!-- Father's Contact -->
+                        <div class="mb-3 row">
+                            <label class="col-lg-4 col-form-label" for="father_contact">Father's Contact No</label>
+                            <div class="col-lg-6">
+                                <input type="tel" class="form-control" id="father_contact" name="father_contact" pattern="[0-9]{11}" placeholder="03XXXXXXXXX" required>
+                                <div class="invalid-feedback">Please enter a valid 11-digit number.</div>
+                            </div>
+                        </div>
+<!-- Father's Email -->
+                        <div class="mb-3 row">
+                            <label class="col-lg-4 col-form-label" for="father_email">Father's Email</label>
+                            <div class="col-lg-6">
+                                <input type="email" class="form-control" id="father_email" name="father_email" placeholder="father@example.com" required>
+                                <div class="invalid-feedback">Please enter a valid email address.</div>
+                            </div>
+                        </div>
+<!-- Father's Occupation -->
+                        <div class="mb-3 row">
+                            <label class="col-lg-4 col-form-label" for="father_occupation">Father's Occupation</label>
+                            <div class="col-lg-6">
+                                <input type="text" class="form-control" id="father_occupation" name="father_occupation" placeholder="e.g. Engineer" required>
+                                <div class="invalid-feedback">Please enter father's occupation.</div>
+                            </div>
+                        </div>
+
+                        <!-- Nationality -->
+                        <!-- <div class="mb-3 row">
+                            <label class="col-lg-4 col-form-label" for="nationality">Nationality</label>
+                            <div class="col-lg-6">
+                                <input type="text" class="form-control" id="nationality" name="nationality" placeholder="e.g. Pakistani" required>
+                                <div class="invalid-feedback">Please enter nationality.</div>
+                            </div>
+                        </div> -->
+                    </div>
+
+                    <!-- Right Column -->
+                    <div class="col-xl-6">
+
+                        <!-- Academic Year -->
+                        <div class="mb-3 row">
+                            <label class="col-lg-4 col-form-label" for="academic_year">Academic Year</label>
+                            <div class="col-lg-6">
+                                <select class="form-control" id="academic_year" name="academic_year">
+                                    {% for year in academic_years %}
+                                        <option value="{{ year.id }}" selected>{{ year.year }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Reference No -->
+                        <div class="mb-3 row">
+                            <label class="col-lg-4 col-form-label" for="ref_no">Reference No</label>
+                            <div class="col-lg-6">
+                                <input type="text" class="form-control" id="ref_no" name="ref_no">
+                            </div>
+                        </div>
+
+                        <!-- Class -->
+                        <div class="mb-3 row">
+                            <label class="col-lg-4 col-form-label" for="class_fk">Class</label>
+                            <div class="col-lg-6">
+                                <select class="form-control" id="class_fk" name="class_fk" required>
+                                    <option value="">Select Class</option>
+                                    {% for class in classes %}
+                                        <option value="{{ class.id }}">{{ class.class_name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="invalid-feedback">Please select a class.</div>
+                            </div>
+                        </div>
+
+                        <!-- Gender -->
+                        <div class="mb-3 row">
+                            <label class="col-lg-4 col-form-label" for="gender">Gender</label>
+                            <div class="col-lg-6">
+                                <select class="form-control" id="gender" name="gender" required>
+                                    <option value="" disabled selected>Select Gender</option>
+                                    <option value="male">Male</option>
+                                    <option value="female">Female</option>
+                                    <option value="other">Other</option>
+                                </select>
+                                <div class="invalid-feedback">Please select gender.</div>
+                            </div>
+                        </div>
+
+                        <!-- Contact -->
+                        <div class="mb-3 row">
+                            <label class="col-lg-4 col-form-label" for="contact">Contact Number</label>
+                            <div class="col-lg-6">
+                                <input type="tel" class="form-control" id="contact" name="contact" required>
+                                <div class="invalid-feedback">Please enter a contact number.</div>
+                            </div>
+                        </div>
+
+                        <!-- Admission Date -->
+                        <div class="mb-3 row">
+                            <label class="col-lg-4 col-form-label" for="admission_date">Admission Date</label>
+                            <div class="col-lg-6">
+                                <input type="date" class="form-control" id="admission_date" name="admission_date" required>
+                                <div class="invalid-feedback">Please select admission date.</div>
+                            </div>
+                        </div>
+
+                        <!-- Mother's Name -->
+                        <div class="mb-3 row">
+                            <label class="col-lg-4 col-form-label" for="mother_name">Mother's Name</label>
+                            <div class="col-lg-6">
+                                <input type="text" class="form-control" id="mother_name" name="mother_name" required>
+                                <div class="invalid-feedback">Please enter mother's name.</div>
+                            </div>
+                        </div>
+
+                        <!-- Father CNIC -->
+                        <div class="mb-3 row">
+                            <label class="col-lg-4 col-form-label" for="father_cnic">Father CNIC</label>
+                            <div class="col-lg-6">
+                                <input type="text" class="form-control" id="father_cnic" name="father_cnic" pattern="\d{5}-\d{7}-\d{1}" placeholder="12345-1234567-1" required>
+                                <div class="invalid-feedback">Please enter a valid CNIC.</div>
+                            </div>
+                        </div>
+
+                        <!-- Admission Status -->
+                        <div class="mb-3 row">
+                            <label class="col-lg-4 col-form-label" for="admission_status">Admission Status</label>
+                            <div class="col-lg-6">
+                                <select class="form-control" id="admission_status" name="admission_status" required>
+                                    <option value="pending" selected>Pending</option>
+                                </select>
+                                <div class="invalid-feedback">Please select admission status.</div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3 row">
+                            <label class="col-lg-4 col-form-label" for="nationality">Nationality</label>
+                            <div class="col-lg-6">
+                                <input type="text" class="form-control" id="nationality" name="nationality" placeholder="e.g. Pakistani" required>
+                                <div class="invalid-feedback">Please enter nationality.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="col-lg-12 ms-auto text-center mt-4">
+                        <button type="submit" class="btn btn-primary">Submit</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

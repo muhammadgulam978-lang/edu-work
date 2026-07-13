@@ -1,0 +1,103 @@
+{% extends "admin_panel/bases.html" %}
+{% load static %}
+
+{% block title %}
+    Admission Query
+{% endblock %}
+
+{% block head %}
+    <link rel="stylesheet" href="{% static 'admin_panel/css/query.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="col-12">
+  <div class="card" style="background: #f8f9fa; margin-left: 20px; margin-right: 20px;">
+    
+    <!-- Card Header -->
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h4 class="card-title mb-0">Admission Query</h4>
+
+      <!-- Optional Back to List Button -->
+     
+    </div>
+
+    <!-- Card Body -->
+    <div class="card-body">
+      
+      <!-- Search Form -->
+      
+
+      <!-- Table -->
+      <div class="table-responsive">
+        <table id="example3" class="display table-responsive-lg dataTable no-footer" style="width: 100%;">
+          <thead>
+            <tr>
+              <th>Student ID</th>
+              <th>Campus</th>
+              <th>Academic Year</th>
+              <th>Branch</th>
+              <th>Reference No</th>
+              <th>Student Name</th>
+              <th>Class</th>
+              <th>Section</th>
+              <th>DOB</th>
+              <th>Gender</th>
+              <th>Email</th>
+              <th>Contact</th>
+              <th>Address</th>
+              <th>Admission Date</th>
+              <th>Father's Name</th>
+              <th>Mother's Name</th>
+              <th>Father Contact Number</th>
+              <th>Father Email</th>
+              <th>Father Occupation</th>
+              <th>Father's CNIC No</th>
+              <th>Nationality</th>
+              <th>Admission Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for admission in page_obj %}
+              <tr>
+                <td>{{ admission.student_id }}</td>
+                <td>{{ admission.campus }}</td>
+                <td>{{ admission.academic_year }}</td>
+                <td>{{ admission.branch }}</td>
+                <td>{{ admission.ref_no }}</td>
+                <td>{{ admission.name }}</td>
+                <td>{{ admission.class_fk.class_name }}</td>
+                <td>{{ admission.section.section_name|default:"N/A" }}</td>
+                <td>{{ admission.dob }}</td>
+                <td>{{ admission.gender }}</td>
+                <td>{{ admission.email }}</td>
+                <td>{{ admission.contact }}</td>
+                <td>{{ admission.address }}</td>
+                <td>{{ admission.admission_date }}</td>
+                <td>{{ admission.father_name }}</td>
+                <td>{{ admission.mother_name }}</td>
+                <td>{{ admission.father_contact }}</td>
+                <td>{{ admission.father_email }}</td>
+                <td>{{ admission.father_occupation }}</td>
+                <td>{{ admission.father_cnic }}</td>
+                <td>{{ admission.nationality }}</td>
+                <td>{{ admission.admission_status }}</td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="20" class="text-center">No results found.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Required vendors -->
+<script src="{% static 'admin_panel/vendor/global/global.min.js' %}"></script>
+<script src="{% static 'admin_panel/vendor/bootstrap-select/dist/js/bootstrap-select.min.js' %}"></script>
+<script src="{% static 'admin_panel/vendor/datatables/js/jquery.dataTables.min.js' %}"></script>
+<script src="{% static 'admin_panel/js/plugins-init/datatables.init.js' %}"></script>
+{% endblock %}

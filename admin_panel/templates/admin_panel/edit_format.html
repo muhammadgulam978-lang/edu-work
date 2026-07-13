@@ -1,0 +1,71 @@
+{% extends "admin_panel/bases.html" %}
+{% load static %}
+
+{% block title %}Edit Exam Format{% endblock %}
+{% block content %}
+<div class="col-12">
+  <div class="card" style="background: #f8f9fa; margin-left:20px; margin-right:20px;">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h4 class="card-title mb-0">Edit Exam Format</h4>
+      <a href="{% url 'format_list' %}" class="btn btn-secondary">
+        <i class="fa fa-arrow-left me-2"></i>Back to Formats
+      </a>
+    </div>
+
+    <div class="card-body">
+      <form method="post">
+        {% csrf_token %}
+
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label class="form-label">Class</label>
+            <select name="class" class="form-select">
+              {% for cls in classes %}
+              <option value="{{ cls.id }}" {% if cls.id == exam_format.class_obj.id %}selected{% endif %}>
+                {{ cls.class_name }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Subject</label>
+            <select name="subject" class="form-select">
+              {% for sub in subjects %}
+              <option value="{{ sub.id }}" {% if sub.id == exam_format.subject.id %}selected{% endif %}>
+                {{ sub.name }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Format Name</label>
+          <input type="text" name="format_name" class="form-control" value="{{ exam_format.format_name }}" required>
+        </div>
+
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label class="form-label">No. of MCQs</label>
+            <input type="number" name="num_mcqs" class="form-control" value="{{ exam_format.num_mcqs }}">
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label">No. of Short Questions</label>
+            <input type="number" name="num_short" class="form-control" value="{{ exam_format.num_short }}">
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label">No. of Long Questions</label>
+            <input type="number" name="num_long" class="form-control" value="{{ exam_format.num_long }}">
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-end">
+          <button type="submit" class="btn btn-primary">
+            <i class="fa fa-save me-2"></i>Update Format
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,64 @@
+{% extends "admin_panel/base.html" %}
+{% comment %}SAVE AS: exam_system/approve_question.html{% endcomment %}
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex align-items-center mb-4">
+        <a href="{% url 'question_bank_detail' question.bank.id %}" class="btn btn-outline-secondary btn-sm mr-3">
+            <i class="fa fa-arrow-left"></i> Back
+        </a>
+        <h3 class="mb-0">Review Question</h3>
+    </div>
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-body">
+                    <div class="mb-3">
+                        <span class="badge badge-info mr-2">{{ question.get_question_type_display }}</span>
+                        <span class="badge
+                            {% if question.difficulty == 'EASY' %}badge-success
+                            {% elif question.difficulty == 'MEDIUM' %}badge-warning
+                            {% else %}badge-danger{% endif %}">
+                            {{ question.difficulty }}
+                        </span>
+                        <span class="badge badge-secondary ml-2">{{ question.marks }} marks</span>
+                        {% if question.ai_generated %}
+                            <span class="badge badge-primary ml-2">AI Generated</span>
+                        {% endif %}
+                    </div>
+                    <div class="alert alert-light border">
+                        <strong>Question:</strong><br>
+                        {{ question.text }}
+                    </div>
+                    {% if question.option_a %}
+                    <div class="row mb-2">
+                        <div class="col-md-6"><div class="border rounded p-2">A. {{ question.option_a }}</div></div>
+                        <div class="col-md-6"><div class="border rounded p-2">B. {{ question.option_b }}</div></div>
+                        <div class="col-md-6 mt-2"><div class="border rounded p-2">C. {{ question.option_c }}</div></div>
+                        <div class="col-md-6 mt-2"><div class="border rounded p-2">D. {{ question.option_d }}</div></div>
+                    </div>
+                    {% endif %}
+                    <div class="alert alert-success mt-3">
+                        <strong>Correct Answer:</strong> {{ question.correct_answer }}
+                    </div>
+                    {% if not question.human_approved %}
+                    <form method="POST" class="mt-3">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success">
+                            <i class="fa fa-check mr-1"></i> Approve Question
+                        </button>
+                        <a href="{% url 'question_bank_detail' question.bank.id %}" class="btn btn-outline-secondary ml-2">
+                            Back without Approving
+                        </a>
+                    </form>
+                    {% else %}
+                    <div class="alert alert-success mt-3">
+                        <i class="fa fa-check-circle mr-2"></i>
+                        Already approved by {{ question.approved_by }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,754 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel Dashboard</title>
+    <link rel="stylesheet" href="{% static 'admin_panel/css/admin_panel_dashboard.css' %}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* ===== Automation Dashboard Styles (scoped inside .automation-dashboard) ===== */
+        .automation-dashboard * {
+            box-sizing: border-box;
+        }
+
+        .automation-dashboard {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px 0;
+        }
+
+        .automation-dashboard .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .automation-dashboard .card {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .automation-dashboard .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .automation-dashboard .card h2 {
+            color: #333;
+            font-size: 18px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .automation-dashboard .metric {
+            color: #333;
+            font-size: 32px;
+            font-weight: 700;
+            margin-top: 8px;
+        }
+
+        .automation-dashboard .hint {
+            color: #666;
+            font-size: 13px;
+            margin-top: 6px;
+        }
+
+        .automation-dashboard .section-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 20px;
+        }
+
+        .automation-dashboard .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .automation-dashboard .field {
+            margin: 10px 0;
+        }
+
+        .automation-dashboard .field label {
+            color: #666;
+            font-weight: 600;
+            display: block;
+            font-size: 12px;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .automation-dashboard .field input,
+        .automation-dashboard .field select {
+            width: 100%;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px 12px;
+            font-size: 14px;
+            color: #333;
+            background: white;
+        }
+
+        .automation-dashboard .check-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 12px 0;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .automation-dashboard .check-row input {
+            width: 18px;
+            height: 18px;
+        }
+
+        .automation-dashboard .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        .automation-dashboard .btn {
+            border: none;
+            border-radius: 5px;
+            padding: 12px 16px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: background 0.3s;
+        }
+
+        .automation-dashboard .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .automation-dashboard .btn-primary:hover {
+            background: #764ba2;
+        }
+
+        .automation-dashboard .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .automation-dashboard .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .automation-dashboard .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .automation-dashboard .btn-danger:hover {
+            background: #bd2130;
+        }
+
+        .automation-dashboard .status-row {
+            background: #f0f8ff;
+            border-left: 4px solid #667eea;
+            padding: 14px;
+            border-radius: 5px;
+            margin: 10px 0;
+            display: grid;
+            grid-template-columns: 1.2fr 1fr 1fr;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .automation-dashboard .status-title {
+            color: #333;
+            font-weight: 700;
+        }
+
+        .automation-dashboard .status-meta {
+            color: #666;
+            font-size: 13px;
+        }
+
+        .automation-dashboard .badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            text-align: center;
+            width: fit-content;
+        }
+
+        .automation-dashboard .badge-success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .automation-dashboard .badge-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .automation-dashboard .badge-danger {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .automation-dashboard .badge-info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .automation-dashboard .message {
+            background: white;
+            border-left: 4px solid #667eea;
+            padding: 14px 16px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            color: #333;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .automation-dashboard .message.error {
+            border-left-color: #dc3545;
+        }
+
+        .automation-dashboard .message.success {
+            border-left-color: #28a745;
+        }
+
+        .automation-dashboard .no-data {
+            color: #999;
+            text-align: center;
+            padding: 20px;
+            font-style: italic;
+        }
+
+        @media (max-width: 768px) {
+            .automation-dashboard .section-grid,
+            .automation-dashboard .dashboard-grid,
+            .automation-dashboard .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .automation-dashboard .status-row {
+                grid-template-columns: 1fr;
+            }
+
+            .automation-dashboard .button-group {
+                flex-direction: column;
+            }
+
+            .automation-dashboard .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <a class="navbar-brand" href="#">
+            <div class="icon-container">
+                <img class="icon hexagon" />
+            </div>
+            <span class="name">School Management System</span>
+        </a>
+        <ul class="navbar-nav">
+            <li>
+                <a class="active" href="#"><img class="icon home" /><span>Home</span></a>
+            </li>
+            <li>
+                <a href="#"><img class="icon statistics" /><span>Student</span></a>
+            </li>
+            <li>
+                <a href="{% url 'teacher_list' %}"><img class="icon mail" /><span>Teacher</span></a>
+            </li>
+            <li>
+                <a href="{% url 'parent_list' %}"><img class="icon user" /><span>Parent</span></a>
+            </li>
+            <!-- Admissions dropdown -->
+            <li class="dropdown">
+                <a href="javascript:void(0);" onclick="toggleDropdown('Admissions', event)" id="dropdownToggleAdmissions">
+                    <img class="icon file" /><span>Admissions</span>
+                </a>
+                <ul class="dropdown-menu" id="dropdownMenuAdmissions">
+                    <li><a href="{% url 'registration' %}">Registration for Admission</a></li>
+                    <li><a href="{% url 'query' %}">Query</a></li>
+                    <li><a href="{% url 'admission_list' %}">Assessment for Admission</a></li>
+                    <li><a href="#">Open Admission</a></li>
+                    <li><a href="{% url 'registration' %}">Receive Admission Form</a></li>
+                    <li><a href="#">Issue Admission Form</a></li>
+                    <li><a href="#">Admission Test Configuration</a></li>
+                    <li><a href="{% url 'student_id_card_list'%}">ID card Generate </a></li>
+                </ul>
+            </li>
+
+            <!-- Academic Year dropdown -->
+            <li class="dropdown">
+                <a href="javascript:void(0);" onclick="toggleDropdown('AcademicYear', event)" id="dropdownToggleAcademicYear">
+                    <img class="icon file" /><span>Academics</span>
+                </a>
+                <ul class="dropdown-menu" id="dropdownMenuAcademicYear">
+                    <li><a href="{%url 'academic_year_list'%}">Academic year Data</a></li>
+                    <li><a href="{% url 'class_list' %}">Classes</a></li>
+                    <li><a href="{%url 'teacher_list' %}">Faculty</a></li>
+                    <li><a href="{% url 'section_list' %}">Section/configration</a></li>
+                    <li><a href="{% url 'subject_list' %}">Subjects</a></li>
+                    <li><a href="{%url 'class_teacher_list' %}">class teacher</a></li>
+                    <li><a href="{% url 'add_class_group' %}">class Groups</a></li>
+                    <li><a href="{% url 'period_list' %}">Create Period</a></li>
+                    <li><a href="{% url 'timetable_view' %}">Period Planning timetable</a></li>
+                    <li><a href="{% url 'assign_period' %}">Period planning assign</a></li>
+                    <li><a href="{% url 'portfolio_timetable' %}">Portfolio timetable Pdf</a></li>
+                    <!-- baaki links -->
+                </ul>
+            </li>
+        </ul>
+
+        <div class="navbar-footer">
+            <img class="image-documents" src="https://ozcanzaferayan.github.io/financial-crm/img/documents.svg" alt="documents" />
+            <div class="container">
+                <h2>Hi isra</h2>
+                <span>Develoepd By isra </span>
+                <a href="#">Logout</a>
+            </div>
+        </div>
+    </nav>
+    <main>
+        <header>
+            <section role="search">
+                <form action="#" method="get">
+                    <div class="form-inline">
+                        <img class="icon search" />
+                        <input type="search" placeholder="Search" />
+                    </div>
+                </form>
+            </section>
+
+            <section role="application">
+                <button class="change-view">
+                    <img class="icon layout" />Change view
+                </button>
+                <button class="notification">
+                    <img class="icon notification" />
+                </button>
+
+                <button class="menu" onclick="toggleNavbar()">
+                    <img class="icon menu" />
+                </button>
+            </section>
+        </header>
+        <h1>Dashboard</h1>
+        <div class="charts-wrapper">
+            <section role="credit-card">
+                <div class="top">
+                    <img src="https://ozcanzaferayan.github.io/financial-crm/img/mastercard.svg" />
+                    <img src="https://ozcanzaferayan.github.io/financial-crm/img/apple_pay.svg" class="apple_pay" />
+                </div>
+                <div class="ccNumber">
+                    <span>˙˙˙˙ ˙˙˙˙ ˙˙˙˙ 5610</span>
+                </div>
+                <div class="ccBottom">
+                    <div class="ccValidThru">
+                        <label>VALID THRU</label>
+                        <span>05/21</span>
+                    </div>
+                    <div class="ccCardHolder">
+                        <label>CARD HOLDER</label>
+                        <span>Robert</span>
+                    </div>
+                </div>
+            </section>
+            <section role="chart" class="exchange-rates">
+                <h3 class="title">Exchange rates</h3>
+                <canvas id="exchangeRates"></canvas>
+            </section>
+            <section role="chart" class="last-costs">
+                <h3 class="title">Last Costs</h3>
+                <canvas id="last_costs"></canvas>
+            </section>
+            <section role="chart" class="efficiency">
+                <h3 class="title">Efficiency</h3>
+                <canvas id="efficiency"></canvas>
+            </section>
+        </div>
+
+        <!-- ===================== Admin Automation Dashboard (merged) ===================== -->
+        <div class="automation-dashboard">
+            <h1>Admin Automation Dashboard</h1>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="message {{ message.tags }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+
+            <div class="dashboard-grid">
+                <div class="card">
+                    <h2>Total Students</h2>
+                    <div class="metric">{{ total_students }}</div>
+                    <p class="hint">Registered student records</p>
+                </div>
+                <div class="card">
+                    <h2>Active Teachers</h2>
+                    <div class="metric">{{ total_teachers }}</div>
+                    <p class="hint">Teachers used for salary automation</p>
+                </div>
+                <div class="card">
+                    <h2>Fee Vouchers</h2>
+                    <div class="metric">{{ fee_vouchers_count }}</div>
+                    <p class="hint">Generated student fee vouchers</p>
+                </div>
+                <div class="card">
+                    <h2>Salary Vouchers</h2>
+                    <div class="metric">{{ salary_vouchers_count }}</div>
+                    <p class="hint">Generated teacher salary vouchers</p>
+                </div>
+                <div class="card">
+                    <h2>Pending Notices</h2>
+                    <div class="metric">{{ pending_notifications }}</div>
+                    <p class="hint">Waiting in notification queue</p>
+                </div>
+                <div class="card">
+                    <h2>Monthly Revenue</h2>
+                    <div class="metric">Rs. {{ monthly_revenue|floatformat:0 }}</div>
+                    <p class="hint">Income transactions this month</p>
+                </div>
+            </div>
+
+            <div class="section-grid">
+                <div class="card">
+                    <h2>Fee Automation Settings</h2>
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="save_fee_settings">
+                        <label class="check-row">
+                            <input type="checkbox" name="fee_auto_enabled" {% if fee_settings.auto_enabled %}checked{% endif %}>
+                            Enable automatic fee generation
+                        </label>
+                        <label class="check-row">
+                            <input type="checkbox" name="fee_send_notifications" {% if fee_settings.send_notifications %}checked{% endif %}>
+                            Queue notifications after fee generation
+                        </label>
+                        <div class="form-grid">
+                            <div class="field">
+                                <label>Generation Day</label>
+                                <input type="number" name="fee_generation_day" min="1" max="31" value="{{ fee_settings.generation_day }}">
+                            </div>
+                            <div class="field">
+                                <label>Generation Time</label>
+                                <input type="time" name="fee_generation_time" value="{{ fee_settings.generation_time|time:'H:i' }}">
+                            </div>
+                        </div>
+                        <div class="button-group">
+                            <button class="btn btn-primary" type="submit">Save Fee Settings</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <h2>Salary Automation Settings</h2>
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="save_salary_settings">
+                        <label class="check-row">
+                            <input type="checkbox" name="salary_auto_enabled" {% if salary_settings.auto_enabled %}checked{% endif %}>
+                            Enable automatic salary generation
+                        </label>
+                        <label class="check-row">
+                            <input type="checkbox" name="salary_send_notifications" {% if salary_settings.send_notifications %}checked{% endif %}>
+                            Keep salary notification setting enabled
+                        </label>
+                        <div class="form-grid">
+                            <div class="field">
+                                <label>Generation Day</label>
+                                <input type="number" name="salary_generation_day" min="1" max="31" value="{{ salary_settings.generation_day }}">
+                            </div>
+                            <div class="field">
+                                <label>Generation Time</label>
+                                <input type="time" name="salary_generation_time" value="{{ salary_settings.generation_time|time:'H:i' }}">
+                            </div>
+                        </div>
+                        <div class="button-group">
+                            <button class="btn btn-primary" type="submit">Save Salary Settings</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="section-grid">
+                <div class="card">
+                    <h2>Manual Fee Generation</h2>
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="generate_fees">
+                        <div class="form-grid">
+                            <div class="field">
+                                <label>Month</label>
+                                <select name="fee_month">
+                                    {% for month_name in months %}
+                                        <option value="{{ month_name }}" {% if month_name == current_month %}selected{% endif %}>{{ month_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label>Year</label>
+                                <input type="number" name="fee_year" value="{{ current_year }}">
+                            </div>
+                        </div>
+                        <div class="button-group">
+                            <button class="btn btn-primary" type="submit">Generate Fees</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <h2>Manual Salary Generation</h2>
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="generate_salaries">
+                        <div class="form-grid">
+                            <div class="field">
+                                <label>Month</label>
+                                <select name="salary_month">
+                                    {% for month_name in months %}
+                                        <option value="{{ month_name }}" {% if month_name == current_month %}selected{% endif %}>{{ month_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label>Year</label>
+                                <input type="number" name="salary_year" value="{{ current_year }}">
+                            </div>
+                        </div>
+                        <div class="button-group">
+                            <button class="btn btn-primary" type="submit">Generate Salaries</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="section-grid">
+                <div class="card">
+                    <h2>Notification Services</h2>
+                    <div class="status-row">
+                        <div class="status-title">Pending Notifications</div>
+                        <div class="status-meta">{{ pending_notifications }} waiting</div>
+                        <span class="badge badge-warning">Queue</span>
+                    </div>
+                    <div class="status-row">
+                        <div class="status-title">Failed Notifications</div>
+                        <div class="status-meta">{{ failed_notifications }} failed</div>
+                        <span class="badge badge-danger">Review</span>
+                    </div>
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="send_notifications">
+                        <div class="button-group">
+                            <button class="btn btn-primary" type="submit">Send Pending Notifications</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <h2>Retry Failed Automation</h2>
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="retry_failed_fees">
+                        <div class="form-grid">
+                            <div class="field">
+                                <label>Fee Retry Month</label>
+                                <select name="retry_fee_month">
+                                    {% for month_name in months %}
+                                        <option value="{{ month_name }}" {% if month_name == current_month %}selected{% endif %}>{{ month_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label>Fee Retry Year</label>
+                                <input type="number" name="retry_fee_year" value="{{ current_year }}">
+                            </div>
+                        </div>
+                        <div class="button-group">
+                            <button class="btn btn-danger" type="submit">Retry Failed Fees</button>
+                        </div>
+                    </form>
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="retry_failed_salaries">
+                        <div class="button-group">
+                            <button class="btn btn-secondary" type="submit">Retry Salary Generation</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="section-grid">
+                <div class="card">
+                    <h2>Recent Fee Jobs</h2>
+                    {% if automation_jobs %}
+                        {% for job in automation_jobs %}
+                            <div class="status-row">
+                                <div>
+                                    <div class="status-title">Job #{{ job.id }} - {{ job.job_type }}</div>
+                                    <div class="status-meta">{{ job.started_at|date:"d/m/Y H:i" }}</div>
+                                </div>
+                                <div class="status-meta">
+                                    {{ job.success_count }} success / {{ job.failed_count }} failed
+                                </div>
+                                {% if job.status == 'COMPLETED' %}
+                                    <span class="badge badge-success">{{ job.status }}</span>
+                                {% elif job.status == 'FAILED' %}
+                                    <span class="badge badge-danger">{{ job.status }}</span>
+                                {% elif job.status == 'RUNNING' %}
+                                    <span class="badge badge-info">{{ job.status }}</span>
+                                {% else %}
+                                    <span class="badge badge-warning">{{ job.status }}</span>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="no-data">No fee automation jobs yet.</div>
+                    {% endif %}
+                </div>
+
+                <div class="card">
+                    <h2>Recent Salary Jobs</h2>
+                    {% if salary_jobs %}
+                        {% for job in salary_jobs %}
+                            <div class="status-row">
+                                <div>
+                                    <div class="status-title">Salary Job #{{ job.id }}</div>
+                                    <div class="status-meta">{{ job.started_at|date:"d/m/Y H:i" }}</div>
+                                </div>
+                                <div class="status-meta">
+                                    {{ job.success_count }} success / {{ job.failed_count }} failed
+                                </div>
+                                {% if job.status == 'COMPLETED' %}
+                                    <span class="badge badge-success">{{ job.status }}</span>
+                                {% elif job.status == 'FAILED' %}
+                                    <span class="badge badge-danger">{{ job.status }}</span>
+                                {% elif job.status == 'RUNNING' %}
+                                    <span class="badge badge-info">{{ job.status }}</span>
+                                {% else %}
+                                    <span class="badge badge-warning">{{ job.status }}</span>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="no-data">No salary automation jobs yet.</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="section-grid">
+                <div class="card">
+                    <h2>Fee Generation Logs</h2>
+                    {% if fee_logs %}
+                        {% for log in fee_logs %}
+                            <div class="status-row">
+                                <div>
+                                    <div class="status-title">{{ log.month }} {{ log.year }}</div>
+                                    <div class="status-meta">Started {{ log.started_at|date:"d/m/Y H:i" }}</div>
+                                </div>
+                                <div class="status-meta">
+                                    {{ log.success_count }} success / {{ log.failed_count }} failed
+                                </div>
+                                <span class="badge badge-info">{{ log.status }}</span>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="no-data">No fee generation logs yet.</div>
+                    {% endif %}
+                </div>
+
+                <div class="card">
+                    <h2>Recent Notifications</h2>
+                    {% if notifications %}
+                        {% for notif in notifications %}
+                            <div class="status-row">
+                                <div>
+                                    <div class="status-title">{{ notif.get_notification_type_display }} - {{ notif.student.full_name }}</div>
+                                    <div class="status-meta">{{ notif.created_at|date:"d/m/Y H:i" }}</div>
+                                </div>
+                                <div class="status-meta">{{ notif.content|truncatechars:48 }}</div>
+                                {% if notif.status == 'SENT' %}
+                                    <span class="badge badge-success">{{ notif.status }}</span>
+                                {% elif notif.status == 'FAILED' %}
+                                    <span class="badge badge-danger">{{ notif.status }}</span>
+                                {% else %}
+                                    <span class="badge badge-warning">{{ notif.status }}</span>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="no-data">No notifications yet.</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="section-grid">
+                <div class="card">
+                    <h2>Failed Fee Details</h2>
+                    {% if automation_details %}
+                        {% for detail in automation_details %}
+                            <div class="status-row">
+                                <div>
+                                    <div class="status-title">{{ detail.student.full_name }}</div>
+                                    <div class="status-meta">Job #{{ detail.job.id }}</div>
+                                </div>
+                                <div class="status-meta">{{ detail.error_message|default:"No error"|truncatechars:55 }}</div>
+                                {% if detail.status == 'SUCCESS' %}
+                                    <span class="badge badge-success">{{ detail.status }}</span>
+                                {% elif detail.status == 'FAILED' %}
+                                    <span class="badge badge-danger">{{ detail.status }}</span>
+                                {% else %}
+                                    <span class="badge badge-warning">{{ detail.status }}</span>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="no-data">No fee job details yet.</div>
+                    {% endif %}
+                </div>
+
+                <div class="card">
+                    <h2>Failed Salary Details</h2>
+                    {% if salary_details %}
+                        {% for detail in salary_details %}
+                            <div class="status-row">
+                                <div>
+                                    <div class="status-title">{{ detail.teacher.name }}</div>
+                                    <div class="status-meta">Job #{{ detail.job.id }}</div>
+                                </div>
+                                <div class="status-meta">{{ detail.error_message|default:"No error"|truncatechars:55 }}</div>
+                                {% if detail.status == 'SUCCESS' %}
+                                    <span class="badge badge-success">{{ detail.status }}</span>
+                                {% elif detail.status == 'FAILED' %}
+                                    <span class="badge badge-danger">{{ detail.status }}</span>
+                                {% else %}
+                                    <span class="badge badge-warning">{{ detail.status }}</span>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="no-data">No salary job details yet.</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <!-- ===================== End Admin Automation Dashboard ===================== -->
+    </main>
+
+    <script src="{% static 'admin_panel/js/admin_panel_dashboard.js' %}"></script>
+</html>

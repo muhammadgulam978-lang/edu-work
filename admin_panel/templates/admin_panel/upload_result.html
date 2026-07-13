@@ -1,0 +1,101 @@
+
+{% load static %}
+
+{% block title %}Upload Results - {{ subject.name }}{% endblock %}
+
+{% block extra_css %}
+<link href="{% static 'vendor/datatables/css/jquery.dataTables.min.css' %}" rel="stylesheet">
+<link href="{% static 'vendor/bootstrap-select/dist/css/bootstrap-select.min.css' %}" rel="stylesheet">
+<link href="{% static 'css/style.css' %}" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+
+        
+        <!-- Upload Results -->
+        <div class="col-lg-12 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title text-blue-600">Upload Results - {{ subject.name }}</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <!-- Term Selection -->
+                        <div class="mb-3">
+                            <label class="font-medium text-gray-700">Term:</label>
+                            <select name="term" class="form-control mt-1" onchange="changeTerm()">
+                                <option value="midterm" {% if term == "midterm" %}selected{% endif %}>Midterm</option>
+                                <option value="final" {% if term == "final" %}selected{% endif %}>Final Term</option>
+                            </select>
+                        </div>
+
+                        <!-- Total Marks -->
+                        <div class="mb-3">
+                            <label class="font-medium text-gray-700">Total Marks:</label>
+                            <input type="number" name="total_marks" value="{{ total_marks_value }}"
+                                   class="form-control mt-1" required />
+                        </div>
+
+                        <!-- Result Table -->
+                        <div class="table-responsive mt-4">
+                            <table class="table primary-table-bordered">
+                                <thead class="thead-primary">
+                                    <tr>
+                                        <th scope="col">#</th>
+                                        <th scope="col">Student Name</th>
+                                        <th scope="col">Marks Obtained</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for student in students %}
+                                        {% with result=results|get_result:student.id %}
+                                            <tr>
+                                                <th>{{ forloop.counter }}</th>
+                                                <td>{{ student.name }}</td>
+                                                <td>
+                                                    <input type="number" step="0.01" name="marks_{{ student.id }}"
+                                                           value="{{ result.marks_obtained|default:'' }}"
+                                                           class="form-control" />
+                                                </td>
+                                            </tr>
+                                        {% endwith %}
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Submit -->
+                        <div class="text-end mt-3">
+                            <button type="submit" class="btn btn-primary">Save Results</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Script for term selection -->
+<script>
+    function changeTerm() {
+        const selectedTerm = document.querySelector('select[name="term"]').value;
+        window.location.href = window.location.pathname + '?term=' + selectedTerm;
+    }
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Required scripts -->
+<script src="{% static 'teacher_dashboard/vendor/global/global.min.js' %}"></script>
+<script src="{% static 'teacher_dashboard/vendor/bootstrap-select/dist/js/bootstrap-select.min.js' %}"></script>
+<script src="{% static 'teacher_dashboard/js/custom.min.js' %}"></script>
+<script src="{% static 'teacher_dashboard/js/deznav-init.js' %}"></script>
+<script src="{% static 'teacher_dashboard/js/demo.js' %}"></script>
+<script src="{% static 'teacher_dashboard/js/styleSwitcher.js' %}"></script>
+{% endblock %}

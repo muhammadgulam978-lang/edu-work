@@ -1,0 +1,65 @@
+{% extends "teacher_dashboard/lms_action_base.html" %}
+{% load static %}
+
+{% block title %}Questions in {{ exam_format.format_name }}{% endblock %}
+
+{% block content %}
+<div class="card" style="background: #f8f9fa; margin-left: 20px; margin-right: 20px;">
+  <div class="card-header">
+    <h4 class="card-title">📝 Questions in {{ exam_format.format_name }}</h4>
+    <small class="text-muted">
+      Class: {{ exam_format.class_obj.class_name }} | Subject: {{ exam_format.subject.name }}
+    </small>
+  </div>
+
+  <div class="card-body">
+    {% if questions %}
+      <div class="table-responsive">
+        <table class="table table-striped table-bordered align-middle">
+          <thead class="table-light">
+            <tr>
+              <th style="width: 50px;">#</th>
+              <th>Question Text</th>
+              <th>Type</th>
+              <th>Options (if MCQ)</th>
+              <th>Correct Answer</th>
+              <th>Section</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for q in questions %}
+              <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ q.text }}</td>
+                <td>{{ q.question_type }}</td>
+                <td>
+                  {% if q.question_type == "MCQ" %}
+                    <ul class="list-unstyled mb-0">
+                      <li><strong>A:</strong> {{ q.option_a }}</li>
+                      <li><strong>B:</strong> {{ q.option_b }}</li>
+                      <li><strong>C:</strong> {{ q.option_c }}</li>
+                      <li><strong>D:</strong> {{ q.option_d }}</li>
+                    </ul>
+                  {% else %}
+                    <span class="text-muted">N/A</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if q.question_type == "MCQ" %}
+                    <span class="badge bg-success">{{ q.correct_answer }}</span>
+                  {% else %}
+                    <span class="text-muted">N/A</span>
+                  {% endif %}
+                </td>
+                <td>{{ q.section.section_name }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="text-muted">No questions found.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

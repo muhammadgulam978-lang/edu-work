@@ -1,0 +1,97 @@
+{% extends "teacher_dashboard/lms_action_base.html" %}
+{% load static %}
+
+{% block title %}Lectures{% endblock %}
+
+{% block extra_css %}
+<!-- Extra CSS agar chahiye to yahan likh sakte ho -->
+{% endblock %}
+
+{% block content %}
+
+<div class="card" style="background: #f8f9fa; margin-left: 20px; margin-right: 20px;">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h4 class="card-title">🎓 Lectures</h4>
+    <button id="toggleFormBtn" class="btn btn-primary">
+      ➕ Add Lecture
+    </button>
+  </div>
+
+  <div class="card-body">
+
+    <!-- Lecture Upload Form (Initially Hidden) -->
+    <div id="uploadForm" class="d-none mb-4">
+      <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+        {% csrf_token %}
+        
+        <div class="mb-3 row">
+          <label class="col-lg-3 col-form-label">Title:</label>
+          <div class="col-lg-6">
+            <input type="text" name="title" class="form-control" required>
+            <div class="invalid-feedback">Please enter a lecture title.</div>
+          </div>
+        </div>
+
+        <div class="mb-3 row">
+          <label class="col-lg-3 col-form-label">Description:</label>
+          <div class="col-lg-6">
+            <textarea name="description" class="form-control"></textarea>
+          </div>
+        </div>
+
+        <div class="mb-3 row">
+          <label class="col-lg-3 col-form-label">Upload File:</label>
+          <div class="col-lg-6">
+            <input type="file" name="file" class="form-control" required>
+            <div class="invalid-feedback">Please upload a file.</div>
+          </div>
+        </div>
+
+        <div class="text-center">
+          <button type="submit" class="btn btn-success">
+            📤 Upload Lecture
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- List of Uploaded Lectures -->
+    <h5 class="mb-3">📂 Uploaded Lectures</h5>
+    {% if lectures %}
+      <ul class="list-group">
+        {% for lecture in lectures %}
+          <li class="list-group-item">
+            <div class="fw-bold">{{ lecture.title }}</div>
+
+            {% if lecture.description %}
+              <p class="mt-2 mb-1">{{ lecture.description }}</p>
+            {% endif %}
+
+            <a href="{{ lecture.file.url }}" target="_blank" class="btn btn-link p-0">
+              📥 Download
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="text-muted">No lectures uploaded yet.</p>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+  const toggleBtn = document.getElementById('toggleFormBtn');
+  const formDiv = document.getElementById('uploadForm');
+
+  toggleBtn.addEventListener('click', () => {
+    if (formDiv.classList.contains('d-none')) {
+      formDiv.classList.remove('d-none');
+      toggleBtn.textContent = '✖ Hide Form';
+    } else {
+      formDiv.classList.add('d-none');
+      toggleBtn.textContent = '➕ Add Lecture';
+    }
+  });
+</script>
+
+{% endblock %}

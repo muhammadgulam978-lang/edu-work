@@ -1,0 +1,43 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Parent</title>
+    <link rel="stylesheet" href="{% static 'admin_panel/css/update_parent.css' %}">
+</head>
+<body>
+    <div class="container">
+        <h2>Update Parent</h2>
+        <form method="POST">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="full_name">Full Name:</label>
+                <input type="text" id="full_name" name="full_name" value="{{ parent.full_name }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" value="{{ parent.email }}">
+            </div>
+
+            <div class="form-group">
+                <label for="phone">Phone Number:</label>
+                <input type="text" id="phone" name="phone" value="{{ parent.phone }}">
+            </div>
+
+            
+
+            <div class="form-group">
+                <label for="address">Address:</label>
+                <textarea id="address" name="address" class="form-control" rows="4" cols="76">{{ parent.address }}</textarea>
+            </div>
+
+            
+
+            <button type="submit" class="btn">Update</button>
+        </form>
+    </div>
+</body>
+</html>

@@ -1,0 +1,121 @@
+{% extends 'admin_panel/bases.html' %}
+{% load static %}
+{% block title %}Assign Period Dashboard{% endblock %}
+
+{% block content %}
+ 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Class Assignment Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+</head>
+<body class="bg-gradient-to-br from-gray-50 to-gray-200 min-h-screen flex flex-col font-sans">
+  <div class="container mx-auto p-4 sm:p-6 max-w-5xl">
+    <header class="mb-8 text-center">
+      <h4 class="card-title">Asssign classes to teachers</h4>
+      <p class="mt-2 text-sm sm:text-base text-gray-600">Effortlessly assign classes with real-time updates</p>
+    </header>
+
+    <!-- Form -->
+    <div class="bg-white rounded-xl shadow-lg p-4 sm:p-6 mb-8 transform hover:scale-[1.01] transition-transform duration-300">
+      <form method="post" action="{% url 'assign_period' %}" class="flex flex-col sm:flex-row sm:items-end gap-4 flex-wrap">
+        {% csrf_token %}
+        <div class="flex-1">
+          <label for="id_class" class="block text-sm font-medium text-gray-700">Class</label>
+          <select name="class_fk" id="id_class" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm input-focus sm:text-sm">
+            <option value="">Select Class</option>
+            {% for cls in classes %}
+              <option value="{{ cls.id }}">{{ cls.class_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="flex-1">
+          <label for="id_section" class="block text-sm font-medium text-gray-700">Section</label>
+          <select name="section" id="id_section" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm input-focus sm:text-sm">
+            <option value="">Select Class First</option>
+          </select>
+        </div>
+
+        <div class="flex-1">
+          <label for="id_subject" class="block text-sm font-medium text-gray-700">Subject</label>
+          <select name="subject" id="id_subject" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm input-focus sm:text-sm">
+            <option value="">Select Section First</option>
+          </select>
+        </div>
+
+        <div class="flex-1">
+          <label for="id_day" class="block text-sm font-medium text-gray-700">Day</label>
+          <select name="day" id="id_day" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm input-focus sm:text-sm">
+            <option value="">Select Subject First</option>
+          </select>
+        </div>
+
+        <div class="flex-1">
+          <label for="id_period" class="block text-sm font-medium text-gray-700">Period</label>
+          <select name="period" id="id_period" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm input-focus sm:text-sm">
+            <option value="">Select Day First</option>
+          </select>
+        </div>
+
+        <div class="flex-1">
+          <label for="id_teacher" class="block text-sm font-medium text-gray-700">Teacher</label>
+          <select name="teacher" id="id_teacher" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm input-focus sm:text-sm">
+            <option value="">Select Subject First</option>
+          </select>
+        </div>
+
+        <!-- ✅ Bypass Checkbox -->
+        <div class="flex items-center space-x-2 mt-2 sm:mt-6">
+          <input type="checkbox" name="is_bypass" id="id_is_bypass" class="form-check-input h-4 w-4 text-gray-600 border-gray-300 rounded focus:ring-gray-500">
+          <label for="id_is_bypass" class="text-sm text-gray-700">Allow same teacher on same period across multiple sections</label>
+        </div>
+
+        
+        <div class="col-lg-12 ms-auto text-center mt-4">
+                        <button type="submit" class="btn btn-primary">Assign</button>
+                    </div>
+               
+      </form>
+    </div>
+
+    <!-- Table -->
+  <div class="card" style="margin-left:20px; margin-right:20px; background-color: #ffffff">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h4 class="card-title">Assigned Classes</h4>
+  </div>
+
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-responsive-md">
+        <thead>
+          <tr>
+            <th><strong>Class</strong></th>
+            <th><strong>Section</strong></th>
+            <th><strong>Subject</strong></th>
+            <th><strong>Day</strong></th>
+            <th><strong>Period</strong></th>
+            <th><strong>Teacher</strong></th>
+            <th><strong>Actions</strong></th>
+          </tr>
+        </thead>
+        <tbody id="assigned-classes-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <!-- JavaScript -->
+ <script src="{% static 'admin_panel/js/assign_period.js' %}"></script> 
+</body>
+</html>
+
+{% endblock %}

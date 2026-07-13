@@ -1,0 +1,92 @@
+{% extends 'admin_panel/bases.html' %}
+{% load static %}
+
+{% block title %}Academic Year List{% endblock %}
+
+{% block head %}
+    <link rel="stylesheet" href="{% static 'admin_panel/css/query.css' %}">
+    <link rel="stylesheet" href="{% static 'admin_panel/vendor/datatables/css/jquery.dataTables.min.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<div class="col-12">
+  <div class="card" style="background:#f8f9fa; margin:20px;">
+
+    <!-- Card Header -->
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h4 class="card-title mb-0">Academic Year List</h4>
+      <a href="{% url 'add_academic_year' %}" class="btn btn-success btn-sm">
+        <i class="fa fa-plus"></i> Add Year
+      </a>
+    </div>
+
+    <!-- Card Body -->
+    <div class="card-body">
+
+      <div class="table-responsive">
+        <table id="example3" class="display table-responsive-lg dataTable no-footer" style="width:100%;">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Year</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {% for year in years %}
+            <tr>
+              <td><strong>{{ forloop.counter }}</strong></td>
+
+              <td>{{ year.year }}</td>
+
+              <td>
+                {% if year.is_active %}
+                  <span class="badge badge-success light">Active</span>
+                {% else %}
+                  <span class="badge badge-danger light">Inactive</span>
+                {% endif %}
+              </td>
+
+              <td>
+                <div class="d-flex">
+
+                  <!-- Edit Button -->
+                  <a href="{% url 'update_academic_year' year.pk %}"
+                     class="btn btn-primary shadow btn-xs sharp me-1" title="Edit">
+                      <i class="fas fa-pencil-alt"></i>
+                  </a>
+
+                  <!-- Delete Button -->
+                  <a href="{% url 'delete_academic_year' year.pk %}"
+                     class="btn btn-danger shadow btn-xs sharp" title="Delete">
+                      <i class="fa fa-trash"></i>
+                  </a>
+
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="4" class="text-center text-muted">No academic years found.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+
+        </table>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<!-- Required Scripts -->
+<script src="{% static 'admin_panel/vendor/global/global.min.js' %}"></script>
+<script src="{% static 'admin_panel/vendor/bootstrap-select/dist/js/bootstrap-select.min.js' %}"></script>
+<script src="{% static 'admin_panel/vendor/datatables/js/jquery.dataTables.min.js' %}"></script>
+<script src="{% static 'admin_panel/js/plugins-init/datatables.init.js' %}"></script>
+
+{% endblock %}

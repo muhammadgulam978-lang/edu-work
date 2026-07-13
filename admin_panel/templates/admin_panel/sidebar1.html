@@ -1,0 +1,139 @@
+<!--**********************************
+    Sidebar start
+***********************************-->
+<div class="deznav">
+    <div class="deznav-scroll">
+        <ul class="metismenu" id="menu">
+
+            <!-- Dashboard -->
+            <li>
+                <a href="{% url 'admin_panel_dashboard' %}" class="ai-icon" aria-expanded="false">
+                    <i class="flaticon-381-networking"></i>
+                    <span class="nav-text">Dashboard</span>
+                </a>
+            </li>
+
+            <!-- Account Automation (NEW) -->
+            <li>
+                <a href="{% url 'automation-dashboard' %}" class="ai-icon" aria-expanded="false">
+                    <i class="flaticon-381-controls-3"></i>
+                    <span class="nav-text">Account Automation</span>
+                </a>
+            </li>
+
+            <!-- Teachers Gateway -->
+            <li class="has-menu">
+                <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
+                    <i class="flaticon-381-networking"></i>
+                    <span class="nav-text">Teachers Gateway</span>
+                </a>
+                <ul aria-expanded="false">
+                    <li><a href="{% url 'teacher_list' %}">Teacher List</a></li>
+                    <li><a href="{% url 'teacher_add' %}">Create Teacher</a></li>
+                </ul>
+            </li>
+
+            <!-- User Role Management -->
+            <li class="has-menu">
+                <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
+                    <i class="flaticon-381-settings-2"></i>
+                    <span class="nav-text">User Role Management</span>
+                </a>
+                <ul aria-expanded="false">
+                    {% if 'auth.add_group' in user_permissions %}
+                        <li><a href="{% url 'create_role' %}">Create Role</a></li>
+                    {% endif %}
+
+                    {% if 'auth.view_group' in user_permissions %}
+                        <li><a href="{% url 'list_roles' %}">View Roles</a></li>
+                    {% endif %}
+
+                    {% if 'auth.change_user' in user_permissions %}
+                        <li><a href="{% url 'assign_role' %}">Assign Role</a></li>
+                    {% endif %}
+                </ul>
+            </li>
+
+            <!-- Student Gateway -->
+            <li class="has-menu">
+                <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
+                    <i class="flaticon-381-networking"></i>
+                    <span class="nav-text">Student Gateway</span>
+                </a>
+                <ul aria-expanded="false">
+                    <li><a href="{% url 'academic_year_list' %}">Academic Year Create</a></li>
+                    <li><a href="{% url 'registration' %}">Registration</a></li>
+                    <li><a href="{% url 'admission_list' %}">Admission list</a></li>
+                    <li><a href="{% url 'query' %}">Query</a></li>
+                    <li><a href="{% url 'student_id_card_list' %}">ID Card Generate</a></li>
+                </ul>
+            </li>
+
+            <!-- Academics -->
+            <li class="has-menu">
+                <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
+                    <i class="flaticon-381-controls-3"></i>
+                    <span class="nav-text">Academics</span>
+                </a>
+                <ul aria-expanded="false">
+                    <li><a href="{% url 'class_list' %}">Classes</a></li>
+                    <li><a href="{% url 'section_list' %}">Sections Capacity</a></li>
+                    <li><a href="{% url 'subject_list' %}">Subjects</a></li>
+                    <li><a href="{% url 'class_group_list' %}">Classes Groups</a></li>
+                    <li><a href="{% url 'timetable_view' %}">Timetable Allocation</a></li>
+                    <li><a href="{% url 'period_list' %}">Create Period</a></li>
+                    <li><a href="{% url 'assign_period' %}">Assign Period Teachers</a></li>
+                    <li><a href="{% url 'manage_fixture' %}">Fixture Management</a></li>
+                    <li><a href="{% url 'class_teacher_list' %}">Create Class Teacher</a></li>
+                    <li><a href="{% url 'portfolio_timetable' %}">PDF Generate Classwise</a></li>
+                </ul>
+            </li>
+
+            <!-- Human Resources -->
+            <li class="has-menu">
+                <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
+                    <i class="flaticon-381-user-7"></i>
+                    <span class="nav-text">HR</span>
+                </a>
+                <ul aria-expanded="false">
+                    <li><a href="{% url 'staff_category_list' %}">Staff Categories</a></li>
+                    <li><a href="{% url 'job_type_list' %}">Job Types</a></li>
+                    <li><a href="{% url 'department_list' %}">Departments</a></li>
+                    <li><a href="{% url 'designation_list' %}">Designations</a></li>
+                    <li><a href="{% url 'employee_list' %}">Employees</a></li>
+                    <li><a href="{% url 'employee_create' %}">Create Employee</a></li>
+
+                    <li class="menu-title">Leave Management</li>
+
+                    <li><a href="{% url 'leave_type_list' %}">Leave Types</a></li>
+                    <li><a href="{% url 'leave_type_create' %}">Add Leave Type</a></li>
+                    <li><a href="{% url 'leave_list' %}">Leave Applications</a></li>
+                    <li><a href="{% url 'leave_create' %}">Apply Leave</a></li>
+                </ul>
+            </li>
+
+            <!-- Exam Management -->
+            <li class="has-menu">
+                <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
+                    <i class="flaticon-381-edit"></i>
+                    <span class="nav-text">Exam Management</span>
+                </a>
+                <ul aria-expanded="false">
+                    <li><a href="{% url 'question_bank_list' %}">Question Banks</a></li>
+                    <li><a href="{% url 'exam_plan_list' %}">Exam Plans</a></li>
+                    <li><a href="{% url 'admin_paper_queue' %}">Paper Approval Queue</a></li>
+                    <li><a href="{% url 'analytics_dashboard' %}">Exam Analytics</a></li>
+                </ul>
+            </li>
+
+        </ul>
+
+        <div class="copyright">
+            <p>Forecaster Dashboard</p>
+        </div>
+
+    </div>
+</div>
+<!--**********************************
+    Sidebar ends
+***********************************-->notepad D:\edu-work\admin_panel\templates\admin_panel\sidebar.html

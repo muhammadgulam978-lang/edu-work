@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+
+{% block content %}
+{% if user.role != 'parent' %}
+    <script>window.location.href = "{% url 'login' %}";</script>
+{% endif %}
+
+<style>
+    .container {
+        background: linear-gradient(135deg, #fff5f5 0%, #ffe0e0 100%);
+        padding: 30px;
+        border-radius: 10px;
+        border-left: 5px solid #dc2626;
+    }
+    
+    .container h2 {
+        color: #991b1b;
+        border-bottom: 3px solid #dc2626;
+        padding-bottom: 15px;
+        margin-bottom: 25px;
+    }
+    
+    .container h3 {
+        color: #b91c1c;
+        margin-top: 30px;
+        margin-bottom: 15px;
+        border-left: 4px solid #dc2626;
+        padding-left: 10px;
+    }
+    
+    .card {
+        background: linear-gradient(to right, #fca5a5 0%, #fecaca 100%);
+        border: 2px solid #dc2626;
+        border-radius: 8px;
+        padding: 15px;
+        margin: 10px 0;
+        box-shadow: 0 4px 6px rgba(220, 38, 38, 0.2);
+    }
+    
+    .card h4 {
+        color: #7f1d1d;
+        margin-bottom: 8px;
+    }
+    
+    .card p {
+        color: #991b1b;
+    }
+    
+    .table {
+        background-color: #fff7f7;
+        border: 2px solid #dc2626;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    
+    .table thead {
+        background: linear-gradient(90deg, #dc2626 0%, #b91c1c 100%);
+    }
+    
+    .table thead th {
+        color: white;
+        font-weight: bold;
+        padding: 12px;
+        border-bottom: 2px solid #991b1b;
+    }
+    
+    .table tbody tr {
+        border-bottom: 1px solid #fecaca;
+    }
+    
+    .table tbody tr:hover {
+        background-color: #fca5a5;
+        color: #7f1d1d;
+    }
+    
+    .table tbody td {
+        padding: 10px 12px;
+        color: #991b1b;
+    }
+</style>
+
+<div class="container">
+    <h2>Welcome, {{ request.user.username }}</h2>
+    
+    <h3>Your Children</h3>
+    <div class="row" id="children-container">
+        {% for child in children %}
+        <div class="card">
+            <h4>{{ child.name }}</h4>
+            <p>Class: {{ child.student_class }}</p>
+        </div>
+        {% empty %}
+        <div id="dynamic-children"></div>
+        {% endfor %}
+    </div>
+
+    <h3>Outstanding Fees</h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Student</th>
+                <th>Voucher No</th>
+                <th>Amount</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody id="vouchers-table-body">
+            {% for voucher in selected_child_vouchers %}
+            <tr>
+                <td>{{ voucher.student.name }}</td>
+                <td>{{ voucher.voucher_no }}</td>
+                <td>{{ voucher.amount }}</td>
+                <td>{{ voucher.status }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+    // Parent API se data fetch karna
+    fetch('/api/parent/dashboard/')
+        .then(response => response.json())
+        .then(data => {
+            const tableBody = document.getElementById('vouchers-table-body');
+            
+            // Agar pehle se table khali thi, toh data populate karein
+            if (tableBody.innerHTML.includes('No transactions')) { 
+                tableBody.innerHTML = ''; 
+            }
+
+            // Children aur vouchers ko dynamic update karna
+            data.children.forEach(child => {
+                if (child.current_fee) {
+                    const row = `<tr>
+                        <td>${child.full_name}</td>
+                        <td>${child.current_fee.voucher_no}</td>
+                        <td>${child.current_fee.net_amount}</td>
+                        <td>${child.current_fee.status}</td>
+                    </tr>`;
+                    tableBody.innerHTML += row;
+                }
+            });
+        })
+        .catch(error => console.error('Error loading dashboard:', error));
+</script>
+{% endblock %}

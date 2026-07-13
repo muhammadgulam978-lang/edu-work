@@ -1,0 +1,94 @@
+{% extends "admin_panel/base.html" %}
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex align-items-center mb-4">
+        <div>
+            <h3 class="mb-1">Exam Results — {{ schedule.subject.name }}</h3>
+            <p class="text-muted mb-0">{{ schedule.exam_date|date:"d M Y" }}</p>
+        </div>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white text-center">
+                <div class="card-body py-3">
+                    <h4>{{ total }}</h4><p class="mb-0">Total Students</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white text-center">
+                <div class="card-body py-3">
+                    <h4>{{ pass_count }}</h4><p class="mb-0">Passed</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white text-center">
+                <div class="card-body py-3">
+                    <h4>{{ fail_count }}</h4><p class="mb-0">Failed</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white text-center">
+                <div class="card-body py-3">
+                    <h4>{{ pass_rate }}%</h4><p class="mb-0">Pass Rate</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Table -->
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>Rank</th>
+                            <th>Student</th>
+                            <th>Roll No</th>
+                            <th>Obtained</th>
+                            <th>Total</th>
+                            <th>%</th>
+                            <th>Grade</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for res in results %}
+                        <tr>
+                            <td><strong>#{{ res.class_position }}</strong></td>
+                            <td>{{ res.answer_sheet.student.name }}</td>
+                            <td>{{ res.answer_sheet.student.roll_no }}</td>
+                            <td>{{ res.obtained_marks }}</td>
+                            <td>{{ res.total_marks }}</td>
+                            <td>{{ res.percentage }}%</td>
+                            <td>
+                                <span class="badge
+                                    {% if res.grade == 'A+' or res.grade == 'A' %}badge-success
+                                    {% elif res.grade == 'B' or res.grade == 'C' %}badge-warning
+                                    {% else %}badge-danger{% endif %}">
+                                    {{ res.grade }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if res.is_pass %}
+                                    <span class="badge badge-success">Pass</span>
+                                {% else %}
+                                    <span class="badge badge-danger">Fail</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="8" class="text-center text-muted py-3">No results compiled yet.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

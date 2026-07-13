@@ -1,0 +1,56 @@
+{% extends 'automation/base_automation.html' %}
+{% block page_title %}Notification Queue{% endblock %}
+{% block content %}
+<div class="stats-row">
+    <div class="stat-card"><div class="ic" style="background:#3b82f6;"><i class="fa fa-inbox"></i></div><div><div class="num">{{ total_queued }}</div><div class="lbl">Total Queued</div></div></div>
+    <div class="stat-card"><div class="ic" style="background:#a855f7;"><i class="fa fa-sms"></i></div><div><div class="num">{{ sms_queued }}</div><div class="lbl">SMS</div></div></div>
+    <div class="stat-card"><div class="ic" style="background:#0ea5e9;"><i class="fa fa-envelope"></i></div><div><div class="num">{{ email_queued }}</div><div class="lbl">Email</div></div></div>
+    <div class="stat-card"><div class="ic" style="background:#ef4444;"><i class="fa fa-xmark"></i></div><div><div class="num">{{ failed }}</div><div class="lbl">Failed</div></div></div>
+</div>
+
+<form method="post" style="margin-bottom:22px;">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="send_notifications">
+    <button type="submit" class="btn-teal">Send Pending Notifications</button>
+</form>
+
+<div class="card">
+    <h3>Recent Notification Queue</h3>
+    <table>
+        <tr><th>Type</th><th>Content</th><th>Queued At</th><th>Status</th></tr>
+        {% for n in recent_queue %}
+        <tr>
+            <td>{{ n.get_notification_type_display }}</td>
+            <td>{{ n.content|truncatechars:60 }}</td>
+            <td>{{ n.created_at|date:"M d, Y H:i" }}</td>
+            <td><span class="badge {% if n.status == 'SENT' %}badge-green{% elif n.status == 'FAILED' %}badge-red{% else %}badge-yellow{% endif %}">{{ n.status }}</span></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4" style="text-align:center;color:#999;">No notifications in queue.</td></tr>
+        {% endfor %}
+    </table>
+</div>
+
+<form method="post" style="margin-bottom:22px;">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="send_notifications">
+    <button type="submit" class="btn-teal">Send Pending Notifications</button>
+</form>
+
+<div class="card">
+    <h3>Recent Notification Queue</h3>
+    <table>
+        <tr><th>Type</th><th>Content</th><th>Queued At</th><th>Status</th></tr>
+        {% for n in recent_queue %}
+        <tr>
+            <td>{{ n.get_notification_type_display }}</td>
+            <td>{{ n.content|truncatechars:60 }}</td>
+            <td>{{ n.created_at|date:"M d, Y H:i" }}</td>
+            <td><span class="badge {% if n.status == 'SENT' %}badge-green{% elif n.status == 'FAILED' %}badge-red{% else %}badge-yellow{% endif %}">{{ n.status }}</span></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4" style="text-align:center;color:#999;">No notifications in queue.</td></tr>
+        {% endfor %}
+    </table>
+</div>
+{% endblock %}

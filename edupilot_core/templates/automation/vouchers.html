@@ -1,0 +1,32 @@
+{% extends 'automation/base_automation.html' %}
+{% block page_title %}Voucher Management{% endblock %}
+{% block content %}
+<div class="stats-row">
+    <div class="stat-card"><div class="ic" style="background:#3b82f6;"><i class="fa fa-receipt"></i></div><div><div class="num">{{ total_vouchers }}</div><div class="lbl">Total Vouchers</div></div></div>
+    <div class="stat-card"><div class="ic" style="background:#22c55e;"><i class="fa fa-check"></i></div><div><div class="num">{{ downloaded }}</div><div class="lbl">Paid</div></div></div>
+    <div class="stat-card"><div class="ic" style="background:#f59e0b;"><i class="fa fa-clock"></i></div><div><div class="num">{{ pending }}</div><div class="lbl">Pending</div></div></div>
+    <div class="stat-card"><div class="ic" style="background:#16a34a;"><i class="fa fa-percent"></i></div><div><div class="num">{{ download_rate }}%</div><div class="lbl">Paid Rate</div></div></div>
+</div>
+
+<form method="post" style="margin-bottom:22px;">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="generate_fees">
+    <button type="submit" class="btn-teal">Generate This Month's Vouchers</button>
+</form>
+
+<div class="card">
+    <h3>Recent Vouchers</h3>
+    <table>
+        <tr><th>Voucher No</th><th>Student</th><th>Month</th><th>Net Amount</th><th>Status</th></tr>
+        {% for v in recent_vouchers %}
+        <tr>
+            <td>{{ v.voucher_no }}</td><td>{{ v.student.full_name }}</td><td>{{ v.month }} {{ v.year }}</td>
+            <td>PKR {{ v.net_amount }}</td>
+            <td><span class="badge {% if v.status == 'PAID' %}badge-green{% elif v.status == 'UNPAID' %}badge-yellow{% else %}badge-red{% endif %}">{{ v.status }}</span></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" style="text-align:center;color:#999;">No vouchers generated yet.</td></tr>
+        {% endfor %}
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,54 @@
+{% extends 'admin_panel/bases.html' %}
+{% load static %}
+
+{% block title %}Class Groups{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'admin_panel/css/registration.css' %}">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;800&display=swap" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="card" style="margin-left:20px; margin-right:20px; background-color: #ffffff;">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h4 class="card-title">Class Groups</h4>
+    <a href="{% url 'add_class_group' %}" class="btn btn-primary btn-sm">+ Add Group</a>
+  </div>
+
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-responsive-md">
+        <thead>
+          <tr>
+            <th><strong>ID</strong></th>
+            <th><strong>Group Name</strong></th>
+            <th><strong>Actions</strong></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for group in groups %}
+          <tr>
+            <td>{{ group.id }}</td>
+            <td>{{ group.group_name }}</td>
+            <td>
+              <div class="d-flex">
+                <a href="{% url 'edit_class_group' group.id %}" class="btn btn-primary shadow btn-xs sharp me-1" title="Edit">
+                  <i class="fas fa-pencil-alt"></i>
+                </a>
+                <a href="{% url 'delete_class_group' group.id %}" class="btn btn-danger shadow btn-xs sharp" title="Delete" >
+                  <i class="fa fa-trash"></i>
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="3">No groups found.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

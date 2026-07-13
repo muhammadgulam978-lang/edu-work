@@ -1,0 +1,8 @@
+<h2>Formats for {{ class_obj.name }} / {{ subject_obj.name }}</h2>
+<ul>
+  {% for f in formats %}
+    <li>{{ f.format_name }} — MCQs: {{ f.num_mcqs }}, Short: {{ f.num_short }}, Long: {{ f.num_long }}</li>
+  {% empty %}
+    <li>No formats available.</li>
+  {% endfor %}
+</ul>

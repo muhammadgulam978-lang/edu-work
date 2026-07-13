@@ -1,0 +1,115 @@
+{% extends "teacher_dashboard/lms_action_base.html" %}
+{% load static %}
+
+{% block title %}Quiz Submissions{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'admin_panel/css/query.css' %}">
+<link rel="stylesheet" href="{% static 'admin_panel/vendor/datatables/css/jquery.dataTables.min.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<div class="col-12">
+
+  {% for item in quizzes_with_submissions %}
+  <div class="card" style="margin-bottom: 24px;">
+
+    <!-- Quiz Header -->
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h4 class="card-title mb-0">
+        Quiz Submissions — {{ item.quiz.title }}
+      </h4>
+      <span class="badge badge-primary light">
+        Due: {{ item.quiz.due_date|date:"M d, Y" }}
+      </span>
+    </div>
+
+    <!-- Card Body -->
+    <div class="card-body">
+
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="quiz_id" value="{{ item.quiz.id }}">
+
+        <div class="table-responsive">
+          <table class="display table-responsive-lg dataTable no-footer" style="width:100%;">
+
+            <thead>
+              <tr>
+                <th>Student</th>
+                <th>Submission</th>
+                <th>Submitted At</th>
+                <th>Marks</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {% for submission in item.submissions %}
+              <tr>
+
+                <td>{{ submission.student.user.get_full_name }}</td>
+
+                <td>
+                  {% if submission.submitted_file %}
+                  <a href="{{ submission.submitted_file.url }}"
+                     target="_blank"
+                     class="btn btn-info btn-sm shadow">
+                    Download
+                  </a>
+                  {% else %}
+                  <span class="text-muted">No file</span>
+                  {% endif %}
+                </td>
+
+                <td>{{ submission.submitted_at|date:"M d, Y H:i" }}</td>
+
+                <td>
+                  <input
+                    type="number"
+                    name="marks_{{ submission.id }}"
+                    value="{{ submission.marks|default_if_none:'' }}"
+                    class="form-control"
+                    style="max-width: 90px;"
+                    min="0"
+                  >
+                </td>
+
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="4" class="text-center text-muted py-3">No submissions found.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+
+          </table>
+        </div>
+
+        {% if item.submissions %}
+        <button type="submit" class="btn btn-success mt-3">
+          <i class="fa fa-save mr-1"></i> Save Marks
+        </button>
+        {% endif %}
+
+      </form>
+
+    </div>
+  </div>
+  {% empty %}
+  <div class="card">
+    <div class="card-body text-center text-muted py-5">
+      No quizzes found for this class.
+    </div>
+  </div>
+  {% endfor %}
+
+</div>
+
+<!-- DataTable JS -->
+<script src="{% static 'admin_panel/vendor/global/global.min.js' %}"></script>
+<script src="{% static 'admin_panel/vendor/bootstrap-select/dist/js/bootstrap-select.min.js' %}"></script>
+<script src="{% static 'admin_panel/vendor/datatables/js/jquery.dataTables.min.js' %}"></script>
+<script src="{% static 'admin_panel/js/plugins-init/datatables.init.js' %}"></script>
+
+{% endblock %}

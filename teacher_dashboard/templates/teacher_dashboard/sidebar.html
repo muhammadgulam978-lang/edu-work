@@ -1,0 +1,147 @@
+
+<div class="deznav">
+    <div class="deznav-scroll">
+        <ul class="metismenu" id="menu">
+
+            <!-- ==========================================
+                 LESSON PLANS
+            =========================================== -->
+            <li class="has-menu">
+                <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
+                    <i class="flaticon-381-notepad"></i>
+                    <span class="nav-text">Lesson Plans</span>
+                </a>
+                <ul aria-expanded="false">
+                    <li><a href="{% url 'lesson_plans_list' %}">My Lesson Plans</a></li>
+                </ul>
+            </li>
+
+            <!-- ==========================================
+                 CENTRALIZED EXAM SYSTEM
+            =========================================== -->
+
+            <!-- Question Bank -->
+            <li class="has-menu">
+                <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
+                    <i class="flaticon-381-list"></i>
+                    <span class="nav-text">Question Bank</span>
+                </a>
+                <ul aria-expanded="false">
+                    <li><a href="{% url 'question_bank_list' %}">All Question Banks</a></li>
+                    <li>
+                        <a href="{% url 'question_bank_list' %}?pending=1">
+                            Pending Approval
+                            <span class="badge badge-xs badge-warning light">Review</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
+            <!-- Exam Plans & Blueprint -->
+            <li class="has-menu">
+                <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
+                    <i class="flaticon-381-calendar"></i>
+                    <span class="nav-text">Exam Plans</span>
+                </a>
+                <ul aria-expanded="false">
+                    <li><a href="{% url 'exam_plan_list' %}">All Exam Plans</a></li>
+                    <li><a href="{% url 'create_exam_plan' %}">Create New Plan</a></li>
+                </ul>
+            </li>
+
+            <!-- Paper Generation -->
+            <li class="has-menu">
+                <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
+                    <i class="flaticon-381-file"></i>
+                    <span class="nav-text">Paper Generation</span>
+                </a>
+                <ul aria-expanded="false">
+                    <li>
+                        <a href="{% url 'exam_plan_list' %}">
+                            Generate Paper (AI)
+                            <span class="badge badge-xs badge-primary light">AI</span>
+                        </a>
+                    </li>
+                    <li><a href="{% url 'exam_plan_list' %}">Approval Workflow</a></li>
+                </ul>
+            </li>
+
+            <!-- Exam Conduct -->
+            <li class="has-menu">
+                <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
+                    <i class="flaticon-381-clock"></i>
+                    <span class="nav-text">Exam Conduct</span>
+                </a>
+                <ul aria-expanded="false">
+                    <li><a href="{% url 'exam_plan_list' %}">Seating Plans</a></li>
+                    <li><a href="{% url 'exam_plan_list' %}">Mark Attendance</a></li>
+                    <li><a href="{% url 'exam_plan_list' %}">Invigilator Duty</a></li>
+                </ul>
+            </li>
+
+            <!-- Marking -->
+            <li class="has-menu">
+                <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
+                    <i class="flaticon-381-check-box"></i>
+                    <span class="nav-text">Marking</span>
+                </a>
+                <ul aria-expanded="false">
+                    <li><a href="{% url 'exam_plan_list' %}">Answer Sheets</a></li>
+                    <li>
+                        <a href="{% url 'exam_plan_list' %}">
+                            AI Marking + Verify
+                            <span class="badge badge-xs badge-primary light">AI</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
+            <!-- Results & Analytics -->
+            <li class="has-menu">
+                <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
+                    <i class="flaticon-381-diploma-1"></i>
+                    <span class="nav-text">Results & Analytics</span>
+                </a>
+                <ul aria-expanded="false">
+                    <li><a href="{% url 'exam_plan_list' %}">Compile Results</a></li>
+                    <li><a href="{% url 'analytics_dashboard' %}">Analytics Dashboard</a></li>
+                </ul>
+            </li>
+
+
+
+            <li class="has-menu">
+    <a class="has-arrow ai-icon" href="javascript:void(0)">
+        <i class="flaticon-381-bar-chart"></i>
+        <span class="nav-text">Appraisal KPI</span>
+    </a>
+
+    <ul aria-expanded="false">
+        <li>
+            <a href="{% url 'teacher_appraisal_submit' %}">
+                My Appraisal
+            </a>
+        </li>
+
+        <li>
+            <a href="{% url 'teacher_appraisal_submit' %}">
+                KPI Activities
+            </a>
+        </li>
+    </ul>
+</li>
+
+            <li>
+                <a href="{% url 'lms_dashboard' %}" class="ai-icon" aria-expanded="false">
+                    <i class="flaticon-381-settings-2"></i>
+                    <span class="nav-text">LMS</span>
+                </a>
+            </li>
+
+        </ul>
+
+        <div class="copyright">
+            <p>Forecaster Dashboard</p>
+        </div>
+    </div>
+</div>

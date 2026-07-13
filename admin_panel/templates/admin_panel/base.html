@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>{% block title %}School Management System{% endblock %}</title>
+
+    <link rel="stylesheet" href="{% static 'admin_panel/css/base.css' %}">
+    <link rel="stylesheet" href="{% static 'admin_panel/css/lms_admin.css' %}">
+
+    <!-- ▼▼▼ ADDED: deznav sidebar theme (matches Image 2 look) ▼▼▼ -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'admin_panel/css/deznav-sidebar.css' %}">
+    <!-- ▲▲▲ END ADDED ▲▲▲ -->
+
+    {% block head %}{% endblock %}
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    {% block navbar %}
+    <nav class="navbar">
+        
+        <ul class="navbar-nav">
+            <li><a class="active" href="#"><img class="icon home" /><span>Home</span></a></li>
+            <li><a href="#"><img class="icon statistics" /><span>Student</span></a></li>
+            <li><a href="{% url 'teacher_list' %}"><img class="icon mail" /><span>Teacher</span></a></li>
+            <!-- <li><a href="{% url 'parent_list' %}"><img class="icon user" /><span>Parent</span></a></li> -->
+
+            <li class="dropdown">
+                <a href="javascript:void(0);" onclick="toggleDropdown('Admissions', event)" id="dropdownToggleAdmissions">
+                    <img class="icon file" /><span>Admissions</span>
+                </a>
+                <ul class="dropdown-menu" id="dropdownMenuAdmissions">
+                    <li><a href="{% url 'registration' %}">Registration for Admission</a></li>
+                    <li><a href="{% url 'query' %}">Query</a></li>
+                    <li><a href="#">Assessment for Admission</a></li>
+                    <li><a href="#">Open Admission</a></li>
+                    <li><a href="{% url 'registration' %}">Receive Admission Form</a></li>
+                    <li><a href="#">Issue Admission Form</a></li>
+                    <li><a href="#">Admission Test Configuration</a></li>
+                    <li><a href="#">ID card Generate</a></li>
+                </ul>
+            </li>
+
+            <li class="dropdown">
+                <a href="javascript:void(0);" onclick="toggleDropdown('AcademicYear', event)" id="dropdownToggleAcademicYear">
+                    <img class="icon file" /><span>Academics</span>
+                </a>
+                <ul class="dropdown-menu" id="dropdownMenuAcademicYear">
+                    <li><a href="{% url 'academic_year_list' %}">Academic year Data</a></li>
+                    <li><a href="{% url 'class_list' %}">Classes</a></li>
+                    <li><a href="{% url 'teacher_list' %}">Faculty</a></li>
+                    <li><a href="{% url 'section_list' %}">Section/configration</a></li>
+                    <li><a href="{% url 'subject_list' %}">Subjects</a></li>
+                    <li><a href="{% url 'class_teacher_list' %}">class teacher</a></li>
+                    <li><a href="{% url 'add_class_group' %}">class Groups</a></li>
+                    <li><a href="{% url 'period_list' %}">Create Period</a></li>
+                    <li><a href="{% url 'timetable_view' %}">Period Planning timetable</a></li>
+                    <li><a href="{% url 'assign_period' %}">Period planning assign</a></li>
+                    <li><a href="{% url 'portfolio_timetable' %}">Portfolio timetable Pdf</a></li>
+                </ul>
+            </li>
+        </ul>
+    </nav>
+    {% endblock navbar %}
+
+    {% block sidebar %}
+    {% include 'admin_panel/sidebar.html' %}
+    {% endblock sidebar %}
+
+    <div class="main-content">
+        {% block content %}{% endblock %}
+    </div>
+
+    <script src="{% static 'admin_panel/js/base.js' %}"></script>
+    <!-- ▼▼▼ ADDED: deznav sidebar collapse/expand behaviour ▼▼▼ -->
+    <script src="{% static 'admin_panel/js/deznav-sidebar.js' %}"></script>
+    <!-- ▲▲▲ END ADDED ▲▲▲ -->
+</body>
+</html>

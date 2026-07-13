@@ -1,0 +1,23 @@
+
+
+{% block content %}
+<h2>Upload Book PDF</h2>
+
+<form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">Upload & Parse TOC</button>
+</form>
+
+<hr>
+
+<h3>Uploaded Books</h3>
+<ul>
+    {% for book in books %}
+        <li>{{ book.title }} - {{ book.class_for }} / {{ book.subject }}</li>
+    {% empty %}
+        <li>No books uploaded yet.</li>
+    {% endfor %}
+</ul>
+
+{% endblock %}

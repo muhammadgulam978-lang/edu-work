@@ -1,0 +1,115 @@
+{% load static %}
+{% block content %}
+
+<div class="container mt-5 p-4 bg-white shadow rounded">
+  <h2 class="mb-4 text-center">Select Teacher for Action</h2>
+
+  <form method="POST" id="teacherForm" class="mx-auto" style="max-width: 650px;">
+    {% csrf_token %}
+
+    <!-- Teacher -->
+    <div class="mb-3">
+      <label class="form-label">Select Teacher:</label>
+      <select id="teacher_id" name="teacher_id" class="form-select" required>
+        <option value="">-- Select Teacher --</option>
+        {% for t in teachers %}
+          <option value="{{ t.id }}">{{ t.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Action -->
+    <div class="mb-3">
+      <label class="form-label">Select Action:</label>
+      <select id="next" name="next" class="form-select" required>
+        <option value="">-- Select Action --</option>
+        <option value="diary">Submit Diary</option>
+        <option value="result">Upload Result</option>
+        <option value="assignment">Upload Assignment</option>
+        <option value="quiz">Upload Quiz</option>
+        <option value="lecture">Upload Lecture Note</option>
+      </select>
+    </div>
+
+    <!-- Class -->
+    <div class="mb-3">
+      <label class="form-label">Select Class:</label>
+      <select id="class_id" name="class_id" class="form-select" required>
+        <option value="">-- Select Class --</option>
+      </select>
+    </div>
+
+    <!-- Section -->
+    <div class="mb-3">
+      <label class="form-label">Select Section:</label>
+      <select id="section_id" name="section_id" class="form-select" required>
+        <option value="">-- Select Section --</option>
+      </select>
+    </div>
+
+    <!-- Subject -->
+    <div class="mb-3">
+      <label class="form-label">Select Subject:</label>
+      <select id="subject_id" name="subject_id" class="form-select" required>
+        <option value="">-- Select Subject --</option>
+      </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary w-100 mt-3">Continue →</button>
+  </form>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+$(function(){
+  let assignedData = [];
+
+  // When teacher changes
+  $('#teacher_id').change(function() {
+    const teacherId = $(this).val();
+    if (!teacherId) return;
+
+    $('#class_id').html('<option value="">Loading...</option>');
+    $('#section_id').html('<option value="">-- Select Section --</option>');
+    $('#subject_id').html('<option value="">-- Select Subject --</option>');
+
+    $.get(`/admin_panel/get-teacher-data/${teacherId}/`, function(resp){
+      assignedData = resp.assigned;
+
+      // Unique classes
+      const uniqueClasses = [...new Map(assignedData.map(item => [item.class_id, item.class_name])).entries()];
+      $('#class_id').html('<option value="">-- Select Class --</option>');
+      uniqueClasses.forEach(([id, name]) => {
+        $('#class_id').append(`<option value="${id}">${name}</option>`);
+      });
+    });
+  });
+
+  // When class changes
+  $('#class_id').change(function() {
+    const selectedClassId = $(this).val();
+    const filteredSections = assignedData.filter(i => i.class_id == selectedClassId);
+
+    const uniqueSections = [...new Map(filteredSections.map(item => [item.section_id, item.section_name])).entries()];
+    $('#section_id').html('<option value="">-- Select Section --</option>');
+    $('#subject_id').html('<option value="">-- Select Subject --</option>');
+    uniqueSections.forEach(([id, name]) => {
+      $('#section_id').append(`<option value="${id}">${name}</option>`);
+    });
+  });
+
+  // When section changes
+  $('#section_id').change(function() {
+    const selectedClassId = $('#class_id').val();
+    const selectedSectionId = $(this).val();
+    const filteredSubjects = assignedData.filter(i => i.class_id == selectedClassId && i.section_id == selectedSectionId);
+
+    $('#subject_id').html('<option value="">-- Select Subject --</option>');
+    filteredSubjects.forEach(sub => {
+      $('#subject_id').append(`<option value="${sub.subject_id}">${sub.subject_name}</option>`);
+    });
+  });
+});
+</script>
+
+{% endblock %}

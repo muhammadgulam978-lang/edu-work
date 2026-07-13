@@ -1,0 +1,29 @@
+{% extends 'admin_panel/bases.html' %}
+{% load static %}
+
+{% block title %}
+  Delete Subject
+{% endblock %}
+
+{% block head %}
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="card" style="margin-left: 20px; margin-right: 20px; background-color: #ffffff">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h4 class="card-title">Delete Subject</h4>
+    <a href="{% url 'subject_list' %}" class="btn btn-primary mt-3">← Back to List</a>
+  </div>
+
+  <div class="card-body">
+    <p>Are you sure you want to delete subject <strong>{{ subject.name }}</strong>?</p>
+
+    <form method="post" class="mt-4 d-flex align-items-center">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger mt-3" style="margin-right: 10px;">Yes, Delete</button>
+      <a href="{% url 'subject_list' %}" class="btn btn-primary mt-3">Cancel</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

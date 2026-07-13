@@ -1,0 +1,48 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block title %}Edit Section{% endblock %}
+
+{% block head %}
+    <link rel="stylesheet" href="{% static 'admin_panel/css/edit_section.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="admission-list-container">
+    <h1>Edit Section</h1>
+    <p>
+        <a href="{% url 'admin_panel_dashboard' %}">Home</a>
+        <a href="{% url 'section_list' %}"> / Section List</a>
+        <a href="#"> / Edit Section</a>
+    </p>
+
+    <div class="form-container">
+        <form method="post">
+            {% csrf_token %}
+            <table>
+                <tr>
+                    <th>Academic Year:</th>
+                    <td>{{ form.academic_year }}</td>
+                </tr>
+                <tr>
+                    <th>Class:</th>
+                    <td>{{ form.class_fk }}</td>
+                </tr>
+                <tr>
+                    <th>Section Name:</th>
+                    <td>{{ form.section_name }}</td>
+                </tr>
+                <tr>
+                    <th>Capacity:</th>
+                    <td>{{ form.capacity }}</td>
+                </tr>
+            </table>
+            <br>
+            <div class="create-button-wrapper">
+                <button type="submit" class="add-button">Update Section</button>
+                <a href="{% url 'section_list' %}" class="add-button" style="background-color: #aaa; margin-left: 10px;">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

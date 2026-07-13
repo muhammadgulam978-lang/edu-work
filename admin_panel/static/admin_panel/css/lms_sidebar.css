@@ -1,0 +1,125 @@
+body {
+    display: block !important;
+    margin: 0 !important;
+}
+
+.navbar {
+    display: none !important;
+}
+
+.main-content {
+    margin-left: 0 !important;
+    width: 100% !important;
+    padding: 0 !important;
+}
+
+/* Sidebar Hidden by Default */
+.deznav {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 260px;
+    background: #1a2e5a;
+    z-index: 9999;
+    box-shadow: 2px 0 15px rgba(0,0,0,0.3);
+    overflow-y: auto;
+    transition: all 0.3s ease;
+}
+
+.deznav.open {
+    display: block !important;
+}
+
+/* Sidebar Links */
+.deznav .metismenu {
+    padding: 15px 0;
+}
+
+.deznav .metismenu a {
+    color: #a8b8d8 !important;
+    padding: 10px 20px;
+    font-size: 14px;
+}
+
+.deznav .metismenu a:hover {
+    color: #fff !important;
+    background: rgba(255,255,255,0.1);
+}
+
+.deznav .metismenu .nav-text {
+    color: #fff;
+    font-weight: 600;
+}
+
+.deznav .metismenu ul a {
+    padding: 8px 20px 8px 45px;
+    font-size: 13px;
+}
+
+.deznav .copyright {
+    color: #a8b8d8;
+    padding: 15px 20px;
+    font-size: 12px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    margin-top: 20px;
+}
+
+/* Overlay */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 9998;
+}
+
+.sidebar-overlay.open {
+    display: block;
+}
+
+/* Top Bar */
+.lms-topbar {
+    display: flex;
+    align-items: center;
+    background: #264c84;
+    padding: 12px 20px;
+    gap: 15px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.lms-topbar-title {
+    color: #fff;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+/* Hamburger Button */
+.hamburger-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 5px;
+}
+
+.hamburger-btn span {
+    display: block;
+    width: 25px;
+    height: 3px;
+    background: #fff;
+    border-radius: 3px;
+    transition: 0.3s;
+}
+
+.lms-page-content {
+    padding: 20px;
+}

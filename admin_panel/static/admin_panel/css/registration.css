@@ -1,0 +1,78 @@
+html, body, h1{
+    height: 100%;
+    margin: 0;
+    padding: 0;
+     
+}
+
+.main-content {
+    margin-top: 0px;
+    margin-left: 250px;  /* Left navbar ke width ke barabar */
+    width: calc(100% - 250px);  /* FULL width - left sidebar */
+    padding: 0.5rem 2rem 2rem 2rem;
+    min-height: 100vh;
+    box-sizing: border-box;
+}
+
+.registration-container {
+    background-color: #ffffff;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    box-sizing: border-box;
+    margin-top: 0px; 
+    
+}
+
+.registration-container h1 {
+    margin-bottom: 10px;
+    text-align: center;
+}
+.form-container {
+    background-color: #f9f9f9;
+    padding: 30px;
+    border-radius: 8px;
+    max-width: 900px; /* Increased width */
+    width: 100%;
+    margin: 2px auto;
+}
+
+
+.form-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.form-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+label {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+input, select, textarea {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+button[type="submit"] {
+    padding: 12px 20px;
+    background-color: #0044cc;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    width: 150px; /* 👈 Adjust this value as needed */
+    align-self: center; /* To center it horizontally if it's inside a flex container */
+}
+
+

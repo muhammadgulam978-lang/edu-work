@@ -1,0 +1,113 @@
+{% extends "student_profile/bases.html" %}
+{% load static %}
+{% load dict_filters %}
+
+{% block title %}Quizzes{% endblock %}
+
+{% block head %}
+    <link rel="stylesheet" href="{% static 'admin_panel/css/query.css' %}">
+    <link rel="stylesheet" href="{% static 'admin_panel/vendor/datatables/css/jquery.dataTables.min.css' %}">
+
+    <style>
+        .deadline-badge {
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .deadline-red { background: #ff4d4d; color: white; }
+        .deadline-green { background: #28a745; color: white; }
+        .action-btn { padding: 6px 14px; border-radius: 6px; color: white; font-weight: bold; }
+        .submit-btn { background: #28a745; }
+        .disabled-btn { background: #b3b3b3; cursor: not-allowed; }
+        .hover-box { background: #e7e7e7; border-radius: 5px; padding: 3px 10px; font-size: 12px; }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="col-12">
+  <div class="card" style="background: #f8f9fa; margin-left: 20px; margin-right: 20px;">
+
+    <!-- Card Header -->
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h4 class="card-title mb-0">Quizzes</h4>
+    </div>
+
+    <!-- Card Body -->
+    <div class="card-body">
+
+      <div class="table-responsive">
+        <table id="example3" class="display table-responsive-lg dataTable no-footer" style="width: 100%;">
+          <thead>
+            <tr>
+              <th>No.</th>
+              <th>Title</th>
+              <th>Quiz File</th>
+              <th>Submission</th>
+              <th>Marks</th>
+              <th>Action</th>
+              <th>Deadline</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {% for q in quizzes %}
+            {% with sub=submission_dict|dictget:q.id %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+
+                <td>{{ q.title }}</td>
+
+                <td>
+                    <a class="btn btn-info btn-sm" href="{{ q.file.url }}" download>Download Quiz</a>
+                </td>
+
+                <td>
+                    {% if sub %}
+                      <a class="btn btn-primary btn-sm" href="{{ sub.submitted_file.url }}" download>Submission</a>
+                    {% else %}
+                      No Submission
+                    {% endif %}
+                </td>
+
+                <td>
+                    {% if sub and sub.marks %}
+                      {{ sub.marks }}
+                    {% else %}
+                      Pending
+                    {% endif %}
+                </td>
+
+                <td>
+                    {% if q.due_date < today %}
+                      <button class="action-btn disabled-btn">Deadline Exceeded</button>
+                    {% else %}
+                      <a href="{% url 'submit_quiz' q.id %}" class="action-btn submit-btn">Submit</a>
+                    {% endif %}
+                </td>
+
+                <td>
+                    {% if q.due_date < today %}
+                      <span class="deadline-badge deadline-red">{{ q.due_date }}</span>
+                    {% else %}
+                      <span class="deadline-badge deadline-green">{{ q.due_date }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endwith %}
+            {% endfor %}
+          </tbody>
+
+        </table>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Required JS -->
+<script src="{% static 'admin_panel/vendor/global/global.min.js' %}"></script>
+<script src="{% static 'admin_panel/vendor/bootstrap-select/dist/js/bootstrap-select.min.js' %}"></script>
+<script src="{% static 'admin_panel/vendor/datatables/js/jquery.dataTables.min.js' %}"></script>
+<script src="{% static 'admin_panel/js/plugins-init/datatables.init.js' %}"></script>
+
+{% endblock %}

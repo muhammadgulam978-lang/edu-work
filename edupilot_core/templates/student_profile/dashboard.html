@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        header h1 {
+            color: #333;
+            font-size: 28px;
+        }
+        
+        header a {
+            background: #667eea;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            transition: background 0.3s;
+        }
+        
+        header a:hover {
+            background: #764ba2;
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .card h2 {
+            color: #333;
+            font-size: 18px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        
+        .info-group {
+            margin: 10px 0;
+        }
+        
+        .info-group label {
+            color: #666;
+            font-weight: 600;
+            display: block;
+            font-size: 12px;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+        
+        .info-group p {
+            color: #333;
+            font-size: 16px;
+            font-weight: 500;
+        }
+        
+        .balance-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        
+        .balance-section h2 {
+            color: white;
+            border: none;
+            margin-bottom: 15px;
+        }
+        
+        .balance-amount {
+            font-size: 48px;
+            font-weight: bold;
+            margin: 15px 0;
+        }
+        
+        .voucher-container {
+            margin-top: 20px;
+        }
+        
+        .voucher-item {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr auto;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .voucher-item.paid {
+            border-left-color: #28a745;
+        }
+        
+        .voucher-item.partial {
+            border-left-color: #ffc107;
+        }
+        
+        .voucher-item.unpaid {
+            border-left-color: #dc3545;
+        }
+        
+        .voucher-no {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .voucher-month {
+            color: #666;
+        }
+        
+        .voucher-amount {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .badge.paid {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .badge.partial {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .badge.unpaid {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .btn-pdf {
+            padding: 6px 12px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+            transition: background 0.3s;
+        }
+
+        .btn-pdf:hover {
+            background: #764ba2;
+        }
+
+        .btn-pdf-disabled {
+            padding: 6px 12px;
+            background: #ccc;
+            color: white;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+            text-transform: uppercase;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #764ba2;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        
+        .empty-state {
+            text-align: center;
+            color: #999;
+            padding: 30px;
+            font-style: italic;
+        }
+        
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid #dc3545;
+        }
+        
+        .no-data {
+            color: #999;
+            text-align: center;
+            padding: 20px;
+        }
+
+        /* Automation Grid */
+        .automation-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .automation-item {
+            background: #f0f8ff;
+            padding: 15px;
+            border-radius: 5px;
+        }
+
+        .automation-item p:first-child {
+            margin: 0;
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .automation-item p:last-child {
+            margin: 5px 0 0 0;
+            color: #666;
+            font-size: 13px;
+        }
+
+        /* Notification item */
+        .notif-item {
+            background: #f0f8ff;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 5px;
+            border-left: 4px solid #667eea;
+        }
+
+        .notif-item p {
+            margin: 0;
+        }
+
+        .notif-title {
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .notif-content {
+            color: #666;
+            font-size: 13px;
+            margin-top: 5px !important;
+        }
+
+        .notif-status {
+            color: #999;
+            font-size: 11px;
+            margin-top: 5px !important;
+        }
+
+        .notif-scroll {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+            
+            header h1 {
+                font-size: 20px;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .voucher-item {
+                grid-template-columns: 1fr;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+
+            .automation-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+
+        <!-- HEADER -->
+        <header>
+            <h1>📚 Student Dashboard</h1>
+            <a href="{% url 'logout' %}">Logout</a>
+        </header>
+        
+        {% if error %}
+            <div class="error-message">
+                <strong>Error:</strong> {{ error }}
+            </div>
+        {% endif %}
+        
+        {% if student %}
+
+            <!-- STUDENT INFO CARDS -->
+            <div class="dashboard-grid">
+                <div class="card">
+                    <h2>👤 Personal Information</h2>
+                    <div class="info-group">
+                        <label>Full Name</label>
+                        <p>{{ student.full_name }}</p>
+                    </div>
+                    <div class="info-group">
+                        <label>Admission Number</label>
+                        <p>{{ student.admission_number }}</p>
+                    </div>
+                    <div class="info-group">
+                        <label>Current Class</label>
+                        <p>{{ student.current_class }}</p>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h2>🏫 Campus Information</h2>
+                    <div class="info-group">
+                        <label>Campus</label>
+                        <p>{{ student.campus|default:"Not Assigned" }}</p>
+                    </div>
+                    <div class="info-group">
+                        <label>Student ID</label>
+                        <p>{{ student.student_id|default:"Not Assigned" }}</p>
+                    </div>
+                    <div class="info-group">
+                        <label>Status</label>
+                        <p>
+                            {% if student.is_active %}
+                                <span style="color: green; font-weight: 600;">✓ Active</span>
+                            {% else %}
+                                <span style="color: red; font-weight: 600;">✗ Inactive</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h2>📅 Admission Details</h2>
+                    <div class="info-group">
+                        <label>Admission Date</label>
+                        <p>{{ student.admission_date|date:"d/m/Y" }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- OUTSTANDING BALANCE -->
+            {% if balance %}
+                <div class="balance-section">
+                    <h2>💰 Outstanding Balance</h2>
+                    <div class="balance-amount">
+                        Rs. {{ balance.outstanding_amount|floatformat:2 }}
+                    </div>
+                    <p style="font-size: 14px; opacity: 0.9;">
+                        Amount pending to be paid
+                    </p>
+                </div>
+            {% endif %}
+            
+            <!-- FEE VOUCHERS -->
+            <div class="card" style="margin-bottom: 30px;">
+                <h2>📋 Fee Vouchers</h2>
+                
+                {% if vouchers %}
+                    <div class="voucher-container">
+                        {% for voucher in vouchers %}
+                            <div class="voucher-item {% if voucher.status == 'PAID' %}paid{% elif voucher.status == 'PARTIAL' %}partial{% else %}unpaid{% endif %}">
+                                <div class="voucher-no">{{ voucher.voucher_no }}</div>
+                                <div class="voucher-month">{{ voucher.month }}</div>
+                                <div class="voucher-amount">Rs. {{ voucher.net_amount|floatformat:2 }}</div>
+                                <span class="badge {% if voucher.status == 'PAID' %}paid{% elif voucher.status == 'PARTIAL' %}partial{% else %}unpaid{% endif %}">
+                                    {{ voucher.status }}
+                                </span>
+                                <!-- PDF DOWNLOAD BUTTON -->
+                                {% if voucher.voucher_no %}
+                                    <a href="/media/vouchers/voucher_{{ voucher.voucher_no }}.pdf"
+                                       target="_blank"
+                                       class="btn-pdf">
+                                        📥 PDF
+                                    </a>
+                                {% else %}
+                                    <span class="btn-pdf-disabled">📄 N/A</span>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="no-data">
+                        <p>📭 No fee vouchers generated yet.</p>
+                    </div>
+                {% endif %}
+                
+                <div class="button-group">
+                    <button class="btn btn-primary" onclick="alert('Payment portal coming soon!')">💳 Pay Now</button>
+                    <button class="btn btn-secondary" onclick="window.print()">🖨️ Print Vouchers</button>
+                </div>
+            </div>
+
+            <!-- AUTOMATION STATUS -->
+            <div class="card" style="margin-bottom: 30px;">
+                <h2>⚙️ System Automation</h2>
+                <div class="automation-grid">
+                    <div class="automation-item">
+                        <p>📋 Fee Generation</p>
+                        <p>🟢 Automatic (1st of month, 9:00 AM)</p>
+                    </div>
+                    <div class="automation-item">
+                        <p>📧 Notifications</p>
+                        <p>🟢 SMS/Email (Every 5 minutes)</p>
+                    </div>
+                    <div class="automation-item">
+                        <p>📄 PDF Vouchers</p>
+                        <p>🟢 Auto-generated on fee creation</p>
+                    </div>
+                    <div class="automation-item">
+                        <p>💾 Ledger Updates</p>
+                        <p>🟢 Real-time balance sync</p>
+                    </div>
+                </div>
+                <div class="info-group" style="margin-top: 15px;">
+                    <label>Last Fee Generated</label>
+                    <p>{{ vouchers.0.issue_date|date:"d/m/Y"|default:"N/A" }}</p>
+                </div>
+                <div class="info-group">
+                    <label>System Status</label>
+                    <p style="color: green; font-weight: 600;">🟢 Active & Running</p>
+                </div>
+            </div>
+
+            <!-- NOTIFICATIONS -->
+            <div class="card" style="margin-bottom: 30px;">
+                <h2>🔔 Notifications</h2>
+                {% if notifications %}
+                    <div class="notif-scroll">
+                        {% for notif in notifications %}
+                            <div class="notif-item">
+                                <p class="notif-title">📬 {{ notif.get_notification_type_display }}</p>
+                                <p class="notif-content">{{ notif.content }}</p>
+                                <p class="notif-status">
+                                    {% if notif.status == 'SENT' %}
+                                        ✅ Sent
+                                    {% elif notif.status == 'PENDING' %}
+                                        ⏳ Pending
+                                    {% else %}
+                                        ❌ Failed
+                                    {% endif %}
+                                </p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="no-data">
+                        <p>📭 No notifications yet</p>
+                    </div>
+                {% endif %}
+            </div>
+
+        {% else %}
+            <div class="error-message">
+                <strong>Error:</strong> Could not load student information. Please contact the administration.
+            </div>
+        {% endif %}
+
+    </div><!-- /container -->
+</body>
+</html>

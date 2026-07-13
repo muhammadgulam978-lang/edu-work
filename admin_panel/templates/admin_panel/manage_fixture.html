@@ -1,0 +1,195 @@
+{% extends 'admin_panel/bases.html' %}
+{% load static %}
+{% block title %}Fixture Management{% endblock %}
+
+{% block content %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Fixture Management</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gradient-to-br from-gray-50 to-gray-200 min-h-screen flex flex-col font-sans">
+
+<div class="container mx-auto p-4 sm:p-6 max-w-6xl">
+
+  <!-- Header -->
+  <header class="mb-8 text-center">
+    <h4 class="card-title text-2xl font-semibold">📘 Fixture Management</h4>
+    <p class="mt-2 text-sm sm:text-base text-gray-600">Assign substitute teachers when someone is absent with smart automatic logic.</p>
+  </header>
+
+  <!-- FORM -->
+  <div class="bg-white rounded-xl shadow-lg p-4 sm:p-6 mb-8 transform hover:scale-[1.01] transition-transform duration-300">
+    <form method="POST" id="fixtureForm" class="flex flex-col sm:flex-row sm:items-end gap-4 flex-wrap">
+      {% csrf_token %}
+
+      <!-- Class -->
+      <div class="flex-1">
+        <label class="block text-sm font-medium text-gray-700">Class</label>
+        <select name="class_fk" id="class_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm">
+          <option value="">Select Class</option>
+          {% for c in classes %}
+          <option value="{{ c.id }}">{{ c.class_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Section -->
+      <div class="flex-1">
+        <label class="block text-sm font-medium text-gray-700">Section</label>
+        <select name="section" id="section_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm">
+          <option value="">Select Section</option>
+          {% for s in sections %}
+          <option value="{{ s.id }}">{{ s.section_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Subject -->
+      <div class="flex-1">
+        <label class="block text-sm font-medium text-gray-700">Subject</label>
+        <select name="subject" id="subject_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm">
+          <option value="">Optional</option>
+          {% for subj in subjects %}
+          <option value="{{ subj.id }}">{{ subj.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Day -->
+      <div class="flex-1">
+        <label class="block text-sm font-medium text-gray-700">Day</label>
+        <select name="day" id="day_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm">
+          <option value="">Select Day</option>
+          <option>Monday</option>
+          <option>Tuesday</option>
+          <option>Wednesday</option>
+          <option>Thursday</option>
+          <option>Friday</option>
+          <option>Saturday</option>
+        </select>
+      </div>
+
+      <!-- Period -->
+      <div class="flex-1">
+        <label class="block text-sm font-medium text-gray-700">Period</label>
+        <select name="period" id="period_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm">
+          <option value="">Select Period</option>
+          {% for p in periods %}
+          <option value="{{ p.id }}">{{ p.period_name }} ({{ p.start_time }} - {{ p.end_time }})</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Absent Teacher -->
+      <div class="flex-1">
+        <label class="block text-sm font-medium text-gray-700">Absent Teacher</label>
+        <select name="absent_teacher" id="absent_teacher_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm">
+          <option value="">Select Absent Teacher</option>
+          {% for t in teachers %}
+          <option value="{{ t.id }}">{{ t.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Free Teachers -->
+      <div class="flex-1">
+        <label class="block text-sm font-medium text-gray-700">Free Teachers</label>
+        <select name="substitute_teacher" id="free_teachers" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm">
+          <option value="">Select Available Teacher</option>
+        </select>
+      </div>
+
+      <!-- Submit -->
+      <div class="w-full text-center mt-4">
+        <button type="submit" class="btn btn-primary px-6 py-2">Assign Fixture</button>
+      </div>
+
+    </form>
+  </div>
+
+  <!-- FIXTURE TABLE -->
+  <div class="card bg-white shadow-lg rounded-xl p-4">
+
+    <div class="card-header mb-3">
+      <h4 class="card-title text-lg font-semibold">📋 Assigned Fixtures</h4>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-responsive-md">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Class</th>
+            <th>Section</th>
+            <th>Subject</th>
+            <th>Day</th>
+            <th>Period</th>
+            <th>Absent</th>
+            <th>Substitute</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {% if fixtures %}
+            {% for f in fixtures %}
+            <tr>
+              <td>{{ forloop.counter }}</td>
+              <td>{{ f.class_fk.class_name }}</td>
+              <td>{{ f.section.section_name }}</td>
+              <td>{{ f.subject.name }}</td>
+              <td>{{ f.day }}</td>
+              <td>{{ f.period.period_name }}</td>
+              <td>{{ f.absent_teacher.name }}</td>
+              <td>{{ f.substitute_teacher.name }}</td>
+            </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="8" class="text-center">No Fixtures Assigned</td>
+            </tr>
+          {% endif %}
+        </tbody>
+
+      </table>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- AJAX - Load free teachers -->
+<script>
+function loadFreeTeachers() {
+    const day = document.getElementById("day_id").value;
+    const periodID = document.getElementById("period_id").value;
+    const subjectID = document.getElementById("subject_id").value;
+
+    if (!day || !periodID) return;
+
+    fetch(`{% url 'get_free_teachers' %}?day=${day}&period_id=${periodID}&subject_id=${subjectID}`)
+        .then(resp => resp.json())
+        .then(data => {
+            let select = document.getElementById("free_teachers");
+            select.innerHTML = "<option value=''>Select Available Teacher</option>";
+
+            data.forEach(t => {
+                select.innerHTML += `<option value="${t.id}">${t.name}</option>`;
+            });
+        });
+}
+
+document.getElementById("period_id").addEventListener("change", loadFreeTeachers);
+document.getElementById("day_id").addEventListener("change", loadFreeTeachers);
+document.getElementById("subject_id").addEventListener("change", loadFreeTeachers);
+</script>
+
+</body>
+</html>
+
+{% endblock %}

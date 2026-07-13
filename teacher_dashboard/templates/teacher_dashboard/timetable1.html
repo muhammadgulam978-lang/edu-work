@@ -1,0 +1,53 @@
+
+{% extends "teacher_dashboard/base.html" %}
+{% load dict_extras %}
+{% block content %}
+<div class="container-fluid py-4">
+  <div class="card shadow-sm">
+    <div class="card-header bg-success text-white">
+      <h4 class="mb-0">My Timetable — {{ teacher.name }}</h4>
+    </div>
+    <div class="card-body p-0">
+      {% if period_order %}
+      <div class="table-responsive">
+        <table class="table table-bordered table-hover mb-0 text-center align-middle">
+          <thead class="table-success">
+            <tr>
+              <th>Day</th>
+              {% for period in period_order %}
+                <th>{{ period }}</th>
+              {% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for day in days %}
+            <tr>
+              <td class="fw-bold bg-light">{{ day }}</td>
+              {% for period in period_order %}
+                <td>
+                  {% with cell=slots|dict_key:day %}
+                    {% with val=cell|dict_key:period %}
+                      {% if val and val != "---" %}
+                        <span class="text-success small">{{ val|safe }}</span>
+                      {% else %}
+                        <span class="text-muted">—</span>
+                      {% endif %}
+                    {% endwith %}
+                  {% endwith %}
+                </td>
+              {% endfor %}
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+        <div class="p-4 text-center text-muted">
+          <p>Koi period assign nahi hua abhi tak.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% endblock %}

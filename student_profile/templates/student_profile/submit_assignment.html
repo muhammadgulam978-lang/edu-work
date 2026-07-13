@@ -1,0 +1,29 @@
+{% extends "student_profile/bases.html" %}
+{% block content %}
+
+<div class="container mt-4">
+    <h2>Submit Assignment: {{ assignment.title }}</h2>
+
+    {% if is_deadline_exceeded %}
+        <div class="alert alert-danger">
+            Deadline Exceeded — Submission not allowed.
+        </div>
+    {% endif %}
+
+    {% if existing %}
+        <p><strong>Already Submitted:</strong> {{ existing.submitted_at }}</p>
+        <p><a href="{{ existing.file.url }}" download>Download your submission</a></p>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <label>Upload File:</label>
+        <input type="file" name="file" class="form-control" required>
+
+        {% if not is_deadline_exceeded %}
+            <button class="btn btn-success mt-3">Submit</button>
+        {% endif %}
+    </form>
+</div>
+
+{% endblock %}

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Lesson Plan Preview</title>
+    <style>
+        body { font-family: Arial; }
+        .page { width: 800px; margin: auto; }
+        h2, h3 { margin-top: 20px; }
+        .day { border-bottom: 1px solid #ccc; padding-bottom: 15px; }
+        @media print {
+            button { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="page">
+    <button onclick="window.print()">Print</button>
+
+    <h2>Lesson Plan</h2>
+    <p><strong>Chapter:</strong> {{ plan.chapter.title }}</p>
+    <p><strong>Total Periods:</strong> {{ plan.total_periods }}</p>
+
+    {% for day in days %}
+        <div class="day">
+            <h3>Period {{ day.day_number }}</h3>
+
+            <strong>Learning Objectives</strong>
+            <p>{{ day.learning_objectives|linebreaks }}</p>
+
+            <strong>Teaching Content</strong>
+            <p>{{ day.teaching_content|linebreaks }}</p>
+
+            <strong>Practice Work</strong>
+            <p>{{ day.practice_work|linebreaks }}</p>
+
+            <strong>Assessment</strong>
+            <p>{{ day.assessment_tasks|linebreaks }}</p>
+
+            <strong>Homework</strong>
+            <p>{{ day.homework_tasks|linebreaks }}</p>
+        </div>
+    {% endfor %}
+</div>
+
+</body>
+</html>

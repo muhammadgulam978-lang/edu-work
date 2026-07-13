@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Add Question | EduPilot</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --teal:       #3bbfad;
+      --teal-dark:  #2da898;
+      --teal-deep:  #1e8c7d;
+      --teal-light: #e6f7f5;
+      --teal-mid:   #c2ede8;
+      --green:      #2ecc71;
+      --green-dark: #27ae60;
+      --orange:     #f39c12;
+      --red:        #e74c3c;
+      --sidebar-w:  240px;
+      --topbar-h:   64px;
+      --text:       #1a2d3d;
+      --muted:      #7a8fa6;
+      --border:     #dce8f0;
+      --page-bg:    #f0f4f8;
+      --card-bg:    #ffffff;
+      --radius:     14px;
+      --radius-sm:  9px;
+      --shadow:     0 2px 18px rgba(30,100,120,.09);
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Nunito',sans-serif;background:var(--page-bg);color:var(--text);min-height:100vh;display:flex;}
+
+    /* ── SIDEBAR ── */
+    .sidebar{width:var(--sidebar-w);min-height:100vh;background:linear-gradient(175deg,#3bbfad 0%,#2a9d8f 60%,#1e7d72 100%);position:fixed;top:0;left:0;display:flex;flex-direction:column;z-index:100;box-shadow:4px 0 20px rgba(30,100,120,.18);}
+    .sb-brand{padding:22px 20px 18px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,.15);}
+    .sb-logo{width:44px;height:44px;background:rgba(255,255,255,.2);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;}
+    .sb-name{color:#fff;font-weight:800;font-size:1.05rem;line-height:1.1;}
+    .sb-sub{color:rgba(255,255,255,.65);font-size:.67rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;}
+    .sb-nav{flex:1;padding:12px 0;overflow-y:auto;}
+    .nav-lbl{padding:14px 20px 5px;font-size:.68rem;font-weight:800;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.1em;}
+    .nav-a{display:flex;align-items:center;gap:11px;padding:11px 20px;color:rgba(255,255,255,.78);font-size:.91rem;font-weight:600;cursor:pointer;text-decoration:none;transition:background .2s,color .2s;position:relative;}
+    .nav-a:hover{background:rgba(255,255,255,.13);color:#fff;}
+    .nav-a.active{background:rgba(255,255,255,.2);color:#fff;}
+    .nav-a.active::before{content:'';position:absolute;left:0;top:6px;bottom:6px;width:4px;background:#fff;border-radius:0 4px 4px 0;}
+    .nav-a i{width:20px;text-align:center;}
+    .nav-arrow{margin-left:auto;font-size:.68rem;opacity:.55;}
+
+    /* ── MAIN ── */
+    .main-wrap{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh;}
+
+    /* ── TOPBAR ── */
+    .topbar{height:var(--topbar-h);background:var(--card-bg);border-bottom:1.5px solid var(--border);display:flex;align-items:center;padding:0 28px;gap:16px;position:sticky;top:0;z-index:90;box-shadow:0 2px 10px rgba(30,100,120,.06);}
+    .tb-toggle{background:none;border:none;cursor:pointer;font-size:1.15rem;color:var(--muted);}
+    .tb-title{font-size:1.28rem;font-weight:800;color:var(--text);}
+    .tb-search{margin-left:auto;display:flex;align-items:center;gap:9px;background:var(--page-bg);border:1.5px solid var(--border);border-radius:30px;padding:7px 18px;min-width:210px;}
+    .tb-search input{border:none;background:none;outline:none;font-family:'Nunito',sans-serif;font-size:.87rem;color:var(--text);width:150px;}
+    .tb-search i{color:var(--muted);}
+    .tb-actions{display:flex;align-items:center;gap:9px;}
+    .tb-icon{width:38px;height:38px;border-radius:50%;background:var(--page-bg);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;color:var(--muted);transition:background .2s;}
+    .tb-icon:hover{background:var(--teal-light);color:var(--teal);}
+    .bdot{position:absolute;top:4px;right:4px;width:8px;height:8px;background:var(--red);border-radius:50%;border:1.5px solid #fff;}
+    .tb-user{display:flex;align-items:center;gap:9px;padding:5px 13px 5px 5px;background:var(--teal-light);border-radius:30px;border:1.5px solid var(--teal-mid);}
+    .av{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--green));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:.82rem;}
+    .av-name{font-size:.81rem;font-weight:800;color:var(--text);}
+    .av-role{font-size:.69rem;color:var(--muted);font-weight:600;}
+
+    /* ── PAGE ── */
+    .page{flex:1;padding:28px 32px 40px;}
+
+    .breadcrumb{display:flex;align-items:center;gap:7px;font-size:.79rem;color:var(--muted);font-weight:600;margin-bottom:16px;}
+    .breadcrumb a{color:var(--teal);text-decoration:none;}
+    .breadcrumb a:hover{text-decoration:underline;}
+    .breadcrumb i{font-size:.62rem;}
+
+    .pg-header{display:flex;align-items:center;gap:13px;margin-bottom:26px;}
+    .pg-icon{width:42px;height:42px;background:linear-gradient(135deg,var(--teal),var(--teal-dark));border-radius:11px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.1rem;box-shadow:0 4px 12px rgba(59,191,173,.35);}
+    .pg-header h1{font-size:1.4rem;font-weight:800;margin:0;}
+    .pg-header h1 span{color:var(--teal);}
+
+    /* ── ALERTS ── */
+    .alert{display:flex;align-items:center;gap:11px;padding:13px 18px;border-radius:var(--radius-sm);font-size:.9rem;font-weight:600;margin-bottom:16px;animation:slideDown .3s ease;}
+    @keyframes slideDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+    .alert-success{background:#eafaf1;color:#1e8449;border:1.5px solid #a9dfbf;}
+    .alert-error,.alert-danger{background:#fdf3f2;color:#c0392b;border:1.5px solid #f5b7b1;}
+    .alert-info{background:var(--teal-light);color:var(--teal-deep);border:1.5px solid var(--teal-mid);}
+    .alert-close{margin-left:auto;cursor:pointer;background:none;border:none;font-size:1rem;color:inherit;opacity:.65;}
+
+    /* ── CARD ── */
+    .card{background:var(--card-bg);border-radius:var(--radius);box-shadow:var(--shadow);padding:30px 34px 34px;margin-bottom:22px;animation:fadeUp .4s ease both;}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+    .card-title{display:flex;align-items:center;gap:10px;font-size:.98rem;font-weight:800;color:var(--text);margin-bottom:20px;padding-bottom:14px;border-bottom:1.5px solid var(--border);}
+    .ti-circle{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.88rem;color:#fff;}
+    .ti-pdf{background:linear-gradient(135deg,#e74c3c,#c0392b);}
+    .ti-hand{background:linear-gradient(135deg,var(--orange),#d68910);}
+
+    /* ── UPLOAD ZONE ── */
+    .upload-zone{border:2.5px dashed var(--border);border-radius:var(--radius);background:#fafcff;padding:38px 20px;text-align:center;cursor:pointer;transition:border-color .25s,background .25s,transform .2s;position:relative;margin-bottom:18px;}
+    .upload-zone input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+    .upload-zone:hover,.upload-zone.drag-over{border-color:var(--teal);background:var(--teal-light);transform:scale(1.005);}
+    .uz-icon{font-size:2.6rem;color:var(--teal);margin-bottom:10px;display:block;}
+    .uz-title{font-size:.98rem;font-weight:700;color:var(--text);margin-bottom:4px;}
+    .uz-sub{font-size:.82rem;color:var(--muted);margin-bottom:14px;}
+    .uz-btn{display:inline-flex;align-items:center;gap:7px;padding:9px 22px;background:var(--card-bg);border:1.5px solid var(--teal);color:var(--teal-dark);border-radius:30px;font-size:.86rem;font-weight:700;transition:background .2s,color .2s;font-family:'Nunito',sans-serif;}
+    .upload-zone:hover .uz-btn{background:var(--teal);color:#fff;}
+
+    #file-feedback{display:none;align-items:center;gap:12px;padding:13px 18px;background:var(--teal-light);border:1.5px solid var(--teal-mid);border-radius:var(--radius-sm);margin-bottom:18px;font-size:.9rem;font-weight:600;color:var(--teal-deep);animation:slideDown .3s ease;}
+    #file-feedback .pdf-ic{color:var(--red);font-size:1.2rem;}
+    #file-feedback .fsize{color:var(--muted);font-size:.79rem;font-weight:500;}
+    #file-feedback .rm-btn{margin-left:auto;background:none;border:none;color:var(--red);cursor:pointer;font-size:1rem;transition:transform .2s;}
+    #file-feedback .rm-btn:hover{transform:scale(1.2);}
+
+    /* ── OPTIONS ROW ── */
+    .opts-row{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px;}
+    .opt-g label{display:block;font-size:.76rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;}
+    .form-sel,.form-inp{width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:#fff;font-family:'Nunito',sans-serif;font-size:.91rem;color:var(--text);outline:none;transition:border-color .2s,box-shadow .2s;appearance:none;-webkit-appearance:none;}
+    .form-sel{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='%237a8fa6' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:34px;}
+    .form-sel:focus,.form-inp:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(59,191,173,.12);}
+    textarea.form-inp{resize:vertical;min-height:88px;}
+
+    /* ── PROGRESS ── */
+    #gen-prog{display:none;margin-bottom:18px;}
+    .psteps{display:flex;gap:8px;margin-bottom:10px;}
+    .pstep{flex:1;padding:7px 6px;background:var(--page-bg);border:1.5px solid var(--border);border-radius:8px;text-align:center;font-size:.73rem;font-weight:700;color:var(--muted);transition:all .3s;}
+    .pstep.active{background:var(--teal-light);border-color:var(--teal);color:var(--teal-deep);}
+    .pstep.done{background:#eafaf1;border-color:#a9dfbf;color:#1e8449;}
+    .pbar-wrap{background:var(--page-bg);border-radius:30px;height:8px;overflow:hidden;}
+    .pbar{height:100%;background:linear-gradient(90deg,var(--teal),var(--green));border-radius:30px;width:0%;transition:width .4s ease;}
+    .plabel{display:flex;justify-content:space-between;font-size:.77rem;color:var(--muted);margin-top:5px;}
+
+    /* ── BUTTONS ── */
+    .btn{display:inline-flex;align-items:center;gap:9px;padding:12px 28px;border:none;border-radius:var(--radius-sm);font-family:'Nunito',sans-serif;font-size:.94rem;font-weight:800;cursor:pointer;transition:transform .15s,box-shadow .2s;}
+    .btn:hover{transform:translateY(-2px);}
+    .btn:active{transform:translateY(0);}
+    .btn-teal{background:linear-gradient(135deg,var(--teal),var(--teal-dark));color:#fff;box-shadow:0 4px 14px rgba(59,191,173,.35);}
+    .btn-teal:hover{box-shadow:0 6px 20px rgba(59,191,173,.45);}
+    .btn-green{background:linear-gradient(135deg,var(--green),var(--green-dark));color:#fff;box-shadow:0 4px 14px rgba(46,204,113,.3);}
+    .btn-green:hover{box-shadow:0 6px 20px rgba(46,204,113,.42);}
+    .btn-sm{padding:7px 16px;font-size:.82rem;}
+    .spinner{display:none;width:18px;height:18px;border:2.5px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* ── PREVIEW ── */
+    .preview-wrap{margin-top:28px;animation:fadeUp .4s ease both;}
+    .preview-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+    .preview-ttl{font-size:.98rem;font-weight:800;display:flex;align-items:center;gap:9px;}
+    .cnt-badge{background:var(--teal);color:#fff;border-radius:20px;padding:2px 11px;font-size:.74rem;font-weight:800;}
+    .q-grid{display:flex;flex-direction:column;gap:11px;}
+    .q-card{display:flex;gap:13px;align-items:flex-start;background:var(--page-bg);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:15px 17px;transition:border-color .2s,box-shadow .2s,transform .15s;}
+    .q-card:hover{border-color:var(--teal);box-shadow:0 4px 18px rgba(59,191,173,.12);transform:translateX(3px);}
+    .q-num{width:30px;height:30px;flex-shrink:0;background:linear-gradient(135deg,var(--teal),var(--teal-dark));color:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.79rem;font-weight:800;}
+    .q-body{flex:1;min-width:0;}
+    .q-tag{display:inline-block;padding:2px 9px;border-radius:5px;font-size:.71rem;font-weight:800;background:var(--teal-light);color:var(--teal-deep);margin-bottom:5px;text-transform:uppercase;}
+    .q-text{font-size:.91rem;font-weight:600;line-height:1.4;margin-bottom:7px;}
+    .q-opts{display:grid;grid-template-columns:1fr 1fr;gap:3px 14px;font-size:.82rem;color:var(--muted);}
+    .correct-opt{color:var(--green-dark);font-weight:700;}
+    .q-ans{font-size:.82rem;color:var(--teal-deep);font-weight:600;margin-top:5px;}
+    .btn-add-q{display:inline-flex;align-items:center;gap:6px;padding:7px 15px;background:var(--teal-light);border:1.5px solid var(--teal);color:var(--teal-deep);border-radius:8px;font-size:.81rem;font-weight:700;cursor:pointer;white-space:nowrap;transition:background .2s,color .2s;font-family:'Nunito',sans-serif;}
+    .btn-add-q:hover{background:var(--teal);color:#fff;}
+    .btn-add-q.added{background:var(--green);color:#fff;border-color:var(--green);}
+
+    /* ── DIVIDER ── */
+    .or-div{display:flex;align-items:center;gap:14px;color:var(--muted);font-size:.8rem;font-weight:800;text-transform:uppercase;letter-spacing:.07em;margin:6px 0 26px;}
+    .or-div::before,.or-div::after{content:'';flex:1;height:1.5px;background:var(--border);}
+
+    /* ── MANUAL FORM ── */
+    .manual-row{display:grid;grid-template-columns:200px 130px 1fr;gap:14px;margin-bottom:14px;align-items:end;}
+    .form-g label{display:block;font-size:.76rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;}
+    .mcq-wrap{display:none;margin-bottom:14px;}
+    .mcq-wrap.vis{display:block;}
+    .mcq-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:0;}
+    .opt-row{display:flex;align-items:center;gap:8px;}
+    .opt-ltr{width:28px;height:28px;flex-shrink:0;background:var(--teal-light);color:var(--teal-deep);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:.77rem;font-weight:800;}
+    .correct-row{display:none;align-items:center;gap:10px;margin-bottom:15px;}
+    .correct-row.vis{display:flex;}
+    .correct-row span{font-size:.84rem;font-weight:700;color:var(--muted);white-space:nowrap;}
+
+    /* ── FLOAT BTNS ── */
+    .floats{position:fixed;right:0;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:5px;z-index:200;}
+    .fb{display:flex;align-items:center;gap:8px;padding:12px 14px;font-size:.79rem;font-weight:800;color:#fff;cursor:pointer;border:none;border-radius:8px 0 0 8px;transition:padding .2s;}
+    .fb:hover{padding-right:20px;}
+    .fb.demo{background:linear-gradient(135deg,var(--teal),var(--teal-dark));}
+    .fb.sw{background:linear-gradient(135deg,#636e72,#2d3436);}
+
+    /* ── RESPONSIVE ── */
+    @media(max-width:900px){.sidebar{transform:translateX(-100%)}.main-wrap{margin-left:0}.opts-row{grid-template-columns:1fr 1fr}.manual-row{grid-template-columns:1fr 1fr}}
+    @media(max-width:600px){.page{padding:16px 12px 28px}.card{padding:18px 14px 22px}.opts-row,.manual-row,.mcq-grid,.q-opts{grid-template-columns:1fr}.tb-search{display:none}}
+  </style>
+</head>
+<body>
+
+<!-- ════════════ SIDEBAR ════════════ -->
+<aside class="sidebar">
+  <div class="sb-brand">
+    <div class="sb-logo">📚</div>
+    <div>
+      <div class="sb-name">EDUPILOT</div>
+      <div class="sb-sub">Teach · Track · Transform</div>
+    </div>
+  </div>
+  <nav class="sb-nav">
+    <a class="nav-a" href="#"><i class="fa fa-cog"></i> LMS Dashboard</a>
+    <a class="nav-a" href="#"><i class="fa fa-file-text-o"></i> Lecture Notes <i class="fa fa-chevron-right nav-arrow"></i></a>
+    <a class="nav-a" href="#"><i class="fa fa-tasks"></i> Assignments <i class="fa fa-chevron-right nav-arrow"></i></a>
+    <a class="nav-a" href="#"><i class="fa fa-globe"></i> Quizzes <i class="fa fa-chevron-right nav-arrow"></i></a>
+    <a class="nav-a" href="#"><i class="fa fa-book"></i> Daily Diary <i class="fa fa-chevron-right nav-arrow"></i></a>
+    <a class="nav-a active" href="#"><i class="fa fa-file-pdf-o"></i> Exam Formats <i class="fa fa-chevron-right nav-arrow"></i></a>
+    <div class="nav-lbl">Analytics</div>
+    <a class="nav-a" href="#"><i class="fa fa-bar-chart"></i> Forecaster Dashboard</a>
+  </nav>
+</aside>
+
+<!-- ════════════ MAIN ════════════ -->
+<div class="main-wrap">
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <button class="tb-toggle"><i class="fa fa-bars"></i></button>
+    <span class="tb-title">Dashboard</span>
+    <div class="tb-search">
+      <i class="fa fa-search"></i>
+      <input type="text" placeholder="Search something here..."/>
+    </div>
+    <div class="tb-actions">
+      <div class="tb-icon"><i class="fa fa-comment-o"></i><span class="bdot"></span></div>
+      <div class="tb-icon"><i class="fa fa-bell-o"></i><span class="bdot"></span></div>
+      <div class="tb-user">
+        <div class="av">OD</div>
+        <div>
+          <div class="av-name">Oda Dink</div>
+          <div class="av-role">Super Admin</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- PAGE -->
+  <div class="page">
+
+    <!-- Breadcrumb -->
+    <div class="breadcrumb">
+      <a href="#">Home</a><i class="fa fa-chevron-right"></i>
+      <a href="#">Exam Formats</a><i class="fa fa-chevron-right"></i>
+      <span>Add Question</span>
+    </div>
+
+    <!-- Page Header -->
+    <div class="pg-header">
+      <div class="pg-icon"><i class="fa fa-plus"></i></div>
+      <h1>Add Question &mdash; <span>{{ exam.title|default:"MidTerm 2026" }}</span></h1>
+    </div>
+
+    <!-- Django Messages -->
+    {% if messages %}
+      {% for message in messages %}
+      <div class="alert alert-{{ message.tags }}">
+        <i class="fa fa-{% if 'success' in message.tags %}check-circle{% elif 'error' in message.tags or 'danger' in message.tags %}times-circle{% else %}info-circle{% endif %}"></i>
+        {{ message }}
+        <button class="alert-close" onclick="this.parentElement.remove()">&times;</button>
+      </div>
+      {% endfor %}
+    {% endif %}
+
+    <!-- ════ CARD 1 — PDF Upload ════ -->
+    <div class="card" style="animation-delay:.04s">
+      <div class="card-title">
+        <span class="ti-circle ti-pdf"><i class="fa fa-file-pdf-o"></i></span>
+        Upload PDF to Generate Questions
+      </div>
+
+      <form method="post" enctype="multipart/form-data" id="pdf-form">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="generate_from_pdf">
+        {% if bank %}<input type="hidden" name="bank_id" value="{{ bank.id }}">{% endif %}
+        {% if exam %}<input type="hidden" name="exam_id" value="{{ exam.id }}">{% endif %}
+
+        <!-- Drop Zone -->
+        <div class="upload-zone" id="upload-zone">
+          <input type="file" name="pdf_file" id="pdf-input" accept=".pdf">
+          <i class="fa fa-cloud-upload uz-icon"></i>
+          <div class="uz-title">Drag &amp; drop your PDF here</div>
+          <div class="uz-sub">Supports PDF files up to 10 MB &nbsp;·&nbsp; Text-based PDFs only</div>
+          <span class="uz-btn"><i class="fa fa-folder-open-o"></i> Choose File</span>
+        </div>
+
+        <!-- File Feedback -->
+        <div id="file-feedback">
+          <i class="fa fa-file-pdf-o pdf-ic"></i>
+          <div>
+            <div id="fname"></div>
+            <div class="fsize" id="fsize"></div>
+          </div>
+          <button type="button" class="rm-btn" id="rm-file"><i class="fa fa-times-circle"></i></button>
+        </div>
+
+        <!-- Options -->
+        <div class="opts-row">
+          <div class="opt-g">
+            <label><i class="fa fa-list-ul"></i> &nbsp;Question Type</label>
+            <select name="question_type" class="form-sel">
+              <option value="MCQ">MCQ (Multiple Choice)</option>
+              <option value="TRUE_FALSE">True / False</option>
+              <option value="SHORT">Short Answer</option>
+              <option value="LONG">Long Answer</option>
+            </select>
+          </div>
+          <div class="opt-g">
+            <label><i class="fa fa-signal"></i> &nbsp;Difficulty</label>
+            <select name="difficulty" class="form-sel">
+              <option value="EASY">Easy</option>
+              <option value="MEDIUM" selected>Medium</option>
+              <option value="HARD">Hard</option>
+            </select>
+          </div>
+          <div class="opt-g">
+            <label><i class="fa fa-hashtag"></i> &nbsp;No. of Questions</label>
+            <input type="number" name="count" value="10" min="1" max="20" class="form-inp">
+          </div>
+        </div>
+
+        <!-- Progress -->
+        <div id="gen-prog">
+          <div class="psteps">
+            <div class="pstep" id="ps1"><i class="fa fa-upload"></i> Uploading</div>
+            <div class="pstep" id="ps2"><i class="fa fa-file-text-o"></i> Extracting</div>
+            <div class="pstep" id="ps3"><i class="fa fa-cog fa-spin"></i> Analyzing</div>
+            <div class="pstep" id="ps4"><i class="fa fa-magic"></i> Generating</div>
+          </div>
+          <div class="pbar-wrap"><div class="pbar" id="pbar"></div></div>
+          <div class="plabel"><span id="ptxt">Preparing…</span><span id="ppct">0%</span></div>
+        </div>
+
+        <button type="submit" class="btn btn-teal" id="btn-gen">
+          <div class="spinner" id="gen-spin"></div>
+          <i class="fa fa-bolt" id="gen-ic"></i>
+          <span id="gen-txt">Generate Questions</span>
+        </button>
+      </form>
+
+      <!-- Preview (after POST) -->
+      {% if generated_questions %}
+      <div class="preview-wrap">
+        <div class="preview-hd">
+          <div class="preview-ttl">
+            <i class="fa fa-magic" style="color:var(--teal)"></i>
+            AI Generated Questions
+            <span class="cnt-badge">{{ generated_questions|length }}</span>
+          </div>
+          <form method="post" style="display:inline">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="add_all_generated">
+            <input type="hidden" name="questions_json" value="{{ generated_questions_json }}">
+            {% if bank %}<input type="hidden" name="bank_id" value="{{ bank.id }}">{% endif %}
+            {% if exam %}<input type="hidden" name="exam_id" value="{{ exam.id }}">{% endif %}
+            <button type="submit" class="btn btn-green btn-sm">
+              <i class="fa fa-plus-circle"></i> Add All to Bank
+            </button>
+          </form>
+        </div>
+        <div class="q-grid">
+          {% for q in generated_questions %}
+          <div class="q-card">
+            <div class="q-num">{{ forloop.counter }}</div>
+            <div class="q-body">
+              <span class="q-tag">{{ q.type }}</span>
+              <div class="q-text">{{ q.question }}</div>
+              {% if q.options %}
+              <div class="q-opts">
+                {% for opt in q.options %}
+                <span {% if opt == q.correct_answer %}class="correct-opt"{% endif %}>
+                  {{ forloop.counter|add:64|chr }}) {{ opt }}{% if opt == q.correct_answer %} ✓{% endif %}
+                </span>
+                {% endfor %}
+              </div>
+              {% else %}
+              <div class="q-ans"><i class="fa fa-check-circle"></i> {{ q.correct_answer }}</div>
+              {% endif %}
+            </div>
+            <div>
+              <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="add_single">
+                <input type="hidden" name="question_text" value="{{ q.question }}">
+                <input type="hidden" name="question_type" value="{{ q.type }}">
+                <input type="hidden" name="options_json" value="{{ q.options_json }}">
+                <input type="hidden" name="correct_answer" value="{{ q.correct_answer }}">
+                {% if bank %}<input type="hidden" name="bank_id" value="{{ bank.id }}">{% endif %}
+                {% if exam %}<input type="hidden" name="exam_id" value="{{ exam.id }}">{% endif %}
+                <button type="submit" class="btn-add-q"><i class="fa fa-plus"></i> Add</button>
+              </form>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+    </div><!-- /card 1 -->
+
+    <!-- ════ CARD 2 — Manual ════ -->
+    <div class="card" style="animation-delay:.1s">
+      <div class="card-title">
+        <span class="ti-circle ti-hand"><i class="fa fa-pencil-square-o"></i></span>
+        Manual Question
+      </div>
+
+      <form method="post" id="manual-form">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="add_manual">
+        {% if bank %}<input type="hidden" name="bank_id" value="{{ bank.id }}">{% endif %}
+        {% if exam %}<input type="hidden" name="exam_id" value="{{ exam.id }}">{% endif %}
+
+        <div class="manual-row">
+          <div class="form-g">
+            <label>Select Type</label>
+            <select name="manual_type" class="form-sel" id="m-type">
+              <option value="" disabled selected>Select Type</option>
+              <option value="MCQ">MCQ</option>
+              <option value="TRUE_FALSE">True / False</option>
+              <option value="SHORT">Short Answer</option>
+              <option value="LONG">Long Answer</option>
+            </select>
+          </div>
+          <div class="form-g">
+            <label>Marks</label>
+            <input type="number" name="marks" class="form-inp" value="1" min="1" max="20">
+          </div>
+          <div class="form-g">
+            <label>Bloom's Level</label>
+            <select name="bloom_level" class="form-sel">
+              <option value="REMEMBER">Remember</option>
+              <option value="UNDERSTAND" selected>Understand</option>
+              <option value="APPLY">Apply</option>
+              <option value="ANALYZE">Analyze</option>
+              <option value="EVALUATE">Evaluate</option>
+              <option value="CREATE">Create</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-g" style="margin-bottom:14px">
+          <label>Enter Question</label>
+          <textarea name="question_text" class="form-inp" placeholder="Enter question here…" rows="3" required></textarea>
+        </div>
+
+        <!-- MCQ Options -->
+        <div class="mcq-wrap" id="mcq-wrap">
+          <div class="form-g" style="margin-bottom:9px"><label>Answer Options</label></div>
+          <div class="mcq-grid" style="margin-bottom:14px">
+            {% for l in "ABCD" %}
+            <div class="opt-row">
+              <span class="opt-ltr">{{ l }}</span>
+              <input type="text" name="option_{{ l|lower }}" class="form-inp" placeholder="Option {{ l }}" style="flex:1">
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- Correct Answer -->
+        <div class="correct-row" id="correct-row">
+          <i class="fa fa-check-circle" style="color:var(--green);font-size:1.1rem"></i>
+          <span>Correct Answer:</span>
+          <select name="correct_answer" class="form-sel" id="correct-sel" style="width:auto;min-width:155px">
+            <option value="">Select…</option>
+          </select>
+        </div>
+
+        <div class="form-g" style="margin-bottom:20px">
+          <label>Topic Tag <span style="text-transform:none;font-weight:400">(optional)</span></label>
+          <input type="text" name="topic_tag" class="form-inp" placeholder="e.g. Chapter 3 — Photosynthesis">
+        </div>
+
+        <button type="submit" class="btn btn-green">
+          <i class="fa fa-save"></i> Save Question
+        </button>
+      </form>
+
+    </div><!-- /card 2 -->
+
+  </div><!-- /page -->
+</div><!-- /main -->
+
+<!-- Float Buttons -->
+<div class="floats">
+  <button class="fb demo"><i class="fa fa-stack-overflow"></i> Demos</button>
+  <button class="fb sw"><i class="fa fa-cog"></i> Switcher</button>
+</div>
+
+<script>
+/* ── File Upload ── */
+const zone  = document.getElementById('upload-zone');
+const finp  = document.getElementById('pdf-input');
+const ffb   = document.getElementById('file-feedback');
+const fname = document.getElementById('fname');
+const fsize = document.getElementById('fsize');
+
+function fmt(b){return b<1024?b+' B':b<1048576?(b/1024).toFixed(1)+' KB':(b/1048576).toFixed(2)+' MB';}
+function showFile(n,s){fname.textContent=n;fsize.textContent=s?fmt(s):'';ffb.style.display='flex';zone.style.display='none';}
+function clearFile(){finp.value='';ffb.style.display='none';zone.style.display='block';}
+
+finp.addEventListener('change',function(){if(this.files.length)showFile(this.files[0].name,this.files[0].size);});
+document.getElementById('rm-file').addEventListener('click',clearFile);
+zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('drag-over');});
+zone.addEventListener('dragleave',()=>zone.classList.remove('drag-over'));
+zone.addEventListener('drop',e=>{
+  e.preventDefault();zone.classList.remove('drag-over');
+  const f=e.dataTransfer.files[0];
+  if(f&&f.type==='application/pdf'){
+    const dt=new DataTransfer();dt.items.add(f);finp.files=dt.files;showFile(f.name,f.size);
+  }
+});
+
+/* ── Generate Loading ── */
+document.getElementById('pdf-form').addEventListener('submit',function(){
+  if(!finp.files.length)return;
+  const btn=document.getElementById('btn-gen');
+  const spin=document.getElementById('gen-spin');
+  const ic=document.getElementById('gen-ic');
+  const txt=document.getElementById('gen-txt');
+  const prog=document.getElementById('gen-prog');
+  const bar=document.getElementById('pbar');
+  const pct=document.getElementById('ppct');
+  const ptxt=document.getElementById('ptxt');
+  spin.style.display='block';ic.style.display='none';
+  txt.textContent='Generating…';btn.disabled=true;prog.style.display='block';
+  const steps=[
+    {d:400, w:15, l:'Uploading PDF…',     id:'ps1'},
+    {d:1200,w:35, l:'Extracting text…',   id:'ps2'},
+    {d:2000,w:60, l:'Analyzing content…', id:'ps3'},
+    {d:3000,w:82, l:'Building questions…',id:'ps4'},
+    {d:3800,w:96, l:'Almost done…',       id:null},
+  ];
+  steps.forEach(({d,w,l,id})=>{
+    setTimeout(()=>{
+      bar.style.width=w+'%';pct.textContent=w+'%';ptxt.textContent=l;
+      if(id){document.getElementById(id).classList.add('active');}
+    },d);
+  });
+});
+
+/* ── Manual Form ── */
+const mType=document.getElementById('m-type');
+const mcqWrap=document.getElementById('mcq-wrap');
+const correctRow=document.getElementById('correct-row');
+const correctSel=document.getElementById('correct-sel');
+
+mType.addEventListener('change',function(){
+  const v=this.value;
+  mcqWrap.classList.remove('vis');correctRow.classList.remove('vis');
+  correctSel.innerHTML='<option value="">Select…</option>';
+  if(v==='MCQ'){
+    mcqWrap.classList.add('vis');correctRow.classList.add('vis');
+    ['A','B','C','D'].forEach(l=>correctSel.innerHTML+=`<option value="${l}">Option ${l}</option>`);
+  }else if(v==='TRUE_FALSE'){
+    correctRow.classList.add('vis');
+    ['True','False'].forEach(v=>correctSel.innerHTML+=`<option value="${v}">${v}</option>`);
+  }
+});
+
+/* ── Add button feedback ── */
+document.querySelectorAll('.btn-add-q').forEach(b=>b.addEventListener('click',function(){
+  this.classList.add('added');this.innerHTML='<i class="fa fa-check"></i> Added';
+}));
+
+/* ── Alert auto-close ── */
+document.querySelectorAll('.alert').forEach(el=>{
+  setTimeout(()=>{el.style.transition='opacity .4s';el.style.opacity='0';setTimeout(()=>el.remove(),400);},5000);
+});
+</script>
+</body>
+</html>

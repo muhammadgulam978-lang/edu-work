@@ -1,0 +1,8 @@
+<h2>Roles List</h2>
+<ul>
+  {% for role in roles %}
+    <li>{{ role.name }} - Permissions: {{ role.permissions.all|join:", " }}</li>
+  {% endfor %}
+</ul>
+
+<a href="{% url 'create_role' %}">➕ Create New Role</a>

@@ -1,0 +1,788 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Account Automation{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --sidebar-width: 300px;
+            --mint: #8ad4c9;
+            --mint-dark: #74c7bb;
+            --mint-text: #172421;   
+            --page-bg: #f7f7f8;
+            --panel: #ffffff;
+            --muted: #77768b;
+            --line: #ececf1;
+            --green: #84c83a;
+            --blue: #46a9ef;
+            --orange: #ff8b1a;
+            --teal: #21b7a7;
+        }
+
+        * { box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: var(--page-bg);
+            color: #050505;
+            font-family: 'Poppins', 'Segoe UI', Tahoma, sans-serif;
+        }
+
+        .automation-shell { min-height: 100vh; }
+
+        .deznav {
+            position: fixed;
+            inset: 0 auto 0 0;
+            width: var(--sidebar-width);
+            background: var(--mint);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            border-top-right-radius: 22px;
+            overflow: hidden;
+        }
+
+        .deznav-brand {
+            min-height: 184px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 18px 22px 16px;
+        }
+
+        .brand-logo {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            color: #000;
+            line-height: 1;
+        }
+
+        .brand-logo img {
+            width: 150px;
+            max-width: 78%;
+            height: auto;
+            object-fit: contain;
+            display: block;
+        }
+
+        .brand-logo strong {
+            font-size: 35px;
+            font-weight: 800;
+            letter-spacing: -0.04em;
+        }
+
+        .brand-logo small {
+            font-size: 8px;
+            font-weight: 600;
+            letter-spacing: 0;
+        }
+
+        .deznav-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0 0 18px;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0,0,0,.18) transparent;
+        }
+
+        .deznav-scroll::-webkit-scrollbar { width: 5px; }
+        .deznav-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,.18); border-radius: 10px; }
+
+        .metismenu,
+        .metismenu ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .metismenu > li { margin: 0 0 10px; }
+
+        .metismenu a {
+            color: #000;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            min-height: 66px;
+            padding: 14px 28px 14px 44px;
+            font-size: 22px;
+            font-weight: 600;
+            border-top-right-radius: 22px;
+            border-bottom-right-radius: 22px;
+            transition: background .18s ease, color .18s ease, transform .18s ease;
+        }
+
+        .metismenu a i {
+            width: 22px;
+            min-width: 22px;
+            text-align: center;
+            color: #000;
+            font-size: 21px;
+        }
+
+        .metismenu a:hover,
+        .metismenu a.mm-active,
+        .metismenu a.active-link {
+            background: #fff;
+            color: #000;
+        }
+
+        .metismenu a:hover { transform: translateX(2px); }
+
+        .metismenu .has-arrow::after {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-right: 1.7px solid currentColor;
+            border-bottom: 1.7px solid currentColor;
+            transform: rotate(-45deg);
+            margin-left: auto;
+            opacity: .55;
+            transition: transform .2s ease;
+        }
+
+        .metismenu li.mm-active > .has-arrow::after { transform: rotate(45deg); }
+
+        .metismenu ul {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height .28s ease;
+            background: rgba(255,255,255,.18);
+            border-top-right-radius: 22px;
+            border-bottom-right-radius: 22px;
+            margin-right: 0;
+        }
+
+        .metismenu li.mm-active > ul { max-height: 1200px; }
+
+        .metismenu ul a {
+            min-height: 40px;
+            padding: 9px 24px 9px 84px;
+            font-size: 16px;
+            font-weight: 500;
+            border-radius: 0;
+        }
+
+        /* Replaced dots with specific styling for sub-menu icons */
+        .metismenu ul a i {
+            font-size: 16px;
+            width: 18px;
+            min-width: 18px;
+            opacity: 0.8;
+        }
+
+        .metismenu ul a:hover,
+        .metismenu ul a.active-link {
+            background: rgba(255,255,255,.75);
+        }
+
+        .sidebar-section {
+            padding: 16px 30px 8px;
+            color: rgba(0,0,0,.48);
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
+
+        .copyright {
+            padding: 12px 26px 18px;
+            color: rgba(0,0,0,.45);
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .main-content {
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+            width: calc(100% - var(--sidebar-width));
+            background: #f8f8f9;
+        }
+
+        .topbar {
+            height: 164px;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 28px;
+            padding: 74px 58px 28px 72px;
+            background: #fff;
+        }
+
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+        }
+
+        .menu-toggle {
+            width: 38px;
+            height: 38px;
+            border: 0;
+            background: transparent;
+            color: var(--mint-dark);
+            font-size: 30px;
+            line-height: 1;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .topbar h1 {
+            margin: 0;
+            color: #000;
+            font-size: 34px;
+            font-weight: 700;
+            letter-spacing: 0;
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 26px;
+            margin-top: -12px;
+        }
+
+        .search-box {
+            width: min(410px, 34vw);
+            height: 52px;
+            border-radius: 28px;
+            background: #ececec;
+            display: flex;
+            align-items: center;
+            padding: 0 22px;
+            color: #6c7080;
+        }
+
+        .search-box input {
+            width: 100%;
+            border: 0;
+            outline: 0;
+            background: transparent;
+            color: #606579;
+            font-size: 16px;
+            font-family: inherit;
+        }
+
+        .search-box i { font-size: 18px; color: #627287; }
+
+        .bell-wrap {
+            position: relative;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #283744;
+            font-size: 22px;
+        }
+
+        .bell-badge {
+            position: absolute;
+            top: -8px;
+            right: -6px;
+            min-width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--mint);
+            color: #fff;
+            font-size: 12px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
+
+        .user-copy {
+            text-align: right;
+            line-height: 1.25;
+        }
+
+        .user-copy strong {
+            display: block;
+            color: #000;
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .user-copy span {
+            color: #8b879d;
+            font-size: 20px;
+            font-weight: 500;
+        }
+
+        .avatar {
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            background: #f3f3f3;
+            color: #85858c;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+        }
+
+        .content {
+            padding: 26px 58px 50px 72px;
+        }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 36px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            min-height: 116px;
+            border-radius: 8px;
+            padding: 28px 34px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            background: var(--mint);
+            color: #fff;
+            box-shadow: 0 9px 16px rgba(0,0,0,.08);
+            overflow: hidden;
+        }
+
+        .stat-card:nth-child(2) { background: var(--blue); }
+        .stat-card:nth-child(3) { background: var(--green); }
+        .stat-card:nth-child(4) { background: #8acb3d; }
+
+        .stat-card .ic {
+            width: 66px !important;
+            height: 66px !important;
+            border-radius: 10px !important;
+            border: 1px solid rgba(255,255,255,.65);
+            background: rgba(255,255,255,.12) !important;
+            color: #fff;
+            box-shadow: none !important;
+            font-size: 31px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            order: 0;
+        }
+
+        .stat-card > div:last-child {
+            text-align: right;
+            order: 1;
+            display: flex;
+            flex-direction: column-reverse;
+            align-items: flex-end;
+        }
+
+        .stat-card .num {
+            color: #fff;
+            font-size: 58px;
+            font-weight: 700;
+            line-height: 1;
+            letter-spacing: 0;
+            white-space: nowrap;
+        }
+
+        .stat-card .lbl {
+            color: #fff;
+            font-size: 23px;
+            font-weight: 500;
+            margin-bottom: 16px;
+            line-height: 1.2;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 8px;
+            padding: 28px 32px;
+            margin-bottom: 30px;
+            box-shadow: 0 6px 18px rgba(0,0,0,.035);
+            border: 1px solid rgba(0,0,0,.015);
+        }
+
+        .card h3 {
+            margin: 0 0 22px;
+            color: #000;
+            font-size: 24px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .card h3::before {
+            content: '';
+            width: 5px;
+            height: 20px;
+            border-radius: 4px;
+            background: var(--teal);
+            flex: 0 0 auto;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: minmax(0, 1.35fr) minmax(320px, .95fr);
+            gap: 30px;
+            margin-bottom: 0;
+        }
+
+        .card p,
+        .card div,
+        .card label {
+            font-size: 18px;
+        }
+
+        label {
+            color: #171717;
+            font-weight: 500;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        input[type="email"],
+        input[type="date"],
+        input[type="time"],
+        select,
+        textarea {
+            min-height: 42px;
+            border: 1px solid #e5e5e5;
+            border-radius: 8px;
+            padding: 9px 12px;
+            font-family: inherit;
+            font-size: 15px;
+            outline: 0;
+            background: #fff;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            border-color: var(--mint-dark);
+            box-shadow: 0 0 0 3px rgba(138,212,201,.2);
+        }
+
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--mint-dark);
+            vertical-align: middle;
+        }
+
+        .btn-teal,
+        button.btn-teal,
+        a.btn-teal {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 42px;
+            border: 0;
+            border-radius: 8px;
+            padding: 10px 18px;
+            background: var(--mint-dark);
+            color: #fff !important;
+            font-family: inherit;
+            font-size: 15px;
+            font-weight: 700;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background .18s ease, transform .18s ease;
+        }
+
+        .btn-teal:hover {
+            background: #5db9ac;
+            transform: translateY(-1px);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 15px;
+        }
+
+        th {
+            text-align: left;
+            color: #7a7a86;
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            padding: 13px 10px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        td {
+            color: #1e1e1e;
+            padding: 14px 10px;
+            border-bottom: 1px solid #f1f1f4;
+            vertical-align: top;
+        }
+
+        tr:hover td { background: #fbfbfc; }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border-radius: 18px;
+            padding: 5px 13px;
+            font-size: 12px !important;
+            font-weight: 800;
+            text-transform: uppercase;
+            line-height: 1.2;
+        }
+
+        .badge::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .badge-green { background: #d7f5e4; color: #08765a; }
+        .badge-yellow { background: #fff0bf; color: #906d00; }
+        .badge-red { background: #fde3df; color: #c0392b; }
+
+        .messages {
+            display: grid;
+            gap: 10px;
+            margin-bottom: 22px;
+        }
+
+        .message {
+            border-radius: 8px;
+            padding: 13px 16px;
+            background: #fff;
+            border-left: 5px solid var(--mint-dark);
+            box-shadow: 0 3px 12px rgba(0,0,0,.05);
+            color: #111;
+            font-weight: 500;
+        }
+
+        .message.error { border-left-color: #c0392b; }
+        .message.success { border-left-color: #1f9d68; }
+
+        .table-wrap {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        @media (max-width: 1180px) {
+            :root { --sidebar-width: 270px; }
+            .topbar,
+            .content { padding-left: 42px; padding-right: 36px; }
+            .topbar h1 { font-size: 30px; }
+            .search-box { width: 300px; }
+            .grid-2 { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 860px) {
+            .deznav {
+                transform: translateX(-100%);
+                transition: transform .25s ease;
+                border-radius: 0 22px 22px 0;
+            }
+            .deznav.deznav-open { transform: translateX(0); }
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+            }
+            .topbar {
+                height: auto;
+                padding: 24px;
+                align-items: center;
+                flex-wrap: wrap;
+            }
+            .topbar-right {
+                width: 100%;
+                margin-top: 0;
+                justify-content: space-between;
+                gap: 12px;
+            }
+            .search-box {
+                width: 100%;
+                order: 3;
+            }
+            .content { padding: 22px; }
+            .stat-card { padding: 22px; }
+            .stat-card .num { font-size: 44px; }
+            .stat-card .lbl { font-size: 18px; }
+            .card { padding: 22px; }
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+<div class="automation-shell">
+    <aside class="deznav" id="automationSidebar">
+        <div class="deznav-brand">
+            <a href="{% url 'admin_panel_dashboard' %}" class="brand-logo">
+                <img src="{% static 'admin_panel/images/final final.png' %}" alt="EDUPILOT">
+                <strong>EDUPILOT</strong>
+                <small>TEACH, TRACK, TRANSFORM</small>
+            </a>
+        </div>
+
+        <div class="deznav-scroll">
+            <ul class="metismenu" id="automationMenu">
+                <li>
+                    <a href="{% url 'admin_panel_dashboard' %}" class="ai-icon">
+                        <i class="fas fa-th-large"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="has-menu mm-active">
+                    <a href="javascript:void(0)" class="has-arrow ai-icon mm-active">
+                        <i class="fas fa-sliders"></i>
+                        <span>Account Automation</span>
+                    </a>
+                    <ul>
+                        <li><a href="{% url 'automation-dashboard' %}" class="{% if request.resolver_match.url_name == 'automation-dashboard' %}active-link{% endif %}"><i class="fas fa-chart-pie"></i> <span>Dashboard</span></a></li>
+                        <li><a href="{% url 'fee-automation' %}" class="{% if request.resolver_match.url_name == 'fee-automation' %}active-link{% endif %}"><i class="fas fa-money-check-dollar"></i> <span>Fee Automation</span></a></li>
+                        <li><a href="{% url 'voucher-management' %}" class="{% if request.resolver_match.url_name == 'voucher-management' %}active-link{% endif %}"><i class="fas fa-file-invoice"></i> <span>Voucher Management</span></a></li>
+                        <li><a href="{% url 'notification-queue' %}" class="{% if request.resolver_match.url_name == 'notification-queue' %}active-link{% endif %}"><i class="fas fa-bell"></i> <span>Notification Queue</span></a></li>
+                        <li><a href="{% url 'salary-automation' %}" class="{% if request.resolver_match.url_name == 'salary-automation' %}active-link{% endif %}"><i class="fas fa-money-bill-wave"></i> <span>Salary Automation</span></a></li>
+                        <li><a href="{% url 'payslip-management' %}" class="{% if request.resolver_match.url_name == 'payslip-management' %}active-link{% endif %}"><i class="fas fa-file-signature"></i> <span>Payslip Management</span></a></li>
+                        <li><a href="{% url 'automation-logs' %}" class="{% if request.resolver_match.url_name == 'automation-logs' %}active-link{% endif %}"><i class="fas fa-clipboard-list"></i> <span>Automation Logs</span></a></li>
+                        <li><a href="{% url 'automation-settings' %}" class="{% if request.resolver_match.url_name == 'automation-settings' %}active-link{% endif %}"><i class="fas fa-cogs"></i> <span>Automation Settings</span></a></li>
+                    </ul>
+                </li>
+                <li class="has-menu">
+                    <a href="javascript:void(0)" class="has-arrow ai-icon">
+                        <i class="fas fa-database"></i>
+                        <span>Data Management</span>
+                    </a>
+                    <ul>
+                        <li><a href="{% url 'crud-list' model_name='feehead' %}"><i class="fas fa-tags"></i> <span>Fee Heads</span></a></li>
+                        <li><a href="{% url 'crud-list' model_name='feeplan' %}"><i class="fas fa-map"></i> <span>Fee Plans</span></a></li>
+                        <li><a href="{% url 'crud-list' model_name='feeplandetail' %}"><i class="fas fa-circle-info"></i> <span>Fee Plan Details</span></a></li>
+                        <li><a href="{% url 'crud-list' model_name='transportroute' %}"><i class="fas fa-bus"></i> <span>Transport Routes</span></a></li>
+                        <li><a href="{% url 'crud-list' model_name='scholarship' %}"><i class="fas fa-graduation-cap"></i> <span>Scholarships</span></a></li>
+                        <li><a href="{% url 'crud-list' model_name='feevoucher' %}"><i class="fas fa-receipt"></i> <span>Fee Vouchers</span></a></li>
+                        <li><a href="{% url 'crud-list' model_name='feevoucheritem' %}"><i class="fas fa-list"></i> <span>Fee Voucher Items</span></a></li>
+                        <li><a href="{% url 'crud-list' model_name='feegenerationsettings' %}"><i class="fas fa-sliders"></i> <span>Fee Generation Settings</span></a></li>
+                        <li><a href="{% url 'crud-list' model_name='feegenerationlog' %}"><i class="fas fa-clock-rotate-left"></i> <span>Fee Generation Logs</span></a></li>
+                        <li><a href="{% url 'crud-list' model_name='student' %}"><i class="fas fa-user-graduate"></i> <span>Students</span></a></li>
+                        <li><a href="{% url 'crud-list' model_name='studentfeeassignment' %}"><i class="fas fa-clipboard-check"></i> <span>Student Fee Assignments</span></a></li>
+                        <li><a href="{% url 'crud-list' model_name='studentledger' %}"><i class="fas fa-book"></i> <span>Student Ledgers</span></a></li>
+                        <li><a href="{% url 'crud-list' model_name='studentbalance' %}"><i class="fas fa-scale-balanced"></i> <span>Student Balances</span></a></li>
+                        <li><a href="{% url 'crud-list' model_name='studentperformance' %}"><i class="fas fa-chart-line"></i> <span>Student Performance</span></a></li>
+                        <li><a href="{% url 'crud-list' model_name='teacher' %}"><i class="fas fa-chalkboard-user"></i> <span>Teachers</span></a></li>
+                        <li><a href="{% url 'crud-list' model_name='salarystructure' %}"><i class="fas fa-sitemap"></i> <span>Salary Structures</span></a></li>
+                        <li><a href="{% url 'crud-list' model_name='salaryvoucher' %}"><i class="fas fa-envelope-open-text"></i> <span>Salary Vouchers</span></a></li>
+                        <li><a href="{% url 'crud-list' model_name='salaryautomationsettings' %}"><i class="fas fa-screwdriver-wrench"></i> <span>Salary Automation Settings</span></a></li>
+                        <li><a href="{% url 'crud-list' model_name='salaryautomationjob' %}"><i class="fas fa-briefcase"></i> <span>Salary Automation Jobs</span></a></li>
+                        <li><a href="{% url 'crud-list' model_name='salaryautomationjobdetail' %}"><i class="fas fa-circle-info"></i> <span>Salary Job Details</span></a></li>
+                        <li><a href="{% url 'crud-list' model_name='staff' %}"><i class="fas fa-users"></i> <span>Staff</span></a></li>
+                        <li><a href="{% url 'crud-list' model_name='transaction' %}"><i class="fas fa-arrow-right-arrow-left"></i> <span>Transactions</span></a></li>
+                        <li><a href="{% url 'crud-list' model_name='automationjob' %}"><i class="fas fa-robot"></i> <span>Automation Jobs</span></a></li>
+                        <li><a href="{% url 'crud-list' model_name='automationjobdetail' %}"><i class="fas fa-magnifying-glass-chart"></i> <span>Automation Job Details</span></a></li>
+                        <li><a href="{% url 'crud-list' model_name='notificationqueue' %}"><i class="fas fa-flag"></i> <span>Notification Queue (Data)</span></a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+
+        <div class="copyright">EduPilot &copy; {% now "Y" %}</div>
+    </aside>
+
+    <main class="main-content">
+        <header class="topbar">
+            <div class="topbar-left">
+                <button type="button" class="menu-toggle" id="mobileMenuToggle" aria-label="Toggle sidebar">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1>{% block page_title %}Dashboard{% endblock %}</h1>
+            </div>
+            <div class="topbar-right">
+                <div class="search-box">
+                    <input type="search" placeholder="Search something here..." aria-label="Search">
+                    <i class="fas fa-search"></i>
+                </div>
+                <div class="bell-wrap">
+                    <i class="fas fa-bell"></i>
+                    <span class="bell-badge">{{ notifications_today|default:"52" }}</span>
+                </div>
+                <div class="user-info">
+                    <div class="user-copy">
+                        <strong>{{ request.user.get_full_name|default:request.user.username|default:"Admin" }}</strong>
+                        <span>Super Admin</span>
+                    </div>
+                    <div class="avatar"><i class="fas fa-user"></i></div>
+                </div>
+            </div>
+        </header>
+
+        <section class="content">
+            {% if messages %}
+                <div class="messages">
+                    {% for message in messages %}
+                        <div class="message {{ message.tags }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            {% block content %}{% endblock %}
+        </section>
+    </main>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var menu = document.getElementById('automationMenu');
+    var sidebar = document.getElementById('automationSidebar');
+    var toggleBtn = document.getElementById('mobileMenuToggle');
+
+    if (menu) {
+        menu.querySelectorAll('li.has-menu > a.has-arrow').forEach(function (link) {
+            link.addEventListener('click', function (event) {
+                event.preventDefault();
+                var parent = link.parentElement;
+                var wasOpen = parent.classList.contains('mm-active');
+                menu.querySelectorAll(':scope > li.has-menu.mm-active').forEach(function (openItem) {
+                    if (openItem !== parent) openItem.classList.remove('mm-active');
+                });
+                parent.classList.toggle('mm-active', !wasOpen);
+                link.classList.toggle('mm-active', !wasOpen);
+            });
+        });
+
+        menu.querySelectorAll('a[href]').forEach(function (link) {
+            var href = link.getAttribute('href');
+            if (!href || href === '#' || href.indexOf('javascript:') === 0) return;
+            if (window.location.pathname.indexOf(href) === 0) {
+                link.classList.add('active-link');
+                var parentMenu = link.closest('ul') && link.closest('ul').closest('li.has-menu');
+                if (parentMenu) {
+                    parentMenu.classList.add('mm-active');
+                    var topLink = parentMenu.querySelector(':scope > a');
+                    if (topLink) topLink.classList.add('mm-active');
+                }
+            }
+        });
+    }
+
+    if (toggleBtn && sidebar) {
+        toggleBtn.addEventListener('click', function () {
+            sidebar.classList.toggle('deznav-open');
+        });
+    }
+});
+</script>
+</body>
+</html>

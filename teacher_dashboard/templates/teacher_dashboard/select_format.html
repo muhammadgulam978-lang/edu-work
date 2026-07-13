@@ -1,0 +1,35 @@
+{% extends "teacher_dashboard/lms_action_base.html" %}
+{% load static %}
+
+{% block title %}Exam Formats{% endblock %}
+
+{% block content %}
+<div class="card" style="background: #f8f9fa; margin-left: 20px; margin-right: 20px;">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h4 class="card-title">📑 Formats for {{ class_obj.name }} / {{ subject_obj.name }}</h4>
+  </div>
+
+  <div class="card-body">
+    {% if formats_with_sections %}
+      <ul class="list-group">
+        {% for item in formats_with_sections %}
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+              <div class="fw-bold">{{ item.format.format_name }}</div>
+              <small class="text-muted">Section: {{ item.section.section_name }}</small>
+            </div>
+            <div>
+              <a href="{% url 'add_question' item.format.class_obj.id item.format.subject.id item.format.id item.section.id %}" 
+                 class="btn btn-sm btn-success">
+                ➕ Add Question
+              </a>
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="text-muted">No formats available.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,576 @@
+{% extends "admin_panel/base.html" %}
+{% load static %}
+
+{% block title %}{{ bank.subject.name }} — Question Bank{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+  :root {
+    --ep-green:        #2e7d32;
+    --ep-green-dark:   #1b5e20;
+    --ep-green-light:  #4caf50;
+    --ep-green-pale:   #e8f5e9;
+    --ep-green-mid:    #c8e6c9;
+    --ep-white:        #ffffff;
+    --ep-grey-50:      #fafafa;
+    --ep-grey-100:     #f5f5f5;
+    --ep-grey-200:     #eeeeee;
+    --ep-grey-400:     #bdbdbd;
+    --ep-grey-600:     #757575;
+    --ep-grey-800:     #424242;
+    --ep-grey-900:     #212121;
+    --ep-orange:       #e65100;
+    --ep-orange-pale:  #fff3e0;
+    --ep-blue:         #1565c0;
+    --ep-blue-pale:    #e3f2fd;
+    --ep-purple:       #6a1b9a;
+    --ep-purple-pale:  #f3e5f5;
+    --ep-red:          #c62828;
+    --ep-red-pale:     #ffebee;
+    --ep-radius:       10px;
+    --ep-shadow:       0 1px 3px rgba(0,0,0,.08);
+  }
+
+  .qd-wrapper { max-width: 1180px; margin: 0 auto; padding: 32px 24px 80px; font-family: 'Inter', sans-serif; }
+
+  .qd-page-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
+  .qd-header-left { display: flex; align-items: center; gap: 14px; }
+  .qd-back-btn {
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 14px; background: var(--ep-white); border: 1px solid var(--ep-grey-200);
+    border-radius: 7px; color: var(--ep-grey-600); text-decoration: none; font-size: 13px; transition: all .15s;
+  }
+  .qd-back-btn:hover { color: var(--ep-green); border-color: var(--ep-green); }
+  .qd-header-title h1 { font-size: 20px; font-weight: 700; color: var(--ep-grey-900); }
+  .qd-header-title p  { font-size: 12.5px; color: var(--ep-grey-600); margin-top: 3px; }
+
+  .qd-header-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+  .qd-btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 9px 16px; border-radius: 7px; font-family: 'Inter', sans-serif;
+    font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none;
+    border: none; transition: all .15s;
+  }
+  .qd-btn-primary   { background: var(--ep-green); color: #fff; }
+  .qd-btn-primary:hover { background: var(--ep-green-dark); }
+  .qd-btn-secondary { background: var(--ep-grey-100); border: 1px solid var(--ep-grey-200); color: var(--ep-grey-800); }
+  .qd-btn-secondary:hover { background: var(--ep-grey-200); }
+  .qd-btn-outline   { background: var(--ep-white); border: 1.5px solid var(--ep-green); color: var(--ep-green); }
+  .qd-btn-outline:hover { background: var(--ep-green-pale); }
+  .qd-btn-danger    { background: var(--ep-red-pale); border: 1px solid #ffcdd2; color: var(--ep-red); }
+  .qd-btn-danger:hover { background: #ffcdd2; }
+  .qd-btn-sm { padding: 6px 12px; font-size: 12px; }
+
+  .qd-stats-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 22px; }
+  @media (max-width:700px) { .qd-stats-bar { grid-template-columns: repeat(2,1fr); } }
+  .qd-stat-card {
+    background: var(--ep-white); border: 1px solid var(--ep-grey-200); border-radius: var(--ep-radius);
+    padding: 16px 18px; box-shadow: var(--ep-shadow);
+  }
+  .qd-stat-card .label { font-size: 11px; font-weight: 600; color: var(--ep-grey-600); text-transform: uppercase; letter-spacing:.05em; }
+  .qd-stat-card .value { font-size: 26px; font-weight: 700; margin-top: 4px; }
+  .qd-stat-card.total .value    { color: var(--ep-grey-900); }
+  .qd-stat-card.approved .value { color: var(--ep-green); }
+  .qd-stat-card.pending .value  { color: var(--ep-orange); }
+  .qd-stat-card.ai .value       { color: var(--ep-blue); }
+
+  .qd-messages { margin-bottom: 16px; }
+  .qd-alert {
+    padding: 11px 16px; border-radius: 8px; font-size: 13.5px; margin-bottom: 8px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .qd-alert-success { background: var(--ep-green-pale); border: 1px solid var(--ep-green-mid); color: var(--ep-green-dark); }
+  .qd-alert-error   { background: var(--ep-red-pale); border: 1px solid #ffcdd2; color: #b71c1c; }
+  .qd-alert-warning { background: var(--ep-orange-pale); border: 1px solid #ffe0b2; color: var(--ep-orange); }
+  .qd-alert-info    { background: var(--ep-blue-pale); border: 1px solid #bbdefb; color: var(--ep-blue); }
+
+  .qd-filter-bar {
+    background: var(--ep-white); border: 1px solid var(--ep-grey-200); border-radius: var(--ep-radius);
+    padding: 14px 18px; margin-bottom: 18px; box-shadow: var(--ep-shadow);
+    display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+  }
+  .qd-filter-bar label { font-size: 12px; color: var(--ep-grey-600); font-weight: 600; text-transform: uppercase; letter-spacing:.04em; }
+  .qd-filter-bar select {
+    padding: 7px 28px 7px 12px; background: var(--ep-white); border: 1.5px solid var(--ep-grey-200);
+    border-radius: 7px; color: var(--ep-grey-900); font-family: 'Inter', sans-serif; font-size: 13px;
+    outline: none; cursor: pointer; transition: border-color .15s; appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23757575' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 10px center;
+  }
+  .qd-filter-bar select:focus { border-color: var(--ep-green); }
+
+  .qd-questions-list { display: flex; flex-direction: column; gap: 10px; }
+
+  .qd-q-card {
+    background: var(--ep-white); border: 1px solid var(--ep-grey-200); border-radius: var(--ep-radius);
+    overflow: hidden; transition: border-color .15s; box-shadow: var(--ep-shadow);
+  }
+  .qd-q-card:hover { border-color: var(--ep-green-light); }
+  .qd-q-card.approved-card { border-left: 3px solid var(--ep-green); }
+  .qd-q-card.pending-card  { border-left: 3px solid var(--ep-orange); }
+
+  .qd-q-header {
+    padding: 13px 18px; display: flex; align-items: center; gap: 12px;
+    cursor: pointer; user-select: none;
+  }
+  .qd-q-num {
+    width: 27px; height: 27px; border-radius: 50%;
+    background: var(--ep-grey-100); border: 1px solid var(--ep-grey-200);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700;
+    color: var(--ep-grey-600); flex-shrink: 0;
+  }
+  .qd-q-preview { flex: 1; font-size: 13.5px; color: var(--ep-grey-900); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .qd-q-meta { display: flex; gap: 7px; align-items: center; flex-shrink: 0; flex-wrap: wrap; }
+
+  .qd-tag {
+    padding: 3px 10px; border-radius: 20px; font-size: 10.5px; font-weight: 600;
+    letter-spacing: .02em;
+  }
+  .qd-tag-mcq         { background: var(--ep-blue-pale);   color: var(--ep-blue); }
+  .qd-tag-short       { background: var(--ep-green-pale);  color: var(--ep-green-dark); }
+  .qd-tag-long        { background: var(--ep-purple-pale); color: var(--ep-purple); }
+  .qd-tag-conceptual  { background: var(--ep-grey-200);    color: var(--ep-grey-800); }
+  .qd-tag-easy        { background: var(--ep-green-pale);  color: var(--ep-green-dark); }
+  .qd-tag-medium      { background: var(--ep-orange-pale); color: var(--ep-orange); }
+  .qd-tag-hard        { background: var(--ep-red-pale);    color: var(--ep-red); }
+  .qd-tag-ai          { background: var(--ep-blue-pale);   color: var(--ep-blue); }
+  .qd-tag-approved    { background: var(--ep-green-pale);  color: var(--ep-green-dark); }
+  .qd-tag-pending     { background: var(--ep-orange-pale); color: var(--ep-orange); }
+  .qd-tag-marks       { background: var(--ep-grey-100);    color: var(--ep-grey-600); border: 1px solid var(--ep-grey-200); }
+
+  .qd-chevron {
+    width: 16px; height: 16px; color: var(--ep-grey-400);
+    transition: transform .2s; flex-shrink: 0;
+  }
+  .qd-q-card.open .qd-chevron { transform: rotate(180deg); }
+
+  .qd-q-body { display: none; padding: 0 18px 18px; border-top: 1px solid var(--ep-grey-100); }
+  .qd-q-card.open .qd-q-body { display: block; }
+
+  .qd-q-text-full { font-size: 14px; color: var(--ep-grey-900); line-height: 1.7; padding: 14px 0 12px; }
+
+  .qd-options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+  @media (max-width:600px) { .qd-options-grid { grid-template-columns: 1fr; } }
+  .qd-option-item {
+    padding: 9px 12px; border-radius: 7px; font-size: 13px;
+    background: var(--ep-grey-50); border: 1px solid var(--ep-grey-200);
+    display: flex; align-items: center; gap: 8px; color: var(--ep-grey-900);
+  }
+  .qd-option-item.correct { background: var(--ep-green-pale); border-color: var(--ep-green-mid); color: var(--ep-green-dark); }
+  .qd-option-key {
+    width: 20px; height: 20px; border-radius: 4px;
+    background: var(--ep-white); border: 1px solid var(--ep-grey-200);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700; flex-shrink: 0;
+  }
+  .qd-option-item.correct .qd-option-key { background: var(--ep-green-mid); border-color: var(--ep-green); color: var(--ep-green-dark); }
+
+  .qd-answer-box {
+    padding: 10px 14px; background: var(--ep-green-pale); border: 1px solid var(--ep-green-mid);
+    border-radius: 7px; font-size: 13px; color: var(--ep-green-dark); margin-bottom: 14px;
+  }
+  .qd-answer-box strong { display: block; font-size: 11px; text-transform: uppercase; letter-spacing:.04em; margin-bottom: 4px; color: var(--ep-grey-600); }
+
+  .qd-edit-form { display: none; border-top: 1px solid var(--ep-grey-200); padding-top: 16px; margin-top: 8px; }
+  .qd-edit-form.show { display: block; }
+
+  .qd-edit-form textarea,
+  .qd-edit-form input[type="text"],
+  .qd-edit-form select {
+    width: 100%; padding: 9px 13px;
+    background: var(--ep-white); border: 1.5px solid var(--ep-grey-200); border-radius: 7px;
+    color: var(--ep-grey-900); font-family: 'Inter', sans-serif; font-size: 13.5px;
+    outline: none; transition: border-color .15s; resize: vertical;
+  }
+  .qd-edit-form textarea:focus,
+  .qd-edit-form input:focus,
+  .qd-edit-form select:focus { border-color: var(--ep-green); }
+
+  .qd-edit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+  @media (max-width:600px) { .qd-edit-grid { grid-template-columns: 1fr; } }
+
+  .qd-field-label {
+    display: block; font-size: 11.5px; font-weight: 600; color: var(--ep-grey-600);
+    text-transform: uppercase; letter-spacing:.05em; margin-bottom: 6px;
+  }
+  .qd-field-group { margin-bottom: 14px; }
+
+  .qd-options-edit { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  @media (max-width:600px) { .qd-options-edit { grid-template-columns: 1fr; } }
+  .qd-option-edit-item label { font-size: 11px; color: var(--ep-grey-600); margin-bottom: 5px; display: block; }
+
+  .qd-edit-actions { display: flex; gap: 8px; margin-top: 4px; }
+
+  .qd-q-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 12px; }
+
+  .qd-approve-toggle {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 13px; border-radius: 7px; font-size: 12px; font-weight: 600;
+    cursor: pointer; border: none; font-family: 'Inter', sans-serif; transition: all .15s;
+  }
+  .qd-approve-toggle.unapproved { background: var(--ep-green-pale); border: 1px solid var(--ep-green-mid); color: var(--ep-green-dark); }
+  .qd-approve-toggle.unapproved:hover { background: var(--ep-green-mid); }
+  .qd-approve-toggle.approved-btn { background: var(--ep-red-pale); border: 1px solid #ffcdd2; color: var(--ep-red); }
+  .qd-approve-toggle.approved-btn:hover { background: #ffcdd2; }
+
+  .qd-empty-state {
+    text-align: center; padding: 60px 24px;
+    background: var(--ep-white); border: 1px dashed var(--ep-grey-200); border-radius: var(--ep-radius);
+  }
+  .qd-empty-state h3 { font-size: 16px; color: var(--ep-grey-800); margin-bottom: 8px; font-weight: 600; }
+  .qd-empty-state p  { font-size: 13px; color: var(--ep-grey-600); }
+
+  .qd-bulk-bar {
+    background: var(--ep-grey-50); border: 1px solid var(--ep-grey-200); border-radius: 8px;
+    padding: 10px 16px; margin-bottom: 14px;
+    display: flex; align-items: center; gap: 12px;
+    font-size: 13px; color: var(--ep-grey-600);
+  }
+  .qd-bulk-bar input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--ep-green); cursor: pointer; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="qd-wrapper">
+
+  <div class="qd-page-header">
+    <div class="qd-header-left">
+      <a href="{% url 'question_bank_list' %}" class="qd-back-btn">
+        <i class="fas fa-arrow-left"></i> Banks
+      </a>
+      <div class="qd-header-title">
+        <h1>{{ bank.subject.name }} — Question Bank</h1>
+        <p>Class {{ bank.class_fk.class_name }} &nbsp;&middot;&nbsp; {{ bank.academic_year }}</p>
+      </div>
+    </div>
+    <div class="qd-header-actions">
+      <a href="{% url 'upload_book_for_bank' bank.id %}" class="qd-btn qd-btn-outline">
+        <i class="fas fa-upload"></i> Book Upload
+      </a>
+      <a href="{% url 'ai_generate_questions' bank.id %}" class="qd-btn qd-btn-secondary">
+        <i class="fas fa-robot"></i> AI Generate
+      </a>
+      <a href="{% url 'add_question_to_bank' bank.id %}" class="qd-btn qd-btn-primary">
+        <i class="fas fa-plus"></i> Add Question
+      </a>
+    </div>
+  </div>
+
+  {% if messages %}
+  <div class="qd-messages">
+    {% for msg in messages %}
+    <div class="qd-alert qd-alert-{{ msg.tags|default:'info' }}">
+      {% if 'success' in msg.tags %}<i class="fas fa-check-circle"></i>
+      {% elif 'error' in msg.tags %}<i class="fas fa-exclamation-circle"></i>
+      {% elif 'warning' in msg.tags %}<i class="fas fa-exclamation-triangle"></i>
+      {% else %}<i class="fas fa-info-circle"></i>{% endif %}
+      {{ msg }}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="qd-stats-bar">
+    <div class="qd-stat-card total">
+      <div class="label">Total</div>
+      <div class="value">{{ total_count }}</div>
+    </div>
+    <div class="qd-stat-card approved">
+      <div class="label">Approved</div>
+      <div class="value">{{ approved_count }}</div>
+    </div>
+    <div class="qd-stat-card pending">
+      <div class="label">Pending</div>
+      <div class="value">{{ pending_count }}</div>
+    </div>
+    <div class="qd-stat-card ai">
+      <div class="label">AI Generated</div>
+      <div class="value">{{ ai_generated_count }}</div>
+    </div>
+  </div>
+
+  <form method="GET" class="qd-filter-bar">
+    <label>Filter:</label>
+    <select name="type" onchange="this.form.submit()">
+      <option value="">All Types</option>
+      {% for value, label in q_types %}
+      <option value="{{ value }}" {% if request.GET.type == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <select name="difficulty" onchange="this.form.submit()">
+      <option value="">All Levels</option>
+      {% for value, label in difficulties %}
+      <option value="{{ value }}" {% if request.GET.difficulty == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <select name="approved" onchange="this.form.submit()">
+      <option value="">All Status</option>
+      <option value="1" {% if request.GET.approved == '1' %}selected{% endif %}>Approved Only</option>
+    </select>
+    {% if request.GET.type or request.GET.difficulty or request.GET.approved %}
+    <a href="{% url 'question_bank_detail' bank.id %}" class="qd-btn qd-btn-secondary qd-btn-sm">
+      <i class="fas fa-times"></i> Clear
+    </a>
+    {% endif %}
+  </form>
+
+  {% if questions %}
+  <form method="POST" action="{% url 'bulk_approve_questions' bank.id %}" id="bulkForm">
+    {% csrf_token %}
+
+    <div class="qd-bulk-bar">
+      <input type="checkbox" id="selectAll" title="Select all">
+      <label for="selectAll" style="cursor:pointer; color:var(--ep-grey-600);">Select All</label>
+      <button type="submit" class="qd-btn qd-btn-secondary qd-btn-sm" style="margin-left:auto;">
+        <i class="fas fa-check-double"></i> Bulk Approve Selected
+      </button>
+    </div>
+
+    <div class="qd-questions-list">
+      {% for question in questions %}
+      <div class="qd-q-card {% if question.human_approved %}approved-card{% else %}pending-card{% endif %}" id="qcard-{{ question.id }}">
+
+        <div class="qd-q-header" onclick="toggleCard({{ question.id }})">
+          <input type="checkbox" name="question_ids" value="{{ question.id }}"
+                 class="bulk-check" onclick="event.stopPropagation()"
+                 style="width:15px;height:15px;accent-color:var(--ep-green);cursor:pointer;flex-shrink:0;">
+          <div class="qd-q-num">{{ forloop.counter }}</div>
+          <div class="qd-q-preview">{{ question.text|truncatechars:90 }}</div>
+          <div class="qd-q-meta">
+            <span class="qd-tag
+              {% if question.question_type == 'MCQ' %}qd-tag-mcq
+              {% elif question.question_type == 'SHORT' %}qd-tag-short
+              {% elif question.question_type == 'LONG' %}qd-tag-long
+              {% else %}qd-tag-conceptual{% endif %}">
+              {{ question.get_question_type_display }}
+            </span>
+            <span class="qd-tag
+              {% if question.difficulty == 'EASY' %}qd-tag-easy
+              {% elif question.difficulty == 'MEDIUM' %}qd-tag-medium
+              {% else %}qd-tag-hard{% endif %}">
+              {{ question.get_difficulty_display }}
+            </span>
+            <span class="qd-tag qd-tag-marks">{{ question.marks }}m</span>
+            {% if question.ai_generated %}
+            <span class="qd-tag qd-tag-ai"><i class="fas fa-robot"></i> AI</span>
+            {% endif %}
+            <span class="qd-tag {% if question.human_approved %}qd-tag-approved{% else %}qd-tag-pending{% endif %}">
+              {% if question.human_approved %}<i class="fas fa-check"></i> Approved{% else %}<i class="fas fa-clock"></i> Pending{% endif %}
+            </span>
+          </div>
+          <i class="fas fa-chevron-down qd-chevron"></i>
+        </div>
+
+        <div class="qd-q-body">
+          <div class="qd-q-text-full">{{ question.text }}</div>
+
+          {% if question.question_type == 'MCQ' %}
+          <div class="qd-options-grid">
+            {% if question.option_a %}
+            <div class="qd-option-item {% if question.correct_answer == 'option_a' or question.correct_answer == 'A' %}correct{% endif %}">
+              <div class="qd-option-key">A</div> {{ question.option_a }}
+            </div>
+            {% endif %}
+            {% if question.option_b %}
+            <div class="qd-option-item {% if question.correct_answer == 'option_b' or question.correct_answer == 'B' %}correct{% endif %}">
+              <div class="qd-option-key">B</div> {{ question.option_b }}
+            </div>
+            {% endif %}
+            {% if question.option_c %}
+            <div class="qd-option-item {% if question.correct_answer == 'option_c' or question.correct_answer == 'C' %}correct{% endif %}">
+              <div class="qd-option-key">C</div> {{ question.option_c }}
+            </div>
+            {% endif %}
+            {% if question.option_d %}
+            <div class="qd-option-item {% if question.correct_answer == 'option_d' or question.correct_answer == 'D' %}correct{% endif %}">
+              <div class="qd-option-key">D</div> {{ question.option_d }}
+            </div>
+            {% endif %}
+          </div>
+          {% elif question.correct_answer %}
+          <div class="qd-answer-box">
+            <strong>Model Answer</strong>
+            {{ question.correct_answer }}
+          </div>
+          {% endif %}
+
+          <div class="qd-q-actions">
+            <button type="button"
+              class="qd-approve-toggle {% if question.human_approved %}approved-btn{% else %}unapproved{% endif %}"
+              id="approvebtn-{{ question.id }}"
+              onclick="toggleApprove({{ question.id }}, this)">
+              {% if question.human_approved %}<i class="fas fa-times"></i> Unapprove{% else %}<i class="fas fa-check"></i> Approve{% endif %}
+            </button>
+
+            <button type="button" class="qd-btn qd-btn-secondary qd-btn-sm"
+              onclick="toggleEdit({{ question.id }})">
+              <i class="fas fa-edit"></i> Edit
+            </button>
+
+            <a href="{% url 'approve_question' question.id %}" class="qd-btn qd-btn-secondary qd-btn-sm">
+              <i class="fas fa-eye"></i> View
+            </a>
+          </div>
+
+          <div class="qd-edit-form" id="editform-{{ question.id }}">
+            <form method="POST" action="{% url 'edit_question' question.id %}">
+              {% csrf_token %}
+              <input type="hidden" name="next" value="{{ request.get_full_path }}">
+
+              <div class="qd-field-group">
+                <label class="qd-field-label">Question Text</label>
+                <textarea name="text" rows="3">{{ question.text }}</textarea>
+              </div>
+
+              <div class="qd-edit-grid">
+                <div class="qd-field-group" style="margin:0">
+                  <label class="qd-field-label">Difficulty</label>
+                  <select name="difficulty">
+                    {% for value, label in difficulties %}
+                    <option value="{{ value }}" {% if question.difficulty == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="qd-field-group" style="margin:0">
+                  <label class="qd-field-label">Marks</label>
+                  <input type="text" name="marks" value="{{ question.marks }}">
+                </div>
+              </div>
+
+              {% if question.question_type == 'MCQ' %}
+              <div class="qd-options-edit">
+                <div class="qd-option-edit-item">
+                  <label>Option A</label>
+                  <input type="text" name="option_a" value="{{ question.option_a|default:'' }}">
+                </div>
+                <div class="qd-option-edit-item">
+                  <label>Option B</label>
+                  <input type="text" name="option_b" value="{{ question.option_b|default:'' }}">
+                </div>
+                <div class="qd-option-edit-item">
+                  <label>Option C</label>
+                  <input type="text" name="option_c" value="{{ question.option_c|default:'' }}">
+                </div>
+                <div class="qd-option-edit-item">
+                  <label>Option D</label>
+                  <input type="text" name="option_d" value="{{ question.option_d|default:'' }}">
+                </div>
+              </div>
+              <div class="qd-field-group">
+                <label class="qd-field-label">Correct Answer</label>
+                <select name="correct_answer">
+                  <option value="option_a" {% if question.correct_answer == 'option_a' %}selected{% endif %}>Option A</option>
+                  <option value="option_b" {% if question.correct_answer == 'option_b' %}selected{% endif %}>Option B</option>
+                  <option value="option_c" {% if question.correct_answer == 'option_c' %}selected{% endif %}>Option C</option>
+                  <option value="option_d" {% if question.correct_answer == 'option_d' %}selected{% endif %}>Option D</option>
+                </select>
+              </div>
+              {% else %}
+              <div class="qd-field-group">
+                <label class="qd-field-label">Model Answer</label>
+                <textarea name="correct_answer" rows="2">{{ question.correct_answer }}</textarea>
+              </div>
+              {% endif %}
+
+              <div class="qd-edit-actions">
+                <button type="submit" class="qd-btn qd-btn-primary qd-btn-sm">
+                  <i class="fas fa-save"></i> Save Changes
+                </button>
+                <button type="button" class="qd-btn qd-btn-secondary qd-btn-sm" onclick="toggleEdit({{ question.id }})">Cancel</button>
+              </div>
+            </form>
+          </div>
+
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </form>
+
+  {% else %}
+  <div class="qd-empty-state">
+    <h3>No Questions Yet</h3>
+    <p>Upload a book or add questions manually to get started.</p>
+  </div>
+  {% endif %}
+
+</div>
+
+<script>
+  function toggleCard(id) {
+    const card = document.getElementById('qcard-' + id);
+    card.classList.toggle('open');
+  }
+
+  function toggleEdit(id) {
+    const form = document.getElementById('editform-' + id);
+    const card = document.getElementById('qcard-' + id);
+    form.classList.toggle('show');
+    if (form.classList.contains('show')) {
+      card.classList.add('open');
+      form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }
+
+  function toggleApprove(questionId, btn) {
+    const card = document.getElementById('qcard-' + questionId);
+    fetch(`/exam/questions/${questionId}/toggle-approve/`, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': getCookie('csrftoken'),
+        'Content-Type': 'application/json',
+      }
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.approved) {
+        btn.innerHTML = '<i class="fas fa-times"></i> Unapprove';
+        btn.className = 'qd-approve-toggle approved-btn';
+        card.classList.remove('pending-card');
+        card.classList.add('approved-card');
+        const statusTag = card.querySelector('.qd-tag-pending');
+        if (statusTag) {
+          statusTag.innerHTML = '<i class="fas fa-check"></i> Approved';
+          statusTag.className = 'qd-tag qd-tag-approved';
+        }
+      } else {
+        btn.innerHTML = '<i class="fas fa-check"></i> Approve';
+        btn.className = 'qd-approve-toggle unapproved';
+        card.classList.remove('approved-card');
+        card.classList.add('pending-card');
+        const statusTag = card.querySelector('.qd-tag-approved');
+        if (statusTag) {
+          statusTag.innerHTML = '<i class="fas fa-clock"></i> Pending';
+          statusTag.className = 'qd-tag qd-tag-pending';
+        }
+      }
+    })
+    .catch(() => alert('Something went wrong. Please try again.'));
+  }
+
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      document.cookie.split(';').forEach(c => {
+        c = c.trim();
+        if (c.startsWith(name + '=')) {
+          cookieValue = decodeURIComponent(c.substring(name.length + 1));
+        }
+      });
+    }
+    return cookieValue;
+  }
+
+  const selectAllEl = document.getElementById('selectAll');
+  if (selectAllEl) {
+    selectAllEl.addEventListener('change', function() {
+      document.querySelectorAll('.bulk-check').forEach(cb => cb.checked = this.checked);
+    });
+  }
+</script>
+{% endblock %}

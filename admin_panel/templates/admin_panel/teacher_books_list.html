@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Your Books</h2>
+<ul>
+  {% for b in books %}
+    <li><a href="{% url 'lessonplanner:teacher_book_detail' b.id %}">{{ b.title }}</a></li>
+  {% endfor %}
+</ul>
+{% endblock %}

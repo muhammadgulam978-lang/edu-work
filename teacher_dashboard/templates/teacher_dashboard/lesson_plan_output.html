@@ -1,0 +1,83 @@
+{% extends "teacher_dashboard/bases.html" %}
+{% block content %}
+
+<div class="container mt-4">
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+
+            <h4 class="mb-4">Generated Lesson Plan</h4>
+
+            {% if lesson_plan %}
+                {% for p in lesson_plan %}
+                <div class="card mb-4 border-start border-4 border-primary">
+                    <div class="card-body">
+
+                        <div class="d-flex justify-content-between mb-2">
+                            <h5>Period {{ p.period }}</h5>
+                            <span class="badge bg-secondary">
+                                Difficulty: {{ p.difficulty }}
+                            </span>
+                        </div>
+
+                        <!-- Learning Objectives -->
+                        <div class="mb-3">
+                            <strong>Learning Objectives</strong>
+                            <ul>
+                                {% for o in p.learning_objectives %}
+                                <li>{{ o }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+
+                        <!-- Main Teaching -->
+                        <div class="mb-3">
+                            <strong>Main Teaching Content</strong>
+                            <p class="text-muted">{{ p.main }}</p>
+                        </div>
+
+                        <!-- Practice -->
+                        <div class="mb-3">
+                            <strong>Practice Work</strong>
+                            <p>{{ p.practice }}</p>
+                        </div>
+
+                        <!-- Plenary -->
+                        <div class="mb-3">
+                            <strong>Plenary</strong>
+                            <p>{{ p.plenary }}</p>
+                        </div>
+
+                        <!-- Assessment -->
+                        <div class="mb-3">
+                            <strong>Assessment Tasks</strong>
+                            <ul>
+                                {% for a in p.assessment %}
+                                <li>{{ a }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+
+                        <!-- Homework -->
+                        <div>
+                            <strong>Homework Tasks</strong>
+                            <ul>
+                                {% for h in p.homework %}
+                                <li>{{ h }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-muted">No lesson plan generated.</p>
+            {% endif %}
+
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

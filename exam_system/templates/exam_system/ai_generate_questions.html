@@ -1,0 +1,68 @@
+{% extends "admin_panel/base.html" %}
+{% comment %}SAVE AS: exam_system/ai_generate_questions.html{% endcomment %}
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex align-items-center mb-4">
+        <a href="{% url 'question_bank_detail' bank.id %}" class="btn btn-outline-secondary btn-sm mr-3">
+            <i class="fa fa-arrow-left"></i> Back
+        </a>
+        <div>
+            <h3 class="mb-1">AI Question Generator</h3>
+            <p class="text-muted mb-0">{{ bank.subject.name }} — Class {{ bank.class_fk.class_name }}</p>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="card border-warning">
+                <div class="card-header bg-warning">
+                    <h5 class="mb-0"><i class="fa fa-magic mr-2"></i>Generate with AI</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label>Topic <span class="text-danger">*</span></label>
+                            <input type="text" name="topic" class="form-control"
+                                   placeholder="e.g. Quadratic Equations, Parts of Speech" required>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Question Type</label>
+                                    <select name="question_type" class="form-control">
+                                        {% for val, label in q_types %}
+                                            <option value="{{ val }}">{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Difficulty</label>
+                                    <select name="difficulty" class="form-control">
+                                        {% for val, label in difficulties %}
+                                            <option value="{{ val }}">{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Number of Questions</label>
+                            <input type="number" name="count" class="form-control" value="5" min="1" max="20">
+                        </div>
+                        <div class="alert alert-info">
+                            <i class="fa fa-info-circle mr-2"></i>
+                            AI will generate questions using Gemini. They will be marked as
+                            <strong>Pending Review</strong> — approve them before using in papers.
+                        </div>
+                        <button type="submit" class="btn btn-warning btn-block">
+                            <i class="fa fa-magic mr-2"></i> Generate Questions
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

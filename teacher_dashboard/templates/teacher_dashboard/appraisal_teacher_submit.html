@@ -1,0 +1,495 @@
+{% extends 'teacher_dashboard/bases.html' %}
+{% load widget_tweaks %}
+{% load result_filters %}
+
+{% block content %}
+<style>
+  /* ===== Base ===== */
+  body{
+    background:#f8fafc;
+    color:#1f2937;
+  }
+
+  /* ===== Card / Layout ===== */
+  .app-card{
+    background:#fff;
+    border-radius:14px;
+    border:1px solid #e5e7eb;
+    box-shadow:0 8px 24px rgba(0,0,0,.06);
+    overflow:hidden;
+  }
+  .app-card .card-header{
+    background:#fff;
+    border-bottom:1px solid #e5e7eb;
+    padding:14px 16px;
+  }
+  .app-card .card-body{ padding:16px; }
+
+  h4,h5{ color:#111827; font-weight:600; }
+  .soft-muted{ color:#6b7280 !important; }
+
+  /* ===== Badges ===== */
+  .badge{
+    border-radius:999px;
+    padding:6px 10px;
+    font-weight:600;
+  }
+  .badge.bg-success{
+    background:#dcfce7 !important;
+    color:#166534 !important;
+    border:1px solid #bbf7d0;
+  }
+  .badge.bg-secondary{
+    background:#e5e7eb !important;
+    color:#374151 !important;
+    border:1px solid #d1d5db;
+  }
+  .badge.bg-primary{
+    background:#dbeafe !important;
+    color:#1d4ed8 !important;
+    border:1px solid #bfdbfe;
+  }
+
+  /* ===== Collapsible ===== */
+  .collapse-card{
+    border:1px solid #e5e7eb;
+    border-radius:14px;
+    overflow:hidden;
+    background:#fff;
+  }
+  .collapse-header{
+    padding:12px 14px;
+    background:#fff;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    border-bottom:1px solid #e5e7eb;
+  }
+  .collapse-body{
+    padding:14px;
+    background:#fbfbfd;
+  }
+
+  /* ===== Auto summary pills ===== */
+  .mini-stat{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-bottom:14px;
+  }
+  .mini-stat .stat-pill{
+    background:#eef2ff;
+    color:#1e3a8a;
+    border:1px solid #c7d2fe;
+    border-radius:12px;
+    padding:8px 10px;
+    font-weight:600;
+    font-size:13px;
+    white-space:nowrap;
+  }
+
+  /* ===== Inputs ===== */
+  .form-control, .form-select{
+    background:#fff;
+    border:1px solid #d1d5db;
+    color:#111827;
+    border-radius:10px;
+  }
+  .form-control::placeholder{ color:#9ca3af; }
+
+  /* ===== Tables ===== */
+  .table{ color:#1f2937; }
+  .table thead th{
+    background:#f1f5f9;
+    color:#111827;
+    font-weight:700;
+    border-bottom:1px solid #e5e7eb;
+    white-space:nowrap;
+  }
+  .table tbody td{
+    background:#fff;
+    border-color:#e5e7eb;
+    vertical-align:middle;
+  }
+  .table-hover tbody tr:hover td{
+    background:#f8fafc;
+  }
+
+  /* ===== Buttons ===== */
+  .btn-primary{
+    background:#2563eb;
+    border-color:#2563eb;
+    border-radius:10px;
+  }
+  .btn-primary:hover{ background:#1d4ed8; border-color:#1d4ed8; }
+
+  .btn-secondary{
+    background:#e5e7eb;
+    border-color:#d1d5db;
+    color:#111827;
+    border-radius:10px;
+  }
+
+  .btn-soft{
+    background:#eef2ff;
+    border:1px solid #c7d2fe;
+    color:#1e3a8a;
+    border-radius:10px;
+    font-weight:600;
+  }
+  .btn-soft:hover{
+    background:#e0e7ff;
+  }
+
+  .sticky-actions{
+    position:sticky;
+    bottom:0;
+    background:#fff;
+    padding:14px;
+    border-top:1px solid #e5e7eb;
+    margin-top:14px;
+    border-radius:12px;
+  }
+
+  .row-deleted{
+    opacity:.45;
+    background:#fef2f2 !important;
+  }
+
+  .small-help{
+    font-size:13px;
+    color:#6b7280;
+  }
+</style>
+
+<div class="container-fluid" style="padding:18px;">
+  <div class="app-card">
+    <div class="card-header d-flex align-items-center justify-content-between">
+      <div>
+        <h4 class="mb-1">Teacher Appraisal</h4>
+        <div class="soft-muted">
+          Cycle: <strong>{{ cycle.name }}</strong>
+          {% if submission.status == "submitted" %}
+            <span class="badge bg-success ms-2">Submitted</span>
+          {% else %}
+            <span class="badge bg-secondary ms-2">Draft</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="text-end">
+        <div class="soft-muted" style="font-size:13px;">
+          Period:
+          <strong>{{ cycle.start_date }}</strong>
+          to
+          <strong>{{ cycle.end_date }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-body">
+
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }} mb-3">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+
+      {% if form.errors or formset.errors %}
+        <div class="alert alert-danger">
+          <strong>Please fix the errors below.</strong>
+        </div>
+      {% endif %}
+
+      <!-- =========================
+           AUTO SUMMARY (Collapsible)
+           ========================= -->
+      <div class="collapse-card mb-3">
+        <div class="collapse-header" data-bs-toggle="collapse" data-bs-target="#autoBlock" aria-expanded="true">
+          <div class="d-flex flex-column">
+            <strong>Auto Summary</strong>
+            <span class="small-help">Read-only (system generated)</span>
+          </div>
+          <div class="soft-muted">▼</div>
+        </div>
+
+        <div class="collapse show" id="autoBlock">
+          <div class="collapse-body">
+
+            <div class="mini-stat">
+              <div class="stat-pill">Total Results: <span>{{ exam_summary.overall.total|default:0 }}</span></div>
+              <div class="stat-pill">Pass Rate: <span>{{ exam_summary.metrics.pass_rate|default:0 }}%</span></div>
+              <div class="stat-pill">A+B Rate: <span>{{ exam_summary.metrics.ab_rate|default:0 }}%</span></div>
+              <div class="stat-pill">A Rate: <span>{{ exam_summary.metrics.a_rate|default:0 }}%</span></div>
+              <div class="stat-pill">Absent Fixtures: <span>{{ fixtures.fixtures_absent|default:0 }}</span></div>
+              <div class="stat-pill">Substitute Fixtures: <span>{{ fixtures.fixtures_substitute|default:0 }}</span></div>
+            </div>
+
+            <div class="mini-stat">
+              <div class="stat-pill">Workshops Attended: <span>{{ extra_kpis.workshops_attended|default:0 }}</span></div>
+              <div class="stat-pill">Trainings Given: <span>{{ extra_kpis.trainings_given|default:0 }}</span></div>
+              <div class="stat-pill">Extra Curricular: <span>{{ extra_kpis.extra_curricular|default:0 }}</span></div>
+              <div class="stat-pill">Diary: <span>{{ extra_kpis.diary_submissions|default:0 }}</span></div>
+              <div class="stat-pill">Lesson Plans: <span>{{ extra_kpis.lesson_plans_created|default:0 }}</span></div>
+              <div class="stat-pill">Lesson Days: <span>{{ extra_kpis.lesson_days_created|default:0 }}</span></div>
+              <div class="stat-pill">Lecture Notes: <span>{{ extra_kpis.lecture_notes_uploaded|default:0 }}</span></div>
+              <div class="stat-pill">Assignments: <span>{{ extra_kpis.assignments_uploaded|default:0 }}</span></div>
+              <div class="stat-pill">Quizzes: <span>{{ extra_kpis.quizzes_created|default:0 }}</span></div>
+            </div>
+
+            <div class="row g-3">
+              <div class="col-lg-6">
+                <div class="app-card">
+                  <div class="card-header">
+                    <strong>Assigned Classes / Sections / Subjects</strong>
+                  </div>
+                  <div class="card-body">
+                    <div class="table-responsive">
+                      <table class="table table-bordered table-hover align-middle mb-0">
+                        <thead>
+                          <tr>
+                            <th style="width:70px;">#</th>
+                            <th>Class</th>
+                            <th>Section</th>
+                            <th>Subject</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {% if assignments %}
+                            {% for a in assignments %}
+                              <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>{{ a.class_fk.class_name }}</td>
+                                <td>{{ a.section.section_name }}</td>
+                                <td>{{ a.subject.name }}</td>
+                              </tr>
+                            {% endfor %}
+                          {% else %}
+                            <tr>
+                              <td colspan="4" class="text-center soft-muted">No assignments found.</td>
+                            </tr>
+                          {% endif %}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-lg-6">
+                <div class="app-card">
+                  <div class="card-header">
+                    <strong>Results Breakdown</strong>
+                  </div>
+                  <div class="card-body">
+                    <div class="table-responsive">
+                      <table class="table table-bordered table-hover align-middle mb-0">
+                        <thead>
+                          <tr>
+                            <th>Class-Section-Subject</th>
+                            <th style="width:60px;">A</th>
+                            <th style="width:60px;">B</th>
+                            <th style="width:60px;">C</th>
+                            <th style="width:60px;">D</th>
+                            <th style="width:60px;">E</th>
+                            <th style="width:60px;">F</th>
+                            <th style="width:80px;">Total</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {% for key, row in exam_summary.by_bucket.items %}
+                            <tr>
+                              <td>{{ key }}</td>
+                              <td>{{ row.A }}</td>
+                              <td>{{ row.B }}</td>
+                              <td>{{ row.C }}</td>
+                              <td>{{ row.D }}</td>
+                              <td>{{ row.E }}</td>
+                              <td>{{ row.F }}</td>
+                              <td><strong>{{ row.total }}</strong></td>
+                            </tr>
+                          {% empty %}
+                            <tr>
+                              <td colspan="8" class="text-center soft-muted">No exam results found in this cycle.</td>
+                            </tr>
+                          {% endfor %}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- =========================
+           FORM
+           ========================= -->
+      <form method="post" id="appraisalForm">
+        {% csrf_token %}
+
+        <div class="row g-3 mb-3">
+          <div class="col-lg-4">
+            <div class="app-card">
+              <div class="card-header"><strong>Achievements</strong></div>
+              <div class="card-body">
+                {% render_field form.achievements class="form-control" rows="6" placeholder="Key achievements, initiatives, improvements..." %}
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-4">
+            <div class="app-card">
+              <div class="card-header"><strong>Challenges</strong></div>
+              <div class="card-body">
+                {% render_field form.challenges class="form-control" rows="6" placeholder="Challenges faced during this cycle..." %}
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-4">
+            <div class="app-card">
+              <div class="card-header"><strong>Improvement Plan</strong></div>
+              <div class="card-body">
+                {% render_field form.improvement_plan class="form-control" rows="6" placeholder="Planned improvements & action steps..." %}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <div>
+            <h5 class="mb-1">Evidence Entries</h5>
+            <div class="small-help">
+              Activities / Trainings / Workshops aur Manual KPIs aik hi table mein. Manual KPI rows ka score system auto generate karta hai.
+            </div>
+          </div>
+          <button type="button" class="btn btn-soft" id="btnAddRow">+ Add Row</button>
+        </div>
+
+        {{ formset.management_form }}
+
+        <div class="table-responsive">
+          <table class="table table-bordered table-hover align-middle" id="evidenceTable">
+            <thead>
+              <tr>
+                <th style="min-width:260px;">KPI / Type</th>
+                <th style="min-width:220px;">Title</th>
+                <th style="width:150px;">Date</th>
+                <th style="width:110px;">Hours</th>
+                <th style="min-width:260px;">Notes / Evidence</th>
+                <th style="width:150px;">System Score</th>
+                <th style="width:140px;">Action</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {% for f in formset.forms %}
+                <tr class="evidence-row">
+                  {% for hidden in f.hidden_fields %}{{ hidden }}{% endfor %}
+
+                  <td>
+                    {% if f.kpi_selector %}
+                      {{ f.kpi_selector }}
+                    {% else %}
+                      {{ f.activity_type }}
+                    {% endif %}
+                  </td>
+
+                  <td>{{ f.title }}</td>
+                  <td>{{ f.date }}</td>
+                  <td>{{ f.hours }}</td>
+                  <td>{{ f.notes }}</td>
+
+                  <td>
+                    {% if f.instance.entry_kind == "MANUAL_KPI" %}
+                      <span class="badge bg-success">{{ f.instance.system_score|default:"Auto" }}/10</span>
+                    {% else %}
+                      <span class="soft-muted">—</span>
+                    {% endif %}
+                  </td>
+
+                  <td class="text-center">
+                    <div class="d-none">{{ f.DELETE }}</div>
+                    <button type="button" class="btn btn-sm btn-outline-danger btn-delete-row">Delete</button>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="sticky-actions">
+          <div class="d-flex flex-wrap gap-2 justify-content-end">
+            <button class="btn btn-secondary" type="submit" name="save_draft" value="1">Save Draft</button>
+            <button class="btn btn-primary" type="submit" name="submit_final" value="1">Submit Final</button>
+          </div>
+        </div>
+      </form>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const tableBody = document.querySelector("#evidenceTable tbody");
+    const btnAddRow = document.getElementById("btnAddRow");
+
+    function bindDelete(scope) {
+      (scope || document).querySelectorAll(".btn-delete-row").forEach(function(btn){
+        btn.addEventListener("click", function(){
+          const row = btn.closest("tr.evidence-row");
+          if (!row) return;
+
+          const delInput = row.querySelector('input[type="checkbox"][name$="-DELETE"]');
+          if (delInput) {
+            delInput.checked = true;
+            row.classList.add("row-deleted");
+            row.style.display = "none";
+          }
+        });
+      });
+    }
+
+    bindDelete(document);
+
+    if (btnAddRow) {
+      btnAddRow.addEventListener("click", function(){
+        const totalInput = document.querySelector('input[name$="-TOTAL_FORMS"]');
+        if (!totalInput) return;
+
+        const total = parseInt(totalInput.value || "0", 10);
+        const lastRow = tableBody.querySelector("tr.evidence-row:last-child");
+        if (!lastRow) return;
+
+        const newRow = lastRow.cloneNode(true);
+
+        newRow.querySelectorAll("input, select, textarea").forEach(function(el){
+          if (el.name) el.name = el.name.replace(`-${total-1}-`, `-${total}-`);
+          if (el.id) el.id = el.id.replace(`-${total-1}-`, `-${total}-`);
+
+          if (el.type === "checkbox") {
+            el.checked = false;
+          } else {
+            el.value = "";
+          }
+        });
+
+        const scoreCell = newRow.querySelector("td:nth-child(6)");
+        if (scoreCell) scoreCell.innerHTML = '<span class="soft-muted">—</span>';
+
+        tableBody.appendChild(newRow);
+        totalInput.value = total + 1;
+
+        bindDelete(newRow);
+      });
+    }
+  });
+</script>
+{% endblock %}

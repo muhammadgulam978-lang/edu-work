@@ -1,0 +1,331 @@
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}School Management System{% endblock %}</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Boxicons -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu&display=swap" rel="stylesheet">
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Base CSS -->
+    <style>
+        :root {
+            --primary-color: #264c84;
+            --secondary-color: #9792c7;
+            --background-color: #F5F5FD;
+            --background-color-hover: #e5e5ec;
+            --white: #fff;
+            --black: #000;
+            --orange: #f8951f;
+            --green: #8ec241;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            background-color: yellow;
+        }
+
+        .wrapper {
+            background-image: url('{% static "images/background_image.jpg" %}');
+            background-size: cover;
+            height: 100vh;
+            width: 100%;
+        }
+
+        /* Sidebar */
+        #sidebar {
+            width: 220px;
+            height: 100vh;
+            background: var(--primary-color);
+            transition: width 0.3s;
+            overflow-y: auto;
+            overflow-x: hidden;
+            position: fixed;
+            top: 0;
+            left: 0;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        #sidebar::-webkit-scrollbar {
+            display: none;
+        }
+
+        #sidebar.collapsed {
+            width: 60px;
+        }
+
+        .sidebar-header {
+            padding: 10px;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+        }
+
+        .toggle-btn {
+            background-color: var(--orange);
+            color: var(--white);
+            border: none;
+            padding: 8px 12px;
+            font-size: 18px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        #sidebar ul {
+            padding: 0;
+            list-style: none;
+            margin: 0;
+        }
+
+        #sidebar ul li {
+            padding: 15px;
+            display: flex;
+            align-items: center;
+        }
+
+        #sidebar ul li a {
+            text-decoration: none;
+            color: var(--white);
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+
+        #sidebar ul li a i {
+            font-size: 20px;
+            margin-right: 10px;
+        }
+
+        #sidebar.collapsed .text {
+            display: none;
+        }
+
+        #sidebar .text {
+            display: inline;
+            transition: opacity 0.3s ease;
+        }
+
+        #sidebar ul li a:hover {
+            background-color: var(--background-color-hover);
+        }
+
+        #sidebar ul li.active a {
+            color: var(--orange);
+        }
+
+        .logout {
+            margin-top: auto;
+            background: var(--orange);
+        }
+
+        /* Dropdown Styles */
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            background-color: var(--white);
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            border: 1px solid #ccc;
+            z-index: 1000;
+            left: 220px;
+            top: 0;
+        }
+
+        .dropdown-menu li a {
+            display: block;
+            padding: 10px 15px;
+            text-decoration: none;
+            color: var(--black);
+        }
+
+        .dropdown-menu li a:hover {
+            background-color: var(--background-color);
+        }
+
+        .dropdown > a span::after {
+            content: " ▼";
+            font-size: 0.9em;
+            margin-left: 10px;
+            display: inline-block;
+            transition: transform 0.3s ease;
+        }
+
+        .dropdown > a:hover span::after {
+            transform: rotate(180deg);
+            color: var(--orange);
+        }
+
+        #sidebar.collapsed .dropdown-menu {
+            left: 60px;
+        }
+
+        /* Main Content */
+        #content {
+            margin-left: 220px;
+            transition: margin-left 0.3s;
+            padding: 20px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        #sidebar.collapsed ~ #content {
+            margin-left: 70px;
+        }
+
+        @media screen and (max-width: 768px) {
+            #sidebar {
+                width: 100%;
+                height: auto;
+                position: fixed;
+                bottom: 0;
+                top: auto;
+                border-top: 1px solid var(--background-color);
+            }
+
+            #sidebar.collapsed {
+                width: 100%;
+                height: 60px;
+            }
+
+            .sidebar-header {
+                display: none;
+            }
+
+            #sidebar ul {
+                display: flex;
+                justify-content: space-around;
+            }
+
+            #sidebar ul li {
+                padding: 10px;
+            }
+
+            #sidebar ul li a {
+                font-size: 0.8em;
+            }
+
+            #sidebar.collapsed .text {
+                display: none;
+            }
+
+            #content {
+                margin-left: 0;
+                margin-bottom: 60px;
+            }
+
+            #sidebar.collapsed ~ #content {
+                margin-left: 0;
+            }
+
+            .dropdown-menu {
+                left: 0;
+                top: auto;
+                bottom: 60px;
+                width: 100%;
+            }
+        }
+    </style>
+
+    <!-- Additional page-specific CSS -->
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <div class="wrapper d-flex">
+        <!-- Sidebar -->
+        <nav id="sidebar" class="collapsed">
+            <div class="sidebar-header d-flex justify-content-end">
+                <button class="toggle-btn" onclick="toggleSidebar()" aria-label="Toggle Sidebar">☰</button>
+            </div>
+            <ul class="list-unstyled components">
+                <li class="nav-item {% if request.resolver_match.view_name == 'student_profile_home' %}active{% endif %}">
+                    <a href="{% url 'student_profile_home' %}"><i class="bx bxs-home"></i> <span class="text">Home</span></a>
+                </li>
+                <li class="nav-item">
+                    <a href="#"><i class='bx bxs-graduation'></i> <span class="text">Student Profile</span></a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'teacher_list' %}"><i class='bx bxs-user-voice'></i> <span class="text">Teacher</span></a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'parent_list' %}"><i class='bx bxs-user'></i> <span class="text">Parent</span></a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a href="javascript:void(0);" onclick="toggleDropdown('Admissions', event)" id="dropdownToggleAdmissions" aria-haspopup="true" aria-expanded="false">
+                        <i class='bx bxs-file'></i> <span class="text">Admissions</span>
+                    </a>
+                    <ul class="dropdown-menu" id="dropdownMenuAdmissions">
+                        <li><a href="{% url 'registration' %}">Registration for Admission</a></li>
+                        <li><a href="{% url 'query' %}">Query</a></li>
+                        <li><a href="#">Assessment for Admission</a></li>
+                        <li><a href="#">Open Admission</a></li>
+                        <li><a href="{% url 'registration' %}">Receive Admission Form</a></li>
+                        <li><a href="#">Issue Admission Form</a></li>
+                        <li><a href="#">Admission Test Configuration</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item dropdown">
+                    <a href="javascript:void(0);" onclick="toggleDropdown('AcademicYear', event)" id="dropdownToggleAcademicYear" aria-haspopup="true" aria-expanded="false">
+                        <i class='bx bxs-book'></i> <span class="text">Academics</span>
+                    </a>
+                    <ul class="dropdown-menu" id="dropdownMenuAcademicYear">
+                        <li><a href="{% url 'academic_year_list' %}">Academic Year Data</a></li>
+                        <li><a href="{% url 'class_list' %}">Classes</a></li>
+                        <li><a href="#">Faculty</a></li>
+                        <li><a href="{% url 'section_list' %}">Section/Configuration</a></li>
+                        <li><a href="{% url 'subject_list' %}">Subjects</a></li>
+                        <li><a href="#">Period Planning Policy</a></li>
+                        <li><a href="#">Subject Period Planning</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item logout">
+                    <a href="{% url 'logout' %}"><i class="bx bx-log-in-circle"></i> <span class="text">Logout</span></a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <div id="content" class="p-4 w-100">
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+
+    <script>
+        function toggleDropdown(menuId, event) {
+            event.preventDefault();
+            const dropdownMenu = document.getElementById(`dropdownMenu${menuId}`);
+            dropdownMenu.style.display = dropdownMenu.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('collapsed');
+        }
+
+        // Close dropdowns when clicking outside
+        $(document).click(function(event) {
+            if (!$(event.target).closest('.dropdown').length) {
+                $('.dropdown-menu').hide();
+            }
+        });
+    </script>
+
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>
+

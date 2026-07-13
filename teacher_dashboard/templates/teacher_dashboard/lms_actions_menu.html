@@ -1,0 +1,26 @@
+{% extends "teacher_dashboard/lms_action_base.html" %}
+{% load static %}
+
+{% block title %}Actions Menu{% endblock %}
+{% block extra_css %}
+<link href="{% static 'teacher_dashboard/css/style.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="page-titles">
+        <h4>Actions Menu</h4>
+        <span class="text-muted">
+            Class: {{ class_obj.class_name }} |
+            Section: {{ section_obj.section_name }} |
+            Subject: {{ subject_obj.name }}
+        </span>
+    </div>
+
+</div> <!-- container close -->
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'teacher_dashboard/js/deznav-init.js' %}"></script>
+{% endblock %}

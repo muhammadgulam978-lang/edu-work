@@ -1,0 +1,365 @@
+{% extends "teacher_dashboard/base.html" %}
+{% load dict_extras %}
+{% block content %}
+
+<style>
+  :root {
+    --ep-green:       #62daac;
+    --ep-green-light: #e8f5ee;
+    --ep-green-mid:   #7ef7c8;
+    --ep-green-dark:  #476b59;
+    --ep-white:       #ffffff;
+    --ep-gray-50:     #f7f9f7;
+    --ep-gray-100:    #eef2ef;
+    --ep-gray-300:    #c5d4ca;
+    --ep-gray-600:    #5a6b60;
+    --ep-text:        #000000;
+    --ep-shadow:      0 2px 16px rgba(26,122,74,0.10);
+    --ep-radius:      14px;
+  }
+
+  .tt-page {
+    min-height: 100vh;
+    background: var(--ep-gray-50);
+    padding: 32px 24px 48px;
+  }
+
+  /* ── Header ── */
+  .tt-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+
+  .tt-title-group {}
+  .tt-eyebrow {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--ep-green-mid);
+    margin-bottom: 4px;
+  }
+  .tt-title {
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--ep-green-dark);
+    margin: 0;
+    line-height: 1.2;
+  }
+  .tt-title span {
+    color: var(--ep-green-mid);
+  }
+
+  .tt-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--ep-green);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 7px 16px;
+    border-radius: 50px;
+    box-shadow: 0 2px 8px rgba(26,122,74,0.25);
+  }
+  .tt-badge svg { width:15px; height:15px; }
+
+  /* ── Legend ── */
+  .tt-legend {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .tt-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--ep-gray-600);
+    font-weight: 500;
+  }
+  .tt-legend-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+  }
+  .dot-assigned  { background: var(--ep-green); }
+  .dot-free      { background: var(--ep-gray-300); }
+
+  /* ── Card ── */
+  .tt-card {
+    background: var(--ep-white);
+    border-radius: var(--ep-radius);
+    box-shadow: var(--ep-shadow);
+    overflow: hidden;
+    border: 1px solid var(--ep-gray-100);
+  }
+
+  /* ── Table ── */
+  .tt-table-wrap { overflow-x: auto; }
+
+  .tt-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 600px;
+  }
+
+  /* Header row */
+  .tt-table thead tr {
+    background: linear-gradient(135deg, var(--ep-green-dark) 0%, var(--ep-green) 100%);
+  }
+  .tt-table thead th {
+    padding: 14px 18px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.92);
+    text-align: center;
+    border: none;
+    white-space: nowrap;
+  }
+  .tt-table thead th:first-child {
+    text-align: left;
+    padding-left: 24px;
+    border-radius: 0;
+    min-width: 110px;
+  }
+
+  /* Body rows */
+  .tt-table tbody tr {
+    border-bottom: 1px solid var(--ep-gray-100);
+    transition: background .15s;
+  }
+  .tt-table tbody tr:last-child { border-bottom: none; }
+  .tt-table tbody tr:hover { background: var(--ep-green-light); }
+
+  /* Day cell */
+  .tt-day-cell {
+    padding: 16px 24px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ep-green-dark);
+    text-align: left;
+    white-space: nowrap;
+    border-right: 2px solid var(--ep-green-light);
+    background: var(--ep-gray-50);
+    vertical-align: middle;
+  }
+  .tt-day-indicator {
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--ep-green-mid);
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+
+  /* Subject cells */
+  .tt-subject-cell {
+    padding: 10px 12px;
+    text-align: center;
+    vertical-align: middle;
+    min-width: 130px;
+  }
+
+  /* Assigned pill */
+  .tt-assigned {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    background: var(--ep-green-light);
+    border: 1px solid rgba(26,122,74,0.18);
+    border-radius: 10px;
+    padding: 8px 12px;
+    min-width: 110px;
+    text-decoration: none;
+  }
+  .tt-subj-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ep-green-dark);
+  }
+  .tt-class-info {
+    font-size: 11px;
+    color: var(--ep-green);
+    font-weight: 600;
+  }
+  .tt-time-info {
+    font-size: 10px;
+    color: var(--ep-gray-600);
+    font-weight: 500;
+  }
+
+  /* Free pill */
+  .tt-free {
+    display: inline-block;
+    width: 28px; height: 4px;
+    background: var(--ep-gray-300);
+    border-radius: 4px;
+    opacity: .6;
+  }
+
+  /* ── Empty state ── */
+  .tt-empty {
+    padding: 60px 24px;
+    text-align: center;
+  }
+  .tt-empty-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+    opacity: .5;
+  }
+  .tt-empty-msg {
+    font-size: 15px;
+    color: var(--ep-gray-600);
+    font-weight: 500;
+  }
+
+  /* ── Summary strip ── */
+  .tt-summary {
+    display: flex;
+    gap: 0;
+    background: var(--ep-green-light);
+    border-top: 1px solid rgba(26,122,74,0.12);
+  }
+  .tt-summary-item {
+    flex: 1;
+    padding: 14px 20px;
+    text-align: center;
+    border-right: 1px solid rgba(26,122,74,0.12);
+  }
+  .tt-summary-item:last-child { border-right: none; }
+  .tt-summary-val {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--ep-green-dark);
+    line-height: 1;
+  }
+  .tt-summary-lbl {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ep-gray-600);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    margin-top: 3px;
+  }
+
+  @media (max-width: 640px) {
+    .tt-page { padding: 16px 8px 32px; }
+    .tt-title { font-size: 20px; }
+    .tt-summary { flex-wrap: wrap; }
+    .tt-summary-item { flex: 1 1 50%; }
+  }
+</style>
+
+<div class="tt-page">
+
+  <!-- Header -->
+  <div class="tt-header">
+    <div class="tt-title-group">
+      <div class="tt-eyebrow">EduPilot — Teacher Portal</div>
+      <h1 class="tt-title">
+        My Timetable &nbsp;
+        <span>{{ teacher.name }}</span>
+      </h1>
+    </div>
+    <div class="tt-badge">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
+        <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+      </svg>
+      Weekly Schedule
+    </div>
+  </div>
+
+  <!-- Legend -->
+  <div class="tt-legend">
+    <div class="tt-legend-item">
+      <span class="tt-legend-dot dot-assigned"></span> Assigned Period
+    </div>
+    <div class="tt-legend-item">
+      <span class="tt-legend-dot dot-free"></span> Free Period
+    </div>
+  </div>
+
+  {% if period_order %}
+
+  <!-- Compute stats -->
+  {% with total_assigned=0 %}
+
+  <div class="tt-card">
+    <div class="tt-table-wrap">
+      <table class="tt-table">
+        <thead>
+          <tr>
+            <th>Day</th>
+            {% for period in period_order %}
+              <th>{{ period }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for day in days %}
+          <tr>
+            <td class="tt-day-cell">
+              <span class="tt-day-indicator"></span>
+              {{ day }}
+            </td>
+            {% for period in period_order %}
+            <td class="tt-subject-cell">
+              {% with day_slots=slots|dict_key:day %}
+                {% with cell_val=day_slots|dict_key:period %}
+                  {% if cell_val and cell_val != "---" %}
+                    <div class="tt-assigned">
+                      {{ cell_val|safe }}
+                    </div>
+                  {% else %}
+                    <span class="tt-free"></span>
+                  {% endif %}
+                {% endwith %}
+              {% endwith %}
+            </td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Summary strip -->
+    <div class="tt-summary">
+      <div class="tt-summary-item">
+        <div class="tt-summary-val">{{ period_order|length }}</div>
+        <div class="tt-summary-lbl">Periods / Day</div>
+      </div>
+      <div class="tt-summary-item">
+        <div class="tt-summary-val">{{ days|length }}</div>
+        <div class="tt-summary-lbl">Working Days</div>
+      </div>
+      <div class="tt-summary-item">
+        <div class="tt-summary-val">{{ teacher.name|truncatechars:12 }}</div>
+        <div class="tt-summary-lbl">Teacher</div>
+      </div>
+    </div>
+  </div>
+
+  {% endwith %}
+
+  {% else %}
+  <div class="tt-card">
+    <div class="tt-empty">
+      <div class="tt-empty-icon">📅</div>
+      <div class="tt-empty-msg">Koi period assign nahi hua abhi tak.</div>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+
+{% endblock %}

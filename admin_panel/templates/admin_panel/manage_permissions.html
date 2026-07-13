@@ -1,0 +1,26 @@
+{% block content %}
+<div class="container">
+  <h2 class="text-xl font-semibold mb-4">Manage Permissions</h2>
+  
+  <form method="post">
+    {% csrf_token %}
+    {% for group in grouped_perms %}
+      <div class="border rounded-lg p-3 mb-4 shadow-sm">
+        <h3 class="text-lg font-medium text-blue-700">{{ group.app_label }}</h3>
+        <ul>
+          {% for perm in group.permissions %}
+            <li>
+              <label>
+                <input type="checkbox" name="permissions" value="{{ perm.id }}">
+                {{ perm.name }}
+              </label>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endfor %}
+    
+    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Save</button>
+  </form>
+</div>
+{% endblock %}

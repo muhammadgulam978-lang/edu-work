@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Student Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        h1 { color: #333; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 10px; border: 1px solid #ccc; text-align: left; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+
+    <h1>Welcome, {{ student.name }}</h1>
+
+    <p><strong>Student ID:</strong> {{ student.student_id }}</p>
+    <p><strong>Class:</strong> {{ student.class_name }}</p>
+    <p><strong>Email:</strong> {{ student.email }}</p>
+    <p><strong>Phone:</strong> {{ student.phone }}</p>
+
+    <h2>Subjects for Your Class</h2>
+
+    {% if subjects %}
+        <table>
+            <tr>
+                <th>Subject Name</th>
+                <th>Short Code</th>
+                <th>Type</th>
+                <th>Grading</th>
+            </tr>
+            {% for subject in subjects %}
+                <tr>
+                    <td>{{ subject.name }}</td>
+                    <td>{{ subject.short_code }}</td>
+                    <td>{{ subject.subject_format }}</td>
+                    <td>{{ subject.grading_type }}</td>
+                </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p>No subjects assigned to your class yet.</p>
+    {% endif %}
+
+</body>
+</html>

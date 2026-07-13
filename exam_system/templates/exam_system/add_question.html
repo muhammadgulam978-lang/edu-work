@@ -1,0 +1,117 @@
+{% extends "admin_panel/base.html" %}
+{% comment %}SAVE AS: exam_system/add_question.html{% endcomment %}
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex align-items-center mb-4">
+        <a href="{% url 'question_bank_detail' bank.id %}" class="btn btn-outline-secondary btn-sm mr-3">
+            <i class="fa fa-arrow-left"></i> Back
+        </a>
+        <h3 class="mb-0">Add Question — {{ bank.subject.name }}</h3>
+    </div>
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-body">
+                    <form method="POST" id="qForm">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label>Question Type</label>
+                                    <select name="question_type" class="form-control" id="qType" onchange="toggleMCQ()">
+                                        {% for val, label in q_types %}
+                                            <option value="{{ val }}">{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label>Difficulty</label>
+                                    <select name="difficulty" class="form-control">
+                                        {% for val, label in difficulties %}
+                                            <option value="{{ val }}">{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label>Marks</label>
+                                    <input type="number" name="marks" class="form-control" value="1" min="1">
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label>Bloom Level</label>
+                                    <select name="bloom_level" class="form-control">
+                                        {% for val, label in bloom_levels %}
+                                            <option value="{{ val }}">{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Topic Tag</label>
+                            <input type="text" name="topic_tag" class="form-control" placeholder="e.g. Algebra, Grammar">
+                        </div>
+                        <div class="form-group">
+                            <label>Question Text <span class="text-danger">*</span></label>
+                            <textarea name="text" class="form-control" rows="3" required
+                                      placeholder="Write your question here..."></textarea>
+                        </div>
+                        <!-- MCQ Options (shown only for MCQ) -->
+                        <div id="mcqOptions">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Option A</label>
+                                        <input type="text" name="option_a" class="form-control">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Option B</label>
+                                        <input type="text" name="option_b" class="form-control">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Option C</label>
+                                        <input type="text" name="option_c" class="form-control">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Option D</label>
+                                        <input type="text" name="option_d" class="form-control">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Correct Answer / Model Answer</label>
+                            <textarea name="correct_answer" class="form-control" rows="2"
+                                      placeholder="For MCQ: write A/B/C/D. For others: write model answer."></textarea>
+                        </div>
+                        <div class="d-flex justify-content-end">
+                            <a href="{% url 'question_bank_detail' bank.id %}" class="btn btn-outline-secondary mr-2">Cancel</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fa fa-save mr-1"></i> Save Question
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+function toggleMCQ() {
+    const t = document.getElementById('qType').value;
+    document.getElementById('mcqOptions').style.display = t === 'MCQ' ? 'block' : 'none';
+}
+toggleMCQ();
+</script>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends 'automation/base_automation.html' %}
+{% block page_title %}Automation Settings{% endblock %}
+{% block content %}
+<form method="post">
+{% csrf_token %}
+<input type="hidden" name="action" value="save_all_settings">
+<div class="stats-row">
+    <div class="card">
+        <h3>Fee Automation Settings</h3>
+        <label><input type="checkbox" name="fee_auto_enabled" {% if fee_settings.auto_enabled %}checked{% endif %}> Enable Fee Automation</label><br><br>
+        <label>Generation Day</label><br><input type="number" name="fee_generation_day" min="1" max="31" value="{{ fee_settings.generation_day }}"><br><br>
+        <label>Generation Time</label><br><input type="time" name="fee_generation_time" value="{{ fee_settings.generation_time|time:'H:i' }}"><br><br>
+        <label><input type="checkbox" name="fee_send_notifications" {% if fee_settings.send_notifications %}checked{% endif %}> Send Notifications</label>
+    </div>
+    <div class="card">
+        <h3>Salary Automation Settings</h3>
+        <label><input type="checkbox" name="salary_auto_enabled" {% if salary_settings.auto_enabled %}checked{% endif %}> Enable Salary Automation</label><br><br>
+        <label>Generation Day</label><br><input type="number" name="salary_generation_day" min="1" max="31" value="{{ salary_settings.generation_day }}"><br><br>
+        <label>Generation Time</label><br><input type="time" name="salary_generation_time" value="{{ salary_settings.generation_time|time:'H:i' }}"><br><br>
+        <label><input type="checkbox" name="salary_send_notifications" {% if salary_settings.send_notifications %}checked{% endif %}> Send Notifications</label>
+    </div>
+</div>
+<button type="submit" class="btn-teal">Save Settings</button>
+</form>
+{% endblock %}

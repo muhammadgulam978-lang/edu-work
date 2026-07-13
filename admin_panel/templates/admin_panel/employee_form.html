@@ -1,0 +1,222 @@
+{% extends 'admin_panel/bases.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block extra_head %}
+    <!-- ✅ Select2 v3 CSS (IMPORTANT for pills look) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/3.3.0/select2.css" />
+    <link rel="stylesheet" href="{% static 'admin_panel/css/add_teacher.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="card" style="background: #f8f9fa; margin-left: 20px; margin-right: 20px;">
+  <div class="card-header">
+    <h4 class="card-title">{{ title }}</h4>
+  </div>
+
+  <div class="card-body">
+    <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+      {% csrf_token %}
+
+      {% if form.errors %}
+  <div class="alert alert-danger" role="alert">
+    <strong>Please fix the errors below:</strong>
+    <ul style="margin-bottom:0;">
+      {% for field in form %}
+        {% for error in field.errors %}
+          <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+        {% endfor %}
+      {% endfor %}
+      {% for error in form.non_field_errors %}
+        <li>{{ error }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+{% endif %}
+
+
+      <!-- Employee Fields -->
+      <div class="row">
+        <div class="col-xl-6">
+          <div class="mb-3 row">
+            <label class="col-lg-4 col-form-label">Name</label>
+            <div class="col-lg-6">{{ form.name|add_class:"form-control" }}</div>
+          </div>
+
+          <div class="mb-3 row">
+            <label class="col-lg-4 col-form-label">Email</label>
+            <div class="col-lg-6">{{ form.email|add_class:"form-control" }}</div>
+          </div>
+
+          <div class="mb-3 row">
+            <label class="col-lg-4 col-form-label">Phone</label>
+            <div class="col-lg-6">{{ form.phone|add_class:"form-control" }}</div>
+          </div>
+
+          <div class="mb-3 row">
+            <label class="col-lg-4 col-form-label">Staff Category</label>
+            <div class="col-lg-6">{{ form.staff_category|add_class:"form-control" }}</div>
+          </div>
+
+          <div class="mb-3 row">
+            <label class="col-lg-4 col-form-label">Job Type</label>
+            <div class="col-lg-6">{{ form.job_type|add_class:"form-control" }}</div>
+          </div>
+        </div>
+
+        <div class="col-xl-6">
+          <div class="mb-3 row">
+            <label class="col-lg-4 col-form-label">Department</label>
+            <div class="col-lg-6">{{ form.department|add_class:"form-control" }}</div>
+          </div>
+
+          <div class="mb-3 row">
+            <label class="col-lg-4 col-form-label">Designation</label>
+            <div class="col-lg-6">{{ form.designation|add_class:"form-control" }}</div>
+          </div>
+
+          <div class="mb-3 row">
+            <label class="col-lg-4 col-form-label">Joining Date</label>
+            <div class="col-lg-6">{{ form.joining_date|add_class:"form-control" }}</div>
+          </div>
+
+          <div class="mb-3 row">
+            <label class="col-lg-4 col-form-label">Active</label>
+            <div class="col-lg-6">{{ form.is_active }}</div>
+          </div>
+
+          <!-- ✅ Is Teacher Checkbox (use SAME id everywhere) -->
+          <div class="mb-3 row">
+            <label class="col-lg-4 col-form-label">Is Teacher?</label>
+            <div class="col-lg-6">
+              {{ form.is_teacher|attr:"id:id_is_teacher" }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Teacher Section -->
+      <div id="teacherSection" style="display:none; margin-top: 20px;">
+        <hr>
+        <h4 class="card-title" style="margin-bottom: 15px;">Teacher Details</h4>
+
+        <div class="row">
+          <div class="mb-3 row">
+            <label class="col-lg-4 col-form-label">Profile Picture</label>
+            <div class="col-lg-6 text-center">
+              <img src="{% static 'admin_panel/images/dummy-profile.png' %}" class="rounded-circle mb-2" width="100" height="100" alt="No Image">
+              {{ form.teacher_image }}
+            </div>
+          </div>
+
+          <div class="col-xl-6">
+            <div class="mb-3 row">
+              <label class="col-lg-4 col-form-label">Gender</label>
+              <div class="col-lg-6">{{ form.teacher_gender|add_class:"form-control" }}</div>
+            </div>
+
+            <div class="mb-3 row">
+              <label class="col-lg-4 col-form-label">Date of Birth</label>
+              <div class="col-lg-6">{{ form.teacher_date_of_birth|add_class:"form-control" }}</div>
+            </div>
+
+            <div class="mb-3 row">
+              <label class="col-lg-4 col-form-label">Qualification</label>
+              <div class="col-lg-6">{{ form.teacher_qualification|add_class:"form-control" }}</div>
+            </div>
+
+            <div class="mb-3 row">
+              <label class="col-lg-4 col-form-label">Address</label>
+              <div class="col-lg-6">{{ form.teacher_address|add_class:"form-control" }}</div>
+            </div>
+
+            <div class="mb-3 row">
+              <label class="col-lg-4 col-form-label">Experience (Years)</label>
+              <div class="col-lg-6">{{ form.teacher_experience|add_class:"form-control" }}</div>
+            </div>
+
+            <div class="mb-3 row">
+              <label class="col-lg-4 col-form-label">Teacher Phone</label>
+              <div class="col-lg-6">{{ form.teacher_phone|add_class:"form-control" }}</div>
+            </div>
+          </div>
+
+          <div class="col-xl-6">
+            <!-- ✅ Faculty Group (multi + select2) -->
+            <div class="mb-3 row">
+              <label class="col-lg-4 col-form-label">Faculty Group</label>
+              <div class="col-lg-6">
+                {{ form.teacher_faculty_group|add_class:"form-control select2" }}
+              </div>
+            </div>
+
+            <div class="mb-3 row">
+              <label class="col-lg-4 col-form-label">Department</label>
+              <div class="col-lg-6">{{ form.teacher_department|add_class:"form-control" }}</div>
+            </div>
+
+            <!-- ✅ Subjects (multi + select2) -->
+            <div class="mb-3 row">
+              <label class="col-lg-4 col-form-label" for="{{ form.teacher_subjects.id_for_label }}">Subjects</label>
+              <div class="col-lg-6">
+                {{ form.teacher_subjects|add_class:"form-control select2" }}
+              </div>
+            </div>
+
+            <!-- ✅ EXACT teacher_form style: jQuery + select2 + init INSIDE (works even if base scripts block fails) -->
+            <script src="https://code.jquery.com/jquery-1.8.3.min.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/3.3.0/select2.min.js"></script>
+
+            <script>
+              $(document).ready(function() {
+                $(".select2").select2({
+                  placeholder: "Select subjects",
+                  allowClear: true,
+                  closeOnSelect: false
+                });
+              });
+            </script>
+
+            <style>
+              /* ✅ pills style same as teacher_form */
+              .select2-search-choice {
+                background-color: #007bff !important;
+                border: none !important;
+                color: white !important;
+                padding: 4px 8px !important;
+                border-radius: 15px !important;
+                font-size: 13px;
+              }
+              .select2-search-choice-close {
+                margin-top: 2px;
+              }
+            </style>
+
+          </div>
+
+          <div class="col-lg-12 text-center mt-4">
+            <button type="submit" class="btn btn-primary">Save</button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Toggle show/hide -->
+<script>
+  function toggleTeacherSection() {
+    var cb = document.getElementById("id_is_teacher");
+    var box = document.getElementById("teacherSection");
+    if (!cb || !box) return;
+    box.style.display = cb.checked ? "block" : "none";
+  }
+  document.addEventListener("DOMContentLoaded", function(){
+    var cb = document.getElementById("id_is_teacher");
+    if (cb) {
+      cb.addEventListener("change", toggleTeacherSection);
+      toggleTeacherSection();
+    }
+  });
+</script>
+{% endblock %}

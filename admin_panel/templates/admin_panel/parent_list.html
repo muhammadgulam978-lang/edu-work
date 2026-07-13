@@ -1,0 +1,65 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parent List</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{% static 'admin_panel/css/parent_list.css' %}">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center fancy-heading">List of Registered Parents</h1>
+        <p class="text-center subtitle">Manage and view parent information below</p>
+
+        <div class="text-end mb-3">
+            <a href="{% url 'add_parent' %}" class="btn btn-success">Add New Parent</a>
+        </div>
+
+        <table class="table table-bordered table-striped">
+            <thead class="table-dark text-center">
+                <tr>
+                    <th>#</th>
+                    <th>Full Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Occupation</th>
+                    <th>Address</th>
+                    <th>Associated Students</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for parent in items %}
+                <tr class="text-center">
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ parent.full_name }}</td>
+                    <td>{{ parent.email }}</td>
+                    <td>{{ parent.phone }}</td>
+                    <td>{{ parent.occupation }}</td>
+                    <td>{{ parent.address }}</td>
+                    <td>
+                        {% for student in parent.students.all %}
+                            {{ student.name }}{% if not forloop.last %}, {% endif %}
+                        {% empty %}
+                            <span class="text-muted">No students</span>
+                        {% endfor %}
+                    </td>
+                    <td>
+                        <a href="{%url 'update_parent' parent.id %}" class="btn btn-primary btn-sm">Update</a>
+                        <a href="{%url 'delete_parent' parent.id %}" class="btn btn-danger btn-sm">Delete</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center text-danger">No parents found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

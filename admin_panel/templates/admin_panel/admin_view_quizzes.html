@@ -1,0 +1,80 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block navbar %}{% endblock %}
+
+{% block head %}
+{% load static %}
+<link rel="stylesheet" href="{% static 'admin_panel/css/lms_sidebar.css' %}">
+{% endblock %}
+
+{% block sidebar %}
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+{% include 'admin_panel/sidebar.html' %}
+{% endblock %}
+
+{% block content %}
+<div class="lms-topbar">
+    <button class="hamburger-btn" onclick="toggleSidebar()">
+        <span></span><span></span><span></span>
+    </button>
+    <span class="lms-topbar-title">📝 Quizzes</span>
+</div>
+
+<div class="lms-page-content">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+        <div>
+            <h2 style="margin:0; color:#2c3e50;">📝 All Quizzes</h2>
+            <p style="color:#7f8c8d; margin:5px 0 0;">Manage and view all quizzes</p>
+        </div>
+        <form method="get">
+            <select name="class_id" onchange="this.form.submit()" style="padding:8px 12px; border-radius:8px; border:1px solid #ddd;">
+                <option value="">-- All Classes --</option>
+                {% for cls in classes %}
+                <option value="{{ cls.id }}" {% if request.GET.class_id == cls.id|stringformat:"s" %}selected{% endif %}>
+                    Class {{ cls.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </form>
+    </div>
+
+    <div style="background:#fff; border-radius:14px; overflow:hidden; box-shadow:0 3px 12px rgba(0,0,0,0.06);">
+        <table class="table" style="margin:0;">
+            <thead style="background:#6fc1b7; color:#fff;">
+                <tr>
+                    <th>#</th><th>Title</th><th>Teacher</th><th>Class</th>
+                    <th>Section</th><th>Subject</th><th>Due Date</th><th>File</th><th>Submissions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for quiz in quizzes %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ quiz.title }}</td>
+                    <td>{{ quiz.teacher.user.get_full_name }}</td>
+                    <td>{{ quiz.class_assigned }}</td>
+                    <td>{{ quiz.section }}</td>
+                    <td>{{ quiz.subject }}</td>
+                    <td>{{ quiz.due_date|date:"F d, Y" }}</td>
+                    <td>
+                        {% if quiz.file %}
+                        <a href="{{ quiz.file.url }}" class="btn btn-primary btn-sm" target="_blank">Download</a>
+                        {% else %}<span style="color:#aaa;">No file</span>{% endif %}
+                    </td>
+                    <td><a href="#" class="btn btn-info btn-sm">View</a></td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="9" style="text-align:center; padding:30px; color:#888;">No quizzes found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+function toggleSidebar() {
+    document.querySelector('.deznav').classList.toggle('open');
+    document.getElementById('sidebarOverlay').classList.toggle('open');
+}
+</script>
+{% endblock %}

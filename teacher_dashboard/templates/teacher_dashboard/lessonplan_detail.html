@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Lesson Plan: {{ lp.topic_title }}</h2>
+<p>Chapter: {{ lp.chapter_title }}</p>
+<h3>Days</h3>
+<ul>
+  {% for d in lessons %}
+    <li>Day {{ d.day_number }} - Objective: {{ d.objective }} - Status: {{ d.status }}</li>
+  {% endfor %}
+</ul>
+{% endblock %}

@@ -1,0 +1,72 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block navbar %}{% endblock %}
+
+{% block head %}
+{% load static %}
+<link rel="stylesheet" href="{% static 'admin_panel/css/lms_sidebar.css' %}">
+{% endblock %}
+
+{% block sidebar %}
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+{% include 'admin_panel/sidebar.html' %}
+{% endblock %}
+
+{% block content %}
+<div class="lms-topbar">
+    <button class="hamburger-btn" onclick="toggleSidebar()">
+        <span></span><span></span><span></span>
+    </button>
+    <span class="lms-topbar-title">📋 Assignments</span>
+</div>
+
+<div class="lms-page-content">
+    <div class="assignment-topbar">
+        <div>
+            <h2 class="page-title">📚 Assignments</h2>
+            <p class="page-subtitle">Manage and view all uploaded assignments</p>
+        </div>
+        <div class="search-box">
+            <input type="text" placeholder="Search assignments...">
+        </div>
+    </div>
+
+    <div class="assignment-stats">
+        <div class="stat-card"><h4>Total Assignments</h4><p>{{ assignments|length }}</p></div>
+        <div class="stat-card"><h4>Active</h4><p>{{ assignments|length }}</p></div>
+        <div class="stat-card"><h4>Upcoming</h4><p>--</p></div>
+    </div>
+
+    <div class="assignment-list-card">
+        <div class="list-header"><h3>📂 Uploaded Assignments</h3></div>
+        {% for a in assignments %}
+        <div class="assignment-card">
+            <div class="assignment-info">
+                <h4>{{ a.title }}</h4>
+                <span class="due-date">📅 Due: {{ a.due_date }}</span>
+                <p class="desc">{{ a.description|default:"No description available." }}</p>
+            </div>
+            <div class="assignment-actions">
+                {% if a.file %}
+                <a href="{{ a.file.url }}" class="btn-download">⬇ Download</a>
+                {% else %}
+                <span class="no-file">No File</span>
+                {% endif %}
+            </div>
+        </div>
+        {% empty %}
+        <div class="empty-state">
+            <h3>No assignments found 😕</h3>
+            <p>Please upload new assignments to get started.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+function toggleSidebar() {
+    document.querySelector('.deznav').classList.toggle('open');
+    document.getElementById('sidebarOverlay').classList.toggle('open');
+}
+</script>
+{% endblock %}

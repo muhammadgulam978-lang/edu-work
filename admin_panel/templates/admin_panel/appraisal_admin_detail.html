@@ -1,0 +1,48 @@
+{% extends 'admin_panel/bases.html' %}
+
+{% block content %}
+<div class="card" style="margin:20px;">
+  <div class="card-header"><h4>{{ submission.teacher.name }} - {{ submission.cycle.name }}</h4></div>
+  <div class="card-body">
+
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+
+    <h5>System Score</h5>
+    {% if submission.score %}
+      <p><strong>Total:</strong> {{ submission.score.total_score }} | <strong>Band:</strong> {{ submission.score.band }}</p>
+      {% if pred %}<p><strong>RF Predicted Band:</strong> {{ pred }}</p>{% endif %}
+    {% else %}
+      <p>No score generated yet.</p>
+    {% endif %}
+
+    <hr>
+    <h5>Final Decision (Admin)</h5>
+    <form method="post">
+      {% csrf_token %}
+      <select class="form-control" name="final_band">
+        <option value="">-- select --</option>
+        <option value="Outstanding" {% if submission.final_band == "Outstanding" %}selected{% endif %}>Outstanding</option>
+        <option value="Excellent" {% if submission.final_band == "Excellent" %}selected{% endif %}>Excellent</option>
+        <option value="Good" {% if submission.final_band == "Good" %}selected{% endif %}>Good</option>
+        <option value="Fair" {% if submission.final_band == "Fair" %}selected{% endif %}>Fair</option>
+        <option value="Average" {% if submission.final_band == "Average" %}selected{% endif %}>Average</option>
+        <option value="Below Average" {% if submission.final_band == "Below Average" %}selected{% endif %}>Below Average</option>
+      </select>
+      <div class="mt-2">
+        <button class="btn btn-success" name="save_final_band" value="1">Save Final Band</button>
+        <button class="btn btn-primary" name="regenerate" value="1">Regenerate KPI Score</button>
+        <button class="btn btn-warning" name="train_ml" value="1">Train RandomForest</button>
+      </div>
+    </form>
+
+    <hr>
+    <h5>Auto Metrics Snapshot</h5>
+    <pre style="background:#f7f7f7;padding:10px;">{{ submission.auto_metrics|default:"{}" }}</pre>
+
+  </div>
+</div>
+{% endblock %}

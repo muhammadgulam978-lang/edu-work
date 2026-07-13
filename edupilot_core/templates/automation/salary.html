@@ -1,0 +1,55 @@
+{% extends 'automation/base_automation.html' %}
+{% block page_title %}Salary Automation{% endblock %}
+{% block content %}
+<div class="stats-row">
+    <div class="stat-card"><div class="ic" style="background:#3b82f6;"><i class="fa fa-money-check"></i></div><div><div class="num">{{ total_payslips }}</div><div class="lbl">Total Payslips</div></div></div>
+    <div class="stat-card"><div class="ic" style="background:#22c55e;"><i class="fa fa-calendar-check"></i></div><div><div class="num">{{ generated_this_month }}</div><div class="lbl">This Month</div></div></div>
+    <div class="stat-card"><div class="ic" style="background:#0ea5e9;"><i class="fa fa-check"></i></div><div><div class="num">{{ downloaded }}</div><div class="lbl">Paid</div></div></div>
+    <div class="stat-card"><div class="ic" style="background:#f59e0b;"><i class="fa fa-clock"></i></div><div><div class="num">{{ pending }}</div><div class="lbl">Pending</div></div></div>
+</div>
+
+<div class="grid-2">
+    <div class="card">
+        <h3>Generate Salaries Manually</h3>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="generate_salaries">
+            <label>Month</label><br>
+            <select name="salary_month">
+                {% for m in months %}<option value="{{ m }}" {% if m == current_month %}selected{% endif %}>{{ m }}</option>{% endfor %}
+            </select><br><br>
+            <label>Year</label><br>
+            <input type="number" name="salary_year" value="{{ current_year }}"><br><br>
+            <button type="submit" class="btn-teal">Generate Salaries</button>
+        </form>
+    </div>
+    <div class="card">
+        <h3>Salary Automation Settings</h3>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="save_salary_settings">
+            <label><input type="checkbox" name="salary_auto_enabled" {% if salary_settings.auto_enabled %}checked{% endif %}> Enable automatic salary generation</label><br>
+            <label>Generation Day</label> <input type="number" name="salary_generation_day" value="{{ salary_settings.generation_day }}" style="width:80px;">
+            <label>Generation Time</label> <input type="time" name="salary_generation_time" value="{{ salary_settings.generation_time|time:'H:i' }}">
+            <br><label><input type="checkbox" name="salary_send_notifications" {% if salary_settings.send_notifications %}checked{% endif %}> Send notifications</label><br><br>
+            <button type="submit" class="btn-teal">Save Settings</button>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <h3>Recent Salary Vouchers</h3>
+    <table>
+        <tr><th>Teacher</th><th>Month</th><th>Net Salary</th><th>Status</th></tr>
+        {% for v in recent_generation %}
+        <tr>
+            <td>{{ v.teacher.name }}</td><td>{{ v.month }} {{ v.year }}</td>
+            <td>PKR {{ v.net_salary }}</td>
+            <td><span class="badge {% if v.status == 'PAID' %}badge-green{% else %}badge-yellow{% endif %}">{{ v.status }}</span></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4" style="text-align:center;color:#999;">No salary vouchers generated yet.</td></tr>
+        {% endfor %}
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends 'admin_panel/bases.html' %}
+{% load static %}
+
+{% block title %}Delete Stream{% endblock %}
+
+{% block head %}
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="card" style="margin-left:20px; margin-right:20px; background-color:#ffffff;">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h4 class="card-title">Delete Stream</h4>
+    <a href="{% url 'stream_list' %}" class="btn btn-primary mt-3">← Back to List</a>
+  </div>
+
+  <div class="card-body">
+    <p>Are you sure you want to delete the stream "<strong>{{ stream.stream_name }}</strong>"?</p>
+    <form method="post" class="mt-4 d-flex align-items-center">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger me-3">Yes, Delete</button>
+      <a href="{% url 'stream_list' %}" class="btn btn-secondary">Cancel</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

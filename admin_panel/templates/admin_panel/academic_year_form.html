@@ -1,0 +1,27 @@
+{% extends 'admin_panel/bases.html' %}
+{% load static %}
+
+{% block title %}
+    {{ form.instance.pk|yesno:"Edit,Add" }} Academic Year
+{% endblock %}
+
+{% block head %}
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="card" style="margin-left:20px; margin-right:20px; background-color: #ffffff">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h4 class="card-title">{{ form.instance.pk|yesno:"Edit,Add" }} Academic Year</h4>
+    <a href="{% url 'academic_year_list' %}" class="btn btn-primary">← Back to List</a>
+  </div>
+
+  <div class="card-body">
+    <form method="post" class="styled-form">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit" class="btn btn-primary mt-3">Save</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

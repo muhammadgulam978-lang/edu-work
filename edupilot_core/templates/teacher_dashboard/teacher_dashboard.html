@@ -1,0 +1,916 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        header h1 {
+            color: #333;
+            font-size: 28px;
+        }
+        
+        header a {
+            background: #667eea;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            transition: background 0.3s;
+        }
+        
+        header a:hover {
+            background: #764ba2;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .card h2 {
+            color: #333;
+            font-size: 18px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        
+        .info-group {
+            margin: 10px 0;
+        }
+        
+        .info-group label {
+            color: #666;
+            font-weight: 600;
+            display: block;
+            font-size: 12px;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+        
+        .info-group p {
+            color: #333;
+            font-size: 16px;
+            font-weight: 500;
+        }
+        
+        .salary-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        
+        .salary-section h2 {
+            color: white;
+            border: none;
+            margin-bottom: 15px;
+        }
+        
+        .salary-amount {
+            font-size: 48px;
+            font-weight: bold;
+            margin: 15px 0;
+        }
+        
+        .voucher-container {
+            margin-top: 20px;
+        }
+        
+        .voucher-item {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .voucher-item.paid {
+            border-left-color: #28a745;
+        }
+        
+        .voucher-item.partial {
+            border-left-color: #ffc107;
+        }
+        
+        .voucher-item.unpaid {
+            border-left-color: #dc3545;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .badge.paid {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .badge.partial {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .badge.unpaid {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .automation-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .automation-item {
+            background: #f0f8ff;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #2196F3;
+        }
+        
+        .automation-item p:first-child {
+            margin: 0;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .automation-item p:last-child {
+            margin: 5px 0 0 0;
+            color: #666;
+            font-size: 13px;
+        }
+        
+        .notification-item {
+            background: #f0f8ff;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 5px;
+            border-left: 4px solid #2196F3;
+        }
+        
+        .notification-item p {
+            margin: 0;
+            color: #333;
+        }
+        
+        .notification-item .type {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .notification-item .content {
+            color: #666;
+            font-size: 13px;
+            margin-top: 5px;
+        }
+        
+        .notification-item .status {
+            color: #999;
+            font-size: 11px;
+            margin-top: 5px;
+        }
+        
+        .no-data {
+            color: #999;
+            text-align: center;
+            padding: 20px;
+            font-style: italic;
+        }
+        
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+            
+            .automation-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .voucher-item {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        
+        <!-- HEADER -->
+        <header>
+            <h1>👨‍🏫 Teacher Dashboard</h1>
+            <a href="{% url 'logout' %}">Logout</a>
+        </header>
+        
+        <!-- TEACHER INFO -->
+        <div class="card">
+            <h2>👤 Teacher Information</h2>
+            <div class="info-group">
+                <label>Name</label>
+                <p>{{ teacher.name }}</p>
+            </div>
+            <div class="info-group">
+                <label>Teacher ID</label>
+                <p>{{ teacher.teacher_id }}</p>
+            </div>
+            <div class="info-group">
+                <label>Email</label>
+                <p>{{ teacher.email|default:"Not Assigned" }}</p>
+            </div>
+            <div class="info-group">
+                <label>Department</label>
+                <p>{{ teacher.department|default:"Not Assigned" }}</p>
+            </div>
+        </div>
+        
+        <!-- SALARY INFO -->
+        <div class="card">
+            <h2>💰 Salary Information</h2>
+            <div class="info-group">
+                <label>Basic Salary</label>
+                <p>Rs. {{ teacher.basic_salary|floatformat:2 }}</p>
+            </div>
+            <div class="info-group">
+                <label>House Allowance</label>
+                <p>Rs. {{ teacher.house_allowance|floatformat:2 }}</p>
+            </div>
+            <div class="info-group">
+                <label>Medical Allowance</label>
+                <p>Rs. {{ teacher.medical_allowance|floatformat:2 }}</p>
+            </div>
+            <div class="info-group">
+                <label>Status</label>
+                <p>
+                    {% if teacher.is_active %}
+                        <span style="color: green; font-weight: 600;">✓ Active</span>
+                    {% else %}
+                        <span style="color: red; font-weight: 600;">✗ Inactive</span>
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+        
+        <!-- SALARY VOUCHERS -->
+        <div class="card">
+            <h2>💵 Salary Vouchers</h2>
+            
+            {% if salary_vouchers %}
+                <div class="voucher-container">
+                    {% for voucher in salary_vouchers %}
+                        <div class="voucher-item {% if voucher.status == 'PAID' %}paid{% elif voucher.status == 'PARTIAL' %}partial{% else %}unpaid{% endif %}">
+                            <div><strong>{{ voucher.month }}-{{ voucher.year }}</strong></div>
+                            <div>Rs. {{ voucher.net_salary|floatformat:2 }}</div>
+                            <div>{{ voucher.generated_at|date:"d/m/Y" }}</div>
+                            <span class="badge {% if voucher.status == 'PAID' %}paid{% elif voucher.status == 'PARTIAL' %}partial{% else %}unpaid{% endif %}">
+                                {{ voucher.status }}
+                            </span>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="no-data">📭 No salary vouchers generated yet.</div>
+            {% endif %}
+        </div>
+        
+        <!-- NOTIFICATIONS -->
+        <div class="card">
+            <h2>🔔 Notifications</h2>
+            
+            {% if notifications %}
+                <div style="max-height: 300px; overflow-y: auto;">
+                    {% for notif in notifications %}
+                        <div class="notification-item">
+                            <p class="type">📬 {{ notif.get_notification_type_display }}</p>
+                            <p class="content">{{ notif.content }}</p>
+                            <p class="status">
+                                {% if notif.status == 'SENT' %}
+                                    ✅ Sent on {{ notif.created_at|date:"d/m/Y H:i" }}
+                                {% elif notif.status == 'PENDING' %}
+                                    ⏳ Pending
+                                {% else %}
+                                    ❌ Failed
+                                {% endif %}
+                            </p>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="no-data">📭 No notifications yet</div>
+            {% endif %}
+        </div>
+        
+        <!-- AUTOMATION STATUS -->
+        <div class="card">
+            <h2>⚙️ System Automation Status</h2>
+            
+            <div class="automation-grid">
+                <div class="automation-item">
+                    <p>📋 Salary Generation</p>
+                    <p>🟢 Automatic (30th of month, 6:00 PM)</p>
+                </div>
+                
+                <div class="automation-item">
+                    <p>📧 Notifications</p>
+                    <p>🟢 SMS/Email (Every 5 minutes)</p>
+                </div>
+                
+                <div class="automation-item">
+                    <p>📄 PDF Vouchers</p>
+                    <p>🟢 Auto-generated on salary creation</p>
+                </div>
+                
+                <div class="automation-item">
+                    <p>💾 Real-time Updates</p>
+                    <p>🟢 Live salary calculations</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html> -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        header h1 {
+            color: #333;
+            font-size: 28px;
+        }
+        
+        header a {
+            background: #667eea;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            transition: background 0.3s;
+        }
+        
+        header a:hover {
+            background: #764ba2;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .card h2 {
+            color: #333;
+            font-size: 18px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        
+        .info-group {
+            margin: 10px 0;
+        }
+        
+        .info-group label {
+            color: #666;
+            font-weight: 600;
+            display: block;
+            font-size: 12px;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+        
+        .info-group p {
+            color: #333;
+            font-size: 16px;
+            font-weight: 500;
+        }
+        
+        .salary-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        
+        .salary-section h2 {
+            color: white;
+            border: none;
+            margin-bottom: 15px;
+        }
+        
+        .salary-amount {
+            font-size: 48px;
+            font-weight: bold;
+            margin: 15px 0;
+        }
+        
+        .voucher-container {
+            margin-top: 20px;
+        }
+        
+        .voucher-item {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .voucher-item.paid {
+            border-left-color: #28a745;
+        }
+        
+        .voucher-item.partial {
+            border-left-color: #ffc107;
+        }
+        
+        .voucher-item.unpaid {
+            border-left-color: #dc3545;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .badge.paid {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .badge.partial {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .badge.unpaid {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .automation-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .automation-item {
+            background: #f0f8ff;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #2196F3;
+        }
+        
+        .automation-item p:first-child {
+            margin: 0;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .automation-item p:last-child {
+            margin: 5px 0 0 0;
+            color: #666;
+            font-size: 13px;
+        }
+        
+        .notification-item {
+            background: #f0f8ff;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 5px;
+            border-left: 4px solid #2196F3;
+        }
+        
+        .notification-item p {
+            margin: 0;
+            color: #333;
+        }
+        
+        .notification-item .type {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .notification-item .content {
+            color: #666;
+            font-size: 13px;
+            margin-top: 5px;
+        }
+        
+        .notification-item .status {
+            color: #999;
+            font-size: 11px;
+            margin-top: 5px;
+        }
+        
+        .no-data {
+            color: #999;
+            text-align: center;
+            padding: 20px;
+            font-style: italic;
+        }
+
+        /* Student voucher item — 5 columns (name + class + voucher + amount + badge) */
+        .student-voucher-item {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            display: grid;
+            grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .student-voucher-item.paid {
+            border-left-color: #28a745;
+        }
+
+        .student-voucher-item.partial {
+            border-left-color: #ffc107;
+        }
+
+        .student-voucher-item.unpaid {
+            border-left-color: #dc3545;
+        }
+
+        .student-voucher-item .col-label {
+            font-size: 11px;
+            color: #999;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+        }
+
+        .student-voucher-item .col-value {
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+
+        /* Student notification item */
+        .student-notification-item {
+            background: #fff8f0;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 5px;
+            border-left: 4px solid #ff9800;
+        }
+
+        .student-notification-item p {
+            margin: 0;
+            color: #333;
+        }
+
+        .student-notification-item .type {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .student-notification-item .content {
+            color: #666;
+            font-size: 13px;
+            margin-top: 5px;
+        }
+
+        .student-notification-item .status {
+            color: #999;
+            font-size: 11px;
+            margin-top: 5px;
+        }
+        
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+            
+            .automation-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .voucher-item {
+                grid-template-columns: 1fr;
+            }
+
+            .student-voucher-item {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- HEADER -->
+        <header>
+            <h1>👨‍🏫 Teacher Dashboard</h1>
+            <a href="{% url 'logout' %}">Logout</a>
+        </header>
+        
+        <!-- TEACHER INFO -->
+        <div class="card">
+            <h2>👤 Teacher Information</h2>
+            <div class="info-group">
+                <label>Name</label>
+                <p>{{ teacher.name }}</p>
+            </div>
+            <div class="info-group">
+                <label>Teacher ID</label>
+                <p>{{ teacher.teacher_id }}</p>
+            </div>
+            <div class="info-group">
+                <label>Email</label>
+                <p>{{ teacher.email|default:"Not Assigned" }}</p>
+            </div>
+            <div class="info-group">
+                <label>Department</label>
+                <p>{{ teacher.department|default:"Not Assigned" }}</p>
+            </div>
+        </div>
+        
+        <!-- SALARY INFO -->
+        <div class="card">
+            <h2>💰 Salary Information</h2>
+            <div class="info-group">
+                <label>Basic Salary</label>
+                <p>Rs. {{ teacher.basic_salary|floatformat:2 }}</p>
+            </div>
+            <div class="info-group">
+                <label>House Allowance</label>
+                <p>Rs. {{ teacher.house_allowance|floatformat:2 }}</p>
+            </div>
+            <div class="info-group">
+                <label>Medical Allowance</label>
+                <p>Rs. {{ teacher.medical_allowance|floatformat:2 }}</p>
+            </div>
+            <div class="info-group">
+                <label>Status</label>
+                <p>
+                    {% if teacher.is_active %}
+                        <span style="color: green; font-weight: 600;">✓ Active</span>
+                    {% else %}
+                        <span style="color: red; font-weight: 600;">✗ Inactive</span>
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+        
+        <!-- SALARY VOUCHERS -->
+        <div class="card">
+            <h2>💵 Salary Vouchers</h2>
+            
+            {% if salary_vouchers %}
+                <div class="voucher-container">
+                    {% for voucher in salary_vouchers %}
+                        <div class="voucher-item {% if voucher.status == 'PAID' %}paid{% elif voucher.status == 'PARTIAL' %}partial{% else %}unpaid{% endif %}">
+                            <div><strong>{{ voucher.month }}-{{ voucher.year }}</strong></div>
+                            <div>Rs. {{ voucher.net_salary|floatformat:2 }}</div>
+                            <div>{{ voucher.generated_at|date:"d/m/Y" }}</div>
+                            <span class="badge {% if voucher.status == 'PAID' %}paid{% elif voucher.status == 'PARTIAL' %}partial{% else %}unpaid{% endif %}">
+                                {{ voucher.status }}
+                            </span>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="no-data">📭 No salary vouchers generated yet.</div>
+            {% endif %}
+        </div>
+        
+        <!-- NOTIFICATIONS -->
+        <div class="card">
+            <h2>🔔 Notifications</h2>
+            
+            {% if notifications %}
+                <div style="max-height: 300px; overflow-y: auto;">
+                    {% for notif in notifications %}
+                        <div class="notification-item">
+                            <p class="type">📬 {{ notif.get_notification_type_display }}</p>
+                            <p class="content">{{ notif.content }}</p>
+                            <p class="status">
+                                {% if notif.status == 'SENT' %}
+                                    ✅ Sent on {{ notif.created_at|date:"d/m/Y H:i" }}
+                                {% elif notif.status == 'PENDING' %}
+                                    ⏳ Pending
+                                {% else %}
+                                    ❌ Failed
+                                {% endif %}
+                            </p>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="no-data">📭 No notifications yet</div>
+            {% endif %}
+        </div>
+        
+        <!-- AUTOMATION STATUS -->
+        <div class="card">
+            <h2>⚙️ System Automation Status</h2>
+            
+            <div class="automation-grid">
+                <div class="automation-item">
+                    <p>📋 Salary Generation</p>
+                    <p>🟢 Automatic (30th of month, 6:00 PM)</p>
+                </div>
+                
+                <div class="automation-item">
+                    <p>📧 Notifications</p>
+                    <p>🟢 SMS/Email (Every 5 minutes)</p>
+                </div>
+                
+                <div class="automation-item">
+                    <p>📄 PDF Vouchers</p>
+                    <p>🟢 Auto-generated on salary creation</p>
+                </div>
+                
+                <div class="automation-item">
+                    <p>💾 Real-time Updates</p>
+                    <p>🟢 Live salary calculations</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- STUDENT FEE VOUCHERS (Nursery to 5th) -->
+        <div class="card">
+            <h2>🎓 Student Fee Vouchers (Nursery — Class 5)</h2>
+
+            {% if student_vouchers %}
+                <div class="voucher-container">
+                    <!-- Header Row -->
+                    <div style="display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr; gap: 10px; padding: 8px 15px; background: #667eea; border-radius: 5px; margin-bottom: 5px;">
+                        <div style="color: white; font-size: 12px; font-weight: 600; text-transform: uppercase;">Student</div>
+                        <div style="color: white; font-size: 12px; font-weight: 600; text-transform: uppercase;">Class</div>
+                        <div style="color: white; font-size: 12px; font-weight: 600; text-transform: uppercase;">Voucher No</div>
+                        <div style="color: white; font-size: 12px; font-weight: 600; text-transform: uppercase;">Amount</div>
+                        <div style="color: white; font-size: 12px; font-weight: 600; text-transform: uppercase;">Status</div>
+                    </div>
+
+                    {% for voucher in student_vouchers %}
+                        <div class="student-voucher-item {% if voucher.status == 'PAID' %}paid{% elif voucher.status == 'PARTIAL' %}partial{% else %}unpaid{% endif %}">
+                            <div>
+                                <div class="col-label">Name</div>
+                                <div class="col-value">{{ voucher.student.full_name }}</div>
+                            </div>
+                            <div>
+                                <div class="col-label">Class</div>
+                                <div class="col-value">{{ voucher.student.current_class }}</div>
+                            </div>
+                            <div>
+                                <div class="col-label">Voucher</div>
+                                <div class="col-value">{{ voucher.voucher_no }}</div>
+                            </div>
+                            <div>
+                                <div class="col-label">Amount</div>
+                                <div class="col-value">Rs. {{ voucher.net_amount|floatformat:2 }}</div>
+                            </div>
+                            <div>
+                                <span class="badge {% if voucher.status == 'PAID' %}paid{% elif voucher.status == 'PARTIAL' %}partial{% else %}unpaid{% endif %}">
+                                    {{ voucher.status }}
+                                </span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="no-data">📭 No fee vouchers found for Nursery to Class 5 students.</div>
+            {% endif %}
+        </div>
+
+        <!-- STUDENT NOTIFICATIONS (Nursery to 5th) -->
+        <div class="card">
+            <h2>📢 Student Notifications (Nursery — Class 5)</h2>
+
+            {% if student_notifications %}
+                <div style="max-height: 350px; overflow-y: auto;">
+                    {% for notif in student_notifications %}
+                        <div class="student-notification-item">
+                            <p class="type">
+                                🎓 {{ notif.student.full_name }}
+                                <span style="color: #999; font-size: 11px; font-weight: 400;">
+                                    — {{ notif.student.current_class }}
+                                </span>
+                            </p>
+                            <p class="content">📬 {{ notif.get_notification_type_display }} — {{ notif.content }}</p>
+                            <p class="status">
+                                {% if notif.status == 'SENT' %}
+                                    ✅ Sent on {{ notif.created_at|date:"d/m/Y H:i" }}
+                                {% elif notif.status == 'PENDING' %}
+                                    ⏳ Pending
+                                {% else %}
+                                    ❌ Failed
+                                {% endif %}
+                            </p>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="no-data">📭 No student notifications found for Nursery to Class 5.</div>
+            {% endif %}
+        </div>
+
+    </div>
+</body>

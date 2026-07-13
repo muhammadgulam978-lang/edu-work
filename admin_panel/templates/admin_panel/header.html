@@ -1,0 +1,98 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Dashboard</title>
+
+    <!-- STYLES -->
+    <link rel="icon" type="image/png" href="{% static 'admin_panel/images/favicon.png' %}">
+    <link href="{% static 'admin_panel/vendor/bootstrap-select/dist/css/bootstrap-select.min.css' %}" rel="stylesheet">
+    <link href="{% static 'admin_panel/vendor/owl-carousel/owl.carousel.css' %}" rel="stylesheet">
+    <link href="{% static 'admin_panel/css/style.css' %}" rel="stylesheet">
+</head>
+
+<body>
+
+<div id="main-wrapper">
+
+    <!--**********************************
+        Nav header start
+    ***********************************-->
+    <div class="nav-header">
+        <a href="{% url 'admin_panel_dashboard' %}" class="brand-logo">
+            <img class="logo-abbr" src="{% static 'admin_panel/images/final final.png' %}" alt="Logo">
+        </a>
+
+        <div class="nav-control">
+            <div class="hamburger">
+                <span class="line"></span><span class="line"></span><span class="line"></span>
+            </div>
+        </div>
+    </div>
+    <!-- Nav header end -->
+
+    <!--**********************************
+        Header start
+    ***********************************-->
+    <div class="header">
+        <div class="header-content">
+            <nav class="navbar navbar-expand">
+
+                <div class="collapse navbar-collapse justify-content-between">
+
+                    <div class="header-left">
+                        <div class="dashboard_bar">Dashboard</div>
+                    </div>
+
+                    <ul class="navbar-nav header-right">
+
+                        <!-- PROFILE DROPDOWN -->
+                        <li class="nav-item dropdown header-profile">
+                            <a class="nav-link" href="#" data-bs-toggle="dropdown">
+
+                                <!-- USER IMAGE (STATIC DEFAULT TO AVOID ERRORS) -->
+                                <img src="{% static 'admin_panel/images/default_user.png' %}"
+                                     width="25" height="25" alt="User">
+
+                                <div class="header-info">
+                                    <span class="text-black">
+                                        {{ request.user.first_name }} {{ request.user.last_name }}
+                                    </span>
+                                    <p class="fs-12 mb-0">
+                                        {{ request.user.groups.all.0.name }}
+                                    </p>
+                                </div>
+
+                            </a>
+
+                            <div class="dropdown-menu dropdown-menu-end">
+
+                                <a href="#" class="dropdown-item ai-icon">
+                                    <span class="ms-2">Profile</span>
+                                </a>
+
+                                <!-- ✔ FIXED LOGOUT URL -->
+                                <a href="{% url 'custom_logout' %}">Logout</a>
+    <span class="ms-2">Logout</span>
+</a>
+
+
+                            </div>
+                        </li>
+
+                    </ul>
+
+                </div>
+
+            </nav>
+        </div>
+    </div>
+    <!-- Header end -->
+
+</div>
+
+</body>
+</html>

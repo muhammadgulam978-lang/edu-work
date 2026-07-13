@@ -1,0 +1,63 @@
+{% extends 'automation/base_automation.html' %}
+{% block page_title %}Fee Automation{% endblock %}
+{% block content %}
+<div class="stats-row">
+    <div class="stat-card"><div class="ic" style="background:#3b82f6;"><i class="fa fa-calendar"></i></div><div><div class="num">{{ last_run|date:"M d, H:i"|default:"—" }}</div><div class="lbl">Last Run</div></div></div>
+    <div class="stat-card"><div class="ic" style="background:#0ea5e9;"><i class="fa fa-users"></i></div><div><div class="num">{{ processed }}</div><div class="lbl">Students Processed</div></div></div>
+    <div class="stat-card"><div class="ic" style="background:#16a34a;"><i class="fa fa-check"></i></div><div><div class="num">{{ success }}</div><div class="lbl">Success</div></div></div>
+    <div class="stat-card"><div class="ic" style="background:#ef4444;"><i class="fa fa-xmark"></i></div><div><div class="num">{{ failed }}</div><div class="lbl">Failed</div></div></div>
+</div>
+
+<div class="grid-2">
+    <div class="card">
+        <h3>Generate Fees Manually</h3>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="generate_fees">
+            <label>Month</label><br>
+            <select name="fee_month">
+                {% for m in months %}<option value="{{ m }}" {% if m == current_month %}selected{% endif %}>{{ m }}</option>{% endfor %}
+            </select><br><br>
+            <label>Year</label><br>
+            <input type="number" name="fee_year" value="{{ current_year }}"><br><br>
+            <button type="submit" class="btn-teal">Generate Fees</button>
+        </form>
+    </div>
+    <div class="card">
+        <h3>Fee Collection Summary</h3>
+        <p>Total Fees: <b>PKR {{ total_fees }}</b></p>
+        <p>Collected: <b style="color:#137a4c;">PKR {{ collected }}</b></p>
+        <p>Pending: <b style="color:#c0392b;">PKR {{ pending }}</b></p>
+        <p>Collection Rate: <b>{{ collection_rate }}%</b></p>
+    </div>
+</div>
+
+<div class="card">
+    <h3>Fee Automation Settings</h3>
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="save_fee_settings">
+        <label><input type="checkbox" name="fee_auto_enabled" {% if fee_settings.auto_enabled %}checked{% endif %}> Enable automatic fee generation</label><br>
+        <label>Generation Day</label> <input type="number" name="fee_generation_day" value="{{ fee_settings.generation_day }}" style="width:80px;">
+        <label>Generation Time</label> <input type="time" name="fee_generation_time" value="{{ fee_settings.generation_time|time:'H:i' }}">
+        <br><label><input type="checkbox" name="fee_send_notifications" {% if fee_settings.send_notifications %}checked{% endif %}> Send notifications after generation</label><br><br>
+        <button type="submit" class="btn-teal">Save Settings</button>
+    </form>
+</div>
+
+<div class="card">
+    <h3>Recent Fee Generation Logs</h3>
+    <table>
+        <tr><th>Date</th><th>Processed</th><th>Success</th><th>Failed</th><th>Status</th></tr>
+        {% for run in recent_runs %}
+        <tr>
+            <td>{{ run.date|date:"M d, Y H:i" }}</td><td>{{ run.processed }}</td>
+            <td>{{ run.success }}</td><td>{{ run.failed }}</td>
+            <td><span class="badge {% if run.status == 'Completed' %}badge-green{% else %}badge-red{% endif %}">{{ run.status }}</span></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" style="text-align:center;color:#999;">No fee generation logs yet.</td></tr>
+        {% endfor %}
+    </table>
+</div>
+{% endblock %}

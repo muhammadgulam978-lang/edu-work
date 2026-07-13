@@ -1,0 +1,203 @@
+/* Main Container */
+/* Remove extra margin & padding from body */
+body, html {
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden; /* Hide horizontal scrollbar */
+    overflow-y: hidden;
+  }
+  
+  
+  .main-content {
+    width: 50%;
+    border-radius: 20px;
+    box-shadow: 0 5px 5px rgba(0, 0, 0, 0.4);
+    margin: 5em auto;
+    display: flex;
+    flex-wrap: wrap;
+    overflow: hidden; /* Prevents content overflow */
+    align-items: stretch; /* Ensures both columns align properly */
+  }
+  
+  /* Company Info */
+  .company__info {
+    background-color: #008080;
+    border-top-left-radius: 20px;
+    border-bottom-left-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: #fff;
+    width: 35%; /* Fixed width */
+  }
+  
+  /* Android Icon */
+  .fa-android {
+    font-size: 3em;
+  }
+
+  /* 88888888888888888888888888888888888888888888888888888888 */
+  @media screen and (max-width: 640px) {
+    .main-content {
+      width: 90%;
+    }
+    .company__info {
+      display: none;
+    }
+    .login_form {
+      border-top-left-radius: 20px;
+      border-bottom-left-radius: 20px;
+    }
+  }
+  @media screen and (min-width: 642px) and (max-width: 800px) {
+    .main-content {
+      width: 70%;
+    }
+  }
+  .row > h2 {
+    color: #008080;
+    text-align: center;
+  }
+  .row > p{
+    text-align: center;
+  }
+  .row > input[type="submit"] {
+    display: flex;
+    justify-content: center;
+}
+  /* .login_form {
+    background-color: #fff;
+    border-top-right-radius: 20px;
+    border-bottom-right-radius: 20px;
+    border-top: 1px solid #ccc;
+    border-right: 1px solid #ccc;
+  } */
+  /* 88888888888888888888888888888888888888888888888888888888 */
+  
+  /* Login Form */
+  .login_form {
+    flex: 1; 
+    background-color: #fff;
+    border-top-right-radius: 20px;
+    border-bottom-right-radius: 20px;
+    padding: 2em;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 65%;
+  }
+  
+  /* Form Styling */
+  form {
+  
+    padding: 0 2em;
+  }
+  
+  .form__input {
+    width: 100%;
+    border: none;
+    border-bottom: 1px solid #aaa;
+    padding: 1em 0.5em 0.5em;
+    padding-left: 2em;
+    outline: none;
+    margin: 1.5em auto;
+    transition: all 0.5s ease;
+  }
+  
+  .form__input:focus {
+    border-bottom-color: #008080;
+    box-shadow: 0 0 5px rgba(0, 80, 80, 0.4);
+    border-radius: 4px;
+  }
+  
+  /* Submit Button */
+  .btn {
+    transition: all 0.5s ease;
+    width: 40%;
+    height: 30px;
+    border-radius: 30px;
+    color: #008080;
+    font-weight: 600;
+    background-color: #fff;
+    border: 1px solid #008080;
+    margin: 10px auto;
+    display: block;
+    text-align: center;
+  }
+  
+  .btn:hover,
+  .btn:focus {
+    background-color: #008080;
+    color: #fff;
+    .company__info {
+      width: 35%;  /* Adjust this width as needed */
+  }
+  
+  .login_form {
+      width: 65%;  /* Adjust to match the remaining width */
+  }
+  .row {
+      text-align: center;
+  }
+  
+  .btn {
+      display: inline-block;
+  }
+  }
+/* chnaging */
+.password-container {
+  position: relative;
+  max-width: 300px;
+}
+
+
+.toggle-password {
+  position: absolute;
+  top: 50%;
+  right: -25px;
+  transform: translateY(-50%);
+  cursor: pointer;
+  font-size: 12px;
+  color: #333;
+}
+
+  /* Responsive Design */
+  @media screen and (max-width: 640px) {
+    .main-content {
+        width: 90%;
+    }
+    .company__info {
+        display: none;
+    }
+    .login_form {
+        border-top-left-radius: 20px;
+        border-bottom-left-radius: 20px;
+    }
+  }
+  
+  @media screen and (min-width: 642px) and (max-width: 800px) {
+    .main-content {
+        width: 70%;
+    }
+  }
+  
+  .row {
+    text-align: center;
+  }
+  
+  .btn {
+    display: inline-block;
+  }
+  .forgot-password {
+    display: block;
+    text-align: right;  /* Right side shift */
+    margin-top: 10px;
+  }
+
+
+
+
+
+  

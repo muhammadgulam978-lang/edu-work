@@ -1,0 +1,88 @@
+{% extends "admin_panel/bases.html" %}
+{% load static %}
+{% block title %}Subject List{% endblock %}
+
+{% block head %}
+    <!-- DataTables CSS (if any custom needed) -->
+{% endblock %}
+
+{% block content %}
+
+<div class="col-12">
+  <div class="card" style="background: #f8f9fa; margin-left:20px; margin-right:20px;">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h4 class="card-title">Subject List</h4>
+      <a href="{% url 'add_subject' %}">
+        <button class="btn btn-primary me-2">
+          <span class="me-2"><i class="fa fa-plus"></i></span>New Subject
+        </button>
+      </a>
+    </div>
+    
+    <div class="card-body">
+      <div class="table-responsive">
+        <table id="example3" class="display table-responsive-lg dataTable no-footer" style="width: 100%;">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Academic Year</th>
+              <th>Class</th>
+              <th>Stream</th>
+              <th>Subject Name</th>
+              <th>Subject Format</th>
+              <th>Subject Type</th>
+              <th>Grading Type</th>
+              <th>Short Code</th>
+              <th>Sort Order</th>
+              <th>Description</th>
+              <th>Created At</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for subject in subjects %}
+            <tr>
+              <td>{{ forloop.counter }}</td>
+              <td>{{ subject.academic_year.year }}</td>
+              <td>{{ subject.class_fk.class_name }}</td>
+              <td>{{ subject.stream.stream_name }}</td>
+              <td>{{ subject.name }}</td>
+              <td>{{ subject.get_subject_format_display }}</td>
+              <td>{{ subject.get_subject_type_display }}</td>
+              <td>{{ subject.get_grading_type_display }}</td>
+              <td>{{ subject.short_code }}</td>
+              <td>{{ subject.sort_order }}</td>
+              <td>{{ subject.course_description|default:"No description" }}</td>
+              <td>{{ subject.created_at|date:"Y-m-d H:i:s" }}</td>
+              <td>
+               <div class="d-flex">
+                <a href="{% url 'edit_subject' subject.id %}" class="btn btn-sm btn-primary me-1" title="Edit">
+                  <i class="fa fa-edit"></i>
+                </a>
+                <a href="{% url 'delete_subject' subject.id %}" class="btn btn-sm btn-danger" title="Delete" >
+                  <i class="fa fa-trash"></i>
+                </a>
+            </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="12" style="text-align: center; color: #1e4976;">No subjects found.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Required vendors -->
+<script src="{% static 'admin_panel/vendor/global/global.min.js' %}"></script>
+<script src="{% static 'admin_panel/vendor/bootstrap-select/dist/js/bootstrap-select.min.js' %}"></script>
+
+<!-- Datatable -->
+<script src="{% static 'admin_panel/vendor/datatables/js/jquery.dataTables.min.js' %}"></script>
+<script src="{% static 'admin_panel/js/plugins-init/datatables.init.js' %}"></script>
+
+{% endblock %}

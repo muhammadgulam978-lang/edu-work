@@ -1,0 +1,511 @@
+{% extends "admin_panel/bases.html" %}
+{% load static %}
+
+{% block title %}Academic Calendar{% endblock %}
+
+{% block content %}
+
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
+
+<style>
+  .ac-wrap{display:flex; gap:16px; align-items:flex-start;}
+  .ac-left{width:290px; min-width:290px;}
+  .ac-right{flex:1;}
+  .ac-card{background:#fff; border-radius:12px; box-shadow:0 2px 10px rgba(0,0,0,.06); padding:14px; margin-bottom:16px;}
+  .ac-title{font-size:18px; font-weight:600; margin:0;}
+  .ac-muted{font-size:12px; opacity:.7}
+  .ac-actions{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
+  #academicCalendar{min-height:720px;}
+
+  .fc .fc-toolbar-title{font-size:18px; font-weight:600;}
+  .fc .fc-button{border-radius:10px;}
+  .fc .fc-button-primary{background:#1a73e8; border-color:#1a73e8;}
+  .fc .fc-button-primary:disabled{background:#9bbcf2; border-color:#9bbcf2;}
+
+  .ac-table{width:100%; border-collapse:collapse;}
+  .ac-table th,.ac-table td{padding:10px; border-bottom:1px solid rgba(0,0,0,.08); vertical-align:top;}
+  .badge-dot{display:inline-block; width:10px; height:10px; border-radius:999px; margin-right:8px; vertical-align:middle;}
+  .ac-chip{display:flex; align-items:center; gap:8px; margin:6px 0;}
+  .ac-chip .dot{width:12px; height:12px; border-radius:999px;}
+  .ac-mini-btn{border-radius:999px;}
+</style>
+
+<div class="container-fluid">
+
+  <div class="row mb-3">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+      <div>
+        <h4 class="ac-title mb-1">Academic Calendar</h4>
+        <div class="ac-muted">Create events + neeche list + yearly PDF export</div>
+      </div>
+
+      <div class="ac-actions">
+        <input id="searchInput" class="form-control form-control-sm" style="width:220px;" placeholder="Search...">
+        <select id="yearSelect" class="form-control form-control-sm" style="width:140px;"></select>
+        <button id="btnExportPdf" class="btn btn-outline-primary btn-sm ac-mini-btn">Download Year PDF</button>
+        <button id="btnCreateTop" class="btn btn-success btn-sm ac-mini-btn">Create</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="ac-wrap">
+
+    <div class="ac-left">
+
+      <div class="ac-card">
+        <button id="btnCreateLeft" class="btn btn-primary btn-sm w-100 ac-mini-btn">+ Create</button>
+      </div>
+
+      <div class="ac-card">
+        <div class="fw-semibold mb-2">Legend</div>
+
+        <div class="ac-chip"><span class="dot" style="background:#34a853;"></span> Gazetted Holidays</div>
+        <div class="ac-chip"><span class="dot" style="background:#1a73e8;"></span> College Assess/Admin</div>
+        <div class="ac-chip"><span class="dot" style="background:#7c6f31;"></span> College Events</div>
+        <div class="ac-chip"><span class="dot" style="background:#8ab4f8;"></span> Mat/Camb Assess</div>
+        <div class="ac-chip"><span class="dot" style="background:#d56a1f;"></span> Pre-Primary</div>
+        <div class="ac-chip"><span class="dot" style="background:#7b1fa2;"></span> Speaker/Ses/Train</div>
+        <div class="ac-chip"><span class="dot" style="background:#fbbc05;"></span> ECA/CCA</div>
+        <div class="ac-chip"><span class="dot" style="background:#ea4335;"></span> PTM</div>
+        <div class="ac-chip"><span class="dot" style="background:#5f6368;"></span> Other</div>
+      </div>
+
+      <div class="ac-card">
+        <div class="fw-semibold mb-2">Type Filters</div>
+
+        <div class="d-flex flex-column gap-2">
+          <label class="d-flex align-items-center gap-2"><input type="checkbox" class="typeFilter" value="gazetted" checked> Gazetted Holidays</label>
+          <label class="d-flex align-items-center gap-2"><input type="checkbox" class="typeFilter" value="college_assess" checked> College Assess/Admin</label>
+          <label class="d-flex align-items-center gap-2"><input type="checkbox" class="typeFilter" value="college_event" checked> College Events</label>
+          <label class="d-flex align-items-center gap-2"><input type="checkbox" class="typeFilter" value="mat_camb_assess" checked> Mat/Camb Assess</label>
+          <label class="d-flex align-items-center gap-2"><input type="checkbox" class="typeFilter" value="pre_primary" checked> Pre-Primary</label>
+          <label class="d-flex align-items-center gap-2"><input type="checkbox" class="typeFilter" value="speaker_train" checked> Speaker/Ses/Train</label>
+          <label class="d-flex align-items-center gap-2"><input type="checkbox" class="typeFilter" value="eca_cca" checked> ECA/CCA</label>
+          <label class="d-flex align-items-center gap-2"><input type="checkbox" class="typeFilter" value="ptm" checked> PTM</label>
+          <label class="d-flex align-items-center gap-2"><input type="checkbox" class="typeFilter" value="other" checked> Other</label>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="ac-right">
+
+      <div class="ac-card">
+        <div id="academicCalendar"></div>
+      </div>
+
+      <div class="ac-card">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <div class="fw-semibold">Created Events / Tasks</div>
+          <div class="ac-muted">Auto update hoti rahe gi</div>
+        </div>
+
+        <div style="overflow:auto;">
+          <table class="ac-table">
+            <thead>
+              <tr>
+                <th style="min-width:90px;">Date</th>
+                <th style="min-width:110px;">Day</th>
+                <th style="min-width:260px;">Event</th>
+                <th style="min-width:200px;">Streams</th>
+                <th style="min-width:200px;">Responsibility</th>
+                <th style="min-width:120px;">Type</th>
+              </tr>
+            </thead>
+            <tbody id="eventsTbody">
+              <tr><td colspan="6" class="ac-muted">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<!-- CREATE / EDIT MODAL -->
+<div class="modal fade" id="eventModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalTitle">Create event</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <input type="hidden" id="eventId">
+
+        <div class="mb-2">
+          <label class="form-label">Title</label>
+          <input type="text" id="eventTitle" class="form-control" placeholder="Add title">
+        </div>
+
+        <div class="mb-2">
+          <label class="form-label">Type</label>
+          <select id="eventType" class="form-control">
+            <option value="gazetted">Gazetted Holidays</option>
+            <option value="college_assess">College Assess/Admin</option>
+            <option value="college_event">College Events</option>
+            <option value="mat_camb_assess">Mat/Camb Assess</option>
+            <option value="pre_primary">Pre-Primary</option>
+            <option value="speaker_train">Speaker/Ses/Train</option>
+            <option value="eca_cca">ECA/CCA</option>
+            <option value="ptm">PTM</option>
+            <option value="other" selected>Other</option>
+          </select>
+        </div>
+
+        <div class="mb-2">
+          <label class="form-label">Start</label>
+          <input type="datetime-local" id="eventStart" class="form-control">
+        </div>
+
+        <div class="mb-2">
+          <label class="form-label">End</label>
+          <input type="datetime-local" id="eventEnd" class="form-control">
+        </div>
+
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" id="eventAllDay">
+          <label class="form-check-label" for="eventAllDay">All day</label>
+        </div>
+
+        <div class="mb-2">
+          <label class="form-label">Streams</label>
+          <input type="text" id="eventStreams" class="form-control" placeholder="e.g. All DIs / College / Matric Stream">
+        </div>
+
+        <div class="mb-2">
+          <label class="form-label">Responsibility</label>
+          <input type="text" id="eventResp" class="form-control" placeholder="e.g. Education Branch / Respective DIs">
+        </div>
+
+        <div class="mb-2">
+          <label class="form-label">Description</label>
+          <textarea id="eventDesc" class="form-control" rows="3"></textarea>
+        </div>
+
+      </div>
+
+      <div class="modal-footer d-flex justify-content-between">
+        <button id="btnDelete" type="button" class="btn btn-danger btn-sm" style="display:none;">Delete</button>
+        <div class="d-flex gap-2">
+          <button type="button" class="btn btn-light btn-sm" data-bs-dismiss="modal">Cancel</button>
+          <button id="btnSave" type="button" class="btn btn-primary btn-sm">Save</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+  // IMPORTANT: existing cheezain touch kiye baghair, yahan prefix force kar rahe hain
+  const URL_EXPORT = "/admin_panel/academic-calendar/export-pdf/";
+  const URL_EVENTS = "/admin_panel/academic-calendar/events/";
+  const URL_CREATE = "/admin_panel/academic-calendar/create/";
+  function urlUpdate(id){ return `/admin_panel/academic-calendar/${id}/update/`; }
+  function urlDelete(id){ return `/admin_panel/academic-calendar/${id}/delete/`; }
+
+  function getCookie(name) {
+    let v = null;
+    document.cookie.split(";").forEach(c => {
+      c = c.trim();
+      if (c.startsWith(name + "=")) v = decodeURIComponent(c.split("=")[1]);
+    });
+    return v;
+  }
+  const csrftoken = getCookie("csrftoken");
+
+  function typeToColor(t){
+    const map = {
+      gazetted: "#34a853",
+      college_assess: "#1a73e8",
+      college_event: "#7c6f31",
+      mat_camb_assess: "#8ab4f8",
+      pre_primary: "#d56a1f",
+      speaker_train: "#7b1fa2",
+      eca_cca: "#fbbc05",
+      ptm: "#ea4335",
+      other: "#5f6368"
+    };
+    return map[t] || "#1a73e8";
+  }
+  function typeToLabel(t){
+    const map = {
+      gazetted: "Gazetted Holidays",
+      college_assess: "College Assess/Admin",
+      college_event: "College Events",
+      mat_camb_assess: "Mat/Camb Assess",
+      pre_primary: "Pre-Primary",
+      speaker_train: "Speaker/Ses/Train",
+      eca_cca: "ECA/CCA",
+      ptm: "PTM",
+      other: "Other"
+    };
+    return map[t] || "Other";
+  }
+
+  function toDayName(d){ return new Date(d).toLocaleDateString(undefined, { weekday: "long" }); }
+  function toDateCell(d){
+    const dt = new Date(d);
+    const dd = String(dt.getDate()).padStart(2,'0');
+    const mm = String(dt.getMonth()+1).padStart(2,'0');
+    const yy = String(dt.getFullYear()).slice(-2);
+    return `${dd}-${mm}-${yy}`;
+  }
+
+  async function api(url, method, body){
+    const res = await fetch(url, {
+      method,
+      headers: {"Content-Type":"application/json","X-CSRFToken": csrftoken},
+      body: body ? JSON.stringify(body) : null
+    });
+    if(!res.ok) throw new Error(await res.text());
+    return res.json();
+  }
+
+  // year selector
+  const yearSelect = document.getElementById("yearSelect");
+  const nowY = new Date().getFullYear();
+  [nowY-1, nowY, nowY+1].forEach(y=>{
+    const opt = document.createElement("option");
+    opt.value = y;
+    opt.textContent = y;
+    if(y === nowY) opt.selected = true;
+    yearSelect.appendChild(opt);
+  });
+
+  // filters + search
+  let searchText = "";
+  let allowedTypes = new Set(Array.from(document.querySelectorAll(".typeFilter")).map(x => x.value));
+
+  document.getElementById("searchInput").addEventListener("input", (e)=>{
+    searchText = (e.target.value || "").toLowerCase().trim();
+    calendar.refetchEvents();
+    refreshList();
+  });
+
+  document.querySelectorAll(".typeFilter").forEach(chk=>{
+    chk.addEventListener("change", ()=>{
+      allowedTypes = new Set(Array.from(document.querySelectorAll(".typeFilter")).filter(x=>x.checked).map(x=>x.value));
+      calendar.refetchEvents();
+      refreshList();
+    });
+  });
+
+  // modal
+  const modal = new bootstrap.Modal(document.getElementById("eventModal"));
+  const ui = {
+    id: document.getElementById("eventId"),
+    title: document.getElementById("eventTitle"),
+    type: document.getElementById("eventType"),
+    start: document.getElementById("eventStart"),
+    end: document.getElementById("eventEnd"),
+    allDay: document.getElementById("eventAllDay"),
+    streams: document.getElementById("eventStreams"),
+    resp: document.getElementById("eventResp"),
+    desc: document.getElementById("eventDesc"),
+    btnSave: document.getElementById("btnSave"),
+    btnDelete: document.getElementById("btnDelete"),
+    modalTitle: document.getElementById("modalTitle"),
+  };
+
+  function openCreate(startStr="", endStr="", allDay=false){
+    ui.modalTitle.textContent = "Create event";
+    ui.id.value = "";
+    ui.title.value = "";
+    ui.type.value = "other";
+    ui.start.value = startStr ? startStr.slice(0,16) : "";
+    ui.end.value = endStr ? endStr.slice(0,16) : "";
+    ui.allDay.checked = !!allDay;
+    ui.streams.value = "";
+    ui.resp.value = "";
+    ui.desc.value = "";
+    ui.btnDelete.style.display = "none";
+    modal.show();
+  }
+
+  function openEdit(event){
+    ui.modalTitle.textContent = "Edit event";
+    ui.id.value = event.id;
+    ui.title.value = event.title || "";
+    const props = event.extendedProps || {};
+    ui.type.value = props.event_type || "other";
+    ui.start.value = event.start ? event.start.toISOString().slice(0,16) : "";
+    ui.end.value = event.end ? event.end.toISOString().slice(0,16) : "";
+    ui.allDay.checked = !!event.allDay;
+    ui.streams.value = props.streams || "";
+    ui.resp.value = props.responsibility || "";
+    ui.desc.value = props.description || "";
+    ui.btnDelete.style.display = "inline-block";
+    modal.show();
+  }
+
+  document.getElementById("btnCreateTop").onclick = ()=> openCreate();
+  document.getElementById("btnCreateLeft").onclick = ()=> openCreate();
+
+  document.getElementById("btnExportPdf").onclick = ()=>{
+    const y = yearSelect.value;
+    const url = URL_EXPORT + "?year=" + encodeURIComponent(y);
+    window.open(url, "_blank");
+  };
+
+  // calendar
+  const calendar = new FullCalendar.Calendar(document.getElementById("academicCalendar"), {
+    initialView: "dayGridMonth",
+    height: "auto",
+    selectable: true,
+    editable: true,
+    nowIndicator: true,
+    dayMaxEvents: true,
+    headerToolbar: { left:"today prev,next", center:"title", right:"dayGridMonth,timeGridWeek,timeGridDay" },
+
+    events: async (info, success, failure) => {
+      try {
+        const res = await fetch(URL_EVENTS);
+        const data = await res.json();
+
+        const filtered = data.filter(ev => {
+          const t = ev.extendedProps?.event_type || "other";
+          const okType = allowedTypes.has(t);
+          const okText = !searchText || (ev.title || "").toLowerCase().includes(searchText);
+          return okType && okText;
+        }).map(ev=>{
+          const t = ev.extendedProps?.event_type || "other";
+          const color = ev.extendedProps?.color || typeToColor(t);
+          return { ...ev, backgroundColor: color, borderColor: color };
+        });
+
+        success(filtered);
+      } catch (e) { failure(e); }
+    },
+
+    select: (info) => openCreate(info.startStr, info.endStr || "", info.allDay),
+    eventClick: (info) => openEdit(info.event),
+
+    eventDrop: async (info) => {
+      try{
+        await api(urlUpdate(info.event.id), "POST", {
+          start: info.event.start ? info.event.start.toISOString() : null,
+          end: info.event.end ? info.event.end.toISOString() : null,
+          allDay: info.event.allDay
+        });
+        refreshList();
+      }catch(e){ info.revert(); alert(e.message); }
+    },
+
+    eventResize: async (info) => {
+      try{
+        await api(urlUpdate(info.event.id), "POST", {
+          start: info.event.start ? info.event.start.toISOString() : null,
+          end: info.event.end ? info.event.end.toISOString() : null
+        });
+        refreshList();
+      }catch(e){ info.revert(); alert(e.message); }
+    }
+  });
+
+  calendar.render();
+
+  ui.btnSave.onclick = async ()=>{
+    const payload = {
+      title: (ui.title.value || "").trim(),
+      event_type: ui.type.value,
+      start: ui.start.value ? new Date(ui.start.value).toISOString() : null,
+      end: ui.end.value ? new Date(ui.end.value).toISOString() : null,
+      allDay: ui.allDay.checked,
+      description: ui.desc.value || "",
+      streams: ui.streams.value || "",
+      responsibility: ui.resp.value || "",
+      color: typeToColor(ui.type.value)
+    };
+
+    if(!payload.title || !payload.start){
+      alert("Title aur Start required hain");
+      return;
+    }
+
+    try{
+      const id = (ui.id.value || "").trim();
+      if(!id){
+        await api(URL_CREATE, "POST", payload);
+      }else{
+        await api(urlUpdate(id), "POST", payload);
+      }
+      modal.hide();
+      calendar.refetchEvents();
+      refreshList();
+    }catch(e){ alert(e.message); }
+  };
+
+  ui.btnDelete.onclick = async ()=>{
+    const id = (ui.id.value || "").trim();
+    if(!id) return;
+    if(!confirm("Delete this event?")) return;
+
+    try{
+      await api(urlDelete(id), "POST", {});
+      modal.hide();
+      calendar.refetchEvents();
+      refreshList();
+    }catch(e){ alert(e.message); }
+  };
+
+  async function refreshList(){
+    const tbody = document.getElementById("eventsTbody");
+    tbody.innerHTML = `<tr><td colspan="6" class="ac-muted">Loading...</td></tr>`;
+
+    try{
+      const res = await fetch(URL_EVENTS);
+      const data = await res.json();
+
+      const filtered = data
+        .filter(ev => {
+          const t = ev.extendedProps?.event_type || "other";
+          const okType = allowedTypes.has(t);
+          const okText = !searchText || (ev.title || "").toLowerCase().includes(searchText);
+          return okType && okText;
+        })
+        .sort((a,b)=> new Date(a.start) - new Date(b.start));
+
+      if(!filtered.length){
+        tbody.innerHTML = `<tr><td colspan="6" class="ac-muted">No events found</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(ev=>{
+        const props = ev.extendedProps || {};
+        const t = props.event_type || "other";
+        const color = props.color || typeToColor(t);
+
+        return `
+          <tr>
+            <td>${toDateCell(ev.start)}</td>
+            <td>${toDayName(ev.start)}</td>
+            <td><span class="badge-dot" style="background:${color};"></span>${ev.title || ""}</td>
+            <td>${props.streams || ""}</td>
+            <td>${props.responsibility || ""}</td>
+            <td>${typeToLabel(t)}</td>
+          </tr>
+        `;
+      }).join("");
+
+    }catch(e){
+      tbody.innerHTML = `<tr><td colspan="6" class="text-danger">${e.message}</td></tr>`;
+    }
+  }
+
+  refreshList();
+
+});
+</script>
+
+{% endblock %}

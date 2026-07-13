@@ -1,0 +1,294 @@
+{% extends "admin_panel/base.html" %}
+{% load static %}
+
+{% block title %}Question Banks{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+  :root {
+    --ep-green:       #2e7d32;
+    --ep-green-dark:  #57d6a5;
+    --ep-green-light: #4aca84;
+    --ep-green-pale:  #e8f5e9;
+    --ep-green-mid:   #c8e6c9;
+    --ep-white:       #ffffff;
+    --ep-grey-50:     #fafafa;
+    --ep-grey-100:    #f5f5f5;
+    --ep-grey-200:    #eeeeee;
+    --ep-grey-400:    #bdbdbd;
+    --ep-grey-600:    #757575;
+    --ep-grey-800:    #424242;
+    --ep-grey-900:    #212121;
+    --ep-red:         #c62828;
+    --ep-red-pale:    #ffebee;
+    --ep-radius:      10px;
+    --ep-shadow:      0 1px 3px rgba(0,0,0,.08);
+  }
+
+  .qb-wrapper { max-width: 1100px; margin: 0 auto; padding: 32px 24px 80px; font-family: 'Inter', sans-serif; }
+
+  /* Header */
+  .qb-page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 14px; }
+  .qb-page-header h1 { font-size: 22px; font-weight: 700; color: var(--ep-grey-900); display: flex; align-items: center; gap: 10px; }
+  .qb-page-header p  { font-size: 13px; color: var(--ep-grey-600); margin-top: 4px; }
+
+  /* Buttons */
+  .qb-btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 9px 18px; border-radius: 7px; font-family: 'Inter', sans-serif;
+    font-size: 13.5px; font-weight: 600; cursor: pointer; text-decoration: none;
+    border: none; transition: all .15s;
+  }
+  .qb-btn-primary { background: var(--ep-green); color: #fff; }
+  .qb-btn-primary:hover { background: var(--ep-green-dark); box-shadow: var(--ep-shadow); }
+  .qb-btn-outline { background: var(--ep-white); border: 1.5px solid var(--ep-green); color: var(--ep-green); }
+  .qb-btn-outline:hover { background: var(--ep-green-pale); }
+  .qb-btn-secondary { background: var(--ep-grey-100); border: 1px solid var(--ep-grey-200); color: var(--ep-grey-800); }
+  .qb-btn-secondary:hover { background: var(--ep-grey-200); }
+  .qb-btn-danger { background: var(--ep-white); border: 1.5px solid var(--ep-red); color: var(--ep-red); }
+  .qb-btn-danger:hover { background: var(--ep-red-pale); }
+  .qb-btn-sm { padding: 6px 12px; font-size: 12px; }
+
+  /* Messages */
+  .qb-messages { margin-bottom: 18px; }
+  .qb-alert { padding: 11px 16px; border-radius: 8px; font-size: 13.5px; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; }
+  .qb-alert-success { background: var(--ep-green-pale); border: 1px solid var(--ep-green-mid); color: var(--ep-green-dark); }
+  .qb-alert-error   { background: #ffebee; border: 1px solid #ffcdd2; color: #b71c1c; }
+  .qb-alert-info    { background: #e3f2fd; border: 1px solid #bbdefb; color: #1565c0; }
+  .qb-alert-warning { background: #fff3e0; border: 1px solid #ffe0b2; color: #e65100; }
+
+  /* Workflow banner */
+  .qb-flow-banner {
+    background: var(--ep-white); border: 1px solid var(--ep-grey-200); border-radius: var(--ep-radius);
+    padding: 18px 22px; margin-bottom: 24px; box-shadow: var(--ep-shadow);
+    display: flex; align-items: center; gap: 0; flex-wrap: wrap;
+  }
+  .qb-flow-step {
+    display: flex; align-items: center; gap: 10px; flex: 1; min-width: 150px;
+    font-size: 12.5px; color: var(--ep-grey-600);
+  }
+  .qb-flow-step-num {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--ep-grey-100); border: 1px solid var(--ep-grey-200);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700;
+    flex-shrink: 0; color: var(--ep-grey-600);
+  }
+  .qb-flow-step.active .qb-flow-step-num { background: var(--ep-green-light); border-color: var(--ep-green); color: #fff; }
+  .qb-flow-step.active { color: var(--ep-grey-900); font-weight: 600; }
+  .qb-flow-arrow { color: var(--ep-grey-400); margin: 0 8px; font-size: 16px; flex-shrink: 0; }
+
+  /* Create bank card */
+  .qb-create-card {
+    background: var(--ep-green-pale); border: 1px solid var(--ep-green-mid); border-radius: var(--ep-radius);
+    padding: 24px 28px; margin-bottom: 28px;
+  }
+  .qb-create-card h2 {
+    font-size: 15px; font-weight: 700; margin-bottom: 4px; color: var(--ep-grey-900);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .qb-create-card p { font-size: 13px; color: var(--ep-grey-600); margin-bottom: 18px; }
+
+  .qb-form-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: 14px; align-items: end; }
+  @media (max-width: 640px) { .qb-form-row { grid-template-columns: 1fr; } }
+
+  .qb-field label {
+    display: block; font-size: 11.5px; font-weight: 600; color: var(--ep-grey-600);
+    text-transform: uppercase; letter-spacing: .05em; margin-bottom: 7px;
+  }
+  .qb-field select {
+    width: 100%; padding: 10px 13px;
+    background: var(--ep-white); border: 1.5px solid var(--ep-grey-200); border-radius: 7px;
+    color: var(--ep-grey-900); font-family: 'Inter', sans-serif; font-size: 13.5px;
+    outline: none; transition: border-color .15s; appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23757575' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 12px center;
+    padding-right: 36px;
+  }
+  .qb-field select:focus { border-color: var(--ep-green); }
+
+  /* Table */
+  .qb-table-card { background: var(--ep-white); border: 1px solid var(--ep-grey-200); border-radius: var(--ep-radius); overflow: hidden; box-shadow: var(--ep-shadow); }
+  .qb-table-header { padding: 16px 20px; border-bottom: 1px solid var(--ep-grey-200); display: flex; align-items: center; justify-content: space-between; }
+  .qb-table-header h3 { font-size: 14px; font-weight: 600; color: var(--ep-grey-900); }
+  .qb-table-header span { font-size: 12px; color: var(--ep-grey-600); }
+
+  .qb-table-card table { width: 100%; border-collapse: collapse; }
+  .qb-table-card th {
+    padding: 11px 18px; text-align: left; font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .06em; color: var(--ep-grey-600);
+    border-bottom: 1px solid var(--ep-grey-200); background: var(--ep-grey-50);
+  }
+  .qb-table-card td { padding: 13px 18px; font-size: 13.5px; border-bottom: 1px solid var(--ep-grey-200); vertical-align: middle; color: var(--ep-grey-900); }
+  .qb-table-card tr:last-child td { border-bottom: none; }
+  .qb-table-card tbody tr:hover td { background: var(--ep-grey-50); }
+
+  .qb-tag {
+    display: inline-flex; align-items: center; padding: 3px 10px;
+    border-radius: 20px; font-size: 11px; font-weight: 600;
+  }
+  .qb-tag-green  { background: var(--ep-green-pale); color: var(--ep-green-dark); }
+  .qb-tag-orange { background: #fff3e0; color: #e65100; }
+  .qb-tag-blue   { background: #e3f2fd; color: #1565c0; }
+  .qb-tag-grey   { background: var(--ep-grey-200); color: var(--ep-grey-800); }
+
+  .qb-actions-cell { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .qb-delete-form { display: inline-block; margin: 0; }
+
+  /* Empty state */
+  .qb-empty-state { text-align: center; padding: 48px 24px; }
+  .qb-empty-state h3 { font-size: 15px; color: var(--ep-grey-800); margin-bottom: 6px; font-weight: 600; }
+  .qb-empty-state p  { font-size: 13px; color: var(--ep-grey-600); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="qb-wrapper">
+
+  <!-- Header -->
+  <div class="qb-page-header">
+    <div>
+      <h1><i class="fas fa-book" style="color:var(--ep-green);"></i> Question Banks</h1>
+      <p>Select a subject and class to create a bank, upload a book, generate questions with AI, and approve them.</p>
+    </div>
+  </div>
+
+  <!-- Workflow Banner -->
+  <div class="qb-flow-banner">
+    <div class="qb-flow-step active">
+      <div class="qb-flow-step-num">1</div>
+      <span>Select Subject & Create Bank</span>
+    </div>
+    <div class="qb-flow-arrow">→</div>
+    <div class="qb-flow-step">
+      <div class="qb-flow-step-num">2</div>
+      <span>Upload Book (PDF)</span>
+    </div>
+    <div class="qb-flow-arrow">→</div>
+    <div class="qb-flow-step">
+      <div class="qb-flow-step-num">3</div>
+      <span>Generate Questions with AI</span>
+    </div>
+    <div class="qb-flow-arrow">→</div>
+    <div class="qb-flow-step">
+      <div class="qb-flow-step-num">4</div>
+      <span>Review / Edit / Approve</span>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  {% if messages %}
+  <div class="qb-messages">
+    {% for msg in messages %}
+    <div class="qb-alert qb-alert-{{ msg.tags|default:'info' }}">
+      {% if 'success' in msg.tags %}<i class="fas fa-check-circle"></i>
+      {% elif 'error' in msg.tags %}<i class="fas fa-exclamation-circle"></i>
+      {% elif 'warning' in msg.tags %}<i class="fas fa-exclamation-triangle"></i>
+      {% else %}<i class="fas fa-info-circle"></i>{% endif %}
+      {{ msg }}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Create New Bank -->
+  <div class="qb-create-card">
+    <h2><i class="fas fa-plus-circle" style="color:var(--ep-green);"></i> Create New Question Bank</h2>
+    <p>Select a subject and class — a question bank will be created automatically, and you can then upload a book.</p>
+
+    <form method="POST">
+      {% csrf_token %}
+      <div class="qb-form-row">
+        <div class="qb-field">
+          <label>Subject</label>
+          <select name="subject_id" required>
+            <option value="">— Select Subject —</option>
+            {% for subject in subjects %}
+            <option value="{{ subject.id }}">{{ subject.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="qb-field">
+          <label>Class</label>
+          <select name="class_id" required>
+            <option value="">— Select Class —</option>
+            {% for class in classes %}
+            <option value="{{ class.id }}">Class {{ class.class_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <button type="submit" class="qb-btn qb-btn-primary">
+            <i class="fas fa-upload"></i> Create & Upload Book
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- Existing Banks -->
+  <div class="qb-table-card">
+    <div class="qb-table-header">
+      <h3>Existing Question Banks</h3>
+      <span>{{ banks.count }} bank{{ banks.count|pluralize }}</span>
+    </div>
+
+    {% if banks %}
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Subject</th>
+          <th>Class</th>
+          <th>Academic Year</th>
+          <th>Total Questions</th>
+          <th>Approved</th>
+          <th>Pending</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for bank in banks %}
+        <tr>
+          <td style="color:var(--ep-grey-600); font-size:12px;">{{ forloop.counter }}</td>
+          <td style="font-weight:600;">{{ bank.subject.name }}</td>
+          <td>Class {{ bank.class_fk.class_name }}</td>
+          <td style="font-size:12px; color:var(--ep-grey-600);">{{ bank.academic_year }}</td>
+          <td><span class="qb-tag qb-tag-blue">{{ bank.total_count }}</span></td>
+          <td><span class="qb-tag qb-tag-green">{{ bank.approved_count }}</span></td>
+          <td><span class="qb-tag qb-tag-orange">{{ bank.pending_count }}</span></td>
+          <td>
+            <div class="qb-actions-cell">
+              <a href="{% url 'question_bank_detail' bank.id %}" class="qb-btn qb-btn-outline qb-btn-sm">
+                <i class="fas fa-eye"></i> View
+              </a>
+              <a href="{% url 'upload_book_for_bank' bank.id %}" class="qb-btn qb-btn-primary qb-btn-sm">
+                <i class="fas fa-upload"></i> Upload Book
+              </a>
+              <form method="POST" action="{% url 'delete_question_bank' bank.id %}" class="qb-delete-form"
+                    onsubmit="return confirm('Are you sure you want to delete the &quot;{{ bank.subject.name }} - Class {{ bank.class_fk.class_name }}&quot; question bank? This will remove all its questions and cannot be undone.');">
+                {% csrf_token %}
+                <button type="submit" class="qb-btn qb-btn-danger qb-btn-sm">
+                  <i class="fas fa-trash"></i> Delete
+                </button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    {% else %}
+    <div class="qb-empty-state">
+      <h3>No Question Banks Yet</h3>
+      <p>Use the form above to select a subject and class and create your first bank.</p>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

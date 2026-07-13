@@ -1,0 +1,60 @@
+{% extends "admin_panel/bases.html" %}
+{% load static %}
+
+{% block title %}Class List{% endblock %}
+
+{% block head %}
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="card" style="margin-left: 20px; margin-right: 20px; background-color: #ffffff">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h4 class="card-title">Class List</h4>
+   <a href="{% url 'class_create' %}" class="btn btn-primary me-2">
+  <span class="me-2"><i class="fa fa-plus"></i></span>Add Class
+</a>
+
+  </div>
+
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-responsive-md">
+        <thead>
+          <tr>
+            <th><strong>#</strong></th>
+            <th><strong>Class Name</strong></th>
+            <th><strong>Total Students</strong></th>
+            <th><strong>Group</strong></th>
+            <th><strong>Actions</strong></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in classes %}
+          <tr>
+            <td><strong>{{ forloop.counter|stringformat:"02d" }}</strong></td>
+            <td>{{ c.class_name }}</td>
+            <td>{{ c.approved_students }}</td>
+            <td>{{ c.group.group_name|default:"No Group" }}</td>
+            <td>
+              <div class="d-flex">
+                <a href="{% url 'class_update' c.id %}" class="btn btn-primary shadow btn-xs sharp me-1" title="Edit">
+                  <i class="fas fa-pencil-alt"></i>
+                </a>
+                <a href="{% url 'class_delete' c.id %}" class="btn btn-danger shadow btn-xs sharp" title="Delete">
+                  <i class="fa fa-trash"></i>
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5">No classes found.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

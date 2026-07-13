@@ -1,0 +1,175 @@
+{% extends "admin_panel/bases.html" %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Group Timetable{% endblock %}
+
+{% block head %}
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #000000ff; padding: 10px; text-align: center; }
+    th { background-color: #000000ff; color: white; }
+    input[type=number] { width: 60px; padding: 5px; text-align: center; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card" style="margin-left:20px; margin-right:20px; background-color: #ffffff">
+  <div class="card-header">
+    <h4 class="card-title">TimeTable for Subject Wise Allocation</h4>
+  </div>
+
+  <div class="card-body">
+    <!-- Group Selector -->
+    <form method="get">
+        <label class="block mb-2 font-semibold text-gray-700">Select Group:</label>
+        <select name="group" onchange="this.form.submit()" class="form-control">
+            <option value="">-- Select Group --</option>
+            {% for group in groups %}
+                <option value="{{ group.id }}" {% if group.id|stringformat:"s" == selected_group_id|stringformat:"s" %}selected{% endif %}>
+                    {{ group.group_name }}
+                </option>
+            {% endfor %}
+        </select>
+    </form>
+
+    {% if selected_group_id %}
+        {% if subjects %}
+        <!-- Subject Table -->
+        <form method="post" class="mt-4">
+            {% csrf_token %}
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Subject</th>
+                            {% for day in days %}
+                                <th>{{ day }}</th>
+                            {% endfor %}
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for subject in subjects %}
+                        <tr>
+                            <td>{{ subject.name }}</td>
+                            {% for day in days %}
+                            <td>
+                                <input
+                                    type="number"
+                                    name="periods_{{ subject.id }}_{{ day }}"
+                                    min="0" max="8"
+                                    value="{{ saved_periods|dict_get:subject.id|dict_get:day|default:0 }}"
+                                    onchange="handleInputChange({{ subject.id }}, '{{ day }}', this)"
+                                />
+                            </td>
+                            {% endfor %}
+                            <td id="total_{{ subject.id }}">0</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <th>Total</th>
+                            {% for day in days %}
+                            <th id="day_total_{{ day }}">0</th>
+                            {% endfor %}
+                            <th id="grand_total">0</th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <div class="text-center mt-3">
+    <button type="submit" class="btn btn-primary" style="width: 140px; font-size: 16px; padding: 10px 0;">
+        Save
+    </button>
+</div>
+        </form>
+        {% else %}
+        <p class="text-center text-danger mt-3">No subjects found for this group.</p>
+        {% endif %}
+    {% endif %}
+  </div>
+</div>
+
+<script>
+const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const maxPeriodsPerSubjectPerWeek = 36;
+const maxPeriodsPerSubjectPerDay = 8;
+const maxTotalPeriodsPerWeek = 36;
+
+function calculateTotal(subjectId) {
+    let subjectTotal = 0;
+    days.forEach(day => {
+        const input = document.querySelector(`input[name='periods_${subjectId}_${day}']`);
+        if (input) subjectTotal += parseInt(input.value) || 0;
+    });
+    document.getElementById(`total_${subjectId}`).innerText = subjectTotal;
+    return subjectTotal;
+}
+
+function calculateWeekTotals() {
+    let grandTotal = 0;
+    days.forEach(day => {
+        let daySum = 0;
+        document.querySelectorAll(`input[name$="_${day}"]`).forEach(input => {
+            daySum += parseInt(input.value) || 0;
+        });
+        document.getElementById(`day_total_${day}`).innerText = daySum;
+        grandTotal += daySum;
+    });
+    document.getElementById('grand_total').innerText = grandTotal;
+    return grandTotal;
+}
+
+function handleInputChange(subjectId, day, inputElem) {
+    let val = parseInt(inputElem.value) || 0;
+
+    if (val > maxPeriodsPerSubjectPerDay) {
+        alert(`Max ${maxPeriodsPerSubjectPerDay} periods allowed per day for a subject.`);
+        inputElem.value = maxPeriodsPerSubjectPerDay;
+        val = maxPeriodsPerSubjectPerDay;
+    } else if (val < 0) {
+        inputElem.value = 0;
+        val = 0;
+    }
+
+    let totalForSubject = 0;
+    days.forEach(d => {
+        const inp = document.querySelector(`input[name='periods_${subjectId}_${d}']`);
+        if (inp) totalForSubject += parseInt(inp.value) || 0;
+    });
+    if (totalForSubject > maxPeriodsPerSubjectPerWeek) {
+        alert(`Total weekly periods for this subject cannot exceed ${maxPeriodsPerSubjectPerWeek}.`);
+        inputElem.value = 0;
+        calculateTotal(subjectId);
+        calculateWeekTotals();
+        return;
+    }
+
+    let grandTotal = 0;
+    document.querySelectorAll('input[type=number]').forEach(input => {
+        grandTotal += parseInt(input.value) || 0;
+    });
+    if (grandTotal > maxTotalPeriodsPerWeek) {
+        alert(`Total weekly periods across all subjects cannot exceed ${maxTotalPeriodsPerWeek}.`);
+        inputElem.value = 0;
+        calculateTotal(subjectId);
+        calculateWeekTotals();
+        return;
+    }
+
+    calculateTotal(subjectId);
+    calculateWeekTotals();
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+    {% for subject in subjects %}
+        calculateTotal({{ subject.id }});
+    {% endfor %}
+    calculateWeekTotals();
+});
+</script>
+{% endblock %}

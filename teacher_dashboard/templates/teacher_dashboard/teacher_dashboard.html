@@ -1,0 +1,181 @@
+{% extends "teacher_dashboard/bases.html" %}
+{% load static %}
+
+{% block title %}Teacher Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-titles">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="javascript:void(0)">Dashboard</a></li>
+    </ol>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h4 class="card-title mb-0">👩‍🏫 {{ teacher.name }} — Dashboard</h4>
+    </div>
+
+    <div class="card-body">
+        <p><strong>Welcome, {{ teacher.name }}</strong></p>
+
+        <!-- Tabs -->
+        <ul class="nav nav-tabs" id="teacherTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="regular-tab" data-bs-toggle="tab" data-bs-target="#regular"
+                        type="button" role="tab" aria-controls="regular" aria-selected="true">
+                    📘 Regular Classes
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="fixture-tab" data-bs-toggle="tab" data-bs-target="#fixture"
+                        type="button" role="tab" aria-controls="fixture" aria-selected="false">
+                    🔄 Fixture Classes
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content mt-3" id="teacherTabContent">
+
+            <!-- ==================== REGULAR CLASSES TAB ==================== -->
+            <div class="tab-pane fade show active" id="regular" role="tabpanel" aria-labelledby="regular-tab">
+                <p>Total Assigned Periods: {{ assigned_periods|length }}</p>
+
+                {% if assigned_periods %}
+                <div class="table-responsive">
+                    <table class="table table-striped align-middle table-hover">
+                        <thead class="table-primary">
+                            <tr>
+                                <th>#</th>
+                                <th>Class</th>
+                                <th>Section</th>
+                                <th>Day</th>
+                                <th>Subject</th>
+                                <th>Period</th>
+                                <th>Class Teacher</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for period in assigned_periods %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>{{ period.class_fk.class_name }}</td>
+                                <td>{{ period.section.section_name }}</td>
+                                <td>{{ period.day }}</td>
+                                <td>{{ period.subject.name }}</td>
+                                <td>{{ period.period.period_name }}</td>
+
+                                <!-- Class Teacher Badge -->
+                                <td>
+                                    {% if period.is_class_teacher %}
+                                        <span class="badge bg-success">Class Teacher</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Not Assigned</span>
+                                    {% endif %}
+                                </td>
+
+                                <!-- ACTIONS -->
+                                <td>
+                                    <a class="btn btn-sm btn-success" href="{% url 'mark_attendance' period.id %}">📝 Mark</a>
+
+                                    <a class="btn btn-sm btn-primary" href="{% url 'view_attendance' period.id %}">📋 View</a>
+
+                                    <a class="btn btn-sm btn-warning"
+                                       href="{% url 'upload_result' period.class_fk.id period.section.id period.subject.id %}">
+                                       📚 Upload Marks
+                                    </a>
+
+                                    <!-- <a class="btn btn-sm btn-dark"
+                                       href="{% url 'merge_result' period.class_fk.id period.section.id %}">
+                                       📊 View Result
+                                    </a> -->
+
+                                    <a class="btn btn-sm btn-info"
+                                      href="{% url 'teacher_timetable' %}" class="btn btn-info btn-sm">
+                                       ⏰ Timetable
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                    <div class="alert alert-warning">No regular periods assigned.</div>
+                {% endif %}
+            </div>
+
+            <!-- ==================== FIXTURE CLASSES TAB ==================== -->
+            <div class="tab-pane fade" id="fixture" role="tabpanel" aria-labelledby="fixture-tab">
+                <p>Total Fixture Assignments: {{ fixture_list|length }}</p>
+
+                {% if fixture_list %}
+                <div class="table-responsive">
+                    <table class="table table-striped align-middle table-hover">
+                        <thead class="table-warning">
+                            <tr>
+                                <th>#</th>
+                                <th>Class</th>
+                                <th>Section</th>
+                                <th>Period</th>
+                                <th>Date</th>
+                                <th>Absent Teacher</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {% for item in fixture_list %}
+                            {% with fix=item.fixture %}
+                            <tr {% if item.is_expired %}style="opacity:0.6;background-color:#f8f9fa;"{% endif %}>
+                                <td>{{ forloop.counter }}</td>
+                                <td>{{ fix.class_fk.class_name }}</td>
+                                <td>{{ fix.section.section_name }}</td>
+                                <td>{{ fix.period.period_name }}</td>
+                                <td>{{ fix.date|date:"d M Y" }}</td>
+                                <td>{{ fix.absent_teacher.name }}</td>
+
+                                <td>
+                                    {% if item.is_expired %}
+                                        <button class="btn btn-sm btn-secondary" disabled>⏰ Expired</button>
+                                    {% else %}
+                                        <a class="btn btn-sm btn-outline-dark"
+                                           href="{% url 'view_students' fix.class_fk.id fix.section.id %}">
+                                           👩‍🎓 View
+                                        </a>
+
+                                        <a class="btn btn-sm btn-success"
+                                           href="{% url 'mark_attendance' item.original_period_id|default_if_none:0 %}">
+                                           📝 Mark
+                                        </a>
+
+                                        <a class="btn btn-sm btn-primary"
+                                           href="{% url 'view_attendance' item.original_period_id|default_if_none:0 %}">
+                                           📋 Attendance
+                                        </a>
+
+                                        <a class="btn btn-sm btn-warning"
+                                           href="{% url 'submit_diary' fix.class_fk.id fix.section.id fix.subject.id %}">
+                                           🗒 Diary
+                                        </a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endwith %}
+                            {% endfor %}
+                        </tbody>
+
+                    </table>
+                </div>
+                {% else %}
+                    <div class="alert alert-info">No fixture assignments right now.</div>
+                {% endif %}
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %}

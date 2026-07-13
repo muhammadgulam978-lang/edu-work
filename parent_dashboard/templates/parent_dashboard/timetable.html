@@ -1,0 +1,43 @@
+{% extends "student_profile/base.html" %}
+{% load static %}
+{% load dict_filters %}
+
+{% block title %}Timetable{% endblock %}
+
+{% block content %}
+
+<div class="container mt-4">
+    <h2><b>Class Timetable — {{ class_info.class_name }} {{ section_info.section_name }}</b></h2>
+
+    <div class="table-responsive mt-3">
+        <table class="table table-bordered text-center" style="background:white; border-radius:10px;">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Day / Period</th>
+                    {% for p in period_order %}
+                        <th>{{ p }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for day in days %}
+                <tr>
+                    <td><b>{{ day }}</b></td>
+
+                    {% for p in period_order %}
+                        <td>
+                            {% autoescape off %}
+                                {{ slots|dictget:day|dictget:p }}
+                            {% endautoescape %}
+                        </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+
+        </table>
+    </div>
+</div>
+
+{% endblock %}

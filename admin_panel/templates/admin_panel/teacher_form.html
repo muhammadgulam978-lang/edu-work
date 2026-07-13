@@ -1,0 +1,196 @@
+{% extends 'admin_panel/bases.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}
+    {% if form.instance.pk %}Edit Teacher{% else %}Create Teacher{% endif %}
+{% endblock %}
+{% block extra_head %}
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="{% static 'admin_panel/css/add_teacher.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="card" style="background: #f8f9fa; margin-left: 20px; margin-right: 20px;">
+    <div class="card-header">
+        <h4 class="card-title">{% if form.instance.pk %}Edit Teacher{% else %}Create New Teacher{% endif %}</h4>
+    </div>
+    <div class="card-body">
+        <form method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
+            {% csrf_token %}
+
+            {% if form.errors %}
+            <div style="color:red; margin-bottom:1em;">
+                <ul>
+                    {% for field in form %}
+                        {% for error in field.errors %}
+                            <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                        {% endfor %}
+                    {% endfor %}
+                    {% for error in form.non_field_errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            <div class="row">
+                <!-- Profile Picture -->
+                <div class="mb-3 row">
+                    <label class="col-lg-4 col-form-label">Profile Picture</label>
+                    <div class="col-lg-6 text-center">
+                        {% if form.instance.image %}
+                            <img src="{{ form.instance.image.url }}" class="rounded-circle mb-2" width="100" height="100" alt="Preview">
+                        {% else %}
+                            <img src="{% static 'admin_panel/images/dummy-profile.png' %}" class="rounded-circle mb-2" width="100" height="100" alt="No Image">
+                        {% endif %}
+                        {{ form.image }}
+                    </div>
+                </div>
+
+                <!-- Left Column -->
+                <div class="col-xl-6">
+                    <div class="mb-3 row">
+                        <label class="col-lg-4 col-form-label">Full Name</label>
+                        <div class="col-lg-6">
+                            {{ form.name|add_class:"form-control" }}
+                        </div>
+                    </div>
+                    <div class="mb-3 row">
+                        <label class="col-lg-4 col-form-label">Email</label>
+                        <div class="col-lg-6">
+                            {{ form.email|add_class:"form-control" }}
+                        </div>
+                    </div>
+                    <div class="mb-3 row">
+                        <label class="col-lg-4 col-form-label">Phone</label>
+                        <div class="col-lg-6">
+                            {{ form.phone|add_class:"form-control" }}
+                        </div>
+                    </div>
+                    <div class="mb-3 row">
+                        <label class="col-lg-4 col-form-label">Gender</label>
+                        <div class="col-lg-6">
+                            {{ form.gender|add_class:"form-control" }}
+                        </div>
+                    </div>
+                    <div class="mb-3 row">
+                        <label class="col-lg-4 col-form-label">Date of Birth</label>
+                        <div class="col-lg-6">
+                            {{ form.date_of_birth|add_class:"form-control" }}
+                        </div>
+                    </div>
+                    <div class="mb-3 row">
+                        <label class="col-lg-4 col-form-label">Qualification</label>
+                        <div class="col-lg-6">
+                            {{ form.qualification|add_class:"form-control" }}
+                        </div>
+                    </div>
+                    <div class="mb-3 row">
+                        <label class="col-lg-4 col-form-label">Address</label>
+                        <div class="col-lg-6">
+                            {{ form.Address|add_class:"form-control" }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column -->
+                <div class="col-xl-6">
+                    <div class="mb-3 row">
+                        <label class="col-lg-4 col-form-label">Faculty Group</label>
+                        <div class="col-lg-6">
+                            {{ form.faculty_group|add_class:"form-control select2" }}
+                        </div>
+                    </div>
+                    <div class="mb-3 row">
+                        <label class="col-lg-4 col-form-label">Department</label>
+                        <div class="col-lg-6">
+                            {{ form.department|add_class:"form-control" }}
+                        </div>
+                    </div>
+                    <!-- Subjects Multi-Select -->
+                  <!-- Subjects Multi-Select -->
+<div class="mb-3 row">
+    <label class="col-lg-4 col-form-label" for="{{ form.subjects.id_for_label }}">Subjects</label>
+    <div class="col-lg-6">
+        {{ form.subjects|add_class:"form-control select2" }}
+    </div>
+</div>
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-1.8.3.min.js"></script>
+<!-- Select2 v3.3.0 JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/3.3.0/select2.min.js"></script>
+
+<!-- Init -->
+<script>
+$(document).ready(function() {
+    $(".select2").select2({
+        placeholder: "Select subjects",
+        allowClear: true,
+        closeOnSelect: false
+    });
+});
+</script>
+
+<!-- Tab style -->
+<style>
+.select2-search-choice {
+    background-color: #007bff !important;
+    border: none !important;
+    color: white !important;
+    padding: 4px 8px !important;
+    border-radius: 15px !important;
+    font-size: 13px;
+}
+.select2-search-choice-close {
+    margin-top: 2px;
+}
+</style>
+
+                    <div class="mb-3 row">
+                        <label class="col-lg-4 col-form-label">Status</label>
+                        <div class="col-lg-6">
+                            {{ form.status|add_class:"form-control" }}
+                        </div>
+                    </div>
+                    <div class="mb-3 row">
+                        <label class="col-lg-4 col-form-label">Experience (Years)</label>
+                        <div class="col-lg-6">
+                            {{ form.experience|add_class:"form-control" }}
+                        </div>
+                    </div>
+                    <div class="mb-3 row">
+                        <label class="col-lg-4 col-form-label">Joining Date</label>
+                        <div class="col-lg-6">
+                            {{ form.joining_date|add_class:"form-control" }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="col-lg-12 text-center mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        {% if form.instance.pk %}Update Teacher{% else %}Submit{% endif %}
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+                                                      
+{% endblock %}
+{% block scripts %}
+<script src="https://code.jquery.com/jquery-1.8.3.min.js"></script>
+<!-- Select2 v3.3.0 JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/3.3.0/select2.min.js"></script>
+
+<script>
+  $(document).ready(function() {
+      $('.select2').select2({
+          placeholder: "Select options",
+          allowClear: true
+      });
+  });
+</script>
+{% endblock %}

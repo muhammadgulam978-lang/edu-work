@@ -1,0 +1,7 @@
+<h2>Permissions</h2>
+<a href="{% url 'create_permission' %}">+ Add Permission</a>
+<ul>
+{% for p in permissions %}
+    <li>{{ p.name }} ({{ p.code }})</li>
+{% endfor %}
+</ul>

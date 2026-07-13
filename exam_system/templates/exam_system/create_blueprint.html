@@ -1,0 +1,118 @@
+{% extends "admin_panel/base.html" %}
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex align-items-center mb-4">
+        <a href="{% url 'exam_plan_detail' plan.id %}" class="btn btn-outline-secondary btn-sm mr-3">
+            <i class="fa fa-arrow-left"></i> Back
+        </a>
+        <div>
+            <h3 class="mb-1">Paper Blueprint</h3>
+            <p class="text-muted mb-0">{{ subject.name }} — {{ plan.title }}</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form method="POST" id="blueprintForm">
+                {% csrf_token %}
+
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <label>Total Marks</label>
+                        <input type="number" name="total_marks" class="form-control"
+                               value="{{ blueprint.total_marks|default:100 }}" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label>Passing Marks</label>
+                        <input type="number" name="passing_marks" class="form-control"
+                               value="{{ blueprint.passing_marks|default:40 }}" required>
+                    </div>
+                </div>
+
+                <h5 class="mb-3">Question Type Rules</h5>
+                <div class="table-responsive">
+                    <table class="table table-bordered" id="rulesTable">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Question Type</th>
+                                <th>Count</th>
+                                <th>Marks Each</th>
+                                <th>Easy %</th>
+                                <th>Medium %</th>
+                                <th>Hard %</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="rulesBody">
+                            {% for rule in blueprint.rules.all %}
+                            <tr>
+                                <td>
+                                    <select name="question_type" class="form-control form-control-sm">
+                                        {% for val, label in q_types %}
+                                            <option value="{{ val }}" {% if rule.question_type == val %}selected{% endif %}>
+                                                {{ label }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                                <td><input type="number" name="count" class="form-control form-control-sm" value="{{ rule.count }}" min="1"></td>
+                                <td><input type="number" name="marks_each" class="form-control form-control-sm" value="{{ rule.marks_each }}" min="1"></td>
+                                <td><input type="number" name="easy_percent" class="form-control form-control-sm" value="{{ rule.easy_percent }}" min="0" max="100"></td>
+                                <td><input type="number" name="medium_percent" class="form-control form-control-sm" value="{{ rule.medium_percent }}" min="0" max="100"></td>
+                                <td><input type="number" name="hard_percent" class="form-control form-control-sm" value="{{ rule.hard_percent }}" min="0" max="100"></td>
+                                <td><button type="button" class="btn btn-xs btn-danger" onclick="this.closest('tr').remove()">✕</button></td>
+                            </tr>
+                            {% empty %}
+                            <!-- Default first row -->
+                            <tr>
+                                <td>
+                                    <select name="question_type" class="form-control form-control-sm">
+                                        {% for val, label in q_types %}
+                                            <option value="{{ val }}">{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                                <td><input type="number" name="count" class="form-control form-control-sm" value="10" min="1"></td>
+                                <td><input type="number" name="marks_each" class="form-control form-control-sm" value="1" min="1"></td>
+                                <td><input type="number" name="easy_percent" class="form-control form-control-sm" value="30" min="0" max="100"></td>
+                                <td><input type="number" name="medium_percent" class="form-control form-control-sm" value="50" min="0" max="100"></td>
+                                <td><input type="number" name="hard_percent" class="form-control form-control-sm" value="20" min="0" max="100"></td>
+                                <td><button type="button" class="btn btn-xs btn-danger" onclick="this.closest('tr').remove()">✕</button></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <button type="button" class="btn btn-outline-secondary btn-sm mb-3" onclick="addRow()">
+                    <i class="fa fa-plus mr-1"></i> Add Row
+                </button>
+
+                <div class="d-flex justify-content-end">
+                    <a href="{% url 'exam_plan_detail' plan.id %}" class="btn btn-outline-secondary mr-2">Cancel</a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa fa-save mr-1"></i> Save Blueprint
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+const qtypes = [{% for val, label in q_types %}{val:"{{ val }}", label:"{{ label }}"},{% endfor %}];
+function addRow() {
+    const opts = qtypes.map(t => `<option value="${t.val}">${t.label}</option>`).join('');
+    const tr = `<tr>
+        <td><select name="question_type" class="form-control form-control-sm">${opts}</select></td>
+        <td><input type="number" name="count" class="form-control form-control-sm" value="5" min="1"></td>
+        <td><input type="number" name="marks_each" class="form-control form-control-sm" value="2" min="1"></td>
+        <td><input type="number" name="easy_percent" class="form-control form-control-sm" value="30" min="0" max="100"></td>
+        <td><input type="number" name="medium_percent" class="form-control form-control-sm" value="50" min="0" max="100"></td>
+        <td><input type="number" name="hard_percent" class="form-control form-control-sm" value="20" min="0" max="100"></td>
+        <td><button type="button" class="btn btn-xs btn-danger" onclick="this.closest('tr').remove()">✕</button></td>
+    </tr>`;
+    document.getElementById('rulesBody').insertAdjacentHTML('beforeend', tr);
+}
+</script>
+{% endblock %}
