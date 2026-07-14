@@ -37,6 +37,7 @@ class Teacher(models.Model):
     ]
     
     user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
+    employee = models.OneToOneField('admin_panel.Employee', on_delete=models.SET_NULL, null=True, blank=True, related_name='teacher_profile')
     image = models.ImageField(upload_to=filepath, null=True, blank=True)
     name = models.CharField(max_length=100)
     email = models.EmailField(unique=True)

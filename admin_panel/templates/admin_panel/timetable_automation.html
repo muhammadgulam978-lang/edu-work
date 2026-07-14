@@ -1,0 +1,369 @@
+{% extends "admin_panel/bases.html" %}
+
+{% block title %}Timetable Automation{% endblock %}
+
+{% block content %}
+<style>
+  .timetable-automation-nav > a { align-items: center; min-height: 64px; padding-right: 28px; white-space: normal; }
+  .timetable-automation-nav > a .nav-text { line-height: 1.25; max-width: 190px; overflow-wrap: normal; }
+  .ta-wrap { margin: 20px; }
+  .ta-card { background: #fff; border: 1px solid #e9ecef; border-radius: 10px; box-shadow: 0 3px 12px rgba(0,0,0,.05); }
+  .ta-card-body { padding: 20px; }
+  .ta-title { font-size: 24px; font-weight: 600; margin: 0; color: #222; }
+  .ta-muted { color: #6c757d; font-size: 14px; margin: 4px 0 0; }
+  .ta-header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px; margin-bottom: 18px; }
+  .ta-selector { min-width: 220px; max-width: 280px; }
+  .ta-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; align-items: stretch; }
+  .ta-step { height: 100%; }
+  .ta-step .ta-card-body { min-height: 320px; display: flex; flex-direction: column; }
+  .ta-step-num { width: 34px; height: 34px; border-radius: 50%; background: #88D0C5; color: #111; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; margin-bottom: 12px; }
+  .ta-step h5 { font-size: 16px; font-weight: 600; margin: 0 0 14px; color: #222; min-height: 40px; display: flex; align-items: center; }
+  .ta-stat { display: flex; justify-content: space-between; gap: 10px; padding: 8px 0; border-bottom: 1px solid #f1f1f1; font-size: 13px; }
+  .ta-stat span:first-child { color: #6c757d; }
+  .ta-stat span:last-child { color: #222; font-weight: 500; text-align: right; }
+  .ta-actions { margin-top: auto; padding-top: 16px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .ta-btn { display: inline-flex; align-items: center; justify-content: center; min-width: 178px; border-radius: 8px; padding: 9px 14px; background: #88D0C5; color: #111; text-decoration: none; font-weight: 500; border: 1px solid #88D0C5; }
+  .ta-btn:hover { color: #111; text-decoration: none; filter: brightness(.98); }
+  .ta-btn-secondary { background: #fff; border-color: #e9ecef; color: #333; }
+  .ta-section { margin-top: 18px; }
+  .ta-table { width: 100%; margin: 0; }
+  .ta-table th { font-weight: 600; color: #333; }
+  .ta-pill { display: inline-flex; padding: 4px 8px; border-radius: 99px; background: #F5F5FD; color: #333; font-size: 12px; }
+  .ta-auto-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: 18px; margin-bottom: 18px; }
+  .ta-form-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; align-items: end; }
+  .ta-status { display: inline-flex; padding: 4px 9px; border-radius: 999px; font-size: 12px; background: #F5F5FD; color: #333; }
+  .ta-status.assigned { background: rgba(139,199,64,.16); color: #315f13; }
+  .ta-status.unassigned { background: rgba(255,99,71,.14); color: #9a2a1c; }
+  .ta-status.skipped { background: rgba(136,208,197,.22); color: #245b55; }
+  .ta-status.cancelled, .ta-status.uncovered { background: rgba(255,99,71,.14); color: #9a2a1c; }
+  .ta-workflow { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 14px; margin-top: 12px; }
+  .ta-workflow-step { display: flex; gap: 8px; align-items: flex-start; font-size: 12px; color: #333; }
+  .ta-workflow-step span:first-child { width: 22px; height: 22px; border-radius: 50%; background: #88D0C5; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 22px; font-size: 11px; }
+  .ta-inline-form { display: inline-flex; gap: 6px; align-items: center; flex-wrap: wrap; margin: 2px 0; }
+  .ta-mini-input { min-width: 150px; max-width: 190px; height: 32px; font-size: 12px; }
+  .ta-mini-btn { border: 1px solid #88D0C5; background: #88D0C5; border-radius: 6px; padding: 5px 8px; font-size: 12px; color: #111; }
+  @media (max-width: 1200px) { .ta-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 992px) { .ta-auto-grid, .ta-form-row { grid-template-columns: 1fr; } }
+  @media (max-width: 768px) { .ta-grid, .ta-workflow { grid-template-columns: 1fr; } .ta-wrap { margin: 12px; } .ta-selector { width: 100%; max-width: none; } }
+</style>
+
+<div class="ta-wrap">
+  <div class="ta-card">
+    <div class="ta-card-body">
+      <div class="ta-header">
+        <div>
+          <h4 class="ta-title">Timetable Automation</h4>
+          <p class="ta-muted">A guided view of subject allocation, teacher period assignment, timetable preview, and fixture coverage.</p>
+        </div>
+        {% if groups %}
+          <form method="get" class="ta-selector">
+            <select name="group" class="form-control" onchange="this.form.submit()">
+              {% for group in groups %}
+                <option value="{{ group.id }}" {% if selected_group and group.id == selected_group.id %}selected{% endif %}>{{ group.group_name }}</option>
+              {% endfor %}
+            </select>
+          </form>
+        {% endif %}
+      </div>
+
+      <div class="ta-auto-grid">
+        <div class="ta-card">
+          <div class="ta-card-body">
+            <h5 class="mb-2" style="font-weight:600;">Auto Fixture Assignment</h5>
+            <p class="ta-muted mb-3">Mark a teacher absent for a date. The system will assign available substitute teachers and send email plus in-app notifications.</p>
+            <form method="post" class="ta-form-row">
+              {% csrf_token %}
+              <div>
+                <label class="form-label">Absent Teacher</label>
+                <select name="teacher_id" class="form-control" required>
+                  <option value="">Select teacher</option>
+                  {% for teacher in teachers %}
+                    <option value="{{ teacher.id }}">{{ teacher.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div>
+                <label class="form-label">Absence Date</label>
+                <input type="date" name="absence_date" class="form-control" value="{{ today|date:'Y-m-d' }}" required>
+              </div>
+              <div>
+                <button type="submit" class="ta-btn" style="width:100%;">Run Auto Assignment</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <div class="ta-card">
+          <div class="ta-card-body">
+            <h5 class="mb-2" style="font-weight:600;">Today's Absent Teachers</h5>
+            {% if today_absences %}
+              {% for absence in today_absences %}
+                <div class="ta-stat">
+                  <span>{{ absence.teacher.name }}</span>
+                  <span>{{ absence.get_status_display }}</span>
+                </div>
+              {% endfor %}
+            {% else %}
+              <p class="ta-muted mb-0">No automated teacher absences recorded today.</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="ta-grid">
+        <div class="ta-card ta-step">
+          <div class="ta-card-body">
+            <div class="ta-step-num">1</div>
+            <h5>Subject Period Allocation</h5>
+            <div class="ta-stat"><span>Selected group</span><span>{% if selected_group %}{{ selected_group.group_name }}{% else %}Not selected{% endif %}</span></div>
+            <div class="ta-stat"><span>Total subjects</span><span>{{ group_subject_count }}</span></div>
+            <div class="ta-stat"><span>Configured subjects</span><span>{{ configured_subject_count }}</span></div>
+            <div class="ta-stat"><span>Missing allocation</span><span>{{ missing_allocation_count }}</span></div>
+            <div class="ta-stat"><span>Planned periods</span><span>{{ planned_periods }}</span></div>
+            <div class="ta-actions"><span class="ta-pill">Manual allocation hidden from UI</span></div>
+          </div>
+        </div>
+
+        <div class="ta-card ta-step">
+          <div class="ta-card-body">
+            <div class="ta-step-num">2</div>
+            <h5>Assign Periods</h5>
+            <div class="ta-stat"><span>All assigned periods</span><span>{{ assignment_count }}</span></div>
+            <div class="ta-stat"><span>Group assigned periods</span><span>{{ assigned_group_periods }}</span></div>
+            <div class="ta-stat"><span>Estimated unassigned</span><span>{{ unassigned_periods }}</span></div>
+            <div class="ta-stat"><span>Teacher slot warnings</span><span>{{ duplicate_teacher_slots }}</span></div>
+            <div class="ta-actions"><span class="ta-pill">Manual assignment hidden from UI</span></div>
+          </div>
+        </div>
+
+        <div class="ta-card ta-step">
+          <div class="ta-card-body">
+            <div class="ta-step-num">3</div>
+            <h5>Preview & PDF</h5>
+            <div class="ta-stat"><span>Classes</span><span>{{ classes|length }}</span></div>
+            <div class="ta-stat"><span>Sections</span><span>{{ sections|length }}</span></div>
+            <div class="ta-stat"><span>Class teachers</span><span>{{ class_teacher_count }}</span></div>
+            <div class="ta-stat"><span>PDF source</span><span>Current timetable</span></div>
+            <div class="ta-actions">
+              <a class="ta-btn" href="{% url 'portfolio_timetable' %}">Open Preview</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="ta-card ta-step">
+          <div class="ta-card-body">
+            <div class="ta-step-num">4</div>
+            <h5>Fixture Management</h5>
+            <div class="ta-stat"><span>Total fixtures</span><span>{{ fixture_stats.total }}</span></div>
+            <div class="ta-stat"><span>Today</span><span>{{ fixture_stats.today }}</span></div>
+            <div class="ta-stat"><span>Absent teachers</span><span>{{ fixture_stats.absent_teachers }}</span></div>
+            <div class="ta-stat"><span>Substitute teachers</span><span>{{ fixture_stats.substitute_teachers }}</span></div>
+            <div class="ta-actions">
+              <a class="ta-btn" href="{% url 'manage_fixture' %}">Open Fixtures</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="ta-card ta-section">
+        <div class="ta-card-body">
+          <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+            <h5 class="mb-0" style="font-weight:600;">Recent Fixture Activity</h5>
+            <span class="ta-pill">Max 3 substitute fixtures per teacher/day</span>
+          </div>
+          <div class="table-responsive">
+            <table class="table ta-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Day</th>
+                  <th>Class / Section</th>
+                  <th>Subject</th>
+                  <th>Period</th>
+                  <th>Absent</th>
+                  <th>Substitute</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for fixture in recent_fixtures %}
+                  <tr>
+                    <td>{{ fixture.fixture_date }}</td>
+                    <td>{{ fixture.day }}</td>
+                    <td>{{ fixture.class_fk.class_name }} - {{ fixture.section.section_name }}</td>
+                    <td>{% if fixture.subject %}{{ fixture.subject.name }}{% else %}Optional{% endif %}</td>
+                    <td>{{ fixture.period.period_name }}</td>
+                    <td>{{ fixture.absent_teacher.name }}</td>
+                    <td>{{ fixture.substitute_teacher.name }}</td>
+                  </tr>
+                {% empty %}
+                  <tr><td colspan="7" class="text-center text-muted">No fixtures assigned yet.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="ta-card ta-section">
+        <div class="ta-card-body">
+          <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+            <h5 class="mb-0" style="font-weight:600;">Latest Auto Assignment Result</h5>
+            {% if latest_absence %}
+              <span class="ta-pill">{{ latest_absence.teacher.name }} - {{ latest_absence.absence_date }} - {{ latest_absence.get_status_display }}</span>
+            {% endif %}
+          </div>
+          <div class="table-responsive">
+            <table class="table ta-table">
+              <thead>
+                <tr>
+                  <th>Period</th>
+                  <th>Class / Section</th>
+                  <th>Subject</th>
+                  <th>Status</th>
+                  <th>Substitute</th>
+                  <th>Score</th>
+                  <th>Reason / Note</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for result in latest_absence_results %}
+                  <tr>
+                    <td>{{ result.assigned_period.period.period_name }}</td>
+                    <td>{{ result.assigned_period.class_fk.class_name }} - {{ result.assigned_period.section.section_name }}</td>
+                    <td>{{ result.assigned_period.subject.name }}</td>
+                    <td><span class="ta-status {{ result.status }}">{{ result.get_status_display }}</span></td>
+                    <td>{% if result.fixture %}{{ result.fixture.substitute_teacher.name }}{% else %}N/A{% endif %}</td>
+                    <td>{{ result.selection_score }}</td>
+                    <td>{% if result.selection_reason %}{{ result.selection_reason }}{% else %}{{ result.note }}{% endif %}</td>
+                  </tr>
+                {% empty %}
+                  <tr><td colspan="7" class="text-center text-muted">Run auto assignment to see period-level results.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="ta-card ta-section">
+        <div class="ta-card-body">
+          <h5 class="mb-3" style="font-weight:600;">Assigned Fixtures & Overrides</h5>
+          <div class="table-responsive">
+            <table class="table ta-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Period</th>
+                  <th>Class</th>
+                  <th>Subject</th>
+                  <th>Absent</th>
+                  <th>Substitute</th>
+                  <th>Status</th>
+                  <th>Selection</th>
+                  <th>Override</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for fixture in visible_fixtures %}
+                  <tr>
+                    <td>{{ fixture.fixture_date }}</td>
+                    <td>{{ fixture.period.period_name }}</td>
+                    <td>{{ fixture.class_fk.class_name }} - {{ fixture.section.section_name }}</td>
+                    <td>{% if fixture.subject %}{{ fixture.subject.name }}{% else %}Optional{% endif %}</td>
+                    <td>{{ fixture.absent_teacher.name }}</td>
+                    <td>{{ fixture.substitute_teacher.name }}</td>
+                    <td><span class="ta-status {{ fixture.fixture_status }}">{{ fixture.get_fixture_status_display }}</span></td>
+                    <td>{{ fixture.selection_score }}<br><small>{{ fixture.selection_reason|default:"Manual fixture" }}</small></td>
+                    <td>
+                      <form method="post" class="ta-inline-form">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="replace_substitute">
+                        <input type="hidden" name="fixture_id" value="{{ fixture.id }}">
+                        <select name="substitute_teacher_id" class="form-control ta-mini-input" required>
+                          {% for teacher in teachers %}
+                            <option value="{{ teacher.id }}" {% if teacher.id == fixture.substitute_teacher.id %}selected{% endif %}>{{ teacher.name }}</option>
+                          {% endfor %}
+                        </select>
+                        <input name="override_reason" class="form-control ta-mini-input" placeholder="Reason">
+                        <button class="ta-mini-btn" type="submit">Replace</button>
+                      </form>
+                      <form method="post" class="ta-inline-form">
+                        {% csrf_token %}
+                        <input type="hidden" name="fixture_id" value="{{ fixture.id }}">
+                        <input name="override_reason" class="form-control ta-mini-input" placeholder="Reason">
+                        <button class="ta-mini-btn" name="action" value="rerun_fixture" type="submit">Re-run</button>
+                        <button class="ta-mini-btn" name="action" value="mark_uncovered" type="submit">Uncovered</button>
+                        <button class="ta-mini-btn" name="action" value="cancel_fixture" type="submit">Cancel</button>
+                      </form>
+                    </td>
+                  </tr>
+                {% empty %}
+                  <tr><td colspan="9" class="text-center text-muted">No fixture records yet.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="ta-card ta-section">
+        <div class="ta-card-body">
+          <h5 class="mb-3" style="font-weight:600;">Candidate & Delivery Audit</h5>
+          <div class="table-responsive mb-3">
+            <table class="table ta-table">
+              <thead>
+                <tr>
+                  <th>Teacher</th>
+                  <th>Period</th>
+                  <th>Decision</th>
+                  <th>Score</th>
+                  <th>Reason</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for log in candidate_logs %}
+                  <tr>
+                    <td>{{ log.teacher.name }}</td>
+                    <td>{{ log.assigned_period.period.period_name }}</td>
+                    <td>{{ log.get_decision_display }}</td>
+                    <td>{{ log.score }}</td>
+                    <td>{{ log.reason }}</td>
+                  </tr>
+                {% empty %}
+                  <tr><td colspan="5" class="text-center text-muted">No candidate audit logs yet.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          <div class="table-responsive">
+            <table class="table ta-table">
+              <thead>
+                <tr>
+                  <th>Recipient</th>
+                  <th>Channel</th>
+                  <th>Status</th>
+                  <th>Sent At</th>
+                  <th>Error</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for log in notification_logs %}
+                  <tr>
+                    <td>{{ log.recipient_teacher.name }}</td>
+                    <td>{{ log.get_channel_display }}</td>
+                    <td>{{ log.get_status_display }}</td>
+                    <td>{% if log.sent_at %}{{ log.sent_at }}{% else %}Pending/failed{% endif %}</td>
+                    <td>{{ log.error_message }}</td>
+                  </tr>
+                {% empty %}
+                  <tr><td colspan="5" class="text-center text-muted">No notification logs yet.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

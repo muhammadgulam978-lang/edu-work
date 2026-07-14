@@ -41,6 +41,7 @@ urlpatterns = [
     path('periods/create/', views.create_period_view, name='create_period'),       
     path('periods/update/<int:pk>/', views.update_period_view, name='update_period'),  
     path('periods/delete/<int:pk>/', views.delete_period_view, name='delete_period'),  
+    path('timetable-automation/', views.timetable_automation, name='timetable_automation'),
     path('timetable/', views.timetable_view, name='timetable_view'),
     path('assign_period/', views.assign_period_view, name='assign_period'),
     path('ajax/subject_periods/', views.ajax_subject_periods, name='ajax_subject_periods'),

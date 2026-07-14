@@ -28,3 +28,25 @@ def user_permissions(request):
         'user_permissions': permissions,
     }
 
+
+def teacher_fixture_notifications(request):
+    if not request.user.is_authenticated:
+        return {}
+
+    try:
+        from teacher_dashboard.models import Teacher
+        from admin_panel.models import TeacherNotification
+
+        teacher = Teacher.objects.filter(user=request.user).first()
+        if not teacher:
+            return {}
+
+        notifications = TeacherNotification.objects.filter(teacher=teacher).order_by('-created_at')[:8]
+        unread_count = TeacherNotification.objects.filter(teacher=teacher, is_read=False).count()
+        return {
+            'teacher_fixture_notifications': notifications,
+            'teacher_fixture_unread_count': unread_count,
+        }
+    except Exception:
+        return {}
+

@@ -16,6 +16,19 @@
     <link href="{% static 'admin_panel/css/style.css' %}" rel="stylesheet">
 
     <style>
+        .timetable-automation-nav > a {
+            align-items: center;
+            min-height: 64px;
+            padding-right: 28px;
+            white-space: normal;
+        }
+
+        .timetable-automation-nav > a .nav-text {
+            line-height: 1.25;
+            max-width: 190px;
+            overflow-wrap: normal;
+        }
+
         /* ── BULK UPLOAD CARDS ── */
         .bulk-upload-section {
             margin-bottom: 30px;
@@ -355,6 +368,15 @@
                         </ul>
                     </li>
 
+                    {% if perms.admin_panel.view_subjectperiod %}
+                    <li class="timetable-automation-nav">
+                        <a href="{% url 'timetable_automation' %}" class="ai-icon">
+                            <i class="flaticon-381-calendar-1"></i>
+                            <span class="nav-text">Timetable Automation</span>
+                        </a>
+                    </li>
+                    {% endif %}
+
                     {% if perms.admin_panel.view_class %}
                     <li class="has-menu">
                         <a class="has-arrow ai-icon" href="javascript:void(0)">
@@ -373,13 +395,11 @@
                                 <li><a href="{% url 'class_group_list' %}">Class Groups</a></li>
                             {% endif %}
                             {% if perms.admin_panel.view_subjectperiod %}
-                                <li><a href="{% url 'timetable_view' %}">Timetable Allocation</a></li>
+                                <li><a href="{% url 'timetable_automation' %}">Timetable Automation</a></li>
                             {% endif %}
                             {% if perms.admin_panel.view_createperiod %}
-                                <li><a href="{% url 'period_list' %}">Create Period</a></li>
                             {% endif %}
                             {% if perms.admin_panel.add_assignedperiod %}
-                                <li><a href="{% url 'assign_period' %}">Assign Period Teachers</a></li>
                             {% endif %}
                             {% if perms.admin_panel.view_classteacher %}
                                 <li><a href="{% url 'class_teacher_list' %}">Class Teacher</a></li>

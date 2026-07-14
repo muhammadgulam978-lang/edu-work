@@ -22,7 +22,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.models import User, Group, Permission
 from django.http import HttpResponseForbidden
-from django.db.models import Q, Sum
+from django.db.models import Q, Sum, Count
 from .forms import RoleForm, AssignRoleForm
 
 
@@ -45,7 +45,10 @@ from .models import (
     SalaryAutomationSettings, SalaryAutomationJob, SalaryAutomationJobDetail
 )
 from .forms import StudentRegistrationForm
-from .services import FeeGenerationService, SalaryAutomationService, NotificationDispatcherService
+from .services import (
+    FeeGenerationService, SalaryAutomationService, NotificationDispatcherService,
+    FixtureAutomationService
+)
 
 
 
@@ -1171,7 +1174,214 @@ def delete_period_view(request, pk):
 
 
 # -------------------- Timetable View --------------------
-from .models import Subject, SubjectPeriod, Section, Class, ClassGroup, AssignedPeriod
+from .models import (
+    Subject, SubjectPeriod, Section, Class, ClassGroup, AssignedPeriod,
+    TeacherFixture, ClassTeacher, TeacherAbsence, TeacherFixtureCandidateLog,
+    TeacherFixtureNotificationLog
+)
+
+
+@permission_required('admin_panel.view_subjectperiod', raise_exception=True)
+def timetable_automation(request):
+    groups = ClassGroup.objects.all().order_by('group_name')
+    selected_group_id = request.GET.get('group')
+    selected_group = None
+    automation_result = None
+
+    if request.method == 'POST':
+        action = request.POST.get('action', 'run')
+
+        if action in ['cancel_fixture', 'mark_uncovered', 'rerun_fixture', 'replace_substitute']:
+            fixture = get_object_or_404(TeacherFixture.objects.select_related('assigned_period', 'substitute_teacher'), id=request.POST.get('fixture_id'))
+            override_reason = request.POST.get('override_reason', '').strip() or f'Admin action: {action}'
+
+            if action == 'cancel_fixture':
+                fixture.fixture_status = 'cancelled'
+                fixture.override_reason = override_reason
+                fixture.overridden_by = request.user
+                fixture.overridden_at = timezone.now()
+                fixture.assignment_mode = 'overridden'
+                fixture.save(update_fields=['fixture_status', 'override_reason', 'overridden_by', 'overridden_at', 'assignment_mode'])
+                messages.success(request, 'Fixture cancelled and override logged.')
+                return redirect('timetable_automation')
+
+            if action == 'mark_uncovered':
+                fixture.fixture_status = 'uncovered'
+                fixture.override_reason = override_reason
+                fixture.overridden_by = request.user
+                fixture.overridden_at = timezone.now()
+                fixture.assignment_mode = 'overridden'
+                fixture.save(update_fields=['fixture_status', 'override_reason', 'overridden_by', 'overridden_at', 'assignment_mode'])
+                messages.success(request, 'Fixture marked as uncovered.')
+                return redirect('timetable_automation')
+
+            if action == 'replace_substitute':
+                substitute_id = request.POST.get('substitute_teacher_id')
+                replacement = get_object_or_404(Teacher, id=substitute_id, status='active')
+                if not fixture.original_substitute_teacher_id:
+                    fixture.original_substitute_teacher = fixture.substitute_teacher
+                fixture.substitute_teacher = replacement
+                fixture.fixture_status = 'reassigned'
+                fixture.assignment_mode = 'overridden'
+                fixture.override_reason = override_reason
+                fixture.overridden_by = request.user
+                fixture.overridden_at = timezone.now()
+                fixture.save()
+                messages.success(request, f'Fixture reassigned to {replacement.name}.')
+                return redirect('timetable_automation')
+
+            if action == 'rerun_fixture' and fixture.assigned_period:
+                fixture.fixture_status = 'cancelled'
+                fixture.override_reason = override_reason
+                fixture.overridden_by = request.user
+                fixture.overridden_at = timezone.now()
+                fixture.assignment_mode = 'overridden'
+                fixture.save(update_fields=['fixture_status', 'override_reason', 'overridden_by', 'overridden_at', 'assignment_mode'])
+                automation_result = FixtureAutomationService.run_for_absence(
+                    teacher=fixture.absent_teacher,
+                    target_date=fixture.fixture_date,
+                    source='manual',
+                    triggered_by=request.user,
+                )
+                messages.success(request, 'Fixture cancelled and automation re-run.')
+            elif action == 'rerun_fixture':
+                messages.error(request, 'This fixture cannot be re-run because it is not linked to an assigned period.')
+                return redirect('timetable_automation')
+
+        teacher_id = request.POST.get('teacher_id')
+        absence_date = request.POST.get('absence_date')
+
+        if automation_result is None and (not teacher_id or not absence_date):
+            messages.error(request, 'Please select absent teacher and date.')
+            return redirect('timetable_automation')
+
+        if automation_result is None:
+            absent_teacher = get_object_or_404(Teacher, id=teacher_id)
+            automation_result = FixtureAutomationService.run_for_absence(
+                teacher=absent_teacher,
+                target_date=absence_date,
+                source='manual',
+                triggered_by=request.user,
+            )
+
+        assigned_count = len(automation_result.get('assigned', []))
+        unassigned_count = len(automation_result.get('unassigned', []))
+        skipped_count = len(automation_result.get('skipped', []))
+        if assigned_count:
+            messages.success(
+                request,
+                f'Auto fixture completed: {assigned_count} assigned, {unassigned_count} unassigned, {skipped_count} skipped.'
+            )
+        else:
+            messages.warning(
+                request,
+                f'Auto fixture completed with no new assignments: {unassigned_count} unassigned, {skipped_count} skipped.'
+            )
+
+    if selected_group_id:
+        selected_group = get_object_or_404(ClassGroup, id=selected_group_id)
+    elif groups.exists():
+        selected_group = groups.first()
+
+    group_subject_count = 0
+    configured_subject_count = 0
+    missing_allocation_count = 0
+    planned_periods = 0
+    assigned_group_periods = 0
+
+    if selected_group:
+        group_class_ids = Class.objects.filter(group=selected_group).values_list('id', flat=True)
+        group_subjects = Subject.objects.filter(class_fk_id__in=group_class_ids).order_by('name')
+        subject_names = set(group_subjects.values_list('name', flat=True))
+        group_subject_count = len(subject_names)
+
+        allocation_map = {}
+        for sp in SubjectPeriod.objects.filter(group=selected_group, subject__class_fk_id__in=group_class_ids).select_related('subject'):
+            key = (sp.subject.name, sp.day)
+            allocation_map[key] = max(allocation_map.get(key, 0), sp.periods)
+
+        planned_by_subject = {}
+        for (subject_name, _day), periods in allocation_map.items():
+            planned_by_subject[subject_name] = planned_by_subject.get(subject_name, 0) + periods
+
+        configured_subject_count = len([name for name, total in planned_by_subject.items() if total > 0])
+        missing_allocation_count = max(group_subject_count - configured_subject_count, 0)
+        planned_periods = sum(planned_by_subject.values())
+        assigned_group_periods = AssignedPeriod.objects.filter(class_fk_id__in=group_class_ids).count()
+
+    duplicate_teacher_slots = AssignedPeriod.objects.values(
+        'teacher_id', 'day', 'period_id'
+    ).annotate(total=Count('id')).filter(total__gt=1).count()
+
+    recent_fixtures = TeacherFixture.objects.select_related(
+        'class_fk', 'section', 'period', 'subject', 'absent_teacher', 'substitute_teacher', 'assigned_period'
+    ).order_by('-id')[:5]
+
+    today = date.today()
+    fixture_stats = {
+        'total': TeacherFixture.objects.count(),
+        'today': TeacherFixture.objects.filter(fixture_date=today).count(),
+        'absent_teachers': TeacherFixture.objects.values('absent_teacher_id').distinct().count(),
+        'substitute_teachers': TeacherFixture.objects.values('substitute_teacher_id').distinct().count(),
+    }
+
+    classes = Class.objects.all().order_by('class_name')
+    sections = Section.objects.select_related('class_fk').order_by('class_fk__class_name', 'section_name')
+    class_teacher_count = ClassTeacher.objects.count()
+    teachers = Teacher.objects.filter(status='active').order_by('name')
+    today_absences = TeacherAbsence.objects.filter(absence_date=today).select_related('teacher').order_by('-created_at')
+    latest_absence = None
+    if automation_result:
+        latest_absence = automation_result.get('absence')
+    elif today_absences.exists():
+        latest_absence = today_absences.first()
+    latest_absence_results = []
+    if latest_absence:
+        latest_absence_results = latest_absence.results.select_related(
+            'assigned_period__class_fk', 'assigned_period__section', 'assigned_period__subject',
+            'assigned_period__period', 'fixture__substitute_teacher'
+        )
+    visible_fixtures = TeacherFixture.objects.select_related(
+        'class_fk', 'section', 'period', 'subject', 'absent_teacher', 'substitute_teacher', 'assigned_period'
+    ).order_by('-fixture_date', '-id')[:10]
+    uncovered_results = TeacherAbsence.objects.filter(
+        results__status='unassigned'
+    ).select_related('teacher').distinct().order_by('-absence_date')[:10]
+    candidate_logs = TeacherFixtureCandidateLog.objects.select_related(
+        'teacher', 'assigned_period__subject', 'assigned_period__period'
+    ).order_by('-created_at')[:20]
+    notification_logs = TeacherFixtureNotificationLog.objects.select_related(
+        'recipient_teacher', 'fixture'
+    ).order_by('-created_at')[:10]
+    workflow_steps = FixtureAutomationService.workflow_steps()
+
+    return render(request, 'admin_panel/timetable_automation.html', {
+        'groups': groups,
+        'selected_group': selected_group,
+        'group_subject_count': group_subject_count,
+        'configured_subject_count': configured_subject_count,
+        'missing_allocation_count': missing_allocation_count,
+        'planned_periods': planned_periods,
+        'assigned_group_periods': assigned_group_periods,
+        'unassigned_periods': max(planned_periods - assigned_group_periods, 0),
+        'assignment_count': AssignedPeriod.objects.count(),
+        'duplicate_teacher_slots': duplicate_teacher_slots,
+        'fixture_stats': fixture_stats,
+        'recent_fixtures': recent_fixtures,
+        'classes': classes,
+        'sections': sections,
+        'class_teacher_count': class_teacher_count,
+        'teachers': teachers,
+        'today_absences': today_absences,
+        'latest_absence': latest_absence,
+        'latest_absence_results': latest_absence_results,
+        'today': today,
+        'visible_fixtures': visible_fixtures,
+        'uncovered_results': uncovered_results,
+        'candidate_logs': candidate_logs,
+        'notification_logs': notification_logs,
+        'workflow_steps': workflow_steps,
+    })
 
 
 @permission_required('admin_panel.view_subjectperiod', raise_exception=True)
@@ -1197,6 +1407,26 @@ def timetable_view(request):
         all_sp = SubjectPeriod.objects.filter(group=selected_group)
         for sp in all_sp:
             saved_periods.setdefault(sp.subject_id, {})[sp.day] = sp.periods
+
+    timetable_summary = {
+        'selected_group_name': '',
+        'total_subjects': len(subjects),
+        'weekly_allocated_periods': 0,
+        'remaining_periods': 36,
+        'missing_subjects': 0,
+        'is_over_limit': False,
+    }
+
+    if selected_group_id:
+        selected_group = ClassGroup.objects.get(id=selected_group_id)
+        timetable_summary['selected_group_name'] = selected_group.group_name
+        for subject in subjects:
+            subject_total = sum((saved_periods.get(subject.id, {}) or {}).values())
+            timetable_summary['weekly_allocated_periods'] += subject_total
+            if subject_total == 0:
+                timetable_summary['missing_subjects'] += 1
+        timetable_summary['remaining_periods'] = 36 - timetable_summary['weekly_allocated_periods']
+        timetable_summary['is_over_limit'] = timetable_summary['remaining_periods'] < 0
 
     if request.method == 'POST' and selected_group_id:
         selected_group = ClassGroup.objects.get(id=selected_group_id)
@@ -1226,7 +1456,8 @@ def timetable_view(request):
         'subjects': subjects,
         'days': days,
         'selected_group_id': int(selected_group_id) if selected_group_id else None,
-        'saved_periods': saved_periods
+        'saved_periods': saved_periods,
+        'timetable_summary': timetable_summary
     })
 
 
@@ -1650,6 +1881,13 @@ def portfolio_timetable(request):
     classes = Class.objects.all()
     timetable_data = None
     class_info = section_info = teacher_name = None
+    timetable_summary = {
+        'class_name': '-',
+        'section_name': '-',
+        'class_teacher': 'Not Assigned',
+        'assigned_periods': 0,
+        'empty_periods': 0,
+    }
 
     if class_id and section_id:
         class_obj = get_object_or_404(Class, id=class_id)
@@ -1664,13 +1902,23 @@ def portfolio_timetable(request):
         }
         class_info = class_obj
         section_info = section_obj
+        assigned_periods = AssignedPeriod.objects.filter(class_fk=class_obj, section=section_obj).count()
+        total_slots = len(period_order) * len(days)
+        timetable_summary = {
+            'class_name': class_obj.class_name,
+            'section_name': section_obj.section_name,
+            'class_teacher': teacher_name or 'Not Assigned',
+            'assigned_periods': assigned_periods,
+            'empty_periods': max(total_slots - assigned_periods, 0),
+        }
 
     return render(request, 'admin_panel/portfolio_timetable.html', {
         'classes': classes,
         'timetable_data': timetable_data,
         'class_info': class_info,
         'section_info': section_info,
-        'teacher_name': teacher_name
+        'teacher_name': teacher_name,
+        'timetable_summary': timetable_summary
     })
 
 
@@ -2100,6 +2348,13 @@ def manage_fixture(request):
         "class_fk", "section", "period",
         "absent_teacher", "substitute_teacher", "subject"
     ).order_by("-id")
+    today = date.today()
+    fixture_summary = {
+        'total': fixtures.count(),
+        'today': TeacherFixture.objects.filter(fixture_date=today).count(),
+        'workload_limit': 3,
+        'active_teachers': teachers.count(),
+    }
 
     if request.method == 'POST':
         class_id = request.POST.get("class_fk")
@@ -2107,12 +2362,13 @@ def manage_fixture(request):
         subject_id = request.POST.get("subject")
         period_id = request.POST.get("period")
         day = request.POST.get("day")
+        fixture_date = request.POST.get("fixture_date") or today
         absent_teacher_id = request.POST.get("absent_teacher")
         substitute_teacher_id = request.POST.get("substitute_teacher")
 
         if TeacherFixture.objects.filter(
             class_fk_id=class_id, section_id=section_id,
-            period_id=period_id, day=day
+            period_id=period_id, day=day, fixture_date=fixture_date
         ).exists():
             messages.error(request, "❌ Fixture already assigned for this class/period.")
             return redirect("manage_fixture")
@@ -2123,7 +2379,7 @@ def manage_fixture(request):
                 messages.error(request, "❌ Substitute teacher cannot teach this subject.")
                 return redirect("manage_fixture")
 
-        if TeacherFixture.objects.filter(substitute_teacher_id=substitute_teacher_id, day=day).count() >= 3:
+        if TeacherFixture.objects.filter(substitute_teacher_id=substitute_teacher_id, fixture_date=fixture_date).count() >= 3:
             messages.error(request, "❌ Teacher workload limit reached for today.")
             return redirect("manage_fixture")
 
@@ -2134,7 +2390,10 @@ def manage_fixture(request):
             section_id=section_id,
             subject_id=subject_id or None,
             period_id=period_id,
-            day=day
+            day=day,
+            fixture_date=fixture_date,
+            source='manual',
+            automation_status='assigned'
         )
         messages.success(request, "✅ Fixture Assigned Successfully!")
         return redirect("manage_fixture")
@@ -2142,6 +2401,7 @@ def manage_fixture(request):
     return render(request, "admin_panel/manage_fixture.html", {
         'classes': classes, 'sections': sections, 'periods': periods,
         'subjects': subjects, 'teachers': teachers, 'fixtures': fixtures,
+        'fixture_summary': fixture_summary,
     })
 
 
@@ -2150,6 +2410,7 @@ def get_free_teachers(request):
         day = request.GET.get('day')
         period_id = request.GET.get('period_id')
         subject_id = request.GET.get('subject_id')
+        fixture_date = request.GET.get('fixture_date') or date.today()
 
         if not period_id:
             return JsonResponse({'error': 'Missing period'}, status=400)
@@ -2159,18 +2420,18 @@ def get_free_teachers(request):
         ).values_list('teacher_id', flat=True)
 
         busy_from_fixtures = TeacherFixture.objects.filter(
-            day=day, period_id=period_id
+            day=day, period_id=period_id, fixture_date=fixture_date
         ).values_list('substitute_teacher_id', flat=True)
 
         all_busy_ids = set(busy_from_timetable) | set(busy_from_fixtures)
-        free_teachers = Teacher.objects.exclude(id__in=all_busy_ids)
+        free_teachers = Teacher.objects.filter(status='active').exclude(id__in=all_busy_ids)
 
         if subject_id:
             free_teachers = free_teachers.filter(subjects__id=subject_id)
 
         free_teachers = [
             t for t in free_teachers
-            if TeacherFixture.objects.filter(substitute_teacher=t, day=day).count() < 3
+            if TeacherFixture.objects.filter(substitute_teacher=t, fixture_date=fixture_date).count() < 3
         ]
 
         free_teachers_sorted = sorted(
@@ -2401,6 +2662,21 @@ def leave_action(request, pk, action):
         leave.status = action
         leave.action_date = timezone.now()
         leave.save()
+        if action == 'approved':
+            automation_results = FixtureAutomationService.run_for_leave(leave, triggered_by=request.user)
+            assigned_count = sum(len(result.get('assigned', [])) for result in automation_results)
+            unassigned_count = sum(len(result.get('unassigned', [])) for result in automation_results)
+            skipped_count = sum(len(result.get('skipped', [])) for result in automation_results)
+            if automation_results:
+                messages.success(
+                    request,
+                    f'Leave approved. Auto fixture result: {assigned_count} assigned, {unassigned_count} unassigned, {skipped_count} skipped.'
+                )
+            else:
+                messages.warning(
+                    request,
+                    'Leave approved, but no linked teacher profile was found for fixture automation.'
+                )
     return redirect('leave_list')
 
 

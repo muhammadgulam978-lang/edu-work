@@ -11,6 +11,13 @@
     th, td { border: 1px solid #000000ff; padding: 10px; text-align: center; }
     th { background-color: #000000ff; color: white; }
     input[type=number] { width: 60px; padding: 5px; text-align: center; }
+    .tt-summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 18px 0; }
+    .tt-summary-card { background: #fff; border: 1px solid #e9ecef; border-radius: 10px; padding: 14px 16px; box-shadow: 0 2px 10px rgba(0,0,0,.04); }
+    .tt-summary-label { color: #6c757d; font-size: 13px; margin-bottom: 6px; }
+    .tt-summary-value { color: #222; font-size: 22px; font-weight: 600; line-height: 1.1; }
+    .tt-summary-note { color: #6c757d; font-size: 12px; margin-top: 4px; }
+    @media (max-width: 992px) { .tt-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 576px) { .tt-summary-grid { grid-template-columns: 1fr; } }
 </style>
 {% endblock %}
 
@@ -35,6 +42,36 @@
     </form>
 
     {% if selected_group_id %}
+        <div class="tt-summary-grid">
+            <div class="tt-summary-card">
+                <div class="tt-summary-label">Selected Group</div>
+                <div class="tt-summary-value">{{ timetable_summary.selected_group_name|default:"-" }}</div>
+                <div class="tt-summary-note">Subject allocation scope</div>
+            </div>
+            <div class="tt-summary-card">
+                <div class="tt-summary-label">Total Subjects</div>
+                <div class="tt-summary-value">{{ timetable_summary.total_subjects }}</div>
+                <div class="tt-summary-note">{{ timetable_summary.missing_subjects }} without weekly periods</div>
+            </div>
+            <div class="tt-summary-card">
+                <div class="tt-summary-label">Weekly Allocated Periods</div>
+                <div class="tt-summary-value">{{ timetable_summary.weekly_allocated_periods }}</div>
+                <div class="tt-summary-note">Recommended weekly cap: 36</div>
+            </div>
+            <div class="tt-summary-card">
+                <div class="tt-summary-label">Remaining / Over Limit</div>
+                <div class="tt-summary-value">
+                    {% if timetable_summary.is_over_limit %}
+                        {{ timetable_summary.remaining_periods }}
+                    {% else %}
+                        {{ timetable_summary.remaining_periods }}
+                    {% endif %}
+                </div>
+                <div class="tt-summary-note">
+                    {% if timetable_summary.is_over_limit %}Over allocated{% else %}Remaining periods{% endif %}
+                </div>
+            </div>
+        </div>
         {% if subjects %}
         <!-- Subject Table -->
         <form method="post" class="mt-4">

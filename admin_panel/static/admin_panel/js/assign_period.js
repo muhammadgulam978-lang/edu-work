@@ -138,10 +138,10 @@ function loadAssignedClasses() {
           <tr class="text-sm sm:text-base text-gray-600">
             <td class="px-4 sm:px-6 py-4 whitespace-nowrap">${a.class_name}</td>
             <td class="px-4 sm:px-6 py-4 whitespace-nowrap">${a.section_name}</td>
-            <td class="px-4 sm:px-6 py-4 whitespace-nowrap">${a.subject_name}</td>
-            <td class="px-4 sm:px-6 py-4 whitespace-nowrap">${a.day_label}</td>
+            <td class="px-4 sm:px-6 py-4 whitespace-nowrap"><span class="assignment-badge assignment-badge-subject">${a.subject_name}</span></td>
+            <td class="px-4 sm:px-6 py-4 whitespace-nowrap"><span class="assignment-badge assignment-badge-day">${a.day_label}</span></td>
             <td class="px-4 sm:px-6 py-4 whitespace-nowrap">${a.period_label}</td>
-            <td class="px-4 sm:px-6 py-4 whitespace-nowrap">${a.teacher_name}</td>
+            <td class="px-4 sm:px-6 py-4 whitespace-nowrap"><span class="assignment-badge assignment-badge-teacher">${a.teacher_name}</span></td>
             <td class="px-4 sm:px-6 py-4 whitespace-nowrap">
               <button data-id="${a.id}" class="text-red-600 hover:text-red-800">Delete</button>
             </td>

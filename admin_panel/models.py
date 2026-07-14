@@ -253,9 +253,31 @@ class AssignedPeriod(models.Model):
     period = models.ForeignKey(CreatePeriod, on_delete=models.CASCADE)
     teacher = models.ForeignKey('teacher_dashboard.Teacher', on_delete=models.CASCADE)
     is_bypass = models.BooleanField(default=False)
+    timetable_version = models.ForeignKey('TimetableVersion', on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_periods')
 
     def __str__(self):
         return f"{self.day} - {self.period} - {self.subject.name} - {self.teacher.name}"
+
+
+class TimetableVersion(models.Model):
+    STATUS_CHOICES = [
+        ('draft', 'Draft'),
+        ('active', 'Active'),
+        ('archived', 'Archived'),
+    ]
+
+    name = models.CharField(max_length=120, default='Default Timetable')
+    academic_year = models.ForeignKey(AcademicYear, on_delete=models.SET_NULL, null=True, blank=True)
+    effective_from = models.DateField(null=True, blank=True)
+    effective_to = models.DateField(null=True, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-effective_from', '-created_at']
+
+    def __str__(self):
+        return self.name
 
 #-----------------------Working on class teacher ------------------------------------------------------------
 
@@ -515,17 +537,77 @@ class Worksheet(models.Model):
 # Fixture Model (Place this at the END of admin_panel/models.py)
 
 class TeacherFixture(models.Model):            # FIXED SYNTAX
+    SOURCE_CHOICES = [
+        ('manual', 'Manual'),
+        ('auto_absence', 'Auto Absence'),
+        ('auto_leave', 'Auto Leave'),
+    ]
+    AUTOMATION_STATUS_CHOICES = [
+        ('assigned', 'Assigned'),
+        ('unassigned', 'Unassigned'),
+        ('notification_failed', 'Notification Failed'),
+    ]
+    FIXTURE_STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('assigned', 'Assigned'),
+        ('accepted', 'Accepted'),
+        ('declined', 'Declined'),
+        ('reassigned', 'Reassigned'),
+        ('completed', 'Completed'),
+        ('cancelled', 'Cancelled'),
+        ('uncovered', 'Uncovered'),
+    ]
+    ASSIGNMENT_MODE_CHOICES = [
+        ('auto', 'Auto'),
+        ('manual', 'Manual'),
+        ('overridden', 'Overridden'),
+    ]
+    RESPONSE_STATUS_CHOICES = [
+        ('final', 'Final'),
+        ('pending', 'Pending'),
+        ('accepted', 'Accepted'),
+        ('declined', 'Declined'),
+    ]
+
     class_fk = models.ForeignKey(Class, on_delete=models.CASCADE)
     section = models.ForeignKey(Section, on_delete=models.CASCADE)
     subject = models.ForeignKey(Subject, on_delete=models.SET_NULL, null=True, blank=True)
     period = models.ForeignKey(CreatePeriod, on_delete=models.CASCADE)
+    assigned_period = models.ForeignKey('AssignedPeriod', on_delete=models.SET_NULL, null=True, blank=True, related_name='fixtures')
+    timetable_version = models.ForeignKey('TimetableVersion', on_delete=models.SET_NULL, null=True, blank=True, related_name='fixtures')
 
     absent_teacher = models.ForeignKey('teacher_dashboard.Teacher', related_name="absent_fixtures", on_delete=models.CASCADE)
     substitute_teacher = models.ForeignKey('teacher_dashboard.Teacher', related_name="substitute_fixtures", on_delete=models.CASCADE)
+    original_substitute_teacher = models.ForeignKey('teacher_dashboard.Teacher', related_name="original_substitute_fixtures", on_delete=models.SET_NULL, null=True, blank=True)
 
     day = models.CharField(max_length=20)
     date = models.DateField(auto_now_add=True)
+    fixture_date = models.DateField(default=timezone.localdate)
+    source = models.CharField(max_length=20, choices=SOURCE_CHOICES, default='manual')
+    automation_status = models.CharField(max_length=30, choices=AUTOMATION_STATUS_CHOICES, default='assigned')
+    fixture_status = models.CharField(max_length=20, choices=FIXTURE_STATUS_CHOICES, default='assigned')
+    assignment_mode = models.CharField(max_length=20, choices=ASSIGNMENT_MODE_CHOICES, default='manual')
+    automation_note = models.TextField(blank=True, default='')
+    override_reason = models.TextField(blank=True, default='')
+    overridden_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='overridden_teacher_fixtures')
+    overridden_at = models.DateTimeField(null=True, blank=True)
+    selection_score = models.IntegerField(default=0)
+    selection_reason = models.TextField(blank=True, default='')
+    candidate_count = models.PositiveIntegerField(default=0)
+    response_required = models.BooleanField(default=False)
+    response_status = models.CharField(max_length=20, choices=RESPONSE_STATUS_CHOICES, default='final')
+    response_deadline = models.DateTimeField(null=True, blank=True)
+    responded_at = models.DateTimeField(null=True, blank=True)
+    decline_reason = models.TextField(blank=True, default='')
     created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['fixture_date', 'assigned_period'],
+                name='uniq_fixture_date_assigned_period',
+            )
+        ]
 
     def __str__(self):
         return f"{self.class_fk.class_name} - {self.section.section_name} ({self.day})"
@@ -684,6 +766,209 @@ class LeaveApplication(models.Model):
 
     def __str__(self):
         return f"{self.employee.name} - {self.leave_type.name}"
+
+
+class TeacherAbsence(models.Model):
+    SOURCE_CHOICES = [
+        ('manual', 'Manual'),
+        ('leave', 'Leave'),
+    ]
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('processed', 'Processed'),
+        ('partial', 'Partial'),
+        ('failed', 'Failed'),
+        ('cancelled', 'Cancelled'),
+    ]
+
+    teacher = models.ForeignKey('teacher_dashboard.Teacher', on_delete=models.CASCADE, related_name='automation_absences')
+    absence_date = models.DateField()
+    day = models.CharField(max_length=20)
+    source = models.CharField(max_length=20, choices=SOURCE_CHOICES, default='manual')
+    leave_application = models.ForeignKey(LeaveApplication, on_delete=models.SET_NULL, null=True, blank=True, related_name='teacher_absences')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    start_time = models.TimeField(null=True, blank=True)
+    end_time = models.TimeField(null=True, blank=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_teacher_absences')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('teacher', 'absence_date', 'source', 'leave_application')
+        ordering = ['-absence_date', '-created_at']
+
+    def __str__(self):
+        return f"{self.teacher.name} absent on {self.absence_date}"
+
+
+class TeacherAbsenceResult(models.Model):
+    STATUS_CHOICES = [
+        ('assigned', 'Assigned'),
+        ('unassigned', 'Unassigned'),
+        ('skipped', 'Skipped'),
+        ('cancelled', 'Cancelled'),
+    ]
+
+    absence = models.ForeignKey(TeacherAbsence, on_delete=models.CASCADE, related_name='results')
+    assigned_period = models.ForeignKey('AssignedPeriod', on_delete=models.CASCADE)
+    fixture = models.ForeignKey(TeacherFixture, on_delete=models.SET_NULL, null=True, blank=True, related_name='automation_results')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES)
+    note = models.TextField(blank=True, default='')
+    selection_score = models.IntegerField(default=0)
+    selection_reason = models.TextField(blank=True, default='')
+    candidate_count = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('absence', 'assigned_period')
+        ordering = ['assigned_period__period__start_time', 'id']
+
+    def __str__(self):
+        return f"{self.absence} - {self.assigned_period} - {self.status}"
+
+
+class TeacherNotification(models.Model):
+    TYPE_CHOICES = [
+        ('fixture_assigned', 'Fixture Assigned'),
+        ('absence_covered', 'Absence Covered'),
+        ('fixture_unassigned', 'Fixture Unassigned'),
+    ]
+
+    teacher = models.ForeignKey('teacher_dashboard.Teacher', on_delete=models.CASCADE, related_name='fixture_notifications')
+    title = models.CharField(max_length=180)
+    message = models.TextField()
+    notification_type = models.CharField(max_length=30, choices=TYPE_CHOICES)
+    related_fixture = models.ForeignKey(TeacherFixture, on_delete=models.SET_NULL, null=True, blank=True, related_name='teacher_notifications')
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.teacher.name}: {self.title}"
+
+
+class TeacherFixtureNotificationLog(models.Model):
+    CHANNEL_CHOICES = [
+        ('email', 'Email'),
+        ('in_app', 'In App'),
+        ('sms', 'SMS'),
+        ('whatsapp', 'WhatsApp'),
+    ]
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('sent', 'Sent'),
+        ('failed', 'Failed'),
+    ]
+
+    fixture = models.ForeignKey(TeacherFixture, on_delete=models.CASCADE, null=True, blank=True, related_name='notification_logs')
+    recipient_teacher = models.ForeignKey('teacher_dashboard.Teacher', on_delete=models.CASCADE, related_name='fixture_notification_logs')
+    channel = models.CharField(max_length=20, choices=CHANNEL_CHOICES)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES)
+    error_message = models.TextField(blank=True, default='')
+    sent_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.recipient_teacher.name} {self.channel} {self.status}"
+
+
+class TeacherAvailability(models.Model):
+    STATUS_CHOICES = [
+        ('available', 'Available'),
+        ('unavailable', 'Unavailable'),
+        ('meeting', 'Meeting'),
+        ('training', 'Training'),
+        ('exam_duty', 'Exam Duty'),
+        ('leave', 'Leave'),
+        ('manual_block', 'Manual Block'),
+    ]
+
+    teacher = models.ForeignKey('teacher_dashboard.Teacher', on_delete=models.CASCADE, related_name='availability_records')
+    date = models.DateField()
+    period = models.ForeignKey(CreatePeriod, on_delete=models.SET_NULL, null=True, blank=True)
+    availability_status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='unavailable')
+    reason = models.CharField(max_length=255, blank=True, default='')
+    source = models.CharField(max_length=50, blank=True, default='manual')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-date', 'teacher__name']
+
+    def __str__(self):
+        return f"{self.teacher.name} - {self.date} - {self.availability_status}"
+
+
+class TeacherTeachingEligibility(models.Model):
+    teacher = models.ForeignKey('teacher_dashboard.Teacher', on_delete=models.CASCADE, related_name='teaching_eligibilities')
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
+    class_fk = models.ForeignKey(Class, on_delete=models.SET_NULL, null=True, blank=True)
+    faculty_group = models.CharField(max_length=100, blank=True, default='')
+    campus = models.CharField(max_length=100, blank=True, default='')
+    priority = models.PositiveIntegerField(default=10)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        unique_together = ('teacher', 'subject', 'class_fk', 'faculty_group', 'campus')
+        ordering = ['teacher__name', 'subject__name']
+
+    def __str__(self):
+        return f"{self.teacher.name} - {self.subject.name}"
+
+
+class SubjectSubstitutionRule(models.Model):
+    source_subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='substitution_sources')
+    eligible_subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='substitution_targets')
+    priority = models.PositiveIntegerField(default=50)
+    class_fk = models.ForeignKey(Class, on_delete=models.SET_NULL, null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        unique_together = ('source_subject', 'eligible_subject', 'class_fk')
+        ordering = ['source_subject__name', 'priority']
+
+    def __str__(self):
+        return f"{self.source_subject.name} -> {self.eligible_subject.name}"
+
+
+class TeacherFixtureCandidateLog(models.Model):
+    DECISION_CHOICES = [
+        ('selected', 'Selected'),
+        ('eligible', 'Eligible'),
+        ('excluded', 'Excluded'),
+    ]
+
+    absence = models.ForeignKey(TeacherAbsence, on_delete=models.CASCADE, related_name='candidate_logs')
+    absence_result = models.ForeignKey(TeacherAbsenceResult, on_delete=models.SET_NULL, null=True, blank=True, related_name='candidate_logs')
+    assigned_period = models.ForeignKey(AssignedPeriod, on_delete=models.CASCADE, related_name='candidate_logs')
+    teacher = models.ForeignKey('teacher_dashboard.Teacher', on_delete=models.CASCADE, related_name='fixture_candidate_logs')
+    decision = models.CharField(max_length=20, choices=DECISION_CHOICES)
+    score = models.IntegerField(default=0)
+    reason = models.TextField(blank=True, default='')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-score', 'teacher__name']
+
+    def __str__(self):
+        return f"{self.teacher.name} - {self.decision} - {self.score}"
+
+
+class TeacherFixtureHandover(models.Model):
+    fixture = models.OneToOneField(TeacherFixture, on_delete=models.CASCADE, related_name='handover')
+    lesson_topic = models.CharField(max_length=255, blank=True, default='')
+    instructions = models.TextField(blank=True, default='')
+    homework = models.TextField(blank=True, default='')
+    attachment = models.FileField(upload_to='fixture_handovers/', null=True, blank=True)
+    submitted_by = models.ForeignKey('teacher_dashboard.Teacher', on_delete=models.SET_NULL, null=True, blank=True, related_name='submitted_fixture_handovers')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Handover for fixture {self.fixture_id}"
 
 #===================================================================
 

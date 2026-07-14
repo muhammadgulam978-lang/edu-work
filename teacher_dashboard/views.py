@@ -2749,7 +2749,8 @@ def teacher_timetable_view(request):
 
     if not teacher:
         if request.user.is_staff:
-            return redirect('select_teacher_for_action')
+            messages.error(request, "No teacher profile is available for timetable preview.")
+            return redirect('teacher_dashboard')
         messages.error(request, "Teacher profile nahi mila.")
         return redirect('teacher_dashboard')
 
@@ -2765,11 +2766,13 @@ def teacher_timetable_view(request):
     days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
     slots = {}
+    weekly_assigned_periods = 0
     for day in days:
         assigned = AssignedPeriod.objects.filter(
             teacher=teacher,
             day=day
         ).select_related('period', 'subject', 'class_fk', 'section')
+        weekly_assigned_periods += assigned.count()
 
         assigned_map = {ap.period.period_name: ap for ap in assigned}
         day_slots = {}
@@ -2788,11 +2791,29 @@ def teacher_timetable_view(request):
 
         slots[day] = day_slots
 
+    total_slots = len(period_order) * len(days)
+    from admin_panel.models import TeacherNotification
+
+    substitute_fixtures = TeacherFixture.objects.filter(
+        substitute_teacher=teacher
+    ).select_related('class_fk', 'section', 'period', 'subject', 'absent_teacher', 'handover').order_by('-id')
+    absent_fixtures = TeacherFixture.objects.filter(
+        absent_teacher=teacher
+    ).select_related('class_fk', 'section', 'period', 'subject', 'substitute_teacher', 'handover').order_by('-id')
+    recent_fixture_notifications = TeacherNotification.objects.filter(
+        teacher=teacher
+    ).select_related('related_fixture').order_by('-created_at')[:8]
+
     return render(request, 'teacher_dashboard/timetable.html', {
         'teacher':      teacher,
         'period_order': period_order,
         'slots':        slots,
         'days':         days,
+        'weekly_assigned_periods': weekly_assigned_periods,
+        'free_periods': max(total_slots - weekly_assigned_periods, 0),
+        'substitute_fixtures': substitute_fixtures,
+        'absent_fixtures': absent_fixtures,
+        'recent_fixture_notifications': recent_fixture_notifications,
     })
 
 

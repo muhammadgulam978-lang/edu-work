@@ -1,3 +1,18 @@
+<style>
+    .timetable-automation-nav > a {
+        align-items: center;
+        min-height: 64px;
+        padding-right: 28px;
+        white-space: normal;
+    }
+
+    .timetable-automation-nav > a .nav-text {
+        line-height: 1.25;
+        max-width: 190px;
+        overflow-wrap: normal;
+    }
+</style>
+
 <!--**********************************
     Sidebar start
 ***********************************-->
@@ -72,6 +87,13 @@
                 </ul>
             </li>
 
+            <li class="timetable-automation-nav">
+                <a href="{% url 'timetable_automation' %}" class="ai-icon" aria-expanded="false">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span class="nav-text">Timetable Automation</span>
+                </a>
+            </li>
+
             <!-- Academics -->
             <li class="has-menu">
                 <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
@@ -83,9 +105,7 @@
                     <li><a href="{% url 'section_list' %}">Sections Capacity</a></li>
                     <li><a href="{% url 'subject_list' %}">Subjects</a></li>
                     <li><a href="{% url 'class_group_list' %}">Classes Groups</a></li>
-                    <li><a href="{% url 'timetable_view' %}">Timetable Allocation</a></li>
-                    <li><a href="{% url 'period_list' %}">Create Period</a></li>
-                    <li><a href="{% url 'assign_period' %}">Assign Period Teachers</a></li>
+                    <li><a href="{% url 'timetable_automation' %}">Timetable Automation</a></li>
                     <li><a href="{% url 'manage_fixture' %}">Fixture Management</a></li>
                     <li><a href="{% url 'class_teacher_list' %}">Create Class Teacher</a></li>
                     <li><a href="{% url 'portfolio_timetable' %}">PDF Generate Classwise</a></li>

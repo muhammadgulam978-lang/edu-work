@@ -11,6 +11,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Class Assignment Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .workflow-strip { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 14px 0 22px; }
+    .workflow-step { background: #fff; border: 1px solid #e9ecef; border-radius: 999px; padding: 8px 12px; color: #495057; font-size: 13px; box-shadow: 0 2px 8px rgba(0,0,0,.04); }
+    .workflow-arrow { color: #88D0C5; align-self: center; font-weight: 600; }
+    .assignment-badge { display: inline-flex; align-items: center; border-radius: 999px; padding: 4px 9px; font-size: 12px; font-weight: 500; }
+    .assignment-badge-day { background: #F5F5FD; color: #495057; }
+    .assignment-badge-subject { background: rgba(136,208,197,.22); color: #264c84; }
+    .assignment-badge-teacher { background: rgba(139,199,64,.22); color: #3c5f19; }
+  </style>
   
 </head>
 <body class="bg-gradient-to-br from-gray-50 to-gray-200 min-h-screen flex flex-col font-sans">
@@ -18,6 +27,14 @@
     <header class="mb-8 text-center">
       <h4 class="card-title">Asssign classes to teachers</h4>
       <p class="mt-2 text-sm sm:text-base text-gray-600">Effortlessly assign classes with real-time updates</p>
+      <div class="workflow-strip" aria-label="Assignment workflow">
+        <span class="workflow-step">Class</span><span class="workflow-arrow">-</span>
+        <span class="workflow-step">Section</span><span class="workflow-arrow">-</span>
+        <span class="workflow-step">Subject</span><span class="workflow-arrow">-</span>
+        <span class="workflow-step">Day</span><span class="workflow-arrow">-</span>
+        <span class="workflow-step">Period</span><span class="workflow-arrow">-</span>
+        <span class="workflow-step">Teacher</span>
+      </div>
     </header>
 
     <!-- Form -->

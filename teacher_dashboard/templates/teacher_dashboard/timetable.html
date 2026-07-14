@@ -89,6 +89,33 @@
   }
   .dot-assigned  { background: var(--ep-green); }
   .dot-free      { background: var(--ep-gray-300); }
+  .tt-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .tt-stat-card {
+    background: var(--ep-white);
+    border: 1px solid var(--ep-gray-100);
+    border-radius: 12px;
+    box-shadow: var(--ep-shadow);
+    padding: 14px 16px;
+  }
+  .tt-stat-label {
+    color: var(--ep-gray-600);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    margin-bottom: 5px;
+  }
+  .tt-stat-value {
+    color: var(--ep-green-dark);
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1;
+  }
 
   /* ── Card ── */
   .tt-card {
@@ -249,12 +276,90 @@
     letter-spacing: .08em;
     margin-top: 3px;
   }
+  .tt-fixtures {
+    margin-top: 24px;
+  }
+  .tt-fixture-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+  .tt-fixture-card {
+    background: var(--ep-white);
+    border: 1px solid var(--ep-gray-100);
+    border-radius: var(--ep-radius);
+    box-shadow: var(--ep-shadow);
+    overflow: hidden;
+  }
+  .tt-fixture-head {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--ep-gray-100);
+    color: var(--ep-green-dark);
+    font-size: 16px;
+    font-weight: 700;
+  }
+  .tt-fixture-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  .tt-fixture-table th,
+  .tt-fixture-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--ep-gray-100);
+    text-align: left;
+    vertical-align: top;
+  }
+  .tt-fixture-table th {
+    color: var(--ep-gray-600);
+    font-weight: 700;
+    background: var(--ep-gray-50);
+  }
+  .tt-fixture-empty {
+    padding: 28px 18px;
+    color: var(--ep-gray-600);
+    text-align: center;
+    font-size: 13px;
+  }
+  .tt-source-badge {
+    display: inline-flex;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: var(--ep-green-light);
+    color: var(--ep-green-dark);
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .tt-notification-list {
+    display: grid;
+    gap: 10px;
+    padding: 14px 18px 18px;
+  }
+  .tt-notification-item {
+    border: 1px solid var(--ep-gray-100);
+    border-radius: 10px;
+    padding: 10px 12px;
+    background: var(--ep-gray-50);
+  }
+  .tt-notification-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ep-green-dark);
+    margin-bottom: 4px;
+  }
+  .tt-notification-message {
+    font-size: 12px;
+    color: var(--ep-gray-600);
+    white-space: pre-line;
+  }
 
   @media (max-width: 640px) {
     .tt-page { padding: 16px 8px 32px; }
     .tt-title { font-size: 20px; }
     .tt-summary { flex-wrap: wrap; }
     .tt-summary-item { flex: 1 1 50%; }
+    .tt-stats-grid,
+    .tt-fixture-grid { grid-template-columns: 1fr; }
   }
 </style>
 
@@ -285,6 +390,25 @@
     </div>
     <div class="tt-legend-item">
       <span class="tt-legend-dot dot-free"></span> Free Period
+    </div>
+  </div>
+
+  <div class="tt-stats-grid">
+    <div class="tt-stat-card">
+      <div class="tt-stat-label">Weekly Assigned</div>
+      <div class="tt-stat-value">{{ weekly_assigned_periods }}</div>
+    </div>
+    <div class="tt-stat-card">
+      <div class="tt-stat-label">Free Periods</div>
+      <div class="tt-stat-value">{{ free_periods }}</div>
+    </div>
+    <div class="tt-stat-card">
+      <div class="tt-stat-label">Substitute Fixtures</div>
+      <div class="tt-stat-value">{{ substitute_fixtures|length }}</div>
+    </div>
+    <div class="tt-stat-card">
+      <div class="tt-stat-label">Absent Fixtures</div>
+      <div class="tt-stat-value">{{ absent_fixtures|length }}</div>
     </div>
   </div>
 
@@ -359,6 +483,114 @@
     </div>
   </div>
   {% endif %}
+
+  <div class="tt-fixtures">
+    <div class="tt-fixture-grid">
+      <div class="tt-fixture-card">
+        <div class="tt-fixture-head">Substitute Duties</div>
+        {% if substitute_fixtures %}
+          <div class="tt-table-wrap">
+            <table class="tt-fixture-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Day / Period</th>
+                  <th>Class</th>
+                  <th>Subject</th>
+                  <th>Absent Teacher</th>
+                  <th>Source</th>
+                  <th>Status</th>
+                  <th>Handover</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for fixture in substitute_fixtures %}
+                  <tr>
+                    <td>{{ fixture.fixture_date }}</td>
+                    <td>{{ fixture.day }}<br><small>{{ fixture.period.period_name }}</small></td>
+                    <td>{{ fixture.class_fk.class_name }} - {{ fixture.section.section_name }}</td>
+                    <td>{% if fixture.subject %}{{ fixture.subject.name }}{% else %}Optional{% endif %}</td>
+                    <td>{{ fixture.absent_teacher.name }}</td>
+                    <td><span class="tt-source-badge">{{ fixture.get_source_display }}</span></td>
+                    <td><span class="tt-source-badge">{{ fixture.get_fixture_status_display }}</span></td>
+                    <td>
+                      {% if fixture.handover %}
+                        {% if fixture.handover.lesson_topic %}{{ fixture.handover.lesson_topic }}<br>{% endif %}
+                        <small>{{ fixture.handover.instructions|default:"No instructions added." }}</small>
+                      {% else %}
+                        <small>No handover added.</small>
+                      {% endif %}
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="tt-fixture-empty">No substitute duties assigned.</div>
+        {% endif %}
+      </div>
+
+      <div class="tt-fixture-card">
+        <div class="tt-fixture-head">Absent Coverage</div>
+        {% if absent_fixtures %}
+          <div class="tt-table-wrap">
+            <table class="tt-fixture-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Day / Period</th>
+                  <th>Class</th>
+                  <th>Subject</th>
+                  <th>Substitute Teacher</th>
+                  <th>Status</th>
+                  <th>Handover</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for fixture in absent_fixtures %}
+                  <tr>
+                    <td>{{ fixture.fixture_date }}</td>
+                    <td>{{ fixture.day }}<br><small>{{ fixture.period.period_name }}</small></td>
+                    <td>{{ fixture.class_fk.class_name }} - {{ fixture.section.section_name }}</td>
+                    <td>{% if fixture.subject %}{{ fixture.subject.name }}{% else %}Optional{% endif %}</td>
+                    <td>{{ fixture.substitute_teacher.name }}</td>
+                    <td><span class="tt-source-badge">{{ fixture.get_fixture_status_display }}</span></td>
+                    <td>
+                      {% if fixture.handover %}
+                        {% if fixture.handover.lesson_topic %}{{ fixture.handover.lesson_topic }}<br>{% endif %}
+                        <small>{{ fixture.handover.instructions|default:"No instructions added." }}</small>
+                      {% else %}
+                        <small>No handover added.</small>
+                      {% endif %}
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="tt-fixture-empty">No absent coverage records.</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="tt-fixture-card" style="margin-top:16px;">
+      <div class="tt-fixture-head">Fixture Notifications</div>
+      {% if recent_fixture_notifications %}
+        <div class="tt-notification-list">
+          {% for notification in recent_fixture_notifications %}
+            <div class="tt-notification-item">
+              <div class="tt-notification-title">{{ notification.title }}</div>
+              <div class="tt-notification-message">{{ notification.message }}</div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="tt-fixture-empty">No fixture notifications yet.</div>
+      {% endif %}
+    </div>
+  </div>
 
 </div>
 

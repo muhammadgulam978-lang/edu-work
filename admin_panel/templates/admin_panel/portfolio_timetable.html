@@ -44,6 +44,21 @@
     .header-row {
         font-size: 1.1rem;
     }
+    .portfolio-summary-grid {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 12px;
+        margin: 18px 0 8px;
+    }
+    .portfolio-summary-card {
+        background: #fff;
+        border: 1px solid #e9ecef;
+        border-radius: 10px;
+        padding: 13px 15px;
+        box-shadow: 0 2px 10px rgba(0,0,0,.04);
+    }
+    .portfolio-summary-label { color: #6c757d; font-size: 12px; margin-bottom: 5px; }
+    .portfolio-summary-value { color: #212529; font-size: 18px; font-weight: 600; line-height: 1.2; }
     @media (max-width: 768px) {
         .timetable-table th, .timetable-table td {
             font-size: 12px;
@@ -55,6 +70,7 @@
         .header-row {
             font-size: 1rem;
         }
+        .portfolio-summary-grid { grid-template-columns: 1fr; }
     }
 </style>
 
@@ -103,6 +119,31 @@
                 </div>
             </div>
         </form>
+
+        {% if timetable_data %}
+            <div class="portfolio-summary-grid">
+                <div class="portfolio-summary-card">
+                    <div class="portfolio-summary-label">Class</div>
+                    <div class="portfolio-summary-value">{{ timetable_summary.class_name }}</div>
+                </div>
+                <div class="portfolio-summary-card">
+                    <div class="portfolio-summary-label">Section</div>
+                    <div class="portfolio-summary-value">{{ timetable_summary.section_name }}</div>
+                </div>
+                <div class="portfolio-summary-card">
+                    <div class="portfolio-summary-label">Class Teacher</div>
+                    <div class="portfolio-summary-value">{{ timetable_summary.class_teacher }}</div>
+                </div>
+                <div class="portfolio-summary-card">
+                    <div class="portfolio-summary-label">Assigned Periods</div>
+                    <div class="portfolio-summary-value">{{ timetable_summary.assigned_periods }}</div>
+                </div>
+                <div class="portfolio-summary-card">
+                    <div class="portfolio-summary-label">Empty Periods</div>
+                    <div class="portfolio-summary-value">{{ timetable_summary.empty_periods }}</div>
+                </div>
+            </div>
+        {% endif %}
 
         {% if timetable_data %}
             <div class="timetable-container mt-4">

@@ -75,6 +75,7 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 'teacher_dashboard.context_processors.lms_sidebar_context',
                 'admin_panel.context_processors.user_permissions',
+                'admin_panel.context_processors.teacher_fixture_notifications',
                 'ai_tutor.context_processors.ai_tutor_fab',
             ],
         },
@@ -120,14 +121,6 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media/")
 
-# Email backend
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = "smtp.gmail.com"
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'isram.amin12@gmail.com'
-EMAIL_HOST_PASSWORD = 'mrdx ygfp qqqc munh'
-
 # Authentication redirects
 LOGIN_URL = "/login/"
 LOGOUT_REDIRECT_URL = '/logout/'
@@ -143,12 +136,10 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_USE_SSL = False
 
-EMAIL_HOST_USER = 'areebanazkhan44@gmail.com'
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
 
-# Gmail App Password
-EMAIL_HOST_PASSWORD = 'vkwd aztg ebhf kixz' 
-
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER)
 
 # Debug
 EMAIL_TIMEOUT = 30
