@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Add Parent</title>
     <link rel="stylesheet" href="{% static 'admin_panel/css/add_parent.css' %}" />
+    <link rel="stylesheet" href="{% static 'admin_panel/css/admin-inner-theme.css' %}" />
     <!-- Select2 CSS -->
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
@@ -17,7 +18,7 @@
 <script src="{% static 'admin_panel/js/add_parent.js' %}"></script>
 
 </head>
-<body>
+<body class="admin-inner-page">
     <div class="container">
         <h2>Add New Parent</h2>
         <form method="POST" action="{% url 'add_parent' %}">

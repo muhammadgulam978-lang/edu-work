@@ -36,7 +36,7 @@
 
         .bulk-section-title {
             font-size: 18px;
-            font-weight: 700;
+            font-weight: 500;
             color: #3d4465;
             margin-bottom: 16px;
             display: flex;
@@ -88,7 +88,7 @@
 
         .bulk-card-title {
             font-size: 20px;
-            font-weight: 700;
+            font-weight: 500;
             color: white;
             margin-bottom: 6px;
         }
@@ -120,7 +120,7 @@
             background: rgba(255,255,255,0.18);
             color: white;
             font-size: 11px;
-            font-weight: 600;
+            font-weight: 400;
             padding: 3px 9px;
             border-radius: 20px;
             border: 1px solid rgba(255,255,255,0.3);
@@ -132,7 +132,7 @@
             border-radius: 10px;
             padding: 10px 22px;
             font-size: 13.5px;
-            font-weight: 700;
+            font-weight: 500;
             cursor: pointer;
             display: inline-flex;
             align-items: center;
@@ -168,7 +168,7 @@
 
         .bulk-stat-num {
             font-size: 22px;
-            font-weight: 800;
+            font-weight: 500;
             color: white;
             line-height: 1;
         }
@@ -183,6 +183,464 @@
             width: 1px;
             background: rgba(255,255,255,0.2);
             margin: 0 4px;
+        }
+
+        .automation-overview {
+            width: 100%;
+            margin: 6px 0 30px;
+        }
+
+        .automation-overview-head {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 18px;
+            margin-bottom: 16px;
+        }
+
+        .automation-overview-title {
+            font-size: 22px;
+            font-weight: 500;
+            color: #222222;
+            margin: 0 0 4px;
+        }
+
+        .automation-overview-subtitle {
+            font-size: 14px;
+            font-weight: 400;
+            color: #6c757d;
+            margin: 0;
+        }
+
+        .automation-refresh-note {
+            font-size: 12px;
+            font-weight: 500;
+            color: #6c757d;
+            background: #F5F5FD;
+            border: 1px solid #e9ecef;
+            border-radius: 999px;
+            padding: 7px 12px;
+            white-space: nowrap;
+        }
+
+        .automation-card-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 18px;
+        }
+
+        .automation-card {
+            background: #DDF7F2;
+            border: 1px solid rgba(136, 208, 197, .45);
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,.06);
+            padding: 20px;
+            min-height: 218px;
+            display: flex;
+            flex-direction: column;
+            color: #222222;
+        }
+
+        .automation-card-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .automation-icon {
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            background: rgba(255,255,255,.58);
+            border: 1px solid rgba(255,255,255,.62);
+            color: #111111;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            flex: 0 0 auto;
+        }
+
+        .automation-status {
+            border-radius: 999px;
+            padding: 5px 10px;
+            font-size: 12px;
+            font-weight: 400;
+            line-height: 1;
+            border: 1px solid transparent;
+            white-space: nowrap;
+        }
+
+        .automation-status.status-success {
+            background: rgba(139, 199, 64, .14);
+            color: #4d7d19;
+            border-color: rgba(139, 199, 64, .22);
+        }
+
+        .automation-status.status-warning {
+            background: rgba(255, 77, 61, .10);
+            color: #b83b30;
+            border-color: rgba(255, 77, 61, .18);
+        }
+
+        .automation-status.status-neutral {
+            background: #F5F5FD;
+            color: #6c757d;
+            border-color: #e9ecef;
+        }
+
+        .automation-card-title {
+            font-size: 17px;
+            font-weight: 500;
+            color: #222222;
+            line-height: 1.35;
+            margin: 0 0 16px;
+        }
+
+        .automation-metrics {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .automation-metric {
+            background: rgba(255,255,255,.54);
+            border: 1px solid rgba(255,255,255,.68);
+            border-radius: 10px;
+            padding: 10px 12px;
+        }
+
+        .automation-metric-value {
+            display: block;
+            font-size: 22px;
+            line-height: 1.2;
+            font-weight: 500;
+            color: #222222;
+        }
+
+        .automation-metric-label {
+            display: block;
+            font-size: 12px;
+            font-weight: 400;
+            color: #6c757d;
+            margin-top: 3px;
+        }
+
+        .automation-last {
+            font-size: 13px;
+            font-weight: 400;
+            color: #6c757d;
+            margin: auto 0 16px;
+        }
+
+        .automation-card-action {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: fit-content;
+            background: rgba(255,255,255,.72);
+            border: 1px solid rgba(255,255,255,.78);
+            border-radius: 9px;
+            color: #111111;
+            font-size: 14px;
+            font-weight: 500;
+            padding: 9px 14px;
+            text-decoration: none;
+        }
+
+        .automation-card-action:hover {
+            color: #111111;
+            text-decoration: none;
+            filter: brightness(.98);
+        }
+
+        .card-tone-success,
+        .automation-card.card-tone-success,
+        .admin-summary-card.card-tone-success {
+            background: #EEF9E5;
+            border-color: rgba(139, 199, 64, .35);
+        }
+
+        .card-tone-warning,
+        .automation-card.card-tone-warning,
+        .admin-summary-card.card-tone-warning {
+            background: #FFF4E5;
+            border-color: rgba(255, 177, 79, .42);
+        }
+
+        .card-tone-neutral,
+        .automation-card.card-tone-neutral,
+        .admin-summary-card.card-tone-neutral {
+            background: #F5F5FD;
+            border-color: #e9ecef;
+        }
+
+        .card-tone-teal,
+        .automation-card.card-tone-teal,
+        .admin-summary-card.card-tone-teal {
+            background: #DDF7F2;
+            border-color: rgba(136, 208, 197, .42);
+        }
+
+        .card-tone-blue,
+        .automation-card.card-tone-blue,
+        .admin-summary-card.card-tone-blue {
+            background: #EAF2FF;
+            border-color: rgba(110, 168, 254, .36);
+        }
+
+        .card-tone-green,
+        .automation-card.card-tone-green,
+        .admin-summary-card.card-tone-green {
+            background: #EEF9E5;
+            border-color: rgba(139, 199, 64, .34);
+        }
+
+        @media (max-width: 1199px) {
+            .automation-card-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 767px) {
+            .automation-overview-head {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .automation-card-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .admin-live-section {
+            width: 100%;
+            margin-bottom: 30px;
+        }
+
+        .admin-section-head {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .admin-section-title {
+            font-size: 22px;
+            font-weight: 500;
+            color: #222222;
+            margin: 0 0 4px;
+        }
+
+        .admin-section-subtitle {
+            font-size: 14px;
+            color: #6c757d;
+            margin: 0;
+        }
+
+        .admin-card-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 18px;
+        }
+
+        .admin-card-grid.compact {
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+        }
+
+        .admin-summary-card,
+        .admin-panel-card {
+            background: #DDF7F2;
+            border: 1px solid rgba(136, 208, 197, .42);
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,.06);
+            padding: 18px;
+            min-height: 190px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .admin-summary-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .admin-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: rgba(255,255,255,.58);
+            border: 1px solid rgba(255,255,255,.62);
+            color: #111111;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex: 0 0 auto;
+        }
+
+        .admin-summary-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: #222222;
+            line-height: 1.35;
+            margin: 0 0 14px;
+        }
+
+        .admin-status-pill {
+            border-radius: 999px;
+            padding: 5px 10px;
+            font-size: 12px;
+            font-weight: 400;
+            line-height: 1;
+            white-space: nowrap;
+            background: #F5F5FD;
+            color: #6c757d;
+            border: 1px solid #e9ecef;
+        }
+
+        .admin-status-pill.status-success {
+            background: rgba(139, 199, 64, .14);
+            color: #4d7d19;
+            border-color: rgba(139, 199, 64, .22);
+        }
+
+        .admin-status-pill.status-warning {
+            background: rgba(255, 77, 61, .10);
+            color: #b83b30;
+            border-color: rgba(255, 77, 61, .18);
+        }
+
+        .admin-metric-row {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .admin-metric-box {
+            background: rgba(255,255,255,.54);
+            border: 1px solid rgba(255,255,255,.68);
+            border-radius: 10px;
+            padding: 10px 12px;
+        }
+
+        .admin-metric-value {
+            display: block;
+            font-size: 21px;
+            font-weight: 500;
+            color: #222222;
+            line-height: 1.2;
+        }
+
+        .admin-metric-label {
+            display: block;
+            color: #6c757d;
+            font-size: 12px;
+            margin-top: 3px;
+        }
+
+        .admin-extra-line {
+            color: #6c757d;
+            font-size: 13px;
+            margin: 0 0 14px;
+        }
+
+        .admin-action-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: fit-content;
+            background: rgba(255,255,255,.72);
+            border: 1px solid rgba(255,255,255,.78);
+            border-radius: 9px;
+            color: #111111;
+            font-size: 14px;
+            font-weight: 500;
+            padding: 9px 14px;
+            text-decoration: none;
+            margin-top: auto;
+        }
+
+        .admin-action-link:hover {
+            color: #111111;
+            text-decoration: none;
+        }
+
+        .admin-bottom-grid {
+            display: grid;
+            grid-template-columns: 1.2fr .8fr;
+            gap: 18px;
+        }
+
+        .admin-preview-list,
+        .admin-quick-list {
+            display: grid;
+            gap: 12px;
+        }
+
+        .admin-preview-item,
+        .admin-quick-action {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid #e9ecef;
+            color: #222222;
+            text-decoration: none;
+        }
+
+        .admin-preview-item:last-child,
+        .admin-quick-action:last-child {
+            border-bottom: 0;
+        }
+
+        .admin-preview-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: #222222;
+            margin: 0 0 3px;
+        }
+
+        .admin-preview-desc,
+        .admin-preview-meta {
+            font-size: 13px;
+            color: #6c757d;
+        }
+
+        .admin-quick-action {
+            justify-content: flex-start;
+        }
+
+        @media (max-width: 1199px) {
+            .admin-card-grid,
+            .admin-card-grid.compact {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .admin-bottom-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 767px) {
+            .admin-card-grid,
+            .admin-card-grid.compact {
+                grid-template-columns: 1fr;
+            }
+
+            .admin-section-head {
+                align-items: flex-start;
+                flex-direction: column;
+            }
         }
     </style>
 </head>
@@ -221,63 +679,56 @@
                         </div>
                         <ul class="navbar-nav header-right">
                             <li class="nav-item">
-                                <div class="input-group search-area d-xl-inline-flex d-none">
-                                    <input type="text" class="form-control" placeholder="Search something here...">
+                                <form class="input-group search-area d-xl-inline-flex d-none" action="{% url 'admin_search' %}" method="get" data-admin-search-form>
+                                    <input type="text" class="form-control" name="q" placeholder="Search something here..." autocomplete="off" data-admin-search>
                                     <div class="input-group-append">
-                                        <button class="input-group-text"><i class="flaticon-381-search-2"></i></button>
+                                        <button class="input-group-text" type="submit"><i class="flaticon-381-search-2"></i></button>
                                     </div>
-                                </div>
+                                    <div class="admin-header-search-results" data-admin-search-results></div>
+                                </form>
                             </li>
                             <li class="nav-item dropdown notification_dropdown">
-                                <a class="nav-link ai-icon" href="#" role="button" data-bs-toggle="dropdown">
+                                <a class="nav-link ai-icon" href="#" role="button" data-bs-toggle="dropdown" data-admin-notification-toggle>
                                     <svg width="26" height="28" viewBox="0 0 26 28" fill="none" xmlns="http://www.w3.org/2000/svg">
                                         <path d="M9.45251 25.6682C10.0606 27.0357 11.4091 28 13.0006 28C14.5922 28 15.9407 27.0357 16.5488 25.6682C15.4266 25.7231 14.2596 25.76 13.0006 25.76C11.7418 25.76 10.5748 25.7231 9.45251 25.6682Z" fill="#3E4954"/>
                                         <path d="M25.3531 19.74C23.8769 17.8785 21.3995 14.2195 21.3995 10.64C21.3995 7.09073 19.1192 3.89758 15.7995 2.72382C15.7592 1.21406 14.5183 0 13.0006 0C11.4819 0 10.2421 1.21406 10.2017 2.72382C6.88095 3.89758 4.60064 7.09073 4.60064 10.64C4.60064 14.2207 2.12434 17.8785 0.647062 19.74C0.154273 20.3616 0.00191325 21.1825 0.240515 21.9363C0.473484 22.6721 1.05361 23.2422 1.79282 23.4595C3.08755 23.8415 5.20991 24.2715 8.44676 24.491C9.84785 24.5851 11.3543 24.64 13.0007 24.64C14.646 24.64 16.1524 24.5851 17.5535 24.491C20.7914 24.2715 22.9127 23.8415 24.2085 23.4595C24.9477 23.2422 25.5268 22.6722 25.7597 21.9363C25.9983 21.1825 25.8448 20.3616 25.3531 19.74Z" fill="#3E4954"/>
                                     </svg>
-                                    <span class="badge light text-white bg-primary rounded-circle">52</span>
+                                    <span class="badge light text-white bg-primary rounded-circle" data-admin-notification-count>{{ admin_dashboard_stats.notifications_pending|default:0 }}</span>
                                 </a>
                                 <div class="dropdown-menu dropdown-menu-end">
                                     <div id="DZ_W_Notification1" class="widget-media dz-scroll p-3 height380">
-                                        <ul class="timeline">
+                                        <ul class="timeline" data-admin-notifications>
                                             <li>
                                                 <div class="timeline-panel">
-                                                    <div class="media me-2 media-info">AD</div>
+                                                    <div class="media me-2 media-info">N</div>
                                                     <div class="media-body">
-                                                        <h6 class="mb-1">New admission registered</h6>
-                                                        <small class="d-block">Just now</small>
-                                                    </div>
-                                                </div>
-                                            </li>
-                                            <li>
-                                                <div class="timeline-panel">
-                                                    <div class="media me-2 media-success"><i class="fa fa-user"></i></div>
-                                                    <div class="media-body">
-                                                        <h6 class="mb-1">Teacher profile updated</h6>
-                                                        <small class="d-block">2 hours ago</small>
+                                                        <h6 class="mb-1">Pending notifications</h6>
+                                                        <small class="d-block">{{ admin_dashboard_stats.notifications_pending|default:0 }} pending in queue</small>
                                                     </div>
                                                 </div>
                                             </li>
                                         </ul>
                                     </div>
-                                    <a class="all-notification" href="#">See all notifications <i class="ti-arrow-right"></i></a>
+                                    <a class="all-notification" href="{% url 'notification-queue' %}">See all notifications <i class="ti-arrow-right"></i></a>
                                 </div>
                             </li>
                             <li class="nav-item dropdown header-profile">
                                 <a class="nav-link" href="#" role="button" data-bs-toggle="dropdown">
                                    
                                         <div class="me-2 text-end">
-                <span class="text-black d-block fw-bold">Miss Rose</span>
-                <small class="text-muted">Super Admin</small>
+                <span class="text-black d-block fw-bold" data-admin-user-name>{{ request.user.get_full_name|default:request.user.username }}</span>
+                <small class="text-muted" data-admin-user-role>{% if request.user.is_superuser %}Super Admin{% else %}Admin{% endif %}</small>
             </div>
              <img src="{% static 'admin_panel/images/dummy-profile.png' %}"
                  width="40"
                  height="40"
                  class="rounded-circle"
-                 alt="Profile">
+                 alt="Profile"
+                 data-admin-user-avatar>
 
                                 </a>
                                 <div class="dropdown-menu dropdown-menu-end">
-                                    <a href="#" class="dropdown-item ai-icon">
+                                    <a href="{% url 'admin_profile' %}" class="dropdown-item ai-icon">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="text-primary" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                                         <span class="ms-2">Profile</span>
                                     </a>
@@ -507,7 +958,7 @@
                                     </span>
                                     <div class="media-body text-end feature-icon-text">
                                         <p class="fs-18 text-white mb-2">Students</p>
-                                        <span class="fs-48 text-white font-w600">86</span>
+                                        <span class="fs-48 text-white font-w500" data-dashboard-stat="students_count">{{ admin_dashboard_stats.students_count|default:0 }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -527,7 +978,7 @@
                                     </span>
                                     <div class="media-body text-end feature-icon-text">
                                         <p class="fs-18 text-white mb-2">Teachers</p>
-                                        <span class="fs-48 text-white font-w600">75</span>
+                                        <span class="fs-48 text-white font-w500" data-dashboard-stat="teachers_count">{{ admin_dashboard_stats.teachers_count|default:0 }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -547,7 +998,23 @@
                                     </span>
                                     <div class="media-body text-end feature-icon-text">
                                         <p class="fs-18 text-white mb-2">Admins</p>
-                                        <span class="fs-48 text-white font-w600">93</span>
+                                        <span class="fs-48 text-white font-w500" data-dashboard-stat="admins_count">{{ admin_dashboard_stats.admins_count|default:0 }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6">
+                        <div class="card" style="background:#88D0C5;">
+                            <div class="card-body">
+                                <div class="media align-items-center">
+                                    <span class="p-2 me-3 feature-icon rounded">
+                                        <i class="lni lni-users text-white" style="font-size:36px;"></i>
+                                    </span>
+                                    <div class="media-body text-end feature-icon-text">
+                                        <p class="fs-18 text-white mb-2">Pending Admissions</p>
+                                        <span class="fs-48 text-white font-w500" data-dashboard-stat="pending_admissions">{{ admin_dashboard_stats.pending_admissions|default:0 }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -555,92 +1022,161 @@
                     </div>
 
                     <!-- ── LEFT COLUMN: CEO Profile ── -->
-                    <div class="col-xl-3 col-xxl-4">
-                        <div class="row">
-                            <div class="col-xl-12">
-                                <div class="card d-flex flex-xl-column flex-sm-column flex-md-row flex-column">
-                                    <div class="card-body text-center profile-bx">
-                                        <div class="profile-image mb-4">
-                                            <img src="images/avatar/1.jpg" class="rounded-circle" alt="">
+                    {% if automation_overview_cards %}
+                    <div class="col-xl-12 automation-overview" id="automationOverview">
+                        <div class="automation-overview-head">
+                            <div>
+                                <h4 class="automation-overview-title">Automation Overview</h4>
+                                <p class="automation-overview-subtitle">Live status of system automation modules</p>
+                            </div>
+                            <span class="automation-refresh-note">Auto-refresh every 30 seconds</span>
+                        </div>
+
+                        <div class="automation-card-grid">
+                            {% for card in automation_overview_cards %}
+                            <article class="automation-card card-tone-{{ card.status_type }}" data-automation-key="{{ card.key }}">
+                                <div class="automation-card-top">
+                                    <span class="automation-icon">
+                                        <i class="{{ card.icon }}"></i>
+                                    </span>
+                                    <span class="automation-status status-{{ card.status_type }}" data-field="status">{{ card.status }}</span>
+                                </div>
+                                <h5 class="automation-card-title" data-field="title">{{ card.title }}</h5>
+                                <div class="automation-metrics">
+                                    <div class="automation-metric">
+                                        <span class="automation-metric-value" data-field="primary_value">{{ card.primary_value }}</span>
+                                        <span class="automation-metric-label" data-field="primary_label">{{ card.primary_label }}</span>
+                                    </div>
+                                    <div class="automation-metric">
+                                        <span class="automation-metric-value" data-field="secondary_value">{{ card.secondary_value }}</span>
+                                        <span class="automation-metric-label" data-field="secondary_label">{{ card.secondary_label }}</span>
+                                    </div>
+                                </div>
+                                <p class="automation-last">Last activity: <span data-field="last_activity">{{ card.last_activity }}</span></p>
+                                <a class="automation-card-action" href="{{ card.url }}" data-field="url">{{ card.action_label }}</a>
+                            </article>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if attention_cards %}
+                    <div class="col-xl-12 admin-live-section" id="attentionOverview">
+                        <div class="admin-section-head">
+                            <div>
+                                <h4 class="admin-section-title">Attention Required</h4>
+                                <p class="admin-section-subtitle">Items that need admin review today</p>
+                            </div>
+                        </div>
+                        <div class="admin-card-grid compact" data-dashboard-card-list="attention_cards">
+                            {% for card in attention_cards %}
+                            <article class="admin-summary-card card-tone-{{ card.status_type }}" data-dashboard-card="{{ card.key }}">
+                                <div class="admin-summary-top">
+                                    <span class="admin-icon"><i class="{{ card.icon }}"></i></span>
+                                    <span class="admin-status-pill status-{{ card.status_type }}" data-field="status">{{ card.status }}</span>
+                                </div>
+                                <h5 class="admin-summary-title" data-field="title">{{ card.title }}</h5>
+                                <div class="admin-metric-row">
+                                    <div class="admin-metric-box">
+                                        <span class="admin-metric-value" data-field="primary_value">{{ card.primary_value }}</span>
+                                        <span class="admin-metric-label" data-field="primary_label">{{ card.primary_label }}</span>
+                                    </div>
+                                    <div class="admin-metric-box">
+                                        <span class="admin-metric-value" data-field="secondary_value">{{ card.secondary_value }}</span>
+                                        <span class="admin-metric-label" data-field="secondary_label">{{ card.secondary_label }}</span>
+                                    </div>
+                                </div>
+                                <a href="{{ card.url }}" class="admin-action-link" data-field="url">{{ card.action_label }}</a>
+                            </article>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if module_summary_cards %}
+                    <div class="col-xl-12 admin-live-section" id="moduleSummaryOverview">
+                        <div class="admin-section-head">
+                            <div>
+                                <h4 class="admin-section-title">System Feature Summary</h4>
+                                <p class="admin-section-subtitle">Live snapshots from each major EduPilot module</p>
+                            </div>
+                        </div>
+                        <div class="admin-card-grid" data-dashboard-card-list="module_cards">
+                            {% for card in module_summary_cards %}
+                            <article class="admin-summary-card card-tone-{{ card.status_type }}" data-dashboard-card="{{ card.key }}">
+                                <div class="admin-summary-top">
+                                    <span class="admin-icon"><i class="{{ card.icon }}"></i></span>
+                                    <span class="admin-status-pill status-{{ card.status_type }}" data-field="status">{{ card.status }}</span>
+                                </div>
+                                <h5 class="admin-summary-title" data-field="title">{{ card.title }}</h5>
+                                <div class="admin-metric-row">
+                                    <div class="admin-metric-box">
+                                        <span class="admin-metric-value" data-field="primary_value">{{ card.primary_value }}</span>
+                                        <span class="admin-metric-label" data-field="primary_label">{{ card.primary_label }}</span>
+                                    </div>
+                                    <div class="admin-metric-box">
+                                        <span class="admin-metric-value" data-field="secondary_value">{{ card.secondary_value }}</span>
+                                        <span class="admin-metric-label" data-field="secondary_label">{{ card.secondary_label }}</span>
+                                    </div>
+                                </div>
+                                {% if card.extra_label %}
+                                <p class="admin-extra-line"><span data-field="extra_value">{{ card.extra_value }}</span> <span data-field="extra_label">{{ card.extra_label }}</span></p>
+                                {% endif %}
+                                <a href="{{ card.url }}" class="admin-action-link" data-field="url">{{ card.action_label }}</a>
+                            </article>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="col-xl-12 admin-live-section">
+                        <div class="admin-bottom-grid">
+                            <div class="admin-panel-card card-tone-teal">
+                                <div class="admin-section-head">
+                                    <div>
+                                        <h4 class="admin-section-title">Recent Activity</h4>
+                                        <p class="admin-section-subtitle">Latest admissions, leaves, and fixture actions</p>
+                                    </div>
+                                </div>
+                                <div class="admin-preview-list" id="recentActivityList">
+                                    {% for item in recent_activity_items %}
+                                    <a class="admin-preview-item" href="{{ item.url }}">
+                                        <div>
+                                            <p class="admin-preview-title">{{ item.title }}</p>
+                                            <span class="admin-preview-desc">{{ item.description }}</span>
                                         </div>
-                                        <h4 class="fs-22 text-black mb-1">Ceo</h4>
-                                        <p class="mb-4">Mr John</p>
-                                        <div class="row">
-                                            <div class="col-4 p-0">
-                                                <div class="d-inline-block mb-2 relative donut-chart-sale">
-                                                    <span class="donut" data-peity='{ "fill": ["rgb(255, 142, 38)", "rgba(236, 236, 236, 1)"], "innerRadius": 27, "radius": 10}'>7/9</span>
-                                                    <small class="text-black">66%</small>
-                                                </div>
-                                                <span class="d-block">Html</span>
-                                            </div>
-                                            <div class="col-4 p-0">
-                                                <div class="d-inline-block mb-2 relative donut-chart-sale">
-                                                    <span class="donut" data-peity='{ "fill": ["rgb(62, 168, 52)", "rgba(236, 236, 236, 1)"], "innerRadius": 27, "radius": 10}'>4/9</span>
-                                                    <small class="text-black">31%</small>
-                                                </div>
-                                                <span class="d-block">Javascript</span>
-                                            </div>
-                                            <div class="col-4 p-0">
-                                                <div class="d-inline-block mb-2 relative donut-chart-sale">
-                                                    <span class="donut" data-peity='{ "fill": ["rgb(34, 172, 147)", "rgba(236, 236, 236, 1)"], "innerRadius": 27, "radius": 10}'>2/9</span>
-                                                    <small class="text-black">7%</small>
-                                                </div>
-                                                <span class="d-block">Python</span>
-                                            </div>
+                                        <span class="admin-preview-meta">{{ item.meta }}</span>
+                                    </a>
+                                    {% empty %}
+                                    <div class="admin-preview-item">
+                                        <div>
+                                            <p class="admin-preview-title">No recent activity</p>
+                                            <span class="admin-preview-desc">New activity will appear here.</span>
                                         </div>
                                     </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            <div class="admin-panel-card card-tone-blue">
+                                <div class="admin-section-head">
+                                    <div>
+                                        <h4 class="admin-section-title">Quick Actions</h4>
+                                        <p class="admin-section-subtitle">Shortcuts to common admin workflows</p>
+                                    </div>
+                                </div>
+                                <div class="admin-quick-list" id="quickActionList">
+                                    {% for action in quick_action_cards %}
+                                    <a class="admin-quick-action" href="{{ action.url }}">
+                                        <span class="admin-icon"><i class="{{ action.icon }}"></i></span>
+                                        <span>{{ action.title }}</span>
+                                    </a>
+                                    {% endfor %}
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- ── RIGHT COLUMN: Chart ── -->
-                    <div class="col-xl-9 col-xxl-8">
-                        <div class="row">
-                            <div class="col-xl-12">
-                                <div class="card">
-                                    <div class="card-header border-0 pb-0 flex-wrap">
-                                        <h4 class="fs-20 text-black me-4 mb-2">Charts Representation</h4>
-                                        <div class="form-check custom-checkbox mb-3">
-                                            <input type="checkbox" class="form-check-input" id="customCheckBox1">
-                                            <label class="form-check-label" for="customCheckBox1">Student</label>
-                                        </div>
-                                        <div class="form-check custom-checkbox mb-3">
-                                            <input type="checkbox" class="form-check-input" id="customCheck1">
-                                            <label class="form-check-label" for="customCheck1">Teacher</label>
-                                        </div>
-                                        <div class="form-check custom-checkbox mb-3">
-                                            <input type="checkbox" class="form-check-input" id="customCheck2">
-                                            <label class="form-check-label" for="customCheck2">Parent</label>
-                                        </div>
-                                        <select class="form-control style-1 default-select mt-3 mt-sm-0">
-                                            <option>Monthly</option>
-                                            <option>Weekly</option>
-                                            <option>Daily</option>
-                                        </select>
-                                    </div>
-                                    <div class="card-body">
-                                        <canvas id="lineChart" class="Vacancy-chart"></canvas>
-                                        <div class="d-flex flex-wrap align-items-center justify-content-center mt-3">
-                                            <div class="fs-14 text-black me-4">
-                                                <svg class="me-2" width="19" height="19" viewBox="0 0 19 19"><rect width="19" height="19" rx="9.5" fill="#4E36E2"/></svg>Student
-                                            </div>
-                                            <div class="fs-14 text-black me-4">
-                                                <svg class="me-2" width="19" height="19" viewBox="0 0 19 19"><rect width="19" height="19" rx="9.5" fill="#1BD084"/></svg>Teachers
-                                            </div>
-                                            <div class="fs-14 text-black">
-                                                <svg class="me-2" width="19" height="19" viewBox="0 0 19 19"><rect width="19" height="19" rx="9.5" fill="#FF424D"/></svg>Parents
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- ══════════════════════════════════════════════ -->
-                    <!-- ────── BULK UPLOAD SECTION ──────────────────── -->
-                    <!-- ══════════════════════════════════════════════ -->
                     <div class="col-xl-12 bulk-upload-section">
                         <div class="d-sm-flex align-items-center mb-3">
                             <h4 class="bulk-section-title me-auto">
@@ -771,73 +1307,6 @@
                     <!-- ────── BULK UPLOAD SECTION END ──────────────── -->
                     <!-- ══════════════════════════════════════════════ -->
 
-                    <!-- ── OUR CAMPUSES ── -->
-                    <div class="col-xl-12">
-                        <div class="d-sm-flex align-items-center mb-3 mt-sm-0 mt-2">
-                            <h4 class="text-black fs-20 me-auto">Our campuses</h4>
-                            <a href="#" class="btn btn-primary light btn-rounded">View More
-                                <svg class="ms-3" width="24" height="14" viewBox="0 0 24 14" fill="none">
-                                    <path d="M23.5607 5.93941L18.2461 0.62482C17.9532 0.331898 17.5693 0.185461 17.1854 0.185461C16.8015 0.185461 16.4176 0.331898 16.1247 0.62482C15.539 1.21062 15.539 2.16035 16.1247 2.74615L18.8787 5.50005L1.5 5.50005C0.671578 5.50005 0 6.17163 0 7.00005C0 7.82848 0.671578 8.50005 1.5 8.50005L18.8787 8.50005L16.1247 11.254C15.539 11.8398 15.539 12.7895 16.1247 13.3753C16.7106 13.9611 17.6602 13.9611 18.2461 13.3753L23.5607 8.06069C24.1464 7.47495 24.1464 6.52516 23.5607 5.93941Z" fill="#40189D"/>
-                                </svg>
-                            </a>
-                        </div>
-                        <div class="testimonial-two owl-carousel">
-                            <div class="items">
-                                <div class="card">
-                                    <div class="card-body">
-                                        <div class="media">
-                                            <svg class="me-3" width="80" height="80" viewBox="0 0 80 80" fill="none"><rect width="80" height="80" rx="11.6" fill="#40C7CF"/><path d="M20.6 20.6C25.7 15.5 32.6 12.7 39.8 12.7C47 12.7 53.9 15.5 59 20.6C64.1 25.7 67 32.6 67 39.8C67 47 64.1 53.9 59 59L49.4 49.4C52 46.9 53.4 43.4 53.4 39.8C53.4 36.2 52 32.8 49.4 30.2C46.9 27.7 43.4 26.2 39.8 26.2C36.2 26.2 32.8 27.7 30.2 30.2L20.6 20.6Z" fill="#8FD7FF"/><path d="M20.6 59C15.5 53.9 12.7 47 12.7 39.8C12.7 32.6 15.5 25.7 20.6 20.6C25.7 15.5 32.6 12.7 39.8 12.7C47 12.7 53.9 15.5 59 20.6L49.4 30.2C46.9 27.7 43.4 26.2 39.8 26.2C36.2 26.2 32.8 27.7 30.2 30.2C27.7 32.8 26.2 36.2 26.2 39.8C26.2 43.4 27.7 46.9 30.2 49.4L20.6 59Z" fill="white"/></svg>
-                                            <div class="media-body">
-                                                <h6 class="fs-16 text-black font-w600">Herman-Carter</h6>
-                                                <span class="text-primary font-w500">21 Vacancy</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="items">
-                                <div class="card">
-                                    <div class="card-body">
-                                        <div class="media">
-                                            <svg class="me-3" width="80" height="80" viewBox="0 0 80 80" fill="none"><rect width="80" height="80" rx="11.6" fill="#6EC061"/><path d="M39.8 67C36.2 67 32.7 66.3 29.4 64.9C26.1 63.5 23.1 61.5 20.6 59C18.1 56.5 16.1 53.5 14.7 50.2C13.4 46.9 12.7 43.4 12.7 39.8L26.2 39.8C26.2 41.6 26.6 43.4 27.3 45C28 46.7 29 48.2 30.2 49.4C31.5 50.7 32.97 51.7 34.6 52.4C36.3 53.1 38 53.4 39.8 53.4L39.8 67Z" fill="white"/><path d="M20.6 59C15.5 53.9 12.7 47 12.7 39.8C12.7 32.6 15.5 25.7 20.6 20.6C25.7 15.5 32.6 12.7 39.8 12.7L39.8 26.2C36.2 26.2 32.8 27.7 30.2 30.2C27.7 32.8 26.2 36.2 26.2 39.8C26.2 43.4 27.7 46.9 30.2 49.4L20.6 59Z" fill="white"/></svg>
-                                            <div class="media-body">
-                                                <h6 class="fs-16 text-black font-w600">Funk Inc.</h6>
-                                                <span class="text-primary font-w500">21 Vacancy</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="items">
-                                <div class="card">
-                                    <div class="card-body">
-                                        <div class="media">
-                                            <svg class="me-3" width="80" height="80" viewBox="0 0 80 80" fill="none"><rect width="80" height="80" rx="11.6" fill="#F3C831"/><path d="M20.6 20.6C25.7 15.5 32.6 12.7 39.8 12.7C47 12.7 53.9 15.5 59 20.6C64.1 25.7 67 32.6 67 39.8C67 47 64.1 53.9 59 59L49.4 49.4C52 46.9 53.4 43.4 53.4 39.8C53.4 36.2 52 32.8 49.4 30.2C46.9 27.7 43.4 26.2 39.8 26.2C36.2 26.2 32.8 27.7 30.2 30.2L20.6 20.6Z" fill="white"/><path d="M20.6 59C15.5 53.9 12.7 47 12.7 39.8C12.7 32.6 15.5 25.7 20.6 20.6C25.7 15.5 32.6 12.7 39.8 12.7C47 12.7 53.9 15.5 59 20.6L49.4 30.2C46.9 27.7 43.4 26.2 39.8 26.2C36.2 26.2 32.8 27.7 30.2 30.2C27.7 32.8 26.2 36.2 26.2 39.8C26.2 43.4 27.7 46.9 30.2 49.4L20.6 59Z" fill="white"/></svg>
-                                            <div class="media-body">
-                                                <h6 class="fs-16 text-black font-w600">Williamson Inc</h6>
-                                                <span class="text-primary font-w500">21 Vacancy</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="items">
-                                <div class="card">
-                                    <div class="card-body">
-                                        <div class="media">
-                                            <svg class="me-3" width="80" height="80" viewBox="0 0 80 80" fill="none"><rect width="80" height="80" rx="11.6" fill="#9B70A1"/><path d="M20.6 20.6C25.7 15.5 32.6 12.7 39.8 12.7C47 12.7 53.9 15.5 59 20.6C64.1 25.7 67 32.6 67 39.8C67 47 64.1 53.9 59 59L49.4 49.4C52 46.9 53.4 43.4 53.4 39.8C53.4 36.2 52 32.8 49.4 30.2C46.9 27.7 43.4 26.2 39.8 26.2C36.2 26.2 32.8 27.7 30.2 30.2L20.6 20.6Z" fill="white"/><path d="M20.6 59C15.5 53.9 12.7 47 12.7 39.8C12.7 32.6 15.5 25.7 20.6 20.6C25.7 15.5 32.6 12.7 39.8 12.7C47 12.7 53.9 15.5 59 20.6L49.4 30.2C46.9 27.7 43.4 26.2 39.8 26.2C36.2 26.2 32.8 27.7 30.2 30.2C27.7 32.8 26.2 36.2 26.2 39.8C26.2 43.4 27.7 46.9 30.2 49.4L20.6 59Z" fill="white"/></svg>
-                                            <div class="media-body">
-                                                <h6 class="fs-16 text-black font-w600">Donnelly Ltd.</h6>
-                                                <span class="text-primary font-w500">21 Vacancy</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Campuses End -->
-
                 </div>
             </div>
         </div>
@@ -862,8 +1331,157 @@
     <script src="{% static 'admin_panel/js/dashboard/dashboard-1.js' %}"></script>
     <script src="{% static 'admin_panel/js/custom.min.js' %}"></script>
     <script src="{% static 'admin_panel/js/deznav-init.js' %}"></script>
+    <script src="{% static 'admin_panel/js/admin-header-live.js' %}?v=header-live-solid-1"></script>
 
     <script>
+        (function () {
+            var overview = document.getElementById('automationOverview');
+            if (!overview) {
+                return;
+            }
+
+            var endpoint = "{% url 'automation_overview_data' %}";
+            var statusClasses = ['status-success', 'status-warning', 'status-neutral'];
+
+            function setField(card, field, value) {
+                var node = card.querySelector('[data-field="' + field + '"]');
+                if (node && value !== undefined && value !== null) {
+                    node.textContent = value;
+                }
+            }
+
+            function updateCard(data) {
+                var card = overview.querySelector('[data-automation-key="' + data.key + '"]');
+                if (!card) {
+                    return;
+                }
+
+                setField(card, 'status', data.status);
+                setField(card, 'title', data.title);
+                setField(card, 'primary_value', data.primary_value);
+                setField(card, 'primary_label', data.primary_label);
+                setField(card, 'secondary_value', data.secondary_value);
+                setField(card, 'secondary_label', data.secondary_label);
+                setField(card, 'last_activity', data.last_activity);
+
+                var status = card.querySelector('[data-field="status"]');
+                if (status && data.status_type) {
+                    statusClasses.forEach(function (className) {
+                        status.classList.remove(className);
+                    });
+                    status.classList.add('status-' + data.status_type);
+                }
+
+                var link = card.querySelector('[data-field="url"]');
+                if (link) {
+                    if (data.url) {
+                        link.setAttribute('href', data.url);
+                    }
+                    if (data.action_label) {
+                        link.textContent = data.action_label;
+                    }
+                }
+            }
+
+            function refreshAutomationOverview() {
+                fetch(endpoint, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                    .then(function (response) {
+                        if (!response.ok) {
+                            throw new Error('Automation overview refresh failed');
+                        }
+                        return response.json();
+                    })
+                    .then(function (payload) {
+                        if (!payload || !Array.isArray(payload.cards)) {
+                            return;
+                        }
+                        payload.cards.forEach(updateCard);
+                    })
+                    .catch(function () {
+                        return;
+                    });
+            }
+
+            window.setInterval(refreshAutomationOverview, 30000);
+        })();
+
+        (function () {
+            var endpoint = "{% url 'dashboard_summary_data' %}";
+            var statusClasses = ['status-success', 'status-warning', 'status-neutral'];
+
+            function setText(node, value) {
+                if (node && value !== undefined && value !== null) {
+                    node.textContent = value;
+                }
+            }
+
+            function setField(card, field, value) {
+                setText(card.querySelector('[data-field="' + field + '"]'), value);
+            }
+
+            function updateStats(stats) {
+                if (!stats) {
+                    return;
+                }
+                Object.keys(stats).forEach(function (key) {
+                    setText(document.querySelector('[data-dashboard-stat="' + key + '"]'), stats[key]);
+                });
+            }
+
+            function updateCard(cardData) {
+                var card = document.querySelector('[data-dashboard-card="' + cardData.key + '"]');
+                if (!card) {
+                    return;
+                }
+                setField(card, 'status', cardData.status);
+                setField(card, 'title', cardData.title);
+                setField(card, 'primary_value', cardData.primary_value);
+                setField(card, 'primary_label', cardData.primary_label);
+                setField(card, 'secondary_value', cardData.secondary_value);
+                setField(card, 'secondary_label', cardData.secondary_label);
+                setField(card, 'extra_value', cardData.extra_value);
+                setField(card, 'extra_label', cardData.extra_label);
+
+                var status = card.querySelector('[data-field="status"]');
+                if (status && cardData.status_type) {
+                    statusClasses.forEach(function (className) {
+                        status.classList.remove(className);
+                    });
+                    status.classList.add('status-' + cardData.status_type);
+                }
+
+                var link = card.querySelector('[data-field="url"]');
+                if (link) {
+                    if (cardData.url) {
+                        link.setAttribute('href', cardData.url);
+                    }
+                    if (cardData.action_label) {
+                        link.textContent = cardData.action_label;
+                    }
+                }
+            }
+
+            function refreshDashboardSummary() {
+                fetch(endpoint, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                    .then(function (response) {
+                        if (!response.ok) {
+                            throw new Error('Dashboard refresh failed');
+                        }
+                        return response.json();
+                    })
+                    .then(function (payload) {
+                        updateStats(payload.stats);
+                        (payload.attention_cards || []).forEach(updateCard);
+                        (payload.module_cards || []).forEach(updateCard);
+                    })
+                    .catch(function () {
+                        return;
+                    });
+            }
+
+            window.setInterval(refreshDashboardSummary, 30000);
+        })();
+
         function carouselReview() {
             function checkDirection() {
                 var htmlClassName = document.getElementsByTagName('html')[0].getAttribute('class');

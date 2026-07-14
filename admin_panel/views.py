@@ -9,7 +9,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from .models import Admission, AcademicYear, Class, Section
 from .utils import role_required
-from django.http import HttpResponseForbidden
+from django.http import HttpResponseForbidden, JsonResponse
 from django.utils.crypto import get_random_string
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.decorators import login_required
@@ -212,10 +212,689 @@ def parent_dashboard(request):
     return render(request, 'parent_dashboard/dashboard.html')
 
 
+def _safe_reverse(view_name, fallback="#"):
+    from django.urls import NoReverseMatch, reverse
+
+    try:
+        return reverse(view_name)
+    except NoReverseMatch:
+        return fallback
+
+
+def _safe_value(callback, default=0):
+    try:
+        return callback()
+    except Exception:
+        return default
+
+
+def _format_automation_activity(value):
+    from datetime import date as date_class, datetime as datetime_class
+    from django.utils import timezone
+    from django.utils.dateformat import format as date_format
+
+    if not value:
+        return "No activity yet"
+    if isinstance(value, datetime_class):
+        if timezone.is_aware(value):
+            value = timezone.localtime(value)
+        return date_format(value, "F j, Y, g:i a")
+    if isinstance(value, date_class):
+        return date_format(value, "F j, Y")
+    return str(value)
+
+
+def build_automation_overview_data():
+    from django.utils import timezone
+    from .models import (
+        AppraisalCycle, AutomationJob, AutomationJobDetail, FeeGenerationSettings,
+        FeeVoucher, KpiRule, LeaveApplication, NotificationQueue,
+        SalaryAutomationJob, SalaryAutomationJobDetail, SalaryAutomationSettings,
+        SalaryVoucher, TeacherAbsence, TeacherAbsenceResult, TeacherAppraisalSubmission,
+        TeacherFixture, TeacherFixtureNotificationLog,
+    )
+
+    today = timezone.localdate()
+    month_start = today.replace(day=1)
+
+    def card(**kwargs):
+        defaults = {
+            "status": "Ready",
+            "status_type": "neutral",
+            "primary_value": 0,
+            "primary_label": "",
+            "secondary_value": 0,
+            "secondary_label": "",
+            "last_activity": "No activity yet",
+            "url": "#",
+            "action_label": "Open",
+            "icon": "lni lni-cog",
+        }
+        defaults.update(kwargs)
+        return defaults
+
+    total_fixtures = _safe_value(lambda: TeacherFixture.objects.count())
+    today_fixtures = _safe_value(lambda: TeacherFixture.objects.filter(fixture_date=today).count())
+    fixture_review_count = _safe_value(
+        lambda: TeacherFixture.objects.filter(
+            fixture_status__in=["uncovered", "cancelled", "declined"]
+        ).count()
+    ) + _safe_value(lambda: TeacherAbsenceResult.objects.filter(status="unassigned").count())
+    last_fixture = _safe_value(
+        lambda: TeacherFixture.objects.order_by("-fixture_date", "-created_at").first(),
+        None,
+    )
+    fixture_status = "Needs Review" if fixture_review_count else ("Active" if total_fixtures else "Ready")
+    fixture_status_type = "warning" if fixture_review_count else ("success" if total_fixtures else "neutral")
+
+    approved_leaves = _safe_value(
+        lambda: LeaveApplication.objects.filter(status="approved", start_date__gte=month_start).count()
+    )
+    leave_absences = _safe_value(lambda: TeacherAbsence.objects.filter(source="leave").count())
+    leave_review_count = _safe_value(
+        lambda: TeacherAbsence.objects.filter(source="leave", status__in=["partial", "failed"]).count()
+    )
+    latest_leave = _safe_value(
+        lambda: LeaveApplication.objects.filter(status="approved").order_by("-action_date", "-applied_at").first(),
+        None,
+    )
+    leave_status = "Needs Review" if leave_review_count else ("Active" if leave_absences else "Ready")
+    leave_status_type = "warning" if leave_review_count else ("success" if leave_absences else "neutral")
+
+    fee_settings = _safe_value(lambda: FeeGenerationSettings.objects.first(), None)
+    latest_fee_job = _safe_value(lambda: AutomationJob.objects.order_by("-started_at").first(), None)
+    fee_failed = _safe_value(lambda: AutomationJobDetail.objects.filter(status="FAILED").count())
+    fee_vouchers = _safe_value(lambda: FeeVoucher.objects.count())
+    fee_status = "Needs Review" if fee_failed else ("Active" if getattr(fee_settings, "auto_enabled", False) else "Ready")
+    fee_status_type = "warning" if fee_failed else ("success" if getattr(fee_settings, "auto_enabled", False) else "neutral")
+
+    salary_settings = _safe_value(lambda: SalaryAutomationSettings.objects.first(), None)
+    latest_salary_job = _safe_value(lambda: SalaryAutomationJob.objects.order_by("-started_at").first(), None)
+    salary_failed = _safe_value(lambda: SalaryAutomationJobDetail.objects.filter(status="FAILED").count())
+    salary_vouchers = _safe_value(lambda: SalaryVoucher.objects.count())
+    salary_status = "Needs Review" if salary_failed else ("Active" if getattr(salary_settings, "auto_enabled", False) else "Ready")
+    salary_status_type = "warning" if salary_failed else ("success" if getattr(salary_settings, "auto_enabled", False) else "neutral")
+
+    pending_notifications = _safe_value(lambda: NotificationQueue.objects.filter(status="PENDING").count())
+    failed_notifications = _safe_value(lambda: NotificationQueue.objects.filter(status="FAILED").count())
+    fixture_failed_notifications = _safe_value(
+        lambda: TeacherFixtureNotificationLog.objects.filter(status="failed").count()
+    )
+    sent_notifications = _safe_value(lambda: NotificationQueue.objects.filter(status="SENT").count()) + _safe_value(
+        lambda: TeacherFixtureNotificationLog.objects.filter(status="sent").count()
+    )
+    latest_notification = _safe_value(
+        lambda: NotificationQueue.objects.order_by("-created_at").first(),
+        None,
+    )
+    notification_review_count = failed_notifications + fixture_failed_notifications
+    notification_status = "Needs Review" if notification_review_count else ("Pending" if pending_notifications else "Active")
+    notification_status_type = "warning" if notification_review_count or pending_notifications else "success"
+
+    scheduler_jobs = 0
+    scheduler_last = None
+    scheduler_status = "Ready"
+    scheduler_status_type = "neutral"
+    try:
+        from django_apscheduler.models import DjangoJob, DjangoJobExecution
+
+        scheduler_jobs = DjangoJob.objects.count()
+        scheduler_last = DjangoJobExecution.objects.order_by("-run_time").first()
+        scheduler_status = "Active" if scheduler_jobs else "Ready"
+        scheduler_status_type = "success" if scheduler_jobs else "neutral"
+    except Exception:
+        scheduler_jobs = 0
+
+    exam_schedules = 0
+    seating_count = 0
+    latest_seating = None
+    try:
+        from exam_system.models import ExamSchedule, ExamSeatingPlan
+
+        exam_schedules = ExamSchedule.objects.count()
+        seating_count = ExamSeatingPlan.objects.count()
+        latest_seating = ExamSeatingPlan.objects.select_related("schedule").order_by("-schedule__exam_date", "-id").first()
+    except Exception:
+        pass
+    exam_status = "Active" if seating_count else ("Pending" if exam_schedules else "Ready")
+    exam_status_type = "success" if seating_count else ("neutral" if exam_schedules else "neutral")
+
+    ai_documents = 0
+    latest_ai_document = None
+    try:
+        from ai_tutor.models import AIKnowledgeDocument
+
+        ai_documents = AIKnowledgeDocument.objects.filter(approval_status="approved").count()
+        latest_ai_document = AIKnowledgeDocument.objects.filter(approval_status="approved").order_by("-updated_at", "-created_at").first()
+    except Exception:
+        pass
+    ai_status = "Ready" if ai_documents else "Pending"
+    ai_status_type = "success" if ai_documents else "neutral"
+
+    open_cycle = _safe_value(lambda: AppraisalCycle.objects.filter(is_open=True).first(), None)
+    auto_kpi_count = len(getattr(KpiRule, "AUTO_KPI_KEYS", []))
+    auto_metric_submissions = _safe_value(lambda: TeacherAppraisalSubmission.objects.exclude(auto_metrics={}).count())
+    latest_appraisal = _safe_value(
+        lambda: TeacherAppraisalSubmission.objects.order_by("-submitted_at", "-id").first(),
+        None,
+    )
+    appraisal_status = "Active" if open_cycle else "Ready"
+    appraisal_status_type = "success" if open_cycle else "neutral"
+
+    return [
+        card(
+            key="fixture",
+            title="Timetable / Fixture Automation",
+            status=fixture_status,
+            status_type=fixture_status_type,
+            primary_value=total_fixtures,
+            primary_label="Total Fixtures",
+            secondary_value=today_fixtures,
+            secondary_label="Today",
+            last_activity=_format_automation_activity(getattr(last_fixture, "created_at", None) or getattr(last_fixture, "fixture_date", None)),
+            url=_safe_reverse("timetable_automation"),
+            action_label="Open Automation",
+            icon="lni lni-calendar",
+        ),
+        card(
+            key="leave_fixture",
+            title="HR Leave To Fixture Automation",
+            status=leave_status,
+            status_type=leave_status_type,
+            primary_value=approved_leaves,
+            primary_label="Approved This Month",
+            secondary_value=leave_absences,
+            secondary_label="Leave Absences",
+            last_activity=_format_automation_activity(getattr(latest_leave, "action_date", None) or getattr(latest_leave, "applied_at", None)),
+            url=_safe_reverse("leave_list"),
+            action_label="Open Leaves",
+            icon="lni lni-user",
+        ),
+        card(
+            key="fee",
+            title="Fee Automation",
+            status=fee_status,
+            status_type=fee_status_type,
+            primary_value=fee_vouchers,
+            primary_label="Fee Vouchers",
+            secondary_value=fee_failed,
+            secondary_label="Failed Records",
+            last_activity=_format_automation_activity(getattr(latest_fee_job, "started_at", None)),
+            url=_safe_reverse("fee-automation"),
+            action_label="Open Fees",
+            icon="lni lni-wallet",
+        ),
+        card(
+            key="salary",
+            title="Salary Automation",
+            status=salary_status,
+            status_type=salary_status_type,
+            primary_value=salary_vouchers,
+            primary_label="Salary Vouchers",
+            secondary_value=salary_failed,
+            secondary_label="Failed Records",
+            last_activity=_format_automation_activity(getattr(latest_salary_job, "started_at", None)),
+            url=_safe_reverse("salary-automation"),
+            action_label="Open Salary",
+            icon="lni lni-briefcase",
+        ),
+        card(
+            key="notifications",
+            title="Notification Automation",
+            status=notification_status,
+            status_type=notification_status_type,
+            primary_value=pending_notifications,
+            primary_label="Pending",
+            secondary_value=sent_notifications,
+            secondary_label="Sent",
+            last_activity=_format_automation_activity(getattr(latest_notification, "created_at", None)),
+            url=_safe_reverse("notification-queue"),
+            action_label="Open Queue",
+            icon="lni lni-alarm",
+        ),
+        card(
+            key="scheduler",
+            title="Scheduler Automation",
+            status=scheduler_status,
+            status_type=scheduler_status_type,
+            primary_value=scheduler_jobs,
+            primary_label="Scheduled Jobs",
+            secondary_value="Ready",
+            secondary_label="Configured",
+            last_activity=_format_automation_activity(getattr(scheduler_last, "run_time", None)),
+            url=_safe_reverse("automation-settings"),
+            action_label="Open Settings",
+            icon="lni lni-timer",
+        ),
+        card(
+            key="exam_seating",
+            title="Exam Seating Auto Generation",
+            status=exam_status,
+            status_type=exam_status_type,
+            primary_value=exam_schedules,
+            primary_label="Exam Schedules",
+            secondary_value=seating_count,
+            secondary_label="Generated Seats",
+            last_activity=_format_automation_activity(getattr(getattr(latest_seating, "schedule", None), "exam_date", None)),
+            url=_safe_reverse("exam_plan_list"),
+            action_label="Open Exams",
+            icon="lni lni-grid-alt",
+        ),
+        card(
+            key="ai_knowledge",
+            title="AI Tutor Knowledge Indexing",
+            status=ai_status,
+            status_type=ai_status_type,
+            primary_value=ai_documents,
+            primary_label="Approved Documents",
+            secondary_value="Index",
+            secondary_label="Management Command",
+            last_activity=_format_automation_activity(getattr(latest_ai_document, "updated_at", None)),
+            url="#",
+            action_label="Index Command",
+            icon="lni lni-bulb",
+        ),
+        card(
+            key="kpi_appraisal",
+            title="KPI / Appraisal Auto Metrics",
+            status=appraisal_status,
+            status_type=appraisal_status_type,
+            primary_value=auto_kpi_count,
+            primary_label="Auto KPI Rules",
+            secondary_value=auto_metric_submissions,
+            secondary_label="Metric Submissions",
+            last_activity=_format_automation_activity(getattr(latest_appraisal, "submitted_at", None)),
+            url=_safe_reverse("admin_appraisal_list"),
+            action_label="Open Appraisal",
+            icon="lni lni-stats-up",
+        ),
+    ]
+
+
+def build_admin_dashboard_stats():
+    from django.contrib.auth.models import Group
+    from .models import Admission, NotificationQueue
+
+    admin_group = Group.objects.filter(name__iexact="Admin").first()
+    admin_users = User.objects.filter(is_superuser=True)
+    if admin_group:
+        admin_users = admin_users | User.objects.filter(groups=admin_group)
+
+    try:
+        from student_profile.models import Student as PortalStudent
+
+        students_count = PortalStudent.objects.count()
+    except Exception:
+        students_count = _safe_value(lambda: Admission.objects.count())
+
+    try:
+        from teacher_dashboard.models import Teacher as PortalTeacher
+
+        teachers_count = PortalTeacher.objects.count()
+    except Exception:
+        from .models import Teacher
+
+        teachers_count = _safe_value(lambda: Teacher.objects.count())
+
+    return {
+        "students_count": students_count,
+        "teachers_count": teachers_count,
+        "admins_count": _safe_value(lambda: admin_users.distinct().count()),
+        "notifications_pending": _safe_value(lambda: NotificationQueue.objects.filter(status="PENDING").count()),
+        "pending_admissions": _safe_value(lambda: Admission.objects.filter(admission_status="pending").count()),
+    }
+
+
+def _dashboard_card(key, title, primary_value, primary_label, secondary_value, secondary_label, url="#",
+                    status="Ready", status_type="neutral", action_label="Open", icon="lni lni-cog",
+                    extra_value=None, extra_label=None):
+    return {
+        "key": key,
+        "title": title,
+        "primary_value": primary_value,
+        "primary_label": primary_label,
+        "secondary_value": secondary_value,
+        "secondary_label": secondary_label,
+        "extra_value": extra_value,
+        "extra_label": extra_label,
+        "url": url,
+        "status": status,
+        "status_type": status_type,
+        "action_label": action_label,
+        "icon": icon,
+    }
+
+
+def _dashboard_status(review_count=0, active_count=0):
+    if review_count:
+        return "Needs Review", "warning"
+    if active_count:
+        return "Active", "success"
+    return "Ready", "neutral"
+
+
+def build_attention_required_cards():
+    from django.utils import timezone
+    from .models import (
+        AutomationJobDetail, LeaveApplication, NotificationQueue,
+        SalaryAutomationJobDetail, TeacherAbsence, TeacherAbsenceResult,
+        TeacherFixtureNotificationLog,
+    )
+
+    today = timezone.localdate()
+    pending_leaves = _safe_value(lambda: LeaveApplication.objects.filter(status="pending").count())
+    uncovered_fixtures = _safe_value(lambda: TeacherAbsenceResult.objects.filter(status="unassigned").count())
+    absent_today = _safe_value(lambda: TeacherAbsence.objects.filter(absence_date=today).count())
+    failed_notifications = _safe_value(lambda: NotificationQueue.objects.filter(status="FAILED").count()) + _safe_value(
+        lambda: TeacherFixtureNotificationLog.objects.filter(status="failed").count()
+    )
+    failed_fee_jobs = _safe_value(lambda: AutomationJobDetail.objects.filter(status="FAILED").count())
+    failed_salary_jobs = _safe_value(lambda: SalaryAutomationJobDetail.objects.filter(status="FAILED").count())
+    pending_papers = 0
+    try:
+        from exam_system.models import GeneratedPaper
+
+        pending_papers = GeneratedPaper.objects.filter(status="REVIEW").count()
+    except Exception:
+        pending_papers = 0
+
+    return [
+        _dashboard_card("pending_leaves", "Pending Leaves", pending_leaves, "Applications", absent_today, "Absent Today",
+                        _safe_reverse("leave_list"), *(_dashboard_status(pending_leaves, absent_today)),
+                        action_label="Review Leaves", icon="lni lni-user"),
+        _dashboard_card("uncovered_fixtures", "Uncovered Fixtures", uncovered_fixtures, "Need Substitute", absent_today,
+                        "Teacher Absences", _safe_reverse("timetable_automation"),
+                        *(_dashboard_status(uncovered_fixtures, absent_today)), action_label="Open Timetable",
+                        icon="lni lni-calendar"),
+        _dashboard_card("failed_notifications", "Failed Notifications", failed_notifications, "Failed", 0, "Retry Queue",
+                        _safe_reverse("notification-queue"), *(_dashboard_status(failed_notifications, 1)),
+                        action_label="Open Queue", icon="lni lni-alarm"),
+        _dashboard_card("pending_papers", "Paper Approvals", pending_papers, "In Review", 0, "Pending Action",
+                        _safe_reverse("exam_plan_list"), *(_dashboard_status(pending_papers, 1)),
+                        action_label="Open Exams", icon="lni lni-write"),
+        _dashboard_card("failed_jobs", "Failed Automation Jobs", failed_fee_jobs + failed_salary_jobs, "Fee/Salary",
+                        failed_fee_jobs, "Fee Failures", _safe_reverse("automation-logs"),
+                        *(_dashboard_status(failed_fee_jobs + failed_salary_jobs, 1)), action_label="Open Logs",
+                        icon="lni lni-warning"),
+    ]
+
+
+def build_module_summary_cards():
+    from django.utils import timezone
+    from .models import (
+        AppraisalCycle,
+        Admission, AssignedPeriod, AutomationJob, AutomationJobDetail, Class, ClassGroup,
+        ClassTeacher, Employee, FeeVoucher, KpiRule, LeaveApplication, NotificationQueue,
+        SalaryAutomationJob, SalaryAutomationJobDetail, SalaryVoucher, Section, Subject,
+        TeacherAbsence, TeacherAbsenceResult, TeacherAppraisalSubmission, TeacherFixture,
+        TeacherFixtureNotificationLog,
+    )
+
+    today = timezone.localdate()
+    month_start = today.replace(day=1)
+
+    cards = []
+
+    pending_admissions = _safe_value(lambda: Admission.objects.filter(admission_status="pending").count())
+    month_admissions = _safe_value(lambda: Admission.objects.filter(admission_date__gte=month_start).count())
+    cards.append(_dashboard_card(
+        "admissions", "Admissions", pending_admissions, "Pending", month_admissions, "This Month",
+        _safe_reverse("admission_list"), *(_dashboard_status(pending_admissions, month_admissions)),
+        action_label="Open Admissions", icon="lni lni-users"
+    ))
+
+    total_classes = _safe_value(lambda: Class.objects.count())
+    total_subjects = _safe_value(lambda: Subject.objects.count())
+    missing_class_teachers = max(total_classes - _safe_value(lambda: ClassTeacher.objects.count()), 0)
+    cards.append(_dashboard_card(
+        "academics", "Academics", total_classes, "Classes", total_subjects, "Subjects",
+        _safe_reverse("class_list"), *(_dashboard_status(missing_class_teachers, total_classes)),
+        action_label="Open Academics", icon="lni lni-book",
+        extra_value=_safe_value(lambda: Section.objects.count()) + _safe_value(lambda: ClassGroup.objects.count()),
+        extra_label="Sections/Groups"
+    ))
+
+    try:
+        from teacher_dashboard.models import Teacher as PortalTeacher
+
+        total_teachers = PortalTeacher.objects.count()
+        active_teachers = PortalTeacher.objects.filter(status="active").count()
+        missing_employee = PortalTeacher.objects.filter(employee__isnull=True).count()
+    except Exception:
+        from .models import Teacher as PortalTeacher
+
+        total_teachers = _safe_value(lambda: PortalTeacher.objects.count())
+        active_teachers = total_teachers
+        missing_employee = 0
+    cards.append(_dashboard_card(
+        "teacher_gateway", "Teacher Gateway", total_teachers, "Teachers", active_teachers, "Active",
+        _safe_reverse("teacher_list"), *(_dashboard_status(missing_employee, total_teachers)),
+        action_label="Open Teachers", icon="lni lni-graduation",
+        extra_value=missing_employee, extra_label="Missing Employee Link"
+    ))
+
+    try:
+        from student_profile.models import Student as PortalStudent
+
+        total_students = PortalStudent.objects.count()
+        missing_class_section = PortalStudent.objects.filter(class_fk__isnull=True).count() + PortalStudent.objects.filter(section__isnull=True).count()
+    except Exception:
+        total_students = _safe_value(lambda: Admission.objects.count())
+        missing_class_section = _safe_value(lambda: Admission.objects.filter(class_fk__isnull=True).count()) + _safe_value(lambda: Admission.objects.filter(section__isnull=True).count())
+    try:
+        from parent_dashboard.models import Parent
+
+        parent_accounts = Parent.objects.count()
+    except Exception:
+        parent_accounts = 0
+    cards.append(_dashboard_card(
+        "student_gateway", "Student Gateway", total_students, "Students", missing_class_section, "Missing Class/Section",
+        _safe_reverse("admission_list"), *(_dashboard_status(missing_class_section, total_students)),
+        action_label="Open Students", icon="lni lni-user",
+        extra_value=parent_accounts, extra_label="Parent Accounts"
+    ))
+
+    assigned_periods = _safe_value(lambda: AssignedPeriod.objects.count())
+    today_fixtures = _safe_value(lambda: TeacherFixture.objects.filter(fixture_date=today).count())
+    uncovered = _safe_value(lambda: TeacherAbsenceResult.objects.filter(status="unassigned").count())
+    cards.append(_dashboard_card(
+        "timetable", "Timetable / Fixture", assigned_periods, "Assigned Periods", today_fixtures, "Today Fixtures",
+        _safe_reverse("timetable_automation"), *(_dashboard_status(uncovered, assigned_periods)),
+        action_label="Open Timetable", icon="lni lni-calendar",
+        extra_value=uncovered, extra_label="Uncovered"
+    ))
+
+    total_employees = _safe_value(lambda: Employee.objects.count())
+    pending_leaves = _safe_value(lambda: LeaveApplication.objects.filter(status="pending").count())
+    approved_this_month = _safe_value(lambda: LeaveApplication.objects.filter(status="approved", start_date__gte=month_start).count())
+    cards.append(_dashboard_card(
+        "hr_leave", "HR / Leave", total_employees, "Employees", pending_leaves, "Pending Leaves",
+        _safe_reverse("leave_list"), *(_dashboard_status(pending_leaves, total_employees)),
+        action_label="Open HR", icon="lni lni-briefcase",
+        extra_value=approved_this_month, extra_label="Approved This Month"
+    ))
+
+    total_vouchers = _safe_value(lambda: FeeVoucher.objects.count())
+    unpaid_vouchers = _safe_value(lambda: FeeVoucher.objects.filter(status__in=["UNPAID", "PARTIAL", "OVERDUE"]).count())
+    fee_failures = _safe_value(lambda: AutomationJobDetail.objects.filter(status="FAILED").count())
+    cards.append(_dashboard_card(
+        "fees", "Fees", total_vouchers, "Vouchers", unpaid_vouchers, "Unpaid/Overdue",
+        _safe_reverse("fee-automation"), *(_dashboard_status(fee_failures + unpaid_vouchers, total_vouchers)),
+        action_label="Open Fees", icon="lni lni-wallet",
+        extra_value=fee_failures, extra_label="Failed Records"
+    ))
+
+    salary_vouchers = _safe_value(lambda: SalaryVoucher.objects.count())
+    unpaid_salaries = _safe_value(lambda: SalaryVoucher.objects.exclude(status__iexact="PAID").count())
+    salary_failures = _safe_value(lambda: SalaryAutomationJobDetail.objects.filter(status="FAILED").count())
+    cards.append(_dashboard_card(
+        "salary", "Salary", salary_vouchers, "Vouchers", unpaid_salaries, "Unpaid",
+        _safe_reverse("salary-automation"), *(_dashboard_status(salary_failures + unpaid_salaries, salary_vouchers)),
+        action_label="Open Salary", icon="lni lni-coin",
+        extra_value=salary_failures, extra_label="Failed Records"
+    ))
+
+    pending_notifications = _safe_value(lambda: NotificationQueue.objects.filter(status="PENDING").count())
+    sent_notifications = _safe_value(lambda: NotificationQueue.objects.filter(status="SENT").count()) + _safe_value(
+        lambda: TeacherFixtureNotificationLog.objects.filter(status="sent").count()
+    )
+    failed_notifications = _safe_value(lambda: NotificationQueue.objects.filter(status="FAILED").count()) + _safe_value(
+        lambda: TeacherFixtureNotificationLog.objects.filter(status="failed").count()
+    )
+    cards.append(_dashboard_card(
+        "notifications", "Notifications", pending_notifications, "Pending", sent_notifications, "Sent",
+        _safe_reverse("notification-queue"), *(_dashboard_status(failed_notifications + pending_notifications, sent_notifications)),
+        action_label="Open Queue", icon="lni lni-alarm",
+        extra_value=failed_notifications, extra_label="Failed"
+    ))
+
+    exam_plans = exam_schedules = generated_seats = pending_questions = pending_papers = 0
+    try:
+        from exam_system.models import ExamPlan, ExamSchedule, ExamSeatingPlan, GeneratedPaper, Question
+
+        exam_plans = ExamPlan.objects.count()
+        exam_schedules = ExamSchedule.objects.filter(exam_date__gte=today).count()
+        generated_seats = ExamSeatingPlan.objects.count()
+        pending_questions = Question.objects.filter(human_approved=False).count()
+        pending_papers = GeneratedPaper.objects.filter(status="REVIEW").count()
+    except Exception:
+        pass
+    cards.append(_dashboard_card(
+        "exam_system", "Exam System", exam_plans, "Exam Plans", exam_schedules, "Upcoming Exams",
+        _safe_reverse("exam_plan_list"), *(_dashboard_status(pending_questions + pending_papers, exam_plans)),
+        action_label="Open Exams", icon="lni lni-pencil-alt",
+        extra_value=generated_seats, extra_label="Generated Seats"
+    ))
+
+    lecture_notes = assignments = quizzes = pending_submissions = 0
+    try:
+        from teacher_dashboard.models import Assignment, LectureNote, Quiz
+        from student_profile.models import AssignmentSubmission
+
+        lecture_notes = LectureNote.objects.count()
+        assignments = Assignment.objects.count()
+        quizzes = Quiz.objects.count()
+        pending_submissions = AssignmentSubmission.objects.filter(marks__isnull=True).count()
+    except Exception:
+        pass
+    cards.append(_dashboard_card(
+        "lms_content", "LMS / Teacher Content", lecture_notes, "Lecture Notes", assignments + quizzes, "Assignments/Quizzes",
+        _safe_reverse("admin_view_assignments"), *(_dashboard_status(pending_submissions, lecture_notes + assignments + quizzes)),
+        action_label="Open Content", icon="lni lni-library",
+        extra_value=pending_submissions, extra_label="Pending Marks"
+    ))
+
+    ai_sessions = ai_docs = ai_attempts = weak_topics = 0
+    try:
+        from ai_tutor.models import AIKnowledgeDocument, AIPracticeAttempt, AITutorSession, StudentTopicMastery
+
+        ai_sessions = AITutorSession.objects.count()
+        ai_docs = AIKnowledgeDocument.objects.filter(approval_status="approved").count()
+        ai_attempts = AIPracticeAttempt.objects.count()
+        weak_topics = StudentTopicMastery.objects.filter(mastery_level__in=["weak", "developing"]).count()
+    except Exception:
+        pass
+    cards.append(_dashboard_card(
+        "ai_tutor", "AI Tutor", ai_sessions, "AI Sessions", ai_docs, "Knowledge Docs",
+        "#", *(_dashboard_status(weak_topics, ai_sessions + ai_docs)),
+        action_label="View Status", icon="lni lni-bulb",
+        extra_value=ai_attempts, extra_label="Practice Attempts"
+    ))
+
+    open_cycles = _safe_value(lambda: AppraisalCycle.objects.filter(is_open=True).count())
+    submitted_appraisals = _safe_value(lambda: TeacherAppraisalSubmission.objects.filter(status="submitted").count())
+    auto_kpis = len(getattr(KpiRule, "AUTO_KPI_KEYS", []))
+    cards.append(_dashboard_card(
+        "appraisal", "Appraisal / KPI", open_cycles, "Open Cycles", submitted_appraisals, "Submitted",
+        _safe_reverse("admin_appraisal_list"), *(_dashboard_status(0, open_cycles + submitted_appraisals)),
+        action_label="Open Appraisal", icon="lni lni-stats-up",
+        extra_value=auto_kpis, extra_label="Auto KPI Rules"
+    ))
+
+    latest_fee_job = _safe_value(lambda: AutomationJob.objects.order_by("-started_at").first(), None)
+    latest_salary_job = _safe_value(lambda: SalaryAutomationJob.objects.order_by("-started_at").first(), None)
+    failed_jobs = fee_failures + salary_failures
+    cards.append(_dashboard_card(
+        "system_health", "System Health", failed_jobs, "Failed Jobs", getattr(latest_fee_job, "status", "None"), "Latest Fee Job",
+        _safe_reverse("automation-logs"), *(_dashboard_status(failed_jobs, 1)),
+        action_label="Open Logs", icon="lni lni-cog",
+        extra_value=getattr(latest_salary_job, "status", "None"), extra_label="Latest Salary Job"
+    ))
+
+    return cards
+
+
+def build_recent_activity_items():
+    from .models import Admission, LeaveApplication, TeacherFixture
+
+    items = []
+    latest_admission = _safe_value(lambda: Admission.objects.order_by("-admission_date", "-id").first(), None)
+    if latest_admission:
+        items.append({
+            "title": "Latest admission",
+            "description": latest_admission.name,
+            "meta": _format_automation_activity(latest_admission.admission_date),
+            "url": _safe_reverse("admission_list"),
+        })
+
+    latest_leave = _safe_value(lambda: LeaveApplication.objects.order_by("-applied_at").first(), None)
+    if latest_leave:
+        items.append({
+            "title": "Latest leave request",
+            "description": str(latest_leave.employee),
+            "meta": latest_leave.status.title(),
+            "url": _safe_reverse("leave_list"),
+        })
+
+    latest_fixture = _safe_value(lambda: TeacherFixture.objects.order_by("-created_at").first(), None)
+    if latest_fixture:
+        items.append({
+            "title": "Latest fixture",
+            "description": str(latest_fixture),
+            "meta": latest_fixture.fixture_status.title(),
+            "url": _safe_reverse("timetable_automation"),
+        })
+
+    return items
+
+
+def build_quick_action_cards():
+    return [
+        {"title": "Register Student", "url": _safe_reverse("registration"), "icon": "lni lni-user"},
+        {"title": "Add Teacher", "url": _safe_reverse("teacher_add"), "icon": "lni lni-graduation"},
+        {"title": "Timetable Automation", "url": _safe_reverse("timetable_automation"), "icon": "lni lni-calendar"},
+        {"title": "Fee Automation", "url": _safe_reverse("fee-automation"), "icon": "lni lni-wallet"},
+        {"title": "Exam Plans", "url": _safe_reverse("exam_plan_list"), "icon": "lni lni-pencil-alt"},
+        {"title": "KPI Builder", "url": _safe_reverse("admin_kpi_builder"), "icon": "lni lni-stats-up"},
+    ]
+
+
+def build_dashboard_summary_data():
+    return {
+        "stats": build_admin_dashboard_stats(),
+        "attention_cards": build_attention_required_cards(),
+        "module_cards": build_module_summary_cards(),
+        "recent_activity": build_recent_activity_items(),
+        "quick_actions": build_quick_action_cards(),
+    }
+
+
+def build_admin_dashboard_context():
+    dashboard_summary = build_dashboard_summary_data()
+    return {
+        "admin_dashboard_stats": dashboard_summary["stats"],
+        "attention_cards": dashboard_summary["attention_cards"],
+        "module_summary_cards": dashboard_summary["module_cards"],
+        "recent_activity_items": dashboard_summary["recent_activity"],
+        "quick_action_cards": dashboard_summary["quick_actions"],
+        "automation_overview_cards": build_automation_overview_data(),
+    }
+
+
 @login_required
 @permission_required('auth.view_group', raise_exception=True)
 def admin_dashboard(request):
-    return render(request, "admin_panel/index.html")
+    return render(request, "admin_panel/index.html", build_admin_dashboard_context())
 
 
 # ===================================================
@@ -303,7 +982,214 @@ def create_admin_user(request):
 
 @login_required
 def admin_panel_dashboard(request):
-    return render(request, 'admin_panel/index.html')
+    return render(request, 'admin_panel/index.html', build_admin_dashboard_context())
+
+
+@login_required
+@permission_required('auth.view_group', raise_exception=True)
+def automation_overview_data(request):
+    return JsonResponse({"cards": build_automation_overview_data()})
+
+
+@login_required
+@permission_required('auth.view_group', raise_exception=True)
+def dashboard_summary_data(request):
+    return JsonResponse(build_dashboard_summary_data())
+
+
+def _admin_role_label(user):
+    if user.is_superuser:
+        return "Super Admin"
+    groups = list(user.groups.values_list("name", flat=True))
+    return ", ".join(groups) if groups else "Admin"
+
+
+def _admin_search_result(title, module, url, description="", status=""):
+    return {
+        "title": str(title),
+        "module": module,
+        "url": url,
+        "description": str(description or ""),
+        "status": str(status or ""),
+    }
+
+
+def _build_admin_header_notifications(limit=6):
+    from django.utils.dateformat import format as date_format
+    from django.utils import timezone
+    from .models import (
+        Admission, AutomationJobDetail, LeaveApplication, NotificationQueue,
+        SalaryAutomationJobDetail, TeacherFixtureNotificationLog,
+    )
+
+    items = []
+    pending_queue = _safe_value(lambda: NotificationQueue.objects.filter(status="PENDING").count())
+    failed_queue = _safe_value(lambda: NotificationQueue.objects.filter(status="FAILED").count())
+    failed_fixture_logs = _safe_value(lambda: TeacherFixtureNotificationLog.objects.filter(status="failed").count())
+    failed_jobs = _safe_value(lambda: AutomationJobDetail.objects.filter(status="FAILED").count()) + _safe_value(
+        lambda: SalaryAutomationJobDetail.objects.filter(status="FAILED").count()
+    )
+    pending_leaves = _safe_value(lambda: LeaveApplication.objects.filter(status="pending").count())
+    pending_admissions = _safe_value(lambda: Admission.objects.filter(admission_status="pending").count())
+
+    def add(title, message, url, status="info", dt=None):
+        if dt and timezone.is_aware(dt):
+            dt = timezone.localtime(dt)
+        items.append({
+            "title": title,
+            "message": message,
+            "time": date_format(dt, "F j, Y, g:i a") if dt else "Now",
+            "url": url,
+            "status": status,
+        })
+
+    latest_queue = _safe_value(lambda: NotificationQueue.objects.order_by("-created_at").first(), None)
+    latest_fixture_log = _safe_value(lambda: TeacherFixtureNotificationLog.objects.order_by("-created_at").first(), None)
+
+    if failed_queue or failed_fixture_logs:
+        add(
+            "Failed notifications",
+            f"{failed_queue + failed_fixture_logs} failed notification(s) need review",
+            _safe_reverse("notification-queue"),
+            "warning",
+            getattr(latest_fixture_log, "created_at", None) or getattr(latest_queue, "created_at", None),
+        )
+    if pending_queue:
+        add(
+            "Pending notifications",
+            f"{pending_queue} pending notification(s) in queue",
+            _safe_reverse("notification-queue"),
+            "info",
+            getattr(latest_queue, "created_at", None),
+        )
+    if failed_jobs:
+        add("Failed automation jobs", f"{failed_jobs} automation job detail(s) failed", _safe_reverse("automation-logs"), "warning")
+    if pending_leaves:
+        add("Pending leaves", f"{pending_leaves} leave application(s) need approval", _safe_reverse("leave_list"), "info")
+    if pending_admissions:
+        add("Pending admissions", f"{pending_admissions} admission request(s) need review", _safe_reverse("admission_list"), "info")
+    if not items:
+        add("All clear", "No pending admin alerts right now", _safe_reverse("admin_panel_dashboard"), "success")
+
+    return {
+        "count": pending_queue + failed_queue + failed_fixture_logs + failed_jobs + pending_leaves + pending_admissions,
+        "items": items[:limit],
+    }
+
+
+def _build_admin_search_results(query, limit_per_group=5):
+    query = (query or "").strip()
+    if not query:
+        return []
+
+    results = []
+
+    def add_many(module, queryset, title_fn, url, description_fn=None, status_fn=None):
+        try:
+            for obj in queryset[:limit_per_group]:
+                results.append(_admin_search_result(
+                    title_fn(obj),
+                    module,
+                    url(obj) if callable(url) else url,
+                    description_fn(obj) if description_fn else "",
+                    status_fn(obj) if status_fn else "",
+                ))
+        except Exception:
+            return
+
+    q = Q
+
+    from .models import Admission, Book, Class, Employee, FeeVoucher, LeaveApplication, Section, Subject
+
+    add_many(
+        "Admissions",
+        Admission.objects.filter(q(name__icontains=query) | q(student_id__icontains=query) | q(email__icontains=query) | q(contact__icontains=query)).order_by("-id"),
+        lambda item: item.name,
+        _safe_reverse("admission_list"),
+        lambda item: f"{item.student_id or 'No ID'} - {getattr(item.class_fk, 'class_name', 'No class')}",
+        lambda item: item.admission_status,
+    )
+    add_many(
+        "Teachers",
+        __import__("teacher_dashboard.models", fromlist=["Teacher"]).Teacher.objects.filter(q(name__icontains=query) | q(email__icontains=query) | q(phone__icontains=query)).order_by("name"),
+        lambda item: item.name,
+        lambda item: _safe_reverse("teacher_edit", "#").replace("/0/", f"/{item.pk}/") if _safe_reverse("teacher_edit", "#") != "#" else _safe_reverse("teacher_list"),
+        lambda item: item.email,
+        lambda item: item.status,
+    )
+    add_many(
+        "Users",
+        User.objects.filter(q(username__icontains=query) | q(first_name__icontains=query) | q(last_name__icontains=query) | q(email__icontains=query)).order_by("username"),
+        lambda item: item.get_full_name() or item.username,
+        _safe_reverse("user_list"),
+        lambda item: item.email,
+        lambda item: "active" if item.is_active else "inactive",
+    )
+    add_many("Classes", Class.objects.filter(class_name__icontains=query).order_by("class_name"), lambda item: item.class_name, _safe_reverse("class_list"), lambda item: f"{item.total_students} students")
+    add_many("Sections", Section.objects.filter(q(section_name__icontains=query) | q(class_fk__class_name__icontains=query)).select_related("class_fk").order_by("class_fk__class_name"), lambda item: str(item), _safe_reverse("section_list"), lambda item: f"Capacity {item.capacity}")
+    add_many("Subjects", Subject.objects.filter(q(name__icontains=query) | q(short_code__icontains=query)).order_by("name"), lambda item: str(item), _safe_reverse("subject_list"), lambda item: getattr(item.class_fk, "class_name", "No class"))
+    add_many("Employees", Employee.objects.filter(q(name__icontains=query) | q(email__icontains=query) | q(phone__icontains=query)).order_by("name"), lambda item: item.name, _safe_reverse("employee_list"), lambda item: item.email)
+    add_many("Leaves", LeaveApplication.objects.filter(q(employee__name__icontains=query) | q(reason__icontains=query) | q(status__icontains=query)).select_related("employee").order_by("-applied_at"), lambda item: f"{item.employee.name} leave", _safe_reverse("leave_list"), lambda item: f"{item.start_date} to {item.end_date}", lambda item: item.status)
+    add_many("Fee Vouchers", FeeVoucher.objects.filter(q(voucher_no__icontains=query) | q(student__full_name__icontains=query) | q(month__icontains=query)).select_related("student").order_by("-id"), lambda item: item.voucher_no, _safe_reverse("voucher-management"), lambda item: f"{item.student.full_name} - {item.month} {item.year}", lambda item: item.status)
+    add_many("Books", Book.objects.filter(q(title__icontains=query) | q(subject__name__icontains=query) | q(class_for__class_name__icontains=query)).select_related("subject", "class_for").order_by("-uploaded_at"), lambda item: item.title, lambda item: _safe_reverse("book_detail", "#").replace("/0/", f"/{item.pk}/") if _safe_reverse("book_detail", "#") != "#" else _safe_reverse("book_list"), lambda item: f"{item.class_for} - {item.subject}")
+
+    static_pages = [
+        ("Timetable Automation", "Timetable", _safe_reverse("timetable_automation")),
+        ("Fixture Management", "Timetable", _safe_reverse("manage_fixture")),
+        ("Assign Periods", "Timetable", _safe_reverse("assign_period")),
+        ("Fee Automation", "Accounts", _safe_reverse("fee-automation")),
+        ("Salary Automation", "Accounts", _safe_reverse("salary-automation")),
+        ("Notification Queue", "Accounts", _safe_reverse("notification-queue")),
+        ("Question Formats", "Exams", _safe_reverse("format_list")),
+        ("Questions", "Exams", _safe_reverse("all_questions")),
+        ("Books", "LMS", _safe_reverse("book_list")),
+        ("KPI Builder", "Appraisal", _safe_reverse("admin_kpi_builder")),
+    ]
+    for title, module, url in static_pages:
+        if query.lower() in title.lower() or query.lower() in module.lower():
+            results.append(_admin_search_result(title, module, url, "Open module"))
+
+    return results[:30]
+
+
+@login_required
+def admin_header_data(request):
+    from django.templatetags.static import static
+
+    notifications = _build_admin_header_notifications()
+    return JsonResponse({
+        "notifications_count": notifications["count"],
+        "notifications": notifications["items"],
+        "user": {
+            "name": request.user.get_full_name() or request.user.username,
+            "role": _admin_role_label(request.user),
+            "avatar": static("admin_panel/images/dummy-profile.png"),
+        },
+    })
+
+
+@login_required
+def admin_search_suggestions(request):
+    query = request.GET.get("q", "")
+    return JsonResponse({"results": _build_admin_search_results(query, limit_per_group=3)[:8]})
+
+
+@login_required
+def admin_search(request):
+    query = request.GET.get("q", "")
+    return render(request, "admin_panel/search_results.html", {
+        "query": query,
+        "results": _build_admin_search_results(query, limit_per_group=8),
+    })
+
+
+@login_required
+def admin_profile(request):
+    return render(request, "admin_panel/admin_profile.html", {
+        "profile_user": request.user,
+        "role_label": _admin_role_label(request.user),
+        "groups": request.user.groups.all(),
+    })
 
 
 # ------------------- user_list -------------------
