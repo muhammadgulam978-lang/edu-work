@@ -1,0 +1,45 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>EduPilot Login</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'login/css/role-login.css' %}?v=role-login-1">
+</head>
+<body class="role-login-body">
+    <main class="role-select-shell">
+        <section class="role-select-card">
+            <div class="role-select-brand">
+                <img src="{% static 'admin_panel/images/final logo without text.png' %}" alt="EduPilot">
+                <h1>EduPilot</h1>
+                <p>Select your portal to continue</p>
+            </div>
+
+            <div class="role-select-grid">
+                <a href="{% url 'login_admin' %}" class="role-tile">
+                    <span><i class="fa-solid fa-user-shield"></i></span>
+                    <strong>Admin Login</strong>
+                    <small>Manage school operations</small>
+                </a>
+                <a href="{% url 'login_teacher' %}" class="role-tile">
+                    <span><i class="fa-solid fa-chalkboard-user"></i></span>
+                    <strong>Teacher Login</strong>
+                    <small>Open classes and LMS</small>
+                </a>
+                <a href="{% url 'login_student' %}" class="role-tile">
+                    <span><i class="fa-solid fa-user-graduate"></i></span>
+                    <strong>Student Login</strong>
+                    <small>Continue learning</small>
+                </a>
+                <a href="{% url 'login_parent' %}" class="role-tile">
+                    <span><i class="fa-solid fa-users"></i></span>
+                    <strong>Parent Login</strong>
+                    <small>Track child progress</small>
+                </a>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

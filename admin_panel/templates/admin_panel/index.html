@@ -14,6 +14,7 @@
     <link href="{% static 'admin_panel/vendor/owl-carousel/owl.carousel.css' %}" rel="stylesheet">
     <link href="https://cdn.lineicons.com/2.0/LineIcons.css" rel="stylesheet">
     <link href="{% static 'admin_panel/css/style.css' %}" rel="stylesheet">
+    <link href="{% static 'admin_panel/css/admin-inner-theme.css' %}?v=admin-pill-buttons-3" rel="stylesheet">
 
     <style>
         .timetable-automation-nav > a {
@@ -27,6 +28,74 @@
             line-height: 1.25;
             max-width: 190px;
             overflow-wrap: normal;
+        }
+
+        /* Keep dashboard KPI cards protected from shared inner-page card rules. */
+        .content-body > .container-fluid > .row.justify-content-center > .col-xl-3:nth-of-type(1) > .card {
+            background: #88D0C5 !important;
+            border-color: rgba(136, 208, 197, .72) !important;
+        }
+
+        .content-body > .container-fluid > .row.justify-content-center > .col-xl-3:nth-of-type(2) > .card {
+            background: #47A7EA !important;
+            border-color: rgba(71, 167, 234, .72) !important;
+        }
+
+        .content-body > .container-fluid > .row.justify-content-center > .col-xl-3:nth-of-type(3) > .card {
+            background: #8BC740 !important;
+            border-color: rgba(139, 199, 64, .72) !important;
+        }
+
+        .content-body > .container-fluid > .row.justify-content-center > .col-xl-3:nth-of-type(4) > .card {
+            background: #88D0C5 !important;
+            border-color: rgba(136, 208, 197, .72) !important;
+        }
+
+        .content-body > .container-fluid > .row.justify-content-center > .col-xl-3 > .card {
+            min-height: 190px !important;
+            border-radius: 10px !important;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, .06) !important;
+            color: #ffffff !important;
+        }
+
+        .content-body > .container-fluid > .row.justify-content-center > .col-xl-3 > .card .card-body {
+            display: flex;
+            align-items: center;
+            min-height: 190px;
+        }
+
+        .content-body > .container-fluid > .row.justify-content-center > .col-xl-3 > .card .media {
+            width: 100%;
+            justify-content: space-between;
+        }
+
+        .content-body > .container-fluid > .row.justify-content-center > .col-xl-3 > .card .feature-icon {
+            width: 58px;
+            height: 58px;
+            min-width: 58px;
+            border: 1px solid rgba(255, 255, 255, .62) !important;
+            background: rgba(255, 255, 255, .18) !important;
+            color: #ffffff !important;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .content-body > .container-fluid > .row.justify-content-center > .col-xl-3 > .card .feature-icon svg,
+        .content-body > .container-fluid > .row.justify-content-center > .col-xl-3 > .card .feature-icon i {
+            color: #ffffff !important;
+            fill: #ffffff !important;
+        }
+
+        .content-body > .container-fluid > .row.justify-content-center > .col-xl-3 > .card .feature-icon svg path {
+            fill: #ffffff !important;
+            stroke: #ffffff !important;
+        }
+
+        .content-body > .container-fluid > .row.justify-content-center > .col-xl-3 > .card .feature-icon-text p,
+        .content-body > .container-fluid > .row.justify-content-center > .col-xl-3 > .card .feature-icon-text span {
+            color: #ffffff !important;
+            font-weight: 500 !important;
         }
 
         /* ── BULK UPLOAD CARDS ── */
@@ -183,6 +252,64 @@
             width: 1px;
             background: rgba(255,255,255,0.2);
             margin: 0 4px;
+        }
+
+        /* Restore bulk upload cards if shared admin styles try to flatten them. */
+        .bulk-upload-section .bulk-card,
+        .bulk-upload-section .bulk-card.card {
+            border: none !important;
+            border-radius: 16px !important;
+            overflow: hidden !important;
+            min-height: 0 !important;
+            color: #ffffff !important;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08) !important;
+        }
+
+        .bulk-upload-section .bulk-card-student {
+            background: linear-gradient(135deg, #3ecfcf 0%, #2ab5b5 100%) !important;
+        }
+
+        .bulk-upload-section .bulk-card-teacher {
+            background: linear-gradient(135deg, #4d7cfe 0%, #3562e0 100%) !important;
+        }
+
+        .bulk-upload-section .bulk-card-body {
+            background: transparent !important;
+            color: #ffffff !important;
+        }
+
+        .bulk-upload-section .bulk-card-footer {
+            background: rgba(0,0,0,0.12) !important;
+        }
+
+        .bulk-upload-section .bulk-card-icon {
+            background: rgba(255,255,255,0.20) !important;
+            border: none !important;
+            color: #ffffff !important;
+        }
+
+        .bulk-upload-section .bulk-card-icon svg,
+        .bulk-upload-section .bulk-card-icon svg path {
+            color: #ffffff !important;
+            fill: #ffffff !important;
+            stroke: #ffffff !important;
+        }
+
+        .bulk-upload-section .bulk-card-title,
+        .bulk-upload-section .bulk-stat-num {
+            color: #ffffff !important;
+            font-weight: 500 !important;
+        }
+
+        .bulk-upload-section .bulk-card-desc,
+        .bulk-upload-section .bulk-stat-label {
+            color: rgba(255,255,255,0.82) !important;
+        }
+
+        .bulk-upload-section .bulk-tag {
+            background: rgba(255,255,255,0.18) !important;
+            border-color: rgba(255,255,255,0.3) !important;
+            color: #ffffff !important;
         }
 
         .automation-overview {

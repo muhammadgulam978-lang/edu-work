@@ -2,27 +2,140 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login
 from django.contrib import messages
 from django.contrib.auth.models import User
+from django.views.decorators.cache import never_cache
 
-def login_view(request):
-    if request.method == 'POST':
-        username = request.POST.get('username')
-        password = request.POST.get('password')
 
-        # Pehle check karo kya username/email kisi user ke sath match karta hai
-        user_exists = User.objects.filter(username=username).exists() or User.objects.filter(email=username).exists()
+ROLE_LOGIN_CONFIG = {
+    "admin": {
+        "group": "Admin",
+        "title": "Admin Login",
+        "portal": "Admin Portal",
+        "welcome": "Welcome Admin! Please log in to continue",
+        "subtitle": "Manage EduPilot operations, people, and automation.",
+        "icon": "fa-user-shield",
+        "dashboard": "admin_panel_dashboard",
+        "profile_check": None,
+    },
+    "teacher": {
+        "group": "Teacher",
+        "title": "Teacher Login",
+        "portal": "Teacher Portal",
+        "welcome": "Welcome Teacher! Please log in to continue",
+        "subtitle": "Open your timetable, classes, LMS, and exam tools.",
+        "icon": "fa-chalkboard-user",
+        "dashboard": "teacher_dashboard",
+        "profile_check": "teacher",
+    },
+    "student": {
+        "group": "Student",
+        "title": "Student Login",
+        "portal": "Student Portal",
+        "welcome": "Welcome Student! Please log in to continue",
+        "subtitle": "Continue learning, practice, assignments, and AI Tutor.",
+        "icon": "fa-user-graduate",
+        "dashboard": "student_dashboard",
+        "profile_check": "student",
+    },
+    "parent": {
+        "group": "Parent",
+        "title": "Parent Login",
+        "portal": "Parent Portal",
+        "welcome": "Welcome Parent! Please log in to continue",
+        "subtitle": "Track attendance, results, assignments, and progress.",
+        "icon": "fa-users",
+        "dashboard": "parent_dashboard",
+        "profile_check": "parent",
+    },
+}
 
-        if not user_exists:
-            messages.error(request, 'Username or email is incorrect')
-            return render(request, 'registration/login.html')
+
+def _user_has_role(user, role):
+    config = ROLE_LOGIN_CONFIG[role]
+    if role == "admin" and user.is_superuser:
+        return True
+    return user.groups.filter(name__iexact=config["group"]).exists()
+
+
+def _linked_profile_exists(user, role):
+    profile_check = ROLE_LOGIN_CONFIG[role]["profile_check"]
+    if not profile_check:
+        return True
+
+    if profile_check == "teacher":
+        from teacher_dashboard.models import Teacher
+        return Teacher.objects.filter(user=user).exists()
+    if profile_check == "student":
+        from student_profile.models import Student
+        return Student.objects.filter(user=user).exists()
+    if profile_check == "parent":
+        from parent_dashboard.models import Parent
+        return Parent.objects.filter(user=user).exists()
+    return True
+
+
+@never_cache
+def role_select_view(request):
+    if request.user.is_authenticated:
+        for role in ("admin", "teacher", "student", "parent"):
+            if _user_has_role(request.user, role) and _linked_profile_exists(request.user, role):
+                return redirect(ROLE_LOGIN_CONFIG[role]["dashboard"])
+    return render(request, "registration/role_select.html", {
+        "roles": ROLE_LOGIN_CONFIG,
+    })
+
+
+@never_cache
+def role_login_view(request, role):
+    if role not in ROLE_LOGIN_CONFIG:
+        return redirect("login")
+
+    config = ROLE_LOGIN_CONFIG[role]
+
+    if request.method == "POST":
+        username = request.POST.get("username", "").strip()
+        password = request.POST.get("password", "")
+        remember_me = request.POST.get("remember_me") == "on"
 
         user = authenticate(request, username=username, password=password)
-        if user is not None:
-            login(request, user)
-            return redirect_user_dashboard(request, user)
-        else:
-            messages.error(request, 'Password is incorrect')
 
-    return render(request, 'registration/login.html')
+        if user is None:
+            messages.error(request, "Invalid login ID or password.")
+        elif not user.is_active:
+            messages.error(request, "Your account is inactive. Contact admin.")
+        elif not _user_has_role(user, role):
+            messages.error(request, "This account is not allowed on this login page.")
+        elif not _linked_profile_exists(user, role):
+            messages.error(request, "This account is missing its linked portal profile. Contact admin.")
+        else:
+            login(request, user)
+            if not remember_me:
+                request.session.set_expiry(0)
+            return redirect(config["dashboard"])
+
+    return render(request, "registration/role_login.html", {
+        "role": role,
+        "config": config,
+    })
+
+
+def admin_login(request):
+    return role_login_view(request, "admin")
+
+
+def teacher_login(request):
+    return role_login_view(request, "teacher")
+
+
+def student_login(request):
+    return role_login_view(request, "student")
+
+
+def parent_login(request):
+    return role_login_view(request, "parent")
+
+
+def login_view(request):
+    return redirect("login")
 
 
 def redirect_user_dashboard(request, user):

@@ -2,11 +2,16 @@ from django.contrib import admin
 from django.urls import path, include
 from django.contrib.auth import views as auth_views
 from admin_panel.views import custom_login 
+from login import views as login_views
 from django.urls import path, include
 
 urlpatterns = [
-    path('', custom_login, name='login'), 
-    path('login/', custom_login, name='login'),
+    path('', login_views.role_select_view, name='home'), 
+    path('login/', login_views.role_select_view, name='login'),
+    path('login/admin/', login_views.admin_login, name='login_admin'),
+    path('login/teacher/', login_views.teacher_login, name='login_teacher'),
+    path('login/student/', login_views.student_login, name='login_student'),
+    path('login/parent/', login_views.parent_login, name='login_parent'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
     path('auth/', include('login.urls')),
 

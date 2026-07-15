@@ -1,0 +1,99 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ config.title }}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'login/css/role-login.css' %}?v=role-login-1">
+</head>
+<body class="role-login-body">
+    <main class="login-shell">
+        <section class="login-card">
+            <aside class="login-visual">
+                <a href="{% url 'login' %}" class="login-home" aria-label="Back to portal selection">
+                    <i class="fa-solid fa-house"></i>
+                </a>
+                <div>
+                    <h1>One click to go<br>all digital.</h1>
+                    <span class="portal-badge">
+                        <i class="fa-solid {{ config.icon }}"></i>
+                        {{ config.portal }}
+                    </span>
+                </div>
+
+                <div class="portal-illustration portal-{{ role }}">
+                    <div class="illustration-person">
+                        <i class="fa-solid {{ config.icon }}"></i>
+                    </div>
+                    <div class="illustration-window">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <div></div>
+                    </div>
+                </div>
+            </aside>
+
+            <section class="login-form-panel">
+                <form method="POST" action="" autocomplete="off" class="role-login-form">
+                    {% csrf_token %}
+                    <h2>Log In</h2>
+                    <p>{{ config.welcome }}</p>
+
+                    {% if messages %}
+                        <div class="login-messages">
+                            {% for message in messages %}
+                                <div class="login-message login-message-{{ message.tags|default:'info' }}">{{ message }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <label for="username">Login ID</label>
+                    <div class="login-input">
+                        <i class="fa-regular fa-user"></i>
+                        <input type="text" name="username" id="username" placeholder="Enter login ID" autocomplete="off" required>
+                    </div>
+
+                    <label for="password">Password</label>
+                    <div class="login-input">
+                        <i class="fa-solid fa-lock"></i>
+                        <input type="password" name="password" id="password" placeholder="Enter password" autocomplete="current-password" required>
+                        <button type="button" class="password-toggle" aria-label="Show password">
+                            <i class="fa-regular fa-eye"></i>
+                        </button>
+                    </div>
+
+                    <a href="{% url 'password_reset' %}" class="forgot-link">Forgot Password?</a>
+
+                    <label class="remember-row">
+                        <input type="checkbox" name="remember_me">
+                        <span>Remember Me!</span>
+                    </label>
+
+                    <button type="submit" class="login-submit">Login</button>
+
+                    <div class="contact-admin">
+                        Don't have an account? <span>Contact Admin</span>
+                    </div>
+                </form>
+            </section>
+        </section>
+    </main>
+
+    <script>
+        const toggle = document.querySelector('.password-toggle');
+        const password = document.getElementById('password');
+        if (toggle && password) {
+            toggle.addEventListener('click', function () {
+                const hidden = password.type === 'password';
+                password.type = hidden ? 'text' : 'password';
+                this.innerHTML = hidden
+                    ? '<i class="fa-regular fa-eye-slash"></i>'
+                    : '<i class="fa-regular fa-eye"></i>';
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1175,3 +1175,614 @@ body,
   color: #ffffff !important;
   font-weight: 500 !important;
 }
+
+/* Admin-wide pill button system.
+   Visual-only overrides for admin and account automation screens. */
+#main-wrapper .btn,
+#main-wrapper button:not(.hamburger):not(.navbar-toggler):not(.owl-dot),
+#main-wrapper input[type="submit"],
+#main-wrapper input[type="button"],
+#main-wrapper input[type="reset"],
+#main-wrapper a.btn,
+#main-wrapper .admin-action-link,
+#main-wrapper .automation-card-action,
+#main-wrapper .dataTables_paginate .paginate_button,
+#main-wrapper .dataTables_paginate a.paginate_button,
+#main-wrapper .pagination .page-link,
+#main-wrapper .fc-button,
+.admin-inner-page .btn,
+.admin-inner-page button:not(.hamburger):not(.navbar-toggler):not(.owl-dot),
+.admin-inner-page input[type="submit"],
+.admin-inner-page input[type="button"],
+.admin-inner-page input[type="reset"],
+.automation-admin-page .btn,
+.automation-admin-page button:not(.hamburger):not(.navbar-toggler):not(.owl-dot),
+.automation-admin-page input[type="submit"],
+.automation-admin-page input[type="button"],
+.automation-admin-page input[type="reset"],
+.automation-admin-page .dataTables_paginate .paginate_button,
+.automation-admin-page .pagination .page-link {
+  min-height: 44px !important;
+  padding: 11px 24px !important;
+  border-radius: 999px !important;
+  background: #88D0C5 !important;
+  color: #222222 !important;
+  border: 1px solid rgba(136, 208, 197, 0.86) !important;
+  box-shadow: 0 8px 20px rgba(136, 208, 197, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
+  font-size: 15px !important;
+  font-weight: 500 !important;
+  line-height: 1.2 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  text-decoration: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease !important;
+}
+
+#main-wrapper .btn:hover,
+#main-wrapper button:not(.hamburger):not(.navbar-toggler):not(.owl-dot):hover,
+#main-wrapper input[type="submit"]:hover,
+#main-wrapper input[type="button"]:hover,
+#main-wrapper input[type="reset"]:hover,
+#main-wrapper a.btn:hover,
+#main-wrapper .admin-action-link:hover,
+#main-wrapper .automation-card-action:hover,
+#main-wrapper .dataTables_paginate .paginate_button:hover,
+#main-wrapper .dataTables_paginate a.paginate_button:hover,
+#main-wrapper .pagination .page-link:hover,
+#main-wrapper .fc-button:hover,
+.admin-inner-page .btn:hover,
+.admin-inner-page button:not(.hamburger):not(.navbar-toggler):not(.owl-dot):hover,
+.admin-inner-page input[type="submit"]:hover,
+.admin-inner-page input[type="button"]:hover,
+.admin-inner-page input[type="reset"]:hover,
+.automation-admin-page .btn:hover,
+.automation-admin-page button:not(.hamburger):not(.navbar-toggler):not(.owl-dot):hover,
+.automation-admin-page input[type="submit"]:hover,
+.automation-admin-page input[type="button"]:hover,
+.automation-admin-page input[type="reset"]:hover,
+.automation-admin-page .dataTables_paginate .paginate_button:hover,
+.automation-admin-page .pagination .page-link:hover {
+  background: #78c9bd !important;
+  color: #111111 !important;
+  border-color: #78c9bd !important;
+  box-shadow: 0 10px 24px rgba(136, 208, 197, 0.30), inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
+  transform: translateY(-1px) !important;
+}
+
+#main-wrapper .btn:focus,
+#main-wrapper button:focus,
+#main-wrapper input[type="submit"]:focus,
+#main-wrapper input[type="button"]:focus,
+#main-wrapper input[type="reset"]:focus,
+#main-wrapper .dataTables_paginate .paginate_button:focus,
+#main-wrapper .pagination .page-link:focus,
+.admin-inner-page .btn:focus,
+.admin-inner-page button:focus,
+.admin-inner-page input[type="submit"]:focus,
+.admin-inner-page input[type="button"]:focus,
+.admin-inner-page input[type="reset"]:focus,
+.automation-admin-page .btn:focus,
+.automation-admin-page button:focus,
+.automation-admin-page input[type="submit"]:focus,
+.automation-admin-page input[type="button"]:focus,
+.automation-admin-page input[type="reset"]:focus {
+  outline: none !important;
+  box-shadow: 0 0 0 4px rgba(136, 208, 197, 0.24), 0 8px 20px rgba(0, 0, 0, 0.06) !important;
+}
+
+#main-wrapper .btn-primary,
+#main-wrapper .btn-success,
+#main-wrapper .btn-info,
+#main-wrapper .btn-teal,
+#main-wrapper .admin-btn-primary,
+#main-wrapper .btn-upload,
+#main-wrapper .btn-custom,
+#main-wrapper button[type="submit"],
+#main-wrapper input[type="submit"],
+.admin-inner-page .btn-primary,
+.admin-inner-page .btn-success,
+.admin-inner-page .btn-info,
+.admin-inner-page .btn-teal,
+.admin-inner-page .admin-btn-primary,
+.admin-inner-page .btn-upload,
+.admin-inner-page .btn-custom,
+.automation-admin-page .btn-primary,
+.automation-admin-page .btn-success,
+.automation-admin-page .btn-info,
+.automation-admin-page .btn-teal,
+.automation-admin-page button[type="submit"],
+.automation-admin-page input[type="submit"] {
+  background: #88D0C5 !important;
+  border-color: #88D0C5 !important;
+  color: #111111 !important;
+}
+
+#main-wrapper .btn-secondary,
+#main-wrapper .btn-light,
+#main-wrapper .btn-cancel,
+#main-wrapper .admin-btn-secondary,
+.admin-inner-page .btn-secondary,
+.admin-inner-page .btn-light,
+.admin-inner-page .btn-cancel,
+.admin-inner-page .admin-btn-secondary,
+.automation-admin-page .btn-secondary,
+.automation-admin-page .btn-light,
+.automation-admin-page .btn-cancel {
+  background: #ffffff !important;
+  border-color: #e9ecef !important;
+  color: #222222 !important;
+}
+
+#main-wrapper .btn-danger,
+#main-wrapper .btn-outline-danger,
+#main-wrapper .btn-delete,
+#main-wrapper .delete-btn,
+#main-wrapper .admin-btn-danger,
+#main-wrapper button[onclick*="delete" i],
+#main-wrapper a[href*="delete" i].btn,
+.admin-inner-page .btn-danger,
+.admin-inner-page .btn-outline-danger,
+.admin-inner-page .btn-delete,
+.admin-inner-page .delete-btn,
+.admin-inner-page .admin-btn-danger,
+.automation-admin-page .btn-danger,
+.automation-admin-page .btn-outline-danger,
+.automation-admin-page .btn-delete,
+.automation-admin-page .delete-btn {
+  background: #FFEDEA !important;
+  border-color: rgba(255, 77, 61, 0.24) !important;
+  color: #a73328 !important;
+}
+
+#main-wrapper .btn-warning,
+#main-wrapper .btn-outline-warning,
+.admin-inner-page .btn-warning,
+.admin-inner-page .btn-outline-warning,
+.automation-admin-page .btn-warning,
+.automation-admin-page .btn-outline-warning {
+  background: #FFF4E5 !important;
+  border-color: rgba(255, 166, 77, 0.32) !important;
+  color: #8a5200 !important;
+}
+
+#main-wrapper .btn-sm,
+#main-wrapper .btn-xs,
+#main-wrapper table .btn,
+#main-wrapper .table .btn,
+#main-wrapper .action-btn,
+#main-wrapper .edit-btn,
+#main-wrapper .delete-btn,
+#main-wrapper .view-btn,
+#main-wrapper a[title="Edit"],
+#main-wrapper a[title="Delete"],
+#main-wrapper a[title="View"],
+#main-wrapper button[title="Edit"],
+#main-wrapper button[title="Delete"],
+#main-wrapper button[title="View"],
+.admin-inner-page .btn-sm,
+.admin-inner-page .btn-xs,
+.admin-inner-page table .btn,
+.admin-inner-page .table .btn,
+.admin-inner-page .action-btn,
+.admin-inner-page .edit-btn,
+.admin-inner-page .delete-btn,
+.admin-inner-page .view-btn,
+.automation-admin-page .btn-sm,
+.automation-admin-page .btn-xs,
+.automation-admin-page table .btn,
+.automation-admin-page .table .btn,
+.automation-admin-page .action-btn,
+.automation-admin-page .edit-btn,
+.automation-admin-page .delete-btn,
+.automation-admin-page .view-btn {
+  min-width: 34px !important;
+  width: auto !important;
+  min-height: 34px !important;
+  height: 34px !important;
+  padding: 8px 12px !important;
+  border-radius: 999px !important;
+  font-size: 13px !important;
+}
+
+#main-wrapper table .btn:has(i),
+#main-wrapper .table .btn:has(i),
+#main-wrapper .action-btn:has(i),
+#main-wrapper .edit-btn:has(i),
+#main-wrapper .delete-btn:has(i),
+#main-wrapper .view-btn:has(i),
+.admin-inner-page table .btn:has(i),
+.admin-inner-page .table .btn:has(i),
+.automation-admin-page table .btn:has(i),
+.automation-admin-page .table .btn:has(i) {
+  width: 36px !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+#main-wrapper .btn i,
+#main-wrapper button i,
+#main-wrapper .paginate_button i,
+.admin-inner-page .btn i,
+.admin-inner-page button i,
+.automation-admin-page .btn i,
+.automation-admin-page button i {
+  font-size: 0.95em !important;
+  line-height: 1 !important;
+  font-weight: 400 !important;
+}
+
+#main-wrapper .dataTables_paginate,
+.admin-inner-page .dataTables_paginate,
+.automation-admin-page .dataTables_paginate {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 12px !important;
+  margin-top: 20px !important;
+}
+
+#main-wrapper .dataTables_paginate .paginate_button,
+#main-wrapper .dataTables_wrapper .dataTables_paginate .paginate_button,
+.admin-inner-page .dataTables_paginate .paginate_button,
+.automation-admin-page .dataTables_paginate .paginate_button {
+  margin: 0 !important;
+  min-width: 56px !important;
+}
+
+#main-wrapper .dataTables_wrapper .dataTables_paginate .paginate_button.current,
+#main-wrapper .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover,
+#main-wrapper .pagination .page-item.active .page-link,
+.admin-inner-page .dataTables_wrapper .dataTables_paginate .paginate_button.current,
+.admin-inner-page .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover,
+.admin-inner-page .pagination .page-item.active .page-link,
+.automation-admin-page .dataTables_wrapper .dataTables_paginate .paginate_button.current,
+.automation-admin-page .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover,
+.automation-admin-page .pagination .page-item.active .page-link {
+  background: #88D0C5 !important;
+  border-color: #88D0C5 !important;
+  color: #111111 !important;
+}
+
+#main-wrapper .dataTables_wrapper .dataTables_paginate .paginate_button.disabled,
+#main-wrapper .dataTables_wrapper .dataTables_paginate .paginate_button.disabled:hover,
+#main-wrapper .pagination .page-item.disabled .page-link,
+.admin-inner-page .dataTables_wrapper .dataTables_paginate .paginate_button.disabled,
+.admin-inner-page .dataTables_wrapper .dataTables_paginate .paginate_button.disabled:hover,
+.admin-inner-page .pagination .page-item.disabled .page-link,
+.automation-admin-page .dataTables_wrapper .dataTables_paginate .paginate_button.disabled,
+.automation-admin-page .dataTables_wrapper .dataTables_paginate .paginate_button.disabled:hover,
+.automation-admin-page .pagination .page-item.disabled .page-link {
+  background: #ffffff !important;
+  border-color: #e9ecef !important;
+  color: #9aa0a6 !important;
+  opacity: 0.72 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+}
+
+#main-wrapper .btn-group,
+#main-wrapper .btn-group-vertical,
+.admin-inner-page .btn-group,
+.admin-inner-page .btn-group-vertical,
+.automation-admin-page .btn-group,
+.automation-admin-page .btn-group-vertical {
+  gap: 8px !important;
+}
+
+#main-wrapper .btn-group > .btn,
+#main-wrapper .btn-group-vertical > .btn,
+.admin-inner-page .btn-group > .btn,
+.admin-inner-page .btn-group-vertical > .btn,
+.automation-admin-page .btn-group > .btn,
+.automation-admin-page .btn-group-vertical > .btn {
+  border-radius: 999px !important;
+}
+
+/* Context-aware admin button tones. Buttons now pick up the tone of the
+   screen/card they sit in instead of staying plain white everywhere. */
+#main-wrapper .card-tone-success .btn,
+#main-wrapper .card-tone-success .admin-action-link,
+#main-wrapper .card-tone-success .automation-card-action,
+#main-wrapper .admin-card-green .btn,
+#main-wrapper .admin-card-success .btn,
+#main-wrapper .admin-summary-card.card-tone-success .admin-action-link,
+#main-wrapper .automation-card.card-tone-success .automation-card-action,
+.admin-inner-page .admin-card-green .btn,
+.admin-inner-page .admin-card-success .btn,
+.automation-admin-page .card-tone-success .btn {
+  background: #8BC740 !important;
+  border-color: rgba(139, 199, 64, 0.82) !important;
+  color: #111111 !important;
+  box-shadow: 0 8px 20px rgba(139, 199, 64, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.28) !important;
+}
+
+#main-wrapper .card-tone-blue .btn,
+#main-wrapper .card-tone-blue .admin-action-link,
+#main-wrapper .card-tone-blue .automation-card-action,
+#main-wrapper .admin-card-blue .btn,
+#main-wrapper .automation-card.card-tone-blue .automation-card-action,
+#main-wrapper .admin-summary-card.card-tone-blue .admin-action-link,
+.admin-inner-page .admin-card-blue .btn,
+.automation-admin-page .card-tone-blue .btn {
+  background: #6EA8FE !important;
+  border-color: rgba(110, 168, 254, 0.82) !important;
+  color: #111111 !important;
+  box-shadow: 0 8px 20px rgba(110, 168, 254, 0.20), inset 0 1px 0 rgba(255, 255, 255, 0.30) !important;
+}
+
+#main-wrapper .card-tone-warning .btn,
+#main-wrapper .card-tone-warning .admin-action-link,
+#main-wrapper .card-tone-warning .automation-card-action,
+#main-wrapper .admin-card-warning .btn,
+#main-wrapper .automation-card.card-tone-warning .automation-card-action,
+#main-wrapper .admin-summary-card.card-tone-warning .admin-action-link,
+.admin-inner-page .admin-card-warning .btn,
+.automation-admin-page .card-tone-warning .btn {
+  background: #FFF4E5 !important;
+  border-color: rgba(255, 177, 79, 0.56) !important;
+  color: #8a5200 !important;
+  box-shadow: 0 8px 20px rgba(255, 177, 79, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.52) !important;
+}
+
+#main-wrapper .card-tone-neutral .btn,
+#main-wrapper .card-tone-neutral .admin-action-link,
+#main-wrapper .card-tone-neutral .automation-card-action,
+#main-wrapper .admin-card-neutral .btn,
+#main-wrapper .automation-card.card-tone-neutral .automation-card-action,
+#main-wrapper .admin-summary-card.card-tone-neutral .admin-action-link,
+.admin-inner-page .admin-card-neutral .btn,
+.automation-admin-page .card-tone-neutral .btn {
+  background: #88D0C5 !important;
+  border-color: rgba(136, 208, 197, 0.82) !important;
+  color: #111111 !important;
+}
+
+#main-wrapper .top-stat-card .btn,
+#main-wrapper .bulk-upload-card .btn,
+#main-wrapper .bulk-upload-btn,
+#main-wrapper .summary-card .btn,
+.admin-inner-page .bulk-upload-btn {
+  background: rgba(255, 255, 255, 0.94) !important;
+  border-color: rgba(255, 255, 255, 0.72) !important;
+  color: #111111 !important;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+}
+
+#main-wrapper table .btn-primary,
+#main-wrapper .table .btn-primary,
+#main-wrapper table .edit-btn,
+#main-wrapper .table .edit-btn,
+.admin-inner-page table .btn-primary,
+.admin-inner-page table .edit-btn,
+.automation-admin-page table .btn-primary,
+.automation-admin-page table .edit-btn {
+  background: #88D0C5 !important;
+  border-color: #88D0C5 !important;
+  color: #111111 !important;
+}
+
+#main-wrapper table .btn-success,
+#main-wrapper .table .btn-success,
+#main-wrapper table .view-btn,
+#main-wrapper .table .view-btn,
+.admin-inner-page table .btn-success,
+.admin-inner-page table .view-btn,
+.automation-admin-page table .btn-success,
+.automation-admin-page table .view-btn {
+  background: #EEF9E5 !important;
+  border-color: rgba(139, 199, 64, 0.42) !important;
+  color: #4b7a18 !important;
+}
+
+#main-wrapper .dataTables_wrapper .dataTables_paginate .paginate_button.previous,
+#main-wrapper .dataTables_wrapper .dataTables_paginate .paginate_button.next,
+.admin-inner-page .dataTables_wrapper .dataTables_paginate .paginate_button.previous,
+.admin-inner-page .dataTables_wrapper .dataTables_paginate .paginate_button.next,
+.automation-admin-page .dataTables_wrapper .dataTables_paginate .paginate_button.previous,
+.automation-admin-page .dataTables_wrapper .dataTables_paginate .paginate_button.next {
+  background: #88D0C5 !important;
+  border-color: #88D0C5 !important;
+  color: #111111 !important;
+}
+
+/* Button layout safety: prevent the new global button theme from creating
+   overlap in headers, search bars, compact tables, and narrow cards. */
+#main-wrapper .header .search-area,
+.admin-inner-page .header .search-area {
+  display: inline-flex !important;
+  align-items: stretch !important;
+  flex-wrap: nowrap !important;
+  max-width: min(420px, 42vw) !important;
+  overflow: visible !important;
+}
+
+#main-wrapper .header .search-area .form-control,
+.admin-inner-page .header .search-area .form-control {
+  height: 52px !important;
+  min-height: 52px !important;
+  border-radius: 28px 0 0 28px !important;
+  padding-right: 14px !important;
+}
+
+#main-wrapper .header .search-area .input-group-append,
+.admin-inner-page .header .search-area .input-group-append {
+  flex: 0 0 auto !important;
+  margin-left: 0 !important;
+}
+
+#main-wrapper .header .search-area button.input-group-text,
+#main-wrapper .header .search-area .input-group-text,
+.admin-inner-page .header .search-area button.input-group-text,
+.admin-inner-page .header .search-area .input-group-text {
+  width: 58px !important;
+  min-width: 58px !important;
+  max-width: 58px !important;
+  height: 52px !important;
+  min-height: 52px !important;
+  padding: 0 !important;
+  border-radius: 0 28px 28px 0 !important;
+  background: #88D0C5 !important;
+  border: 1px solid #88D0C5 !important;
+  box-shadow: none !important;
+  transform: none !important;
+  flex: 0 0 58px !important;
+  position: static !important;
+  z-index: 1 !important;
+}
+
+#main-wrapper .header .search-area button.input-group-text:hover,
+#main-wrapper .header .search-area .input-group-text:hover,
+.admin-inner-page .header .search-area button.input-group-text:hover,
+.admin-inner-page .header .search-area .input-group-text:hover {
+  background: #78c9bd !important;
+  border-color: #78c9bd !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+#main-wrapper .header .search-area button.input-group-text i,
+#main-wrapper .header .search-area .input-group-text i,
+.admin-inner-page .header .search-area button.input-group-text i,
+.admin-inner-page .header .search-area .input-group-text i {
+  font-size: 18px !important;
+  line-height: 1 !important;
+}
+
+#main-wrapper .btn,
+#main-wrapper button:not(.hamburger):not(.navbar-toggler):not(.owl-dot),
+#main-wrapper input[type="submit"],
+#main-wrapper input[type="button"],
+#main-wrapper input[type="reset"],
+#main-wrapper a.btn,
+#main-wrapper .admin-action-link,
+#main-wrapper .automation-card-action,
+.admin-inner-page .btn,
+.admin-inner-page button:not(.hamburger):not(.navbar-toggler):not(.owl-dot),
+.admin-inner-page input[type="submit"],
+.admin-inner-page input[type="button"],
+.admin-inner-page input[type="reset"],
+.automation-admin-page .btn,
+.automation-admin-page button:not(.hamburger):not(.navbar-toggler):not(.owl-dot),
+.automation-admin-page input[type="submit"],
+.automation-admin-page input[type="button"],
+.automation-admin-page input[type="reset"] {
+  max-width: 100% !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+  text-align: center !important;
+}
+
+#main-wrapper table,
+#main-wrapper .table,
+#main-wrapper .table-responsive,
+.admin-inner-page table,
+.admin-inner-page .table,
+.admin-inner-page .table-responsive,
+.automation-admin-page table,
+.automation-admin-page .table,
+.automation-admin-page .table-responsive {
+  overflow-x: auto !important;
+}
+
+#main-wrapper table td,
+#main-wrapper .table td,
+.admin-inner-page table td,
+.admin-inner-page .table td,
+.automation-admin-page table td,
+.automation-admin-page .table td {
+  vertical-align: middle !important;
+}
+
+#main-wrapper table td:last-child,
+#main-wrapper .table td:last-child,
+.admin-inner-page table td:last-child,
+.admin-inner-page .table td:last-child,
+.automation-admin-page table td:last-child,
+.automation-admin-page .table td:last-child {
+  white-space: nowrap !important;
+}
+
+#main-wrapper table td:last-child .btn,
+#main-wrapper .table td:last-child .btn,
+#main-wrapper table td:last-child button,
+#main-wrapper .table td:last-child button,
+.admin-inner-page table td:last-child .btn,
+.admin-inner-page .table td:last-child .btn,
+.admin-inner-page table td:last-child button,
+.admin-inner-page .table td:last-child button,
+.automation-admin-page table td:last-child .btn,
+.automation-admin-page .table td:last-child .btn,
+.automation-admin-page table td:last-child button,
+.automation-admin-page .table td:last-child button {
+  margin: 2px !important;
+  vertical-align: middle !important;
+}
+
+#main-wrapper .btn-group,
+#main-wrapper .btn-toolbar,
+#main-wrapper .form-actions,
+#main-wrapper .admin-inner-toolbar,
+#main-wrapper .edu-form-actions,
+.admin-inner-page .btn-group,
+.admin-inner-page .btn-toolbar,
+.admin-inner-page .form-actions,
+.admin-inner-page .admin-inner-toolbar,
+.admin-inner-page .edu-form-actions,
+.automation-admin-page .btn-group,
+.automation-admin-page .btn-toolbar,
+.automation-admin-page .form-actions,
+.automation-admin-page .admin-inner-toolbar,
+.automation-admin-page .edu-form-actions {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+#main-wrapper .input-group > .btn,
+#main-wrapper .input-group > button,
+.admin-inner-page .input-group > .btn,
+.admin-inner-page .input-group > button,
+.automation-admin-page .input-group > .btn,
+.automation-admin-page .input-group > button {
+  flex: 0 0 auto !important;
+}
+
+@media (max-width: 767px) {
+  #main-wrapper .header .search-area,
+  .admin-inner-page .header .search-area {
+    max-width: 100% !important;
+  }
+
+  #main-wrapper .btn,
+  #main-wrapper button:not(.hamburger):not(.navbar-toggler):not(.owl-dot),
+  #main-wrapper input[type="submit"],
+  #main-wrapper input[type="button"],
+  #main-wrapper input[type="reset"],
+  #main-wrapper a.btn,
+  .admin-inner-page .btn,
+  .admin-inner-page button:not(.hamburger):not(.navbar-toggler):not(.owl-dot),
+  .admin-inner-page input[type="submit"],
+  .admin-inner-page input[type="button"],
+  .admin-inner-page input[type="reset"],
+  .automation-admin-page .btn,
+  .automation-admin-page button:not(.hamburger):not(.navbar-toggler):not(.owl-dot),
+  .automation-admin-page input[type="submit"],
+  .automation-admin-page input[type="button"],
+  .automation-admin-page input[type="reset"] {
+    min-height: 40px !important;
+    padding: 10px 16px !important;
+    font-size: 14px !important;
+  }
+
+  #main-wrapper .dataTables_paginate,
+  .admin-inner-page .dataTables_paginate,
+  .automation-admin-page .dataTables_paginate {
+    justify-content: flex-start !important;
+    flex-wrap: wrap !important;
+  }
+}
