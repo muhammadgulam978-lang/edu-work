@@ -1,4 +1,5 @@
 from django import forms
+from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.models import User, Group, Permission
 from .models import (
     Admission, AcademicYear, Class, Section, Subject, Stream,
@@ -38,10 +39,27 @@ class RoleForm(forms.ModelForm):
 
 
 class AssignRoleForm(forms.Form):
-    username = forms.CharField(max_length=150)
+    username = forms.CharField(max_length=150, label="Login ID")
     email = forms.EmailField()
     password = forms.CharField(widget=forms.PasswordInput)
+    confirm_password = forms.CharField(widget=forms.PasswordInput)
     role = forms.ModelChoiceField(queryset=Group.objects.all(), label="Assign Role")
+
+    def clean_username(self):
+        username = self.cleaned_data["username"].strip()
+        if User.objects.filter(username__iexact=username).exists():
+            raise forms.ValidationError("This login ID already exists.")
+        return username
+
+    def clean(self):
+        cleaned_data = super().clean()
+        password = cleaned_data.get("password")
+        confirm_password = cleaned_data.get("confirm_password")
+        if password and confirm_password and password != confirm_password:
+            raise forms.ValidationError("Password and confirm password do not match.")
+        if password:
+            validate_password(password)
+        return cleaned_data
 
 
 
@@ -123,6 +141,9 @@ class SubjectForm(forms.ModelForm):
 # 👨‍🏫 Teacher Form
 # =============================================================
 class TeacherForm(forms.ModelForm):
+    login_id = forms.CharField(max_length=150, required=False, label="Login ID")
+    password = forms.CharField(widget=forms.PasswordInput, required=False)
+    confirm_password = forms.CharField(widget=forms.PasswordInput, required=False)
     gender = forms.ChoiceField(
         choices=[('Male', 'Male'), ('Female', 'Female')],
         widget=forms.Select(attrs={'class': 'form-control'})
@@ -159,6 +180,28 @@ class TeacherForm(forms.ModelForm):
             lambda obj: f"{obj.name} ({obj.stream.stream_name}) [{obj.short_code}]"
             if obj.stream else f"{obj.name} [{obj.short_code}]"
         )
+        if not self.instance.pk:
+            self.fields["login_id"].required = True
+            self.fields["password"].required = True
+            self.fields["confirm_password"].required = True
+
+    def clean_login_id(self):
+        login_id = (self.cleaned_data.get("login_id") or "").strip()
+        if login_id and User.objects.filter(username__iexact=login_id).exists():
+            raise forms.ValidationError("This login ID already exists.")
+        return login_id
+
+    def clean(self):
+        cleaned_data = super().clean()
+        password = cleaned_data.get("password")
+        confirm_password = cleaned_data.get("confirm_password")
+        if self.instance.pk:
+            return cleaned_data
+        if password != confirm_password:
+            raise forms.ValidationError("Password and confirm password do not match.")
+        if password:
+            validate_password(password)
+        return cleaned_data
 
 
 # =============================================================

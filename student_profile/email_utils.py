@@ -169,7 +169,7 @@ Username: {student.user.username}
 Password: {password}
 
 Login URL:
-http://127.0.0.1:8000/
+http://127.0.0.1:8000/login/student/
 
 Thanks
 School Management System
@@ -211,7 +211,7 @@ Username: {student.user.username}
 Password: {password}
 
 Login URL:
-http://127.0.0.1:8000/
+http://127.0.0.1:8000/login/student/
 
 Thanks
 School Management System

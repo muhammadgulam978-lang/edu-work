@@ -1,0 +1,109 @@
+{% extends "admin_panel/bases.html" %}
+{% load static %}
+
+{% block title %}Create Student Account{% endblock %}
+
+{% block content %}
+<div class="card" style="background:#f8f9fa; margin:20px;">
+    <div class="card-header">
+        <h4 class="card-title mb-0">Create Student Account</h4>
+    </div>
+    <div class="card-body">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags|default:'info' }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="POST">
+            {% csrf_token %}
+
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Login ID</label>
+                    <input type="text" name="login_id" class="form-control" required>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Password</label>
+                    <input type="password" name="password" class="form-control" required>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Confirm Password</label>
+                    <input type="password" name="confirm_password" class="form-control" required>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Student ID</label>
+                    <input type="text" name="student_id" class="form-control" required>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Full Name</label>
+                    <input type="text" name="name" class="form-control" required>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Email</label>
+                    <input type="email" name="email" class="form-control" required>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Father Name</label>
+                    <input type="text" name="father_name" class="form-control" required>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Mother Name</label>
+                    <input type="text" name="mother_name" class="form-control" required>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Phone</label>
+                    <input type="text" name="phone" class="form-control">
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Class</label>
+                    <select name="class_id" class="form-control">
+                        <option value="">Select Class</option>
+                        {% for class_obj in classes %}
+                            <option value="{{ class_obj.id }}">{{ class_obj.class_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Section</label>
+                    <select name="section_id" class="form-control">
+                        <option value="">Select Section</option>
+                        {% for section in sections %}
+                            <option value="{{ section.id }}">{{ section.class_fk.class_name }} - {{ section.section_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2 mb-3">
+                    <label class="form-label">Roll No</label>
+                    <input type="text" name="roll_no" class="form-control" required>
+                </div>
+                <div class="col-md-2 mb-3">
+                    <label class="form-label">Gender</label>
+                    <select name="gender" class="form-control">
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="col-md-2 mb-3">
+                    <label class="form-label">Date of Birth</label>
+                    <input type="date" name="date_of_birth" class="form-control" required>
+                </div>
+            </div>
+
+            <div class="text-center mt-3">
+                <button type="submit" class="btn btn-primary">Create Student</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

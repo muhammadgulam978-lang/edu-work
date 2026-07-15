@@ -1,10 +1,12 @@
 # student_profile/views.py
 
-from django.contrib.auth.models    import User
+from django.contrib.auth.models    import User, Group
+from django.contrib.auth.password_validation import validate_password
 from django.contrib                 import messages
 from django.shortcuts               import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.utils                   import timezone
+from django.db import transaction
 import uuid
 
 from .models                        import Student, AssignmentSubmission
@@ -136,6 +138,101 @@ def create_student(request):
     from admin_panel.models import Class
     classes = Class.objects.all().order_by('class_name')
     return render(request, 'student_profile/create_student.html', {'classes': classes})
+
+
+@login_required
+def create_student(request):
+    if not request.user.is_staff:
+        messages.error(request, "Only admin can create student accounts.")
+        return redirect('student_dashboard')
+
+    if request.method == 'POST':
+        name = request.POST.get('name', '').strip()
+        email = request.POST.get('email', '').strip()
+        login_id = request.POST.get('login_id', '').strip()
+        password = request.POST.get('password', '')
+        confirm_password = request.POST.get('confirm_password', '')
+        student_id = request.POST.get('student_id', '').strip()
+        class_id = request.POST.get('class_id')
+        section_id = request.POST.get('section_id') or None
+        roll_no = request.POST.get('roll_no', '').strip()
+        father_name = request.POST.get('father_name', '').strip()
+        mother_name = request.POST.get('mother_name', '').strip()
+        gender = request.POST.get('gender', 'Male')
+        date_of_birth = request.POST.get('date_of_birth')
+        phone = request.POST.get('phone', '').strip()
+
+        required_values = [
+            name, email, login_id, password, confirm_password, student_id,
+            roll_no, father_name, mother_name, date_of_birth,
+        ]
+        if not all(required_values):
+            messages.error(request, "Name, email, login ID, password, student ID, roll no, family details, and date of birth are required.")
+            return redirect('create_student')
+
+        if User.objects.filter(email=email).exists():
+            messages.error(request, f"This email '{email}' is already registered.")
+            return redirect('create_student')
+        if User.objects.filter(username__iexact=login_id).exists():
+            messages.error(request, f"This login ID '{login_id}' already exists.")
+            return redirect('create_student')
+        if Student.objects.filter(student_id=student_id).exists():
+            messages.error(request, f"This student ID '{student_id}' already exists.")
+            return redirect('create_student')
+        if password != confirm_password:
+            messages.error(request, "Password and confirm password do not match.")
+            return redirect('create_student')
+
+        try:
+            validate_password(password)
+        except Exception as password_error:
+            messages.error(request, " ".join(password_error.messages))
+            return redirect('create_student')
+
+        try:
+            with transaction.atomic():
+                user = User.objects.create_user(
+                    username=login_id,
+                    email=email,
+                    password=password,
+                    first_name=name,
+                )
+                student_group, _ = Group.objects.get_or_create(name="Student")
+                user.groups.set([student_group])
+
+                student = Student.objects.create(
+                    user=user,
+                    student_id=student_id,
+                    name=name,
+                    father_name=father_name,
+                    mother_name=mother_name,
+                    class_fk_id=class_id if class_id else None,
+                    section_id=section_id,
+                    roll_no=roll_no,
+                    phone=phone or None,
+                    gender=gender,
+                    date_of_birth=date_of_birth,
+                    email=email,
+                )
+
+            email_ok, email_msg = send_student_credentials_email(student, password)
+            if email_ok:
+                messages.success(request, f"Student '{name}' account created. Login credentials were sent to {email}.")
+            else:
+                messages.warning(request, f"Student account created but email was not sent: {email_msg}. Login ID: {login_id}")
+        except Exception as e:
+            messages.error(request, f"Student account was not created: {str(e)}")
+            return redirect('create_student')
+
+        return redirect('admission_list')
+
+    from admin_panel.models import Class, Section
+    classes = Class.objects.all().order_by('class_name')
+    sections = Section.objects.select_related("class_fk").all().order_by("class_fk__class_name", "section_name")
+    return render(request, 'student_profile/create_student.html', {
+        'classes': classes,
+        'sections': sections,
+    })
 
 
 # =============================================================

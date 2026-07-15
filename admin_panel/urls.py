@@ -9,6 +9,7 @@ urlpatterns = [
     path('admission_list/', views.admission_list, name='admission_list'),
     path('admission/<int:pk>/update_status/', views.update_admission_status, name='update_admission_status'),
     path('rejection_reason/<int:admission_id>/', views.reject_reason, name='reject_reason'),
+    path('admission/<int:admission_id>/approve-credentials/', views.approve_admission_credentials, name='approve_admission_credentials'),
     path('change_admission_status/<int:admission_id>/', views.change_admission_status, name='change_admission_status'),
     
     

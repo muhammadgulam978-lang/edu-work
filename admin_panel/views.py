@@ -3,6 +3,7 @@ from django.contrib.auth import login
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib import messages
 from django.contrib.auth.models import User, Group, Permission
+from django.contrib.auth.password_validation import validate_password
 from django.db import transaction
 from django.contrib.auth.decorators import permission_required
 from django.core.mail import send_mail
@@ -172,15 +173,19 @@ def assign_role(request):
     if request.method == 'POST':
         form = AssignRoleForm(request.POST)
         if form.is_valid():
-            user = form.cleaned_data['user']
+            user = User.objects.create_user(
+                username=form.cleaned_data['username'],
+                email=form.cleaned_data['email'],
+                password=form.cleaned_data['password'],
+                is_staff=form.cleaned_data['role'].name.lower() == 'admin',
+            )
             role = form.cleaned_data['role']
 
-            assign_role_to_user(user, role)
             user.groups.clear()
             user.groups.add(role)
             user.save()
 
-            messages.success(request, f"Role '{role.name}' assigned to '{user.username}'!")
+            messages.success(request, f"User '{user.username}' created with role '{role.name}'.")
             return redirect('assign_role')
     else:
         form = AssignRoleForm()
@@ -960,9 +965,25 @@ from .utils import group_required
 @group_required('Admin')
 def create_admin_user(request):
     if request.method == "POST":
-        email = request.POST.get("email")
-        password = request.POST.get("password")
-        username = "admin_" + get_random_string(6)
+        username = request.POST.get("login_id", "").strip()
+        email = request.POST.get("email", "").strip()
+        password = request.POST.get("password", "")
+        confirm_password = request.POST.get("confirm_password", "")
+
+        if not username:
+            messages.error(request, "Login ID is required.")
+            return render(request, 'admin_panel/create_admin_user.html')
+        if User.objects.filter(username__iexact=username).exists():
+            messages.error(request, "This Login ID is already in use.")
+            return render(request, 'admin_panel/create_admin_user.html')
+        if password != confirm_password:
+            messages.error(request, "Password and confirm password do not match.")
+            return render(request, 'admin_panel/create_admin_user.html')
+        try:
+            validate_password(password)
+        except Exception as exc:
+            messages.error(request, " ".join(exc.messages) if hasattr(exc, "messages") else str(exc))
+            return render(request, 'admin_panel/create_admin_user.html')
 
         with transaction.atomic():
             user = User.objects.create_user(
@@ -1332,6 +1353,177 @@ def generate_unique_student_id():
             continue
 
 
+@permission_required('admin_panel.change_admission', raise_exception=True)
+def approve_admission_credentials(request, admission_id):
+    admission = get_object_or_404(Admission, id=admission_id)
+    student_login_default = admission.student_id or f"STD{admission.id:04d}"
+    parent_login_default = f"PAR{admission.id:04d}" if admission.father_email else ""
+
+    if request.method == "POST":
+        student_login_id = request.POST.get("student_login_id", "").strip()
+        student_password = request.POST.get("student_password", "")
+        student_confirm_password = request.POST.get("student_confirm_password", "")
+        parent_login_id = request.POST.get("parent_login_id", "").strip()
+        parent_password = request.POST.get("parent_password", "")
+        parent_confirm_password = request.POST.get("parent_confirm_password", "")
+        errors = []
+
+        if not student_login_id:
+            errors.append("Student Login ID is required.")
+        if User.objects.filter(username__iexact=student_login_id).exists():
+            errors.append("Student Login ID is already in use.")
+        if admission.email and Student.objects.filter(email__iexact=admission.email).exists():
+            errors.append("A student with this email already exists.")
+        if student_password != student_confirm_password:
+            errors.append("Student password and confirm password do not match.")
+        else:
+            try:
+                validate_password(student_password)
+            except Exception as exc:
+                errors.extend(exc.messages if hasattr(exc, "messages") else [str(exc)])
+
+        needs_parent_account = bool(admission.father_email)
+        existing_parent_user = User.objects.filter(email__iexact=admission.father_email).first() if needs_parent_account else None
+        if needs_parent_account:
+            if not parent_login_id:
+                errors.append("Parent Login ID is required.")
+            existing_login = User.objects.filter(username__iexact=parent_login_id).first()
+            if existing_login and existing_login != existing_parent_user:
+                errors.append("Parent Login ID is already in use.")
+            if parent_password != parent_confirm_password:
+                errors.append("Parent password and confirm password do not match.")
+            else:
+                try:
+                    validate_password(parent_password)
+                except Exception as exc:
+                    errors.extend(exc.messages if hasattr(exc, "messages") else [str(exc)])
+
+        if errors:
+            for error in errors:
+                messages.error(request, error)
+            return render(request, "admin_panel/approve_admission_credentials.html", {
+                "admission": admission,
+                "student_login_default": student_login_id or student_login_default,
+                "parent_login_default": parent_login_id or parent_login_default,
+            })
+
+        student_user = None
+        parent_user = None
+        student = None
+
+        with transaction.atomic():
+            student_user = User.objects.create_user(
+                username=student_login_id,
+                email=admission.email or "",
+                password=student_password,
+                first_name=admission.name,
+            )
+            student_group, _ = Group.objects.get_or_create(name="Student")
+            student_user.groups.add(student_group)
+
+            student = Student.objects.create(
+                user=student_user,
+                academic_year=admission.academic_year,
+                student_id=admission.student_id or student_login_id,
+                name=admission.name,
+                father_name=admission.father_name,
+                mother_name=admission.mother_name or "Unknown",
+                class_fk=admission.class_fk,
+                section=admission.section,
+                roll_no=admission.student_id or student_login_id,
+                phone=admission.contact,
+                gender=(admission.gender or "Male").title(),
+                date_of_birth=admission.dob or date.today(),
+                email=admission.email or f"{student_login_id}@edupilot.local",
+            )
+
+            if needs_parent_account:
+                parent_group, _ = Group.objects.get_or_create(name="Parent")
+                if existing_parent_user:
+                    parent_user = existing_parent_user
+                    parent_user.username = parent_login_id
+                    parent_user.set_password(parent_password)
+                    parent_user.first_name = admission.father_name
+                    parent_user.save()
+                else:
+                    parent_user = User.objects.create_user(
+                        username=parent_login_id,
+                        email=admission.father_email or "",
+                        password=parent_password,
+                        first_name=admission.father_name,
+                    )
+                parent_user.groups.add(parent_group)
+
+                parent, _ = Parent.objects.get_or_create(
+                    email=admission.father_email,
+                    defaults={
+                        "user": parent_user,
+                        "full_name": admission.father_name,
+                        "phone": admission.father_contact or admission.contact,
+                        "address": admission.address,
+                        "occupation": admission.father_occupation,
+                    }
+                )
+                parent.user = parent_user
+                parent.full_name = admission.father_name or parent.full_name
+                parent.phone = admission.father_contact or admission.contact
+                parent.address = admission.address
+                parent.occupation = admission.father_occupation
+                parent.save()
+                parent.students.add(student)
+
+            admission.admission_status = "approved"
+            admission.save()
+
+        site_url = getattr(settings, "SITE_URL", "http://127.0.0.1:8000").rstrip("/")
+        if admission.email:
+            try:
+                send_mail(
+                    "Student Portal Login Details",
+                    (
+                        f"Hello {admission.name},\n\n"
+                        f"Your student portal account has been approved.\n\n"
+                        f"Login ID: {student_user.username}\n"
+                        f"Password: {student_password}\n"
+                        f"Login URL: {site_url}/login/student/\n\n"
+                        "Thanks\nEduPilot"
+                    ),
+                    settings.DEFAULT_FROM_EMAIL,
+                    [admission.email],
+                    fail_silently=False,
+                )
+            except Exception as exc:
+                messages.warning(request, f"Student account approved, but email failed: {exc}")
+
+        if parent_user and admission.father_email:
+            try:
+                send_mail(
+                    "Parent Portal Login Details",
+                    (
+                        f"Hello {admission.father_name},\n\n"
+                        f"Your parent portal account has been created.\n\n"
+                        f"Login ID: {parent_user.username}\n"
+                        f"Password: {parent_password}\n"
+                        f"Login URL: {site_url}/login/parent/\n\n"
+                        "Thanks\nEduPilot"
+                    ),
+                    settings.DEFAULT_FROM_EMAIL,
+                    [admission.father_email],
+                    fail_silently=False,
+                )
+            except Exception as exc:
+                messages.warning(request, f"Parent account created, but email failed: {exc}")
+
+        messages.success(request, "Admission approved and portal credentials saved.")
+        return redirect("admission_list")
+
+    return render(request, "admin_panel/approve_admission_credentials.html", {
+        "admission": admission,
+        "student_login_default": student_login_default,
+        "parent_login_default": parent_login_default,
+    })
+
+
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
@@ -1367,6 +1559,9 @@ def change_admission_status(request, admission_id):
     # =========================================================
     # APPROVED
     # =========================================================
+    if status == 'approved':
+        return redirect('approve_admission_credentials', admission_id=admission.id)
+
     if status == 'approved':
         print(">>> ENTERED APPROVED BLOCK")
 
@@ -1945,14 +2140,14 @@ def teacher_create(request):
                 messages.error(request, "A user with this email already exists.")
                 return render(request, "admin_panel/teacher_form.html", {"form": form})
 
-            base = slugify(teacher.name) or "teacher"
-            username = f"{base}_{str(uuid.uuid4())[:5]}"
+            username = form.cleaned_data["login_id"].strip()
+            password = form.cleaned_data["password"]
 
             with transaction.atomic():
                 user = User.objects.create_user(
                     username=username,
                     email=teacher.email,
-                    password=DEFAULT_TEACHER_PASSWORD,
+                    password=password,
                     first_name=teacher.name
                 )
                 user.groups.set([teacher_group])
@@ -1963,7 +2158,7 @@ def teacher_create(request):
             try:
                 send_mail(
                     subject="Teacher account created",
-                    message=f"Username: {user.username}\nPassword: {DEFAULT_TEACHER_PASSWORD}",
+                    message=f"Username: {user.username}\nPassword: {password}\nLogin URL: {getattr(settings, 'SITE_URL', 'http://127.0.0.1:8000')}/login/teacher/",
                     from_email=getattr(settings, "DEFAULT_FROM_EMAIL", None),
                     recipient_list=[teacher.email],
                     fail_silently=True
@@ -4151,9 +4346,29 @@ def bulk_upload_students(request):
                 father_cnic    = _str(row[18])
                 nationality    = _str(row[19])
                 raw_status     = _str(row[20]).lower() or 'pending'
+                login_id       = _str(row[21])
+                password       = _str(row[22])
 
-                if not name:
+                if not name or not login_id or not password:
                     skip_count += 1
+                    error_rows.append(
+                        f"Row {row_num}: Student Name, Login_Id, and Password are required."
+                    )
+                    continue
+
+                if User.objects.filter(username__iexact=login_id).exists():
+                    skip_count += 1
+                    error_rows.append(
+                        f"Row {row_num}: Login ID '{login_id}' pehle se exist karta hai — skip kiya."
+                    )
+                    continue
+                try:
+                    validate_password(password)
+                except Exception as exc:
+                    skip_count += 1
+                    error_rows.append(
+                        f"Row {row_num}: Password invalid — {' '.join(exc.messages) if hasattr(exc, 'messages') else str(exc)}"
+                    )
                     continue
 
                 status_map = {
@@ -4172,7 +4387,18 @@ def bulk_upload_students(request):
                     )
                     continue
 
-                Admission.objects.create(
+                class_obj = Class.objects.filter(class_name__iexact=class_name).first() if class_name else None
+
+                if admission_status == 'approved':
+                    student_email = email or f"{login_id}@edupilot.local"
+                    if Student.objects.filter(email__iexact=student_email).exists():
+                        skip_count += 1
+                        error_rows.append(
+                            f"Row {row_num}: Student email '{student_email}' pehle se exist karta hai — skip kiya."
+                        )
+                        continue
+
+                admission = Admission.objects.create(
                     student_id       = student_id or None,
                     campus           = campus,
                     branch           = branch,
@@ -4188,9 +4414,38 @@ def bulk_upload_students(request):
                     mother_name      = mother_name,
                     father_contact   = father_contact,
                     father_cnic      = father_cnic,
+                    father_occupation= father_occ,
                     academic_year    = active_year,
+                    class_fk         = class_obj,
                     admission_status = admission_status,
+                    nationality      = nationality,
                 )
+
+                if admission_status == 'approved':
+                    with transaction.atomic():
+                        student_group, _ = Group.objects.get_or_create(name="Student")
+                        student_user = User.objects.create_user(
+                            username=login_id,
+                            email=email or "",
+                            password=password,
+                            first_name=name,
+                        )
+                        student_user.groups.add(student_group)
+                        Student.objects.create(
+                            user=student_user,
+                            academic_year=active_year,
+                            student_id=admission.student_id or login_id,
+                            name=name,
+                            father_name=father_name,
+                            mother_name=mother_name or "Unknown",
+                            class_fk=admission.class_fk,
+                            section=admission.section,
+                            roll_no=student_id or login_id,
+                            phone=contact,
+                            gender=(gender or "Male").title(),
+                            date_of_birth=dob or date.today(),
+                            email=email or f"{login_id}@edupilot.local",
+                        )
                 success_count += 1
 
             except Exception as e:
@@ -4246,15 +4501,34 @@ def bulk_upload_teachers(request):
                 subject_name  = _str(row[11])
                 joining_date  = _parse_date(row[13])
                 raw_status    = _str(row[14]).lower() or 'active'
+                login_id      = _str(row[15])
+                password      = _str(row[16])
 
-                if not name or not email:
+                if not name or not email or not login_id or not password:
                     skip_count += 1
+                    error_rows.append(
+                        f"Row {row_num}: Name, Email, Login_Id, and Password are required."
+                    )
                     continue
 
                 if User.objects.filter(email__iexact=email).exists():
                     skip_count += 1
                     error_rows.append(
                         f"Row {row_num}: Email '{email}' pehle se exist karta hai — skip kiya."
+                    )
+                    continue
+                if User.objects.filter(username__iexact=login_id).exists():
+                    skip_count += 1
+                    error_rows.append(
+                        f"Row {row_num}: Login ID '{login_id}' pehle se exist karta hai — skip kiya."
+                    )
+                    continue
+                try:
+                    validate_password(password)
+                except Exception as exc:
+                    skip_count += 1
+                    error_rows.append(
+                        f"Row {row_num}: Password invalid — {' '.join(exc.messages) if hasattr(exc, 'messages') else str(exc)}"
                     )
                     continue
 
@@ -4266,13 +4540,10 @@ def bulk_upload_teachers(request):
                 teacher_status = status_map.get(raw_status, 'active')
 
                 with transaction.atomic():
-                    base     = slugify(name) or "teacher"
-                    username = f"{base}_{str(uuid.uuid4())[:5]}"
-
                     user = User.objects.create_user(
-                        username   = username,
+                        username   = login_id,
                         email      = email,
-                        password   = DEFAULT_TEACHER_PASSWORD,
+                        password   = password,
                         first_name = name,
                     )
                     user.groups.set([teacher_group])

@@ -222,6 +222,17 @@
             return;
         }
 
+        if (selectElement.value === 'approved') {
+
+            const admissionId =
+                form.action.split('/').filter(Boolean).pop();
+
+            window.location.href =
+                `/admin_panel/admission/${admissionId}/approve-credentials/`;
+
+            return;
+        }
+
         form.submit();
     }
 
