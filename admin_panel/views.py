@@ -896,6 +896,259 @@ def build_admin_dashboard_context():
     }
 
 
+def build_ai_analytics_data():
+    from django.utils import timezone
+    from django.db.models import Count, Sum
+    from datetime import timedelta
+    from student_profile.models import Student as PortalStudent
+    from teacher_dashboard.models import Attendance, Assignment, LectureNote, Quiz, Teacher as PortalTeacher
+    from .models import (
+        Admission, AssignedPeriod, AutomationJob, Class, FeeVoucher, LeaveApplication,
+        NotificationQueue, SalaryAutomationJob, Subject, TeacherFixture,
+        TeacherFixtureNotificationLog,
+    )
+
+    today = timezone.localdate()
+    month_start = today.replace(day=1)
+
+    total_students = _safe_value(lambda: PortalStudent.objects.count())
+    total_teachers = _safe_value(lambda: PortalTeacher.objects.count())
+    total_classes = _safe_value(lambda: Class.objects.count())
+    total_subjects = _safe_value(lambda: Subject.objects.count())
+
+    attendance_today = _safe_value(lambda: Attendance.objects.filter(date=today).count())
+    absent_today = _safe_value(lambda: Attendance.objects.filter(date=today, status="absent").count())
+    present_today = _safe_value(lambda: Attendance.objects.filter(date=today, status="present").count())
+    attendance_rate = round((present_today / attendance_today) * 100, 1) if attendance_today else 0
+
+    admissions_month = _safe_value(lambda: Admission.objects.filter(admission_date__gte=month_start).count())
+    pending_admissions = _safe_value(lambda: Admission.objects.filter(admission_status="pending").count())
+    approved_admissions = _safe_value(lambda: Admission.objects.filter(admission_status="approved").count())
+
+    fee_total = _safe_value(lambda: FeeVoucher.objects.aggregate(total=Sum("net_amount"))["total"], 0) or 0
+    fee_paid = _safe_value(lambda: FeeVoucher.objects.filter(status="PAID").aggregate(total=Sum("net_amount"))["total"], 0) or 0
+    unpaid_vouchers = _safe_value(lambda: FeeVoucher.objects.exclude(status="PAID").count())
+    fee_collection_rate = round((float(fee_paid) / float(fee_total)) * 100, 1) if fee_total else 0
+
+    assigned_periods = _safe_value(lambda: AssignedPeriod.objects.count())
+    fixtures_total = _safe_value(lambda: TeacherFixture.objects.count())
+    fixtures_today = _safe_value(lambda: TeacherFixture.objects.filter(fixture_date=today).count())
+    uncovered_fixtures = _safe_value(lambda: TeacherFixture.objects.filter(fixture_status__in=["uncovered", "cancelled"]).count())
+
+    pending_leaves = _safe_value(lambda: LeaveApplication.objects.filter(status="pending").count())
+    approved_leaves_month = _safe_value(lambda: LeaveApplication.objects.filter(status="approved", action_date__date__gte=month_start).count())
+    failed_notifications = _safe_value(lambda: NotificationQueue.objects.filter(status="FAILED").count()) + _safe_value(
+        lambda: TeacherFixtureNotificationLog.objects.filter(status="failed").count()
+    )
+
+    assignments_due = _safe_value(lambda: Assignment.objects.filter(due_date__gte=today).count())
+    quizzes_due = _safe_value(lambda: Quiz.objects.filter(due_date__gte=today).count())
+    lecture_notes = _safe_value(lambda: LectureNote.objects.count())
+
+    exam_schedules = 0
+    seating_plans = 0
+    try:
+        from exam_system.models import ExamSchedule, ExamSeatingPlan
+        exam_schedules = ExamSchedule.objects.count()
+        seating_plans = ExamSeatingPlan.objects.count()
+    except Exception:
+        pass
+
+    ai_sessions = 0
+    ai_docs = 0
+    ai_attempts = 0
+    try:
+        from ai_tutor.models import AITutorSession, AIKnowledgeDocument, AIPracticeAttempt
+        ai_sessions = AITutorSession.objects.count()
+        ai_docs = AIKnowledgeDocument.objects.count()
+        ai_attempts = AIPracticeAttempt.objects.count()
+    except Exception:
+        pass
+
+    failed_fee_jobs = _safe_value(lambda: AutomationJob.objects.filter(status="FAILED").count())
+    failed_salary_jobs = _safe_value(lambda: SalaryAutomationJob.objects.filter(status="FAILED").count())
+
+    risk_score = 0
+    risk_score += min(absent_today * 6, 30)
+    risk_score += min(pending_admissions * 4, 20)
+    risk_score += min(unpaid_vouchers * 3, 20)
+    risk_score += min(uncovered_fixtures * 8, 20)
+    risk_score += min(failed_notifications * 5, 10)
+    risk_score = min(risk_score, 100)
+
+    def status_for(value, warning=1):
+        if value >= warning:
+            return "Needs Review"
+        return "Active"
+
+    kpis = [
+        {"key": "students", "title": "Students", "value": total_students, "label": "Active profiles", "tone": "teal", "icon": "fas fa-user-graduate"},
+        {"key": "attendance", "title": "Attendance Today", "value": f"{attendance_rate}%", "label": f"{absent_today} absent records", "tone": "green" if absent_today == 0 else "warning", "icon": "fas fa-calendar-check"},
+        {"key": "fees", "title": "Fee Collection", "value": f"{fee_collection_rate}%", "label": f"{unpaid_vouchers} unpaid vouchers", "tone": "blue" if unpaid_vouchers == 0 else "warning", "icon": "fas fa-wallet"},
+        {"key": "risk", "title": "AI Risk Index", "value": risk_score, "label": "Operational risk score", "tone": "green" if risk_score < 35 else "warning", "icon": "fas fa-brain"},
+    ]
+
+    modules = [
+        {"title": "Admissions Intelligence", "status": status_for(pending_admissions), "primary_value": admissions_month, "primary_label": "This Month", "secondary_value": pending_admissions, "secondary_label": "Pending", "url": _safe_reverse("admission_list"), "icon": "fas fa-user-plus"},
+        {"title": "Timetable / Fixture AI", "status": status_for(uncovered_fixtures), "primary_value": assigned_periods, "primary_label": "Assigned Periods", "secondary_value": fixtures_today, "secondary_label": "Today Fixtures", "url": _safe_reverse("timetable_automation"), "icon": "fas fa-calendar-alt"},
+        {"title": "HR & Leave Intelligence", "status": status_for(pending_leaves), "primary_value": pending_leaves, "primary_label": "Pending Leaves", "secondary_value": approved_leaves_month, "secondary_label": "Approved Month", "url": _safe_reverse("leave_list"), "icon": "fas fa-users-cog"},
+        {"title": "Academic Content", "status": "Active", "primary_value": assignments_due + quizzes_due, "primary_label": "Due Items", "secondary_value": lecture_notes, "secondary_label": "Lecture Notes", "url": _safe_reverse("admin_view_assignments"), "icon": "fas fa-book-open"},
+        {"title": "Exam Intelligence", "status": "Ready", "primary_value": exam_schedules, "primary_label": "Schedules", "secondary_value": seating_plans, "secondary_label": "Seats", "url": _safe_reverse("exam_plan_list"), "icon": "fas fa-file-signature"},
+        {"title": "AI Tutor Signals", "status": "Active" if ai_sessions else "Ready", "primary_value": ai_sessions, "primary_label": "Sessions", "secondary_value": ai_docs, "secondary_label": "Knowledge Docs", "url": _safe_reverse("ai_tutor_dashboard", "#"), "icon": "fas fa-robot"},
+    ]
+
+    alerts = []
+    if absent_today:
+        alerts.append({"title": "Attendance attention", "detail": f"{absent_today} absence record(s) found today.", "priority": "High", "url": "#"})
+    if pending_admissions:
+        alerts.append({"title": "Admissions pending", "detail": f"{pending_admissions} admission request(s) need review.", "priority": "Medium", "url": _safe_reverse("admission_list")})
+    if uncovered_fixtures:
+        alerts.append({"title": "Uncovered fixture risk", "detail": f"{uncovered_fixtures} fixture(s) need substitute review.", "priority": "Critical", "url": _safe_reverse("timetable_automation")})
+    if failed_notifications:
+        alerts.append({"title": "Notification delivery issue", "detail": f"{failed_notifications} failed delivery log(s).", "priority": "High", "url": _safe_reverse("notification-queue")})
+    if not alerts:
+        alerts.append({"title": "All clear", "detail": "No critical operational alerts detected from current data.", "priority": "Low", "url": "#"})
+
+    trends = [
+        {"label": "Present", "value": present_today, "max": max(attendance_today, 1), "tone": "green"},
+        {"label": "Absent", "value": absent_today, "max": max(attendance_today, 1), "tone": "danger"},
+        {"label": "Approved Admissions", "value": approved_admissions, "max": max(approved_admissions + pending_admissions, 1), "tone": "teal"},
+        {"label": "Pending Admissions", "value": pending_admissions, "max": max(approved_admissions + pending_admissions, 1), "tone": "warning"},
+        {"label": "Paid Fees", "value": float(fee_paid), "max": max(float(fee_total), 1), "tone": "green"},
+        {"label": "Unpaid Vouchers", "value": unpaid_vouchers, "max": max(unpaid_vouchers + _safe_value(lambda: FeeVoucher.objects.filter(status='PAID').count()), 1), "tone": "warning"},
+    ]
+
+    copilot_examples = [
+        "Show attendance today",
+        "Which students are at risk?",
+        "Compare fee collection with last month",
+        "Open pending admissions",
+        "Generate executive report",
+        "Show teacher workload",
+    ]
+
+    search_base = _safe_reverse("admin_search")
+    quick_actions = [
+        {"title": "Generate Report", "url": _safe_reverse("ai_analytics_reports"), "icon": "fas fa-file-export"},
+        {"title": "Compare Data", "url": f"{search_base}?q=compare fee collection with last month", "icon": "fas fa-chart-bar"},
+        {"title": "Forecast", "url": f"{search_base}?q=forecast", "icon": "fas fa-chart-line"},
+        {"title": "Notify Parents", "url": _safe_reverse("notification-queue"), "icon": "fas fa-bell"},
+        {"title": "Open Student Search", "url": f"{search_base}?q=student", "icon": "fas fa-search"},
+        {"title": "Automation Center", "url": _safe_reverse("automation-dashboard"), "icon": "fas fa-cogs"},
+    ]
+
+    def month_bounds(base_date, offset):
+        month = base_date.month + offset
+        year = base_date.year + ((month - 1) // 12)
+        month = ((month - 1) % 12) + 1
+        start = base_date.replace(year=year, month=month, day=1)
+        if month == 12:
+            end = start.replace(year=year + 1, month=1, day=1)
+        else:
+            end = start.replace(month=month + 1)
+        return start, end
+
+    month_labels = []
+    admissions_series = []
+    fee_total_series = []
+    fee_paid_series = []
+    fixture_manual_series = []
+    fixture_auto_series = []
+    for offset in range(-5, 1):
+        start, end = month_bounds(today, offset)
+        month_labels.append(start.strftime("%b"))
+        admissions_series.append(_safe_value(lambda s=start, e=end: Admission.objects.filter(admission_date__gte=s, admission_date__lt=e).count()))
+        fee_total_series.append(float(_safe_value(lambda s=start, e=end: FeeVoucher.objects.filter(issue_date__gte=s, issue_date__lt=e).aggregate(total=Sum("net_amount"))["total"], 0) or 0))
+        fee_paid_series.append(float(_safe_value(lambda s=start, e=end: FeeVoucher.objects.filter(issue_date__gte=s, issue_date__lt=e, status="PAID").aggregate(total=Sum("net_amount"))["total"], 0) or 0))
+        fixture_manual_series.append(_safe_value(lambda s=start, e=end: TeacherFixture.objects.filter(fixture_date__gte=s, fixture_date__lt=e, assignment_mode="manual").count()))
+        fixture_auto_series.append(_safe_value(lambda s=start, e=end: TeacherFixture.objects.filter(fixture_date__gte=s, fixture_date__lt=e).exclude(assignment_mode="manual").count()))
+
+    day_labels = []
+    present_series = []
+    absent_series = []
+    leave_series = []
+    for offset in range(6, -1, -1):
+        day = today - timedelta(days=offset)
+        day_labels.append(day.strftime("%a"))
+        present_series.append(_safe_value(lambda d=day: Attendance.objects.filter(date=d, status="present").count()))
+        absent_series.append(_safe_value(lambda d=day: Attendance.objects.filter(date=d, status="absent").count()))
+        leave_series.append(_safe_value(lambda d=day: Attendance.objects.filter(date=d, status="leave").count()))
+
+    workload_rows = _safe_value(
+        lambda: list(
+            AssignedPeriod.objects.values("teacher__name")
+            .annotate(total=Count("id"))
+            .order_by("-total")[:6]
+        ),
+        [],
+    )
+    workload_labels = [row.get("teacher__name") or "Teacher" for row in workload_rows]
+    workload_values = [row.get("total", 0) for row in workload_rows]
+
+    charts = {
+        "attendance": {
+            "labels": day_labels,
+            "present": present_series,
+            "absent": absent_series,
+            "leave": leave_series,
+        },
+        "fees": {
+            "labels": month_labels,
+            "total": fee_total_series,
+            "paid": fee_paid_series,
+        },
+        "admissions": {
+            "labels": month_labels,
+            "values": admissions_series,
+        },
+        "fixture_mix": {
+            "labels": month_labels,
+            "manual": fixture_manual_series,
+            "auto": fixture_auto_series,
+        },
+        "attendance_donut": {
+            "labels": ["Present", "Absent", "Leave"],
+            "values": [present_today, absent_today, _safe_value(lambda: Attendance.objects.filter(date=today, status="leave").count())],
+        },
+        "teacher_workload": {
+            "labels": workload_labels,
+            "values": workload_values,
+        },
+    }
+
+    return {
+        "generated_at": timezone.now().strftime("%B %d, %Y, %I:%M %p"),
+        "kpis": kpis,
+        "modules": modules,
+        "alerts": alerts,
+        "trends": trends,
+        "charts": charts,
+        "copilot_examples": copilot_examples,
+        "quick_actions": quick_actions,
+        "counts": {
+            "students": total_students,
+            "teachers": total_teachers,
+            "classes": total_classes,
+            "subjects": total_subjects,
+            "failed_jobs": failed_fee_jobs + failed_salary_jobs,
+        },
+    }
+
+
+@login_required
+@permission_required('auth.view_group', raise_exception=True)
+def ai_analytics_dashboard(request):
+    return render(request, "admin_panel/ai_analytics.html", {
+        "ai_analytics": build_ai_analytics_data(),
+    })
+
+
+@login_required
+@permission_required('auth.view_group', raise_exception=True)
+def ai_analytics_data(request):
+    return JsonResponse(build_ai_analytics_data())
+
+
 @login_required
 @permission_required('auth.view_group', raise_exception=True)
 def admin_dashboard(request):
@@ -1104,6 +1357,7 @@ def _build_admin_search_results(query, limit_per_group=5):
         return []
 
     results = []
+    query_lower = query.lower()
 
     def add_many(module, queryset, title_fn, url, description_fn=None, status_fn=None):
         try:
@@ -1121,6 +1375,132 @@ def _build_admin_search_results(query, limit_per_group=5):
     q = Q
 
     from .models import Admission, Book, Class, Employee, FeeVoucher, LeaveApplication, Section, Subject
+
+    def add_command_results():
+        from django.db.models import Sum
+        from django.utils import timezone
+        from teacher_dashboard.models import Attendance
+        from student_profile.models import Student as PortalStudent
+
+        today = timezone.localdate()
+        month_start = today.replace(day=1)
+        paid_total = _safe_value(
+            lambda: FeeVoucher.objects.filter(status="PAID").aggregate(total=Sum("net_amount"))["total"],
+            0,
+        ) or 0
+        fee_total = _safe_value(lambda: FeeVoucher.objects.aggregate(total=Sum("net_amount"))["total"], 0) or 0
+        unpaid_count = _safe_value(lambda: FeeVoucher.objects.exclude(status="PAID").count())
+        collection_rate = round((float(paid_total) / float(fee_total)) * 100, 1) if fee_total else 0
+        attendance_total = _safe_value(lambda: Attendance.objects.filter(date=today).count())
+        present_count = _safe_value(lambda: Attendance.objects.filter(date=today, status="present").count())
+        absent_count = _safe_value(lambda: Attendance.objects.filter(date=today, status="absent").count())
+        leave_count = _safe_value(lambda: Attendance.objects.filter(date=today, status="leave").count())
+        pending_admissions = _safe_value(lambda: Admission.objects.filter(admission_status="pending").count())
+        students_total = _safe_value(lambda: PortalStudent.objects.count())
+
+        command_matches = False
+
+        if any(word in query_lower for word in ["attendance", "present", "absent", "leave"]):
+            command_matches = True
+            results.append(_admin_search_result(
+                "Attendance Today",
+                "AI Analytics",
+                _safe_reverse("ai_analytics_dashboard"),
+                f"{present_count} present, {absent_count} absent, {leave_count} leave from {attendance_total} marked records.",
+                "Live",
+            ))
+
+        if any(word in query_lower for word in ["fee", "fees", "collection", "compare", "voucher"]):
+            command_matches = True
+            results.append(_admin_search_result(
+                "Fee Collection Summary",
+                "Accounts",
+                _safe_reverse("fee-automation"),
+                f"{collection_rate}% collected. Paid {paid_total}; total billed {fee_total}; {unpaid_count} unpaid vouchers.",
+                "Live",
+            ))
+            results.append(_admin_search_result(
+                "Voucher Management",
+                "Accounts",
+                _safe_reverse("voucher-management"),
+                "Open voucher list for paid, unpaid, partial, and overdue records.",
+                "Open",
+            ))
+
+        if any(word in query_lower for word in ["report", "executive", "analytics", "summary"]):
+            command_matches = True
+            results.append(_admin_search_result(
+                "Executive AI Analytics Report",
+                "AI Analytics",
+                _safe_reverse("ai_analytics_reports"),
+                f"{students_total} students, {attendance_total} attendance records today, {collection_rate}% fee collection, {pending_admissions} pending admissions.",
+                "Ready",
+            ))
+
+        if any(word in query_lower for word in ["forecast", "risk", "predict"]):
+            command_matches = True
+            risk_score = 0
+            risk_score += min(absent_count * 6, 30)
+            risk_score += min(pending_admissions * 4, 20)
+            risk_score += min(unpaid_count * 3, 20)
+            results.append(_admin_search_result(
+                "Forecast And Risk Signal",
+                "AI Analytics",
+                _safe_reverse("ai_analytics_dashboard"),
+                f"Current operational risk estimate is {min(risk_score, 100)} based on absence, admissions, and fee signals.",
+                "Forecast",
+            ))
+
+        if any(word in query_lower for word in ["teacher workload", "workload", "period load", "assigned period"]):
+            command_matches = True
+            results.append(_admin_search_result(
+                "Teacher Workload Chart",
+                "Timetable",
+                _safe_reverse("ai_analytics_dashboard"),
+                "Open AI Analytics teacher workload graph based on assigned periods.",
+                "Live",
+            ))
+            results.append(_admin_search_result(
+                "Assign Period Teachers",
+                "Timetable",
+                _safe_reverse("assign_period"),
+                "Open period assignment screen for detailed teacher timetable allocation.",
+                "Open",
+            ))
+
+        if any(word in query_lower for word in ["parent", "notify", "notification", "message"]):
+            command_matches = True
+            results.append(_admin_search_result(
+                "Notification Queue",
+                "Accounts",
+                _safe_reverse("notification-queue"),
+                "Open pending, sent, and failed parent/student notification queue.",
+                "Open",
+            ))
+
+        if any(word in query_lower for word in ["pending admission", "admission", "admissions"]):
+            command_matches = True
+            results.append(_admin_search_result(
+                "Pending Admissions",
+                "Admissions",
+                _safe_reverse("admission_list"),
+                f"{pending_admissions} admission request(s) need review.",
+                "Review",
+            ))
+
+        if any(word in query_lower for word in ["student", "students", "at risk"]):
+            command_matches = True
+            results.append(_admin_search_result(
+                "Student Search",
+                "Student Gateway",
+                _safe_reverse("admin_ai_student_intelligence"),
+                f"Search student/admission records. Current portal students: {students_total}.",
+                "Open",
+            ))
+
+        return command_matches
+
+    command_matched = add_command_results()
 
     add_many(
         "Admissions",
@@ -1156,6 +1536,10 @@ def _build_admin_search_results(query, limit_per_group=5):
 
     static_pages = [
         ("Timetable Automation", "Timetable", _safe_reverse("timetable_automation")),
+        ("AI Copilot", "AI Analytics", _safe_reverse("admin_ai_copilot")),
+        ("Advanced AI Analytics", "AI Analytics", _safe_reverse("ai_analytics_advanced")),
+        ("AI Analytics Reports", "AI Analytics", _safe_reverse("ai_analytics_reports")),
+        ("Student Insight Profile", "AI Analytics", _safe_reverse("admin_ai_student_intelligence")),
         ("Fixture Management", "Timetable", _safe_reverse("manage_fixture")),
         ("Assign Periods", "Timetable", _safe_reverse("assign_period")),
         ("Fee Automation", "Accounts", _safe_reverse("fee-automation")),
@@ -1169,6 +1553,9 @@ def _build_admin_search_results(query, limit_per_group=5):
     for title, module, url in static_pages:
         if query.lower() in title.lower() or query.lower() in module.lower():
             results.append(_admin_search_result(title, module, url, "Open module"))
+
+    if command_matched and results:
+        return results[:30]
 
     return results[:30]
 

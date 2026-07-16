@@ -1,0 +1,28 @@
+{% extends "admin_panel/bases.html" %}
+{% block title %}Student Insight Profile{% endblock %}
+{% block page_title %}Student Insight Profile{% endblock %}
+{% block content %}
+<style>.ai-student{padding:24px 28px}.ai-card{background:#fff;border:1px solid #e9ecef;border-radius:14px;box-shadow:0 8px 22px rgba(0,0,0,.05);padding:22px;margin-bottom:22px}.ai-card h2,.ai-card h3{font-weight:500}.ai-search{display:flex;gap:12px}.ai-search input{flex:1;border:1px solid #e9ecef;border-radius:10px;padding:12px}.ai-btn{border:0;border-radius:999px;background:#88D0C5;color:#111;padding:12px 18px;font-weight:500;text-decoration:none}.ai-table{width:100%;border-collapse:collapse}.ai-table th,.ai-table td{padding:12px;border-bottom:1px solid #e9ecef;text-align:left}.ai-table th{background:#F5F5FD;font-weight:500}</style>
+<div class="ai-student">
+  <section class="ai-card" style="background:linear-gradient(90deg,#DDF7F2,#F5F5FD)">
+    <h2>Student Insight Profile</h2>
+    <p>Search a student by ID and open complete attendance, fee, marks, AI Tutor, and progress profile.</p>
+  </section>
+  <section class="ai-card">
+    <form class="ai-search" method="get">
+      <input type="text" name="q" value="{{ query }}" placeholder="Enter student ID">
+      <button class="ai-btn" type="submit">Search</button>
+    </form>
+  </section>
+  <section class="ai-card">
+    <h3>Results</h3>
+    <table class="ai-table"><thead><tr><th>ID</th><th>Name</th><th>Class</th><th>Section</th><th>Action</th></tr></thead><tbody>
+      {% for student in results %}
+        <tr><td>{{ student.student_id }}</td><td>{{ student.name }}</td><td>{{ student.class_fk.class_name }}</td><td>{{ student.section.section_name }}</td><td><a href="{% url 'admin_ai_student_intelligence_detail' student.student_id %}">Open Profile</a></td></tr>
+      {% empty %}
+        <tr><td colspan="5">Search by student ID to view records.</td></tr>
+      {% endfor %}
+    </tbody></table>
+  </section>
+</div>
+{% endblock %}

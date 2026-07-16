@@ -745,6 +745,13 @@
 
         .admin-quick-action {
             justify-content: flex-start;
+            width: 100%;
+            background: transparent;
+            border-left: 0;
+            border-right: 0;
+            border-top: 0;
+            cursor: pointer;
+            text-align: left;
         }
 
         @media (max-width: 1199px) {
@@ -880,6 +887,13 @@
                         <a href="{% url 'admin_panel_dashboard' %}" class="ai-icon">
                             <i class="flaticon-381-networking"></i>
                             <span class="nav-text">Dashboard</span>
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="{% url 'ai_analytics_dashboard' %}" class="ai-icon">
+                            <i class="flaticon-381-search-2"></i>
+                            <span class="nav-text">AI Analytics</span>
                         </a>
                     </li>
 
@@ -1294,10 +1308,25 @@
                                 </div>
                                 <div class="admin-quick-list" id="quickActionList">
                                     {% for action in quick_action_cards %}
+                                    {% if action.title == "Generate Report" %}
+                                    <button
+                                        class="admin-quick-action"
+                                        type="button"
+                                        data-auto-report
+                                        data-report-type="full"
+                                        data-period="today"
+                                        data-report-title="Executive AI Report - Today"
+                                        data-source="admin_dashboard_quick_action"
+                                    >
+                                        <span class="admin-icon"><i class="{{ action.icon }}"></i></span>
+                                        <span>{{ action.title }}</span>
+                                    </button>
+                                    {% else %}
                                     <a class="admin-quick-action" href="{{ action.url }}">
                                         <span class="admin-icon"><i class="{{ action.icon }}"></i></span>
                                         <span>{{ action.title }}</span>
                                     </a>
+                                    {% endif %}
                                     {% endfor %}
                                 </div>
                             </div>
@@ -1459,6 +1488,8 @@
     <script src="{% static 'admin_panel/js/custom.min.js' %}"></script>
     <script src="{% static 'admin_panel/js/deznav-init.js' %}"></script>
     <script src="{% static 'admin_panel/js/admin-header-live.js' %}?v=header-live-solid-1"></script>
+
+    {% include "admin_ai/includes/auto_report_modal.html" %}
 
     <script>
         (function () {

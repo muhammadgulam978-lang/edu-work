@@ -1,0 +1,115 @@
+<style>
+  .ai-report-popup-backdrop{position:fixed;inset:0;background:rgba(17,17,17,.28);z-index:9999;display:none;align-items:center;justify-content:center;padding:20px}
+  .ai-report-popup-backdrop.is-open{display:flex}
+  .ai-report-popup{width:min(430px,100%);background:#fff;border:1px solid #e9ecef;border-radius:24px;box-shadow:0 24px 60px rgba(0,0,0,.16);padding:28px 24px 22px;position:relative;text-align:center;color:#111}
+  .ai-report-popup-close{position:absolute;right:18px;top:14px;border:0;background:transparent;color:#9aa0a6;font-size:24px;line-height:1;cursor:pointer}
+  .ai-report-popup-ticket{width:190px;margin:-8px auto 24px;border-radius:14px;background:#88D0C5;color:#111;padding:12px 16px;box-shadow:0 10px 24px rgba(136,208,197,.34);display:flex;align-items:center;justify-content:center;gap:9px;font-weight:500}
+  .ai-report-popup-ticket i{font-size:15px}
+  .ai-report-popup h3{font-size:22px;font-weight:500;margin:0 0 8px}
+  .ai-report-popup p{font-size:15px;color:#6c757d;margin:0 0 20px;line-height:1.5}
+  .ai-report-popup-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}
+  .ai-report-popup-btn{border:1px solid #e9ecef;border-radius:999px;background:#F5F5FD;color:#111;padding:12px 16px;text-decoration:none;font-weight:500;display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer}
+  .ai-report-popup-btn.primary{background:#88D0C5;border-color:#88D0C5}
+  .ai-report-popup-btn.success{background:#8BC740;border-color:#8BC740}
+  .ai-report-popup-btn.dark{background:#111;color:#fff;border-color:#111}
+  .ai-report-popup-status{min-height:18px;font-size:13px;color:#6c757d}
+  .ai-report-popup-spinner{height:42px;width:42px;border-radius:50%;border:4px solid #DDF7F2;border-top-color:#88D0C5;margin:6px auto 18px;animation:aiReportSpin .8s linear infinite}
+  .ai-report-popup-ready .ai-report-popup-spinner{display:none}
+  .ai-report-popup-error .ai-report-popup-spinner{display:none}
+  @keyframes aiReportSpin{to{transform:rotate(360deg)}}
+  @media(max-width:560px){.ai-report-popup-actions{grid-template-columns:1fr}.ai-report-popup{border-radius:18px}}
+</style>
+
+<form style="display:none">{% csrf_token %}</form>
+<div class="ai-report-popup-backdrop" data-ai-report-modal>
+  <div class="ai-report-popup" role="dialog" aria-modal="true" aria-labelledby="ai-report-popup-title">
+    <button class="ai-report-popup-close" type="button" data-ai-report-close aria-label="Close">&times;</button>
+    <div class="ai-report-popup-ticket"><i class="fas fa-file-pdf"></i><span data-ai-report-ticket>Generating report</span></div>
+    <div class="ai-report-popup-spinner" data-ai-report-spinner></div>
+    <h3 id="ai-report-popup-title" data-ai-report-title>Please wait</h3>
+    <p data-ai-report-message>EduPilot is preparing your report from live ERP data.</p>
+    <div class="ai-report-popup-status" data-ai-report-status></div>
+    <div class="ai-report-popup-actions" data-ai-report-actions style="display:none">
+      <a class="ai-report-popup-btn success" data-ai-report-download href="#"><i class="fas fa-download"></i> Download PDF</a>
+      <a class="ai-report-popup-btn primary" data-ai-report-view href="#"><i class="fas fa-eye"></i> View</a>
+      <a class="ai-report-popup-btn" data-ai-report-share href="#"><i class="fas fa-share-alt"></i> Share</a>
+      <button class="ai-report-popup-btn dark" type="button" data-ai-report-close>Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  if(window.EduPilotAutoReportInitialized)return;
+  window.EduPilotAutoReportInitialized=true;
+  const endpoint="{% url 'ai_analytics_report_auto_generate' %}";
+
+  function token(){
+    const input=document.querySelector('[name=csrfmiddlewaretoken]');
+    if(input&&input.value)return input.value;
+    const match=document.cookie.match(/(?:^|; )csrftoken=([^;]+)/);
+    return match?decodeURIComponent(match[1]):'';
+  }
+  function modal(){return document.querySelector('[data-ai-report-modal]');}
+  function setState(state,title,message){
+    const root=modal();
+    if(!root)return;
+    root.classList.add('is-open');
+    root.querySelector('.ai-report-popup').classList.remove('ai-report-popup-ready','ai-report-popup-error');
+    if(state==='ready')root.querySelector('.ai-report-popup').classList.add('ai-report-popup-ready');
+    if(state==='error')root.querySelector('.ai-report-popup').classList.add('ai-report-popup-error');
+    root.querySelector('[data-ai-report-ticket]').textContent=state==='ready'?'Report ready':state==='error'?'Report failed':'Generating report';
+    root.querySelector('[data-ai-report-title]').textContent=title;
+    root.querySelector('[data-ai-report-message]').textContent=message;
+    root.querySelector('[data-ai-report-status]').textContent=state==='loading'?'This may take a few seconds.':'';
+    root.querySelector('[data-ai-report-actions]').style.display=state==='ready'?'grid':'none';
+  }
+  function close(){
+    const root=modal();
+    if(root)root.classList.remove('is-open');
+  }
+  function payloadFrom(el){
+    const data=el.dataset||{};
+    return {
+      report_type:data.reportType||'full',
+      period:data.period||'today',
+      title:data.reportTitle||'',
+      class_id:data.classId||'',
+      section_id:data.sectionId||'',
+      start_date:data.startDate||'',
+      end_date:data.endDate||'',
+      source:data.source||'auto_report_button'
+    };
+  }
+  async function generate(payload){
+    setState('loading','Preparing your report','EduPilot is selecting the right report data and generating a PDF-ready snapshot.');
+    const body=new URLSearchParams();
+    Object.keys(payload||{}).forEach(key=>{if(payload[key]!==undefined&&payload[key]!==null)body.append(key,payload[key]);});
+    try{
+      const response=await fetch(endpoint,{
+        method:'POST',
+        body,
+        headers:{'X-CSRFToken':token(),'X-Requested-With':'XMLHttpRequest'}
+      });
+      const data=await response.json();
+      if(!response.ok||!data.success)throw new Error(data.message||'Report could not be generated.');
+      const root=modal();
+      root.querySelector('[data-ai-report-download]').href=data.pdf_url;
+      root.querySelector('[data-ai-report-view]').href=data.report_url;
+      root.querySelector('[data-ai-report-share]').href=data.share_url||data.report_url;
+      setState('ready',data.title||'Report ready',data.message||'Your report is ready.');
+    }catch(error){
+      setState('error','Report could not be generated',error.message||'Please try again.');
+    }
+  }
+  document.addEventListener('click',function(event){
+    const closeBtn=event.target.closest('[data-ai-report-close]');
+    if(closeBtn){event.preventDefault();close();return;}
+    const trigger=event.target.closest('[data-auto-report]');
+    if(!trigger)return;
+    event.preventDefault();
+    generate(payloadFrom(trigger));
+  });
+  window.EduPilotAutoReport={generate};
+})();
+</script>

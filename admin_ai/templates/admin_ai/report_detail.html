@@ -1,0 +1,58 @@
+{% extends "admin_panel/bases.html" %}
+{% block title %}AI Report Preview{% endblock %}
+{% block page_title %}AI Report Preview{% endblock %}
+{% block content %}
+<style>
+  .ai-report{padding:24px 28px}.ai-card{background:#fff;border:1px solid #e9ecef;border-radius:14px;box-shadow:0 8px 22px rgba(0,0,0,.05);padding:22px;margin-bottom:22px}.ai-card h2,.ai-card h3{font-weight:500}.ai-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}.ai-btn{border:0;border-radius:999px;background:#88D0C5;color:#111;padding:12px 18px;font-weight:500;text-decoration:none}.ai-btn.secondary{background:#F5F5FD}.ai-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.ai-mini{background:#F5F5FD;border:1px solid #e9ecef;border-radius:12px;padding:14px}.ai-mini span{display:block;font-size:26px;font-weight:500}.ai-share textarea,.ai-share input{border:1px solid #e9ecef;border-radius:10px;padding:11px;width:100%;margin-bottom:10px}@media(max-width:900px){.ai-grid{grid-template-columns:1fr 1fr}}
+</style>
+<div class="ai-report">
+  <section class="ai-card" style="background:linear-gradient(90deg,#DDF7F2,#F5F5FD)">
+    <h2>{{ report.title }}</h2>
+    <p>{{ report.get_report_type_display }} &middot; Created {{ report.created_at }} &middot; Share: {{ report.get_share_status_display }}</p>
+    <div class="ai-actions">
+      <a class="ai-btn" href="{% url 'ai_analytics_report_pdf' report.uuid %}">Download PDF</a>
+      <a class="ai-btn" href="{% url 'ai_analytics_report_excel' report.uuid %}">Download Excel</a>
+      <a class="ai-btn secondary" href="{{ whatsapp_url }}" target="_blank">WhatsApp</a>
+      <a class="ai-btn secondary" href="{{ facebook_url }}" target="_blank">Facebook</a>
+      <a class="ai-btn secondary" href="{{ x_url }}" target="_blank">X / Twitter</a>
+      <button class="ai-btn secondary" type="button" data-copy-share="{{ report_url }}">Copy for Instagram</button>
+      <button class="ai-btn secondary" type="button" data-copy-share="{{ report_url }}">Copy for TikTok</button>
+    </div>
+  </section>
+
+  <section class="ai-card">
+    <h3>Preview Summary</h3>
+    <div class="ai-grid">
+      {% for kpi in snapshot.kpis %}
+        <div class="ai-mini"><span>{{ kpi.value }}</span>{{ kpi.title }}<br><small>{{ kpi.label }}</small></div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="ai-card ai-share" id="share-report">
+    <h3>Share Report</h3>
+    <input type="text" value="{{ report_url }}" readonly onclick="this.select()">
+    <form method="post" action="{% url 'ai_analytics_report_share' report.uuid %}">
+      {% csrf_token %}
+      <textarea name="emails" rows="2" placeholder="recipient@example.com, another@example.com"></textarea>
+      <textarea name="message" rows="3" placeholder="Optional message"></textarea>
+      <button class="ai-btn" type="submit">Email PDF + Link</button>
+    </form>
+  </section>
+</div>
+<script>
+  document.querySelectorAll("[data-copy-share]").forEach(function(button) {
+    button.dataset.originalText = button.textContent;
+    button.addEventListener("click", function() {
+      var value = button.getAttribute("data-copy-share");
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(value);
+      }
+      button.textContent = "Link Copied";
+      setTimeout(function() {
+        button.textContent = button.dataset.originalText;
+      }, 1400);
+    });
+  });
+</script>
+{% endblock %}

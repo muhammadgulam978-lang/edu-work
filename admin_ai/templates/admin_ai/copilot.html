@@ -1,0 +1,152 @@
+{% extends "admin_panel/bases.html" %}
+{% block title %}Admin AI Copilot{% endblock %}
+{% block page_title %}Admin AI Copilot{% endblock %}
+{% block content %}
+<style>
+  .admin-ai-page{padding:24px 28px;color:#111}
+  .admin-ai-hero,.admin-ai-card{background:#fff;border:1px solid #e9ecef;border-radius:14px;box-shadow:0 8px 22px rgba(0,0,0,.05)}
+  .admin-ai-hero{padding:24px;background:linear-gradient(90deg,#DDF7F2,#F5F5FD);margin-bottom:22px}
+  .admin-ai-hero h2,.admin-ai-card h3{font-weight:500;margin:0 0 8px}
+  .admin-ai-hero p,.admin-ai-muted{color:#6c757d;margin:0}
+  .admin-ai-layout{display:grid;grid-template-columns:1.5fr .8fr;gap:22px}
+  .admin-ai-card{padding:22px}
+  .admin-ai-chat{height:430px;overflow:auto;background:#F5F5FD;border-radius:12px;padding:16px;margin-bottom:16px}
+  .admin-ai-msg{max-width:78%;margin:0 0 12px;padding:12px 14px;border-radius:12px;border:1px solid #e9ecef;background:#fff;font-weight:400}
+  .admin-ai-msg.admin{margin-left:auto;background:#DDF7F2}
+  .admin-ai-msg.assistant{background:#fff}
+  .admin-ai-agent-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .admin-ai-agent-pill{border:1px solid #88D0C5;background:#DDF7F2;border-radius:999px;padding:8px 12px;color:#111;text-decoration:none;font-size:14px}
+  .admin-ai-agent-pill.action{background:#DDF7F2;border-color:#88D0C5}
+  .admin-ai-form{display:flex;gap:12px}
+  .admin-ai-form input{flex:1;border:1px solid #e9ecef;border-radius:12px;padding:13px 14px;font-weight:400}
+  .admin-ai-btn,.admin-ai-link{display:inline-flex;align-items:center;gap:8px;border:0;border-radius:999px;padding:12px 18px;background:#88D0C5;color:#111;text-decoration:none;font-weight:500}
+  .admin-ai-chip{display:block;width:100%;text-align:left;border:1px solid #e9ecef;background:#fff;border-radius:12px;padding:12px 14px;margin-bottom:10px;font-weight:400}
+  .admin-ai-tools{display:grid;gap:10px;margin-top:15px}
+  @media(max-width:991px){.admin-ai-layout{grid-template-columns:1fr}.admin-ai-msg{max-width:100%}.admin-ai-form{flex-direction:column}}
+</style>
+
+<div class="admin-ai-page">
+  <section class="admin-ai-hero">
+    <h2>EduPilot Admin AI Copilot</h2>
+    <p>Ask questions about attendance, students, fees, workload, reports, and operational risk using live ERP data.</p>
+  </section>
+
+  <section class="admin-ai-layout">
+    <div class="admin-ai-card">
+      <h3>AI Chat</h3>
+      <p class="admin-ai-muted">Examples: "How many students are absent today?", "Show student ST001 profile", "Compare fee collection".</p>
+      <div class="admin-ai-chat" data-ai-chat>
+        {% for message in conversation.messages.all %}
+          <div class="admin-ai-msg {{ message.sender }}">{{ message.content }}</div>
+          {% if message.sender == "assistant" and message.payload.actions %}
+            <div class="admin-ai-agent-row">
+              {% for action in message.payload.actions %}
+                {% if action.kind == "auto_report" %}
+                  <button
+                    class="admin-ai-agent-pill action"
+                    type="button"
+                    data-auto-report
+                    data-report-type="{{ action.meta.report_type|default:'full' }}"
+                    data-period="{{ action.meta.period|default:'today' }}"
+                    data-report-title="{{ action.meta.title|default:action.label }}"
+                    data-source="{{ action.meta.source|default:'admin_ai_copilot' }}"
+                  >{{ action.label }}</button>
+                {% else %}
+                  <a class="admin-ai-agent-pill action" href="{{ action.url }}">{{ action.label }}</a>
+                {% endif %}
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% empty %}
+          <div class="admin-ai-msg assistant">Hello Admin. I can plan, retrieve live ERP evidence, generate reports, and open relevant intelligence pages for you.</div>
+        {% endfor %}
+      </div>
+      <form class="admin-ai-form" data-ai-form method="post" action="{% url 'admin_ai_copilot_message' %}">
+        {% csrf_token %}
+        <input type="hidden" name="conversation_id" value="{{ conversation.id }}">
+        <input type="text" name="message" placeholder="Ask your system..." autocomplete="off">
+        <button class="admin-ai-btn" type="submit"><i class="fas fa-paper-plane"></i> Ask</button>
+      </form>
+    </div>
+
+    <aside class="admin-ai-card">
+      <h3>Quick Commands</h3>
+      <p class="admin-ai-muted">One click fills and runs the copilot.</p>
+      <div class="admin-ai-tools">
+        <button class="admin-ai-chip" data-prompt="How many students are absent today?">Absent students today</button>
+        <button class="admin-ai-chip" data-prompt="How many students are absent from class 9?">Class-wise absence</button>
+        <button class="admin-ai-chip" data-prompt="Compare fee collection this month">Compare fee collection</button>
+        <button class="admin-ai-chip" data-prompt="Show teacher workload">Teacher workload</button>
+        <button
+          class="admin-ai-chip"
+          data-auto-report
+          data-report-type="full"
+          data-period="today"
+          data-report-title="Executive AI Report - Today"
+          data-source="copilot_quick_command"
+        >Generate report</button>
+      </div>
+      <a class="admin-ai-link" href="{% url 'ai_analytics_advanced' %}"><i class="fas fa-chart-line"></i> Advanced Analytics</a>
+    </aside>
+  </section>
+</div>
+
+{% include "admin_ai/includes/auto_report_modal.html" %}
+
+<script>
+(function(){
+  const form=document.querySelector('[data-ai-form]');
+  const chat=document.querySelector('[data-ai-chat]');
+  if(!form||!chat)return;
+  function add(text,type){
+    const div=document.createElement('div');
+    div.className='admin-ai-msg '+type;
+    div.textContent=text;
+    chat.appendChild(div); chat.scrollTop=chat.scrollHeight;
+  }
+  function addActions(data){
+    if(data.actions&&data.actions.length){
+      const row=document.createElement('div');
+      row.className='admin-ai-agent-row';
+      data.actions.forEach(action=>{
+        if(action.kind==='auto_report'){
+          const btn=document.createElement('button');
+          btn.className='admin-ai-agent-pill action';
+          btn.type='button';
+          btn.dataset.autoReport='true';
+          btn.dataset.reportType=(action.meta&&action.meta.report_type)||'full';
+          btn.dataset.period=(action.meta&&action.meta.period)||'today';
+          btn.dataset.reportTitle=(action.meta&&action.meta.title)||action.label;
+          btn.dataset.source=(action.meta&&action.meta.source)||'admin_ai_copilot';
+          btn.textContent=action.label;
+          row.appendChild(btn);
+        }else{
+          const link=document.createElement('a');
+          link.className='admin-ai-agent-pill action';
+          link.href=action.url;
+          link.textContent=action.label;
+          row.appendChild(link);
+        }
+      });
+      chat.appendChild(row);
+    }
+    chat.scrollTop=chat.scrollHeight;
+  }
+  form.addEventListener('submit', async function(e){
+    e.preventDefault();
+    const input=form.querySelector('[name="message"]');
+    const text=input.value.trim();
+    if(!text)return;
+    add(text,'admin'); input.value='';
+    const body=new FormData(form); body.set('message',text);
+    const response=await fetch(form.action,{method:'POST',body,headers:{'X-Requested-With':'XMLHttpRequest'}});
+    const data=await response.json();
+    add(data.reply||'No response','assistant');
+    addActions(data);
+  });
+  document.querySelectorAll('[data-prompt]').forEach(btn=>{
+    btn.addEventListener('click',()=>{form.querySelector('[name="message"]').value=btn.dataset.prompt; form.requestSubmit();});
+  });
+})();
+</script>
+{% endblock %}

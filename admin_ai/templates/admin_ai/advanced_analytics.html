@@ -1,0 +1,109 @@
+{% extends "admin_panel/bases.html" %}
+{% load static %}
+{% block title %}Advanced AI Analytics{% endblock %}
+{% block page_title %}Advanced AI Analytics{% endblock %}
+{% block content %}
+<style>
+  .ai-advanced{padding:24px 28px;color:#111}
+  .ai-advanced-card{background:#fff;border:1px solid #e9ecef;border-radius:14px;box-shadow:0 8px 22px rgba(0,0,0,.05);padding:22px}
+  .ai-advanced-hero{background:linear-gradient(90deg,#DDF7F2,#F5F5FD);margin-bottom:22px}
+  .ai-advanced h2,.ai-advanced h3,.ai-advanced h4{font-weight:500}
+  .ai-filter-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:14px}
+  .ai-filter-grid select,.ai-filter-grid input{border:1px solid #e9ecef;border-radius:10px;padding:11px 12px}
+  .ai-filter-grid button,.ai-btn{border:0;border-radius:999px;background:#88D0C5;color:#111;padding:11px 18px;font-weight:500;text-decoration:none}
+  .ai-kpi-grid,.ai-chart-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin:22px 0}
+  .ai-kpi{min-height:155px}
+  .ai-icon{height:46px;width:46px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:rgba(255,255,255,.62);border:1px solid #e9ecef;margin-bottom:12px}
+  .tone-teal{background:#DDF7F2;border-color:#88D0C5}.tone-green{background:#EEF9E5;border-color:#8BC740}.tone-blue{background:#F5F5FD;border-color:#e9ecef}.tone-warning{background:#FFF4E5;border-color:#ffc980}
+  .ai-value{font-size:34px;font-weight:500;margin:8px 0}.ai-muted{color:#6c757d}
+  .ai-chart-grid{grid-template-columns:repeat(2,1fr)}.ai-chart-box{height:320px}
+  .ai-table{width:100%;border-collapse:collapse}.ai-table th,.ai-table td{padding:12px;border-bottom:1px solid #e9ecef;text-align:left;font-weight:400}.ai-table th{background:#F5F5FD;font-weight:500}
+  @media(max-width:1100px){.ai-kpi-grid,.ai-chart-grid,.ai-filter-grid{grid-template-columns:1fr 1fr}}@media(max-width:700px){.ai-kpi-grid,.ai-chart-grid,.ai-filter-grid{grid-template-columns:1fr}}
+</style>
+
+<div class="ai-advanced">
+  <section class="ai-advanced-card ai-advanced-hero">
+    <h2>Advanced AI Analytics</h2>
+    <p class="ai-muted">Filtered operational intelligence with live ERP data, graph comparisons, and report-ready snapshots.</p>
+    <form class="ai-filter-grid" method="get">
+      <select name="period">
+        {% for key,label in period_options %}
+          <option value="{{ key }}" {% if analytics.filters.period == key %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+      <select name="class_id">
+        <option value="">All Classes</option>
+        {% for class in classes %}<option value="{{ class.id }}" {% if analytics.filters.class_id == class.id|stringformat:"s" %}selected{% endif %}>{{ class.class_name }}</option>{% endfor %}
+      </select>
+      <select name="section_id">
+        <option value="">All Sections</option>
+        {% for section in sections %}<option value="{{ section.id }}" {% if analytics.filters.section_id == section.id|stringformat:"s" %}selected{% endif %}>{{ section }}</option>{% endfor %}
+      </select>
+      <input type="date" name="start_date" value="{{ analytics.filters.start_date }}">
+      <input type="date" name="end_date" value="{{ analytics.filters.end_date }}">
+      <button type="submit">Apply Filter</button>
+      <button
+        class="ai-btn"
+        type="button"
+        data-auto-report
+        data-report-type="full"
+        data-period="{{ analytics.filters.period|default:'today' }}"
+        data-class-id="{{ analytics.filters.class_id|default:'' }}"
+        data-section-id="{{ analytics.filters.section_id|default:'' }}"
+        data-start-date="{{ analytics.filters.start_date|default:'' }}"
+        data-end-date="{{ analytics.filters.end_date|default:'' }}"
+        data-report-title="Advanced AI Analytics Report"
+        data-source="advanced_analytics"
+      >Generate Report</button>
+    </form>
+  </section>
+
+  <section class="ai-kpi-grid">
+    {% for kpi in analytics.kpis %}
+      <article class="ai-advanced-card ai-kpi tone-{{ kpi.tone }}">
+        <span class="ai-icon"><i class="{{ kpi.icon }}"></i></span>
+        <h4>{{ kpi.title }}</h4>
+        <div class="ai-value">{{ kpi.value }}</div>
+        <p class="ai-muted">{{ kpi.label }}</p>
+      </article>
+    {% endfor %}
+  </section>
+
+  <section class="ai-chart-grid">
+    <article class="ai-advanced-card"><h3>Attendance Trend</h3><div class="ai-chart-box"><canvas id="attendanceChart"></canvas></div></article>
+    <article class="ai-advanced-card"><h3>Fee Collection Compare</h3><div class="ai-chart-box"><canvas id="feeChart"></canvas></div></article>
+    <article class="ai-advanced-card"><h3>Admissions Trend</h3><div class="ai-chart-box"><canvas id="admissionsChart"></canvas></div></article>
+    <article class="ai-advanced-card"><h3>Teacher Workload</h3><div class="ai-chart-box"><canvas id="workloadChart"></canvas></div></article>
+  </section>
+
+  <section class="ai-advanced-card">
+    <h3>Absent Student Records</h3>
+    <table class="ai-table">
+      <thead><tr><th>ID</th><th>Name</th><th>Class</th><th>Section</th><th>Date</th></tr></thead>
+      <tbody>
+        {% for row in analytics.tables.absent_students %}
+          <tr><td>{{ row.student__student_id }}</td><td>{{ row.student__name }}</td><td>{{ row.class_fk__class_name }}</td><td>{{ row.section__section_name }}</td><td>{{ row.date }}</td></tr>
+        {% empty %}
+          <tr><td colspan="5">No absent student records for selected filter.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+</div>
+
+{% include "admin_ai/includes/auto_report_modal.html" %}
+
+{{ analytics.charts|json_script:"advanced-chart-data" }}
+<script src="{% static 'admin_panel/vendor/chart.js/Chart.bundle.min.js' %}"></script>
+<script>
+(function(){
+  const data=JSON.parse(document.getElementById('advanced-chart-data').textContent);
+  const colors={teal:'#88D0C5',green:'#8BC740',blue:'#6EA8FE',warning:'#f5b461',danger:'#ff7a68'};
+  function chart(id,type,labels,datasets){const el=document.getElementById(id); if(!el)return; new Chart(el,{type, data:{labels,datasets}, options:{responsive:true,maintainAspectRatio:false,legend:{position:'bottom'}}});}
+  chart('attendanceChart','line',data.attendance.labels,[{label:'Present',data:data.attendance.present,borderColor:colors.green,fill:false},{label:'Absent',data:data.attendance.absent,borderColor:colors.danger,fill:false},{label:'Leave',data:data.attendance.leave,borderColor:colors.warning,fill:false}]);
+  chart('feeChart','bar',data.fees.labels,[{label:'Billed',data:data.fees.total,backgroundColor:colors.blue},{label:'Paid',data:data.fees.paid,backgroundColor:colors.green}]);
+  chart('admissionsChart','line',data.admissions.labels,[{label:'Admissions',data:data.admissions.values,borderColor:colors.teal,backgroundColor:'rgba(136,208,197,.25)',fill:true}]);
+  chart('workloadChart','bar',data.teacher_workload.labels,[{label:'Periods',data:data.teacher_workload.values,backgroundColor:colors.teal}]);
+})();
+</script>
+{% endblock %}

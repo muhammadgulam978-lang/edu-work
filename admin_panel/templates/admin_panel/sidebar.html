@@ -32,6 +32,19 @@
                     <span class="nav-text">Dashboard</span>
                 </a>
             </li>
+            <li class="has-menu">
+                <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
+                    <i class="fas fa-brain"></i>
+                    <span class="nav-text">AI Analytics</span>
+                </a>
+                <ul aria-expanded="false">
+                    <li><a href="{% url 'ai_analytics_dashboard' %}">Overview</a></li>
+                    <li><a href="{% url 'admin_ai_copilot' %}">AI Copilot</a></li>
+                    <li><a href="{% url 'ai_analytics_advanced' %}">Advanced Analytics</a></li>
+                    <li><a href="{% url 'ai_analytics_reports' %}">Reports Center</a></li>
+                    <li><a href="{% url 'admin_ai_student_intelligence' %}">Student Insight Profile</a></li>
+                </ul>
+            </li>
             <li>
     <a href="{% url 'automation-dashboard' %}" class="ai-icon" aria-expanded="false">
         <i class="fas fa-th-large"></i>

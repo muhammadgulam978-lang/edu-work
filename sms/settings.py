@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'django_apscheduler',
     'edupilot_core',
     'ai_tutor',
+    'admin_ai',
     
 ]
 

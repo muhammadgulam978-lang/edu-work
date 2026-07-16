@@ -1,0 +1,51 @@
+{% extends "admin_panel/bases.html" %}
+{% block title %}AI Analytics Reports{% endblock %}
+{% block page_title %}AI Analytics Reports{% endblock %}
+{% block content %}
+<style>
+  .ai-report{padding:24px 28px}.ai-report-card{background:#fff;border:1px solid #e9ecef;border-radius:14px;box-shadow:0 8px 22px rgba(0,0,0,.05);padding:22px;margin-bottom:22px}.ai-report-card h2,.ai-report-card h3{font-weight:500}.ai-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.ai-grid input,.ai-grid select,.ai-grid textarea{border:1px solid #e9ecef;border-radius:10px;padding:11px;width:100%}.ai-checks{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}.ai-btn{border:0;border-radius:999px;background:#88D0C5;color:#111;padding:12px 18px;font-weight:500;text-decoration:none}.ai-table{width:100%;border-collapse:collapse}.ai-table th,.ai-table td{padding:12px;border-bottom:1px solid #e9ecef;text-align:left}.ai-table th{background:#F5F5FD;font-weight:500}@media(max-width:900px){.ai-grid,.ai-checks{grid-template-columns:1fr}}
+</style>
+<div class="ai-report">
+  <section class="ai-report-card" style="background:linear-gradient(90deg,#DDF7F2,#F5F5FD)">
+    <h2>AI Analytics Report Center</h2>
+    <p>Generate saved snapshots, download PDF/Excel, and share secure report links.</p>
+  </section>
+  <section class="ai-report-card">
+    <h3>Build Report</h3>
+    <form method="post" action="{% url 'ai_analytics_report_generate' %}">
+      {% csrf_token %}
+      <div class="ai-grid">
+        <input type="text" name="title" placeholder="Report title">
+        <select name="report_type">{% for key,label in report_types %}<option value="{{ key }}">{{ label }}</option>{% endfor %}</select>
+        <select name="period">{% for key,label in period_options %}<option value="{{ key }}">{{ label }}</option>{% endfor %}</select>
+        <select name="class_id"><option value="">All Classes</option>{% for class in classes %}<option value="{{ class.id }}">{{ class.class_name }}</option>{% endfor %}</select>
+        <input type="date" name="start_date">
+        <input type="date" name="end_date">
+      </div>
+      <div class="ai-checks">
+        {% for key,label in report_sections %}
+          <label><input type="checkbox" name="sections" value="{{ key }}" checked> {{ label }}</label>
+        {% endfor %}
+      </div>
+      <button class="ai-btn" type="submit" style="margin-top:18px">Generate Report</button>
+    </form>
+  </section>
+  <section class="ai-report-card">
+    <h3>Recent Reports</h3>
+    <table class="ai-table">
+      <thead><tr><th>Title</th><th>Type</th><th>Created</th><th>Share</th><th>Actions</th></tr></thead>
+      <tbody>
+        {% for report in recent_reports %}
+          <tr>
+            <td>{{ report.title }}</td><td>{{ report.get_report_type_display }}</td><td>{{ report.created_at }}</td><td>{{ report.get_share_status_display }}</td>
+            <td><a href="{% url 'ai_analytics_report_detail' report.uuid %}">Preview</a> · <a href="{% url 'ai_analytics_report_pdf' report.uuid %}">PDF</a> · <a href="{% url 'ai_analytics_report_excel' report.uuid %}">Excel</a></td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="5">No reports generated yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+</div>
+{% endblock %}
+

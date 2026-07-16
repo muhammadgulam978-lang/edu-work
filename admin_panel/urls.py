@@ -1,8 +1,9 @@
-from django.urls import path
+from django.urls import path, include
 from .import views
 from django.contrib.auth import views as auth_views
 from admin_panel.views import bulk_upload_students, bulk_upload_teachers, bulk_delete_students,  bulk_delete_teachers
 urlpatterns = [
+    path('', include('admin_ai.urls')),
     path('', views.admin_panel_dashboard, name='admin_panel_dashboard'),
     path('user_list/', views.user_list, name='user_list'),
     path('register/', views.register_admission, name='registration'),
@@ -47,6 +48,8 @@ urlpatterns = [
     path('search/', views.admin_search, name='admin_search'),
     path('search-suggestions/', views.admin_search_suggestions, name='admin_search_suggestions'),
     path('profile/', views.admin_profile, name='admin_profile'),
+    path('ai-analytics/', views.ai_analytics_dashboard, name='ai_analytics_dashboard'),
+    path('ai-analytics-data/', views.ai_analytics_data, name='ai_analytics_data'),
     path('automation-overview-data/', views.automation_overview_data, name='automation_overview_data'),
     path('dashboard-summary-data/', views.dashboard_summary_data, name='dashboard_summary_data'),
     path('timetable/', views.timetable_view, name='timetable_view'),

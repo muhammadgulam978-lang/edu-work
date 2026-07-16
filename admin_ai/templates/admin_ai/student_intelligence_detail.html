@@ -1,0 +1,130 @@
+{% extends "admin_panel/bases.html" %}
+{% load static %}
+{% block title %}Student Insight Profile{% endblock %}
+{% block page_title %}Student Insight Profile{% endblock %}
+{% block content %}
+<style>
+  .student-360-page{padding:24px 28px;color:#111}
+  .student-360-card{background:#fff;border:1px solid #e9ecef;border-radius:14px;box-shadow:0 8px 22px rgba(0,0,0,.05)}
+  .student-360-hero{display:grid;grid-template-columns:1.1fr 1.4fr auto;gap:20px;align-items:center;padding:24px;background:linear-gradient(90deg,#DDF7F2,#F5F5FD);margin-bottom:20px}
+  .student-identity{display:flex;align-items:center;gap:16px;min-width:0}
+  .student-avatar-wrap{width:86px;height:86px;border-radius:50%;padding:5px;background:#fff;border:1px solid rgba(136,208,197,.65);box-shadow:0 12px 24px rgba(136,208,197,.22);flex:0 0 auto}
+  .student-avatar{width:100%;height:100%;border-radius:50%;object-fit:cover;background:#F5F5FD}
+  .student-name{font-size:28px;line-height:1.12;font-weight:500;margin:0 0 8px}
+  .student-meta,.student-small{color:#6c757d;font-weight:400;margin:0}
+  .student-chip-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .student-chip{display:inline-flex;align-items:center;gap:7px;border:1px solid rgba(136,208,197,.68);background:rgba(255,255,255,.65);border-radius:999px;padding:7px 11px;font-size:13px;color:#111}
+  .student-hero-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+  .student-hero-stat{min-height:86px;border:1px solid rgba(255,255,255,.72);background:rgba(255,255,255,.64);border-radius:12px;padding:13px}
+  .student-hero-stat span{display:block;font-size:24px;font-weight:500;line-height:1.1;margin-bottom:6px;color:#111}
+  .student-hero-stat small{display:block;color:#6c757d;font-size:12px}
+  .student-actions{display:grid;gap:10px;justify-items:end}
+  .student-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:999px;background:#88D0C5;color:#111;padding:12px 18px;font-weight:500;text-decoration:none;white-space:nowrap}
+  .student-btn.secondary{background:#F5F5FD;border:1px solid #e9ecef}
+  .student-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:20px}
+  .student-metric{padding:17px;background:#F5F5FD;border-color:#e9ecef}
+  .student-metric:nth-child(1),.student-metric:nth-child(5){background:#DDF7F2;border-color:#88D0C5}
+  .student-metric:nth-child(3),.student-metric:nth-child(7){background:#EEF9E5;border-color:#8BC740}
+  .student-metric-value{display:block;font-size:26px;font-weight:500;line-height:1.15;margin-bottom:7px}
+  .student-metric-label{color:#111;font-weight:400}
+  .student-lower-grid{display:grid;grid-template-columns:.75fr 1.25fr;gap:20px}
+  .student-section{padding:22px;margin-bottom:20px}
+  .student-section h3{font-size:22px;font-weight:500;margin:0 0 15px}
+  .profile-list{display:grid;gap:12px}
+  .profile-item{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid #e9ecef;padding-bottom:10px}
+  .profile-item:last-child{border-bottom:0;padding-bottom:0}
+  .profile-label{color:#6c757d}
+  .profile-value{text-align:right;font-weight:400;color:#111}
+  .student-table-wrap{overflow:auto}
+  .student-table{width:100%;border-collapse:collapse;min-width:680px}
+  .student-table th,.student-table td{padding:12px;border-bottom:1px solid #e9ecef;text-align:left;font-weight:400}
+  .student-table th{background:#F5F5FD;font-weight:500;color:#111}
+  .student-empty{color:#6c757d;text-align:center;padding:18px}
+  @media(max-width:1200px){.student-360-hero{grid-template-columns:1fr}.student-actions{justify-items:start}.student-hero-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.student-lower-grid{grid-template-columns:1fr}}
+  @media(max-width:900px){.student-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media(max-width:620px){.student-360-page{padding:16px}.student-identity{align-items:flex-start}.student-avatar-wrap{width:70px;height:70px}.student-name{font-size:22px}.student-grid,.student-hero-stats{grid-template-columns:1fr}.profile-item{display:block}.profile-value{text-align:left;margin-top:3px}}
+</style>
+
+<div class="student-360-page">
+  <section class="student-360-card student-360-hero">
+    <div class="student-identity">
+      <div class="student-avatar-wrap">
+        {% if snapshot.student.photo_url %}
+          <img class="student-avatar" src="{{ snapshot.student.photo_url }}" alt="{{ snapshot.student.name }}">
+        {% else %}
+          <img class="student-avatar" src="{% static 'admin_panel/images/dummy-profile.png' %}" alt="{{ snapshot.student.name }}">
+        {% endif %}
+      </div>
+      <div>
+        <h2 class="student-name">{{ snapshot.student.name }}</h2>
+        <p class="student-meta">{{ snapshot.student.student_id }} &middot; {{ snapshot.student.class }} - {{ snapshot.student.section }} &middot; Roll {{ snapshot.student.roll_no }}</p>
+        <div class="student-chip-row">
+          <span class="student-chip"><i class="fas fa-user-graduate"></i>{{ snapshot.student.gender|default:"Not set" }}</span>
+          <span class="student-chip"><i class="fas fa-calendar"></i>{{ snapshot.student.date_of_birth|default:"Date not set" }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="student-hero-stats">
+      <div class="student-hero-stat"><span>{{ snapshot.attendance.rate }}%</span><small>Attendance Rate</small></div>
+      <div class="student-hero-stat"><span>{{ snapshot.marks.average }}</span><small>Average Marks</small></div>
+      <div class="student-hero-stat"><span>{{ snapshot.attendance.present }}/{{ snapshot.attendance.total }}</span><small>Present / Total</small></div>
+      <div class="student-hero-stat"><span>{{ snapshot.attendance.absent }}</span><small>Absences</small></div>
+    </div>
+
+    <div class="student-actions">
+      <a class="student-btn" href="{% url 'admin_ai_student_intelligence_pdf' snapshot.student.student_id %}"><i class="fas fa-download"></i>Download Profile PDF</a>
+      <a class="student-btn secondary" href="https://wa.me/?text={{ profile_url }}" target="_blank"><i class="fas fa-share-alt"></i>Share Link</a>
+    </div>
+  </section>
+
+  <section class="student-grid">
+    <div class="student-360-card student-metric"><span class="student-metric-value">{{ snapshot.attendance.rate }}%</span><span class="student-metric-label">Attendance Rate</span></div>
+    <div class="student-360-card student-metric"><span class="student-metric-value">{{ snapshot.attendance.absent }}</span><span class="student-metric-label">Absences</span></div>
+    <div class="student-360-card student-metric"><span class="student-metric-value">{{ snapshot.fees.unpaid }}</span><span class="student-metric-label">Unpaid Vouchers</span></div>
+    <div class="student-360-card student-metric"><span class="student-metric-value">{{ snapshot.marks.average }}</span><span class="student-metric-label">Average Marks</span></div>
+    <div class="student-360-card student-metric"><span class="student-metric-value">{{ snapshot.ai_tutor.sessions }}</span><span class="student-metric-label">AI Tutor Sessions</span></div>
+    <div class="student-360-card student-metric"><span class="student-metric-value">{{ snapshot.ai_tutor.practice_attempts }}</span><span class="student-metric-label">Practice Attempts</span></div>
+    <div class="student-360-card student-metric"><span class="student-metric-value">{{ snapshot.submissions.assignments }}</span><span class="student-metric-label">Assignments</span></div>
+    <div class="student-360-card student-metric"><span class="student-metric-value">{{ snapshot.submissions.quizzes }}</span><span class="student-metric-label">Quizzes</span></div>
+  </section>
+
+  <section class="student-lower-grid">
+    <article class="student-360-card student-section">
+      <h3>Profile</h3>
+      <div class="profile-list">
+        <div class="profile-item"><span class="profile-label">Father</span><span class="profile-value">{{ snapshot.student.father_name|default:"Not set" }}</span></div>
+        <div class="profile-item"><span class="profile-label">Mother</span><span class="profile-value">{{ snapshot.student.mother_name|default:"Not set" }}</span></div>
+        <div class="profile-item"><span class="profile-label">Email</span><span class="profile-value">{{ snapshot.student.email|default:"Not set" }}</span></div>
+        <div class="profile-item"><span class="profile-label">Phone</span><span class="profile-value">{{ snapshot.student.phone|default:"Not set" }}</span></div>
+        <div class="profile-item"><span class="profile-label">Gender</span><span class="profile-value">{{ snapshot.student.gender|default:"Not set" }}</span></div>
+        <div class="profile-item"><span class="profile-label">Date of Birth</span><span class="profile-value">{{ snapshot.student.date_of_birth|default:"Not set" }}</span></div>
+      </div>
+    </article>
+
+    <article class="student-360-card student-section">
+      <h3>Recent Marks</h3>
+      <div class="student-table-wrap">
+        <table class="student-table">
+          <thead>
+            <tr><th>Subject</th><th>Term</th><th>Marks</th><th>Total</th><th>Remarks</th></tr>
+          </thead>
+          <tbody>
+            {% for row in snapshot.marks.recent %}
+              <tr>
+                <td>{{ row.subject__name }}</td>
+                <td>{{ row.term }}</td>
+                <td>{{ row.marks_obtained }}</td>
+                <td>{{ row.total_marks }}</td>
+                <td>{{ row.teacher_remarks }}</td>
+              </tr>
+            {% empty %}
+              <tr><td class="student-empty" colspan="5">No marks recorded.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </article>
+  </section>
+</div>
+{% endblock %}
