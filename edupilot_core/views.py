@@ -5,6 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Sum
 from django.views.decorators.csrf import csrf_protect
+from django.utils import timezone
 from datetime import date, datetime
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -16,6 +17,7 @@ from .models import (
 )
 from .forms import StudentRegistrationForm
 from .services import FeeGenerationService, SalaryAutomationService, NotificationDispatcherService
+from .crud_config import CRUD_REGISTRY
 
 # --- LOGIN/LOGOUT ---
 @csrf_protect
@@ -378,12 +380,16 @@ def automation_dashboard(request):
     total_students = Student.objects.filter(is_active=True).count()
     total_teachers = Teacher.objects.filter(is_active=True).count()
 
+    fee_settings = FeeGenerationSettings.objects.first() or FeeGenerationSettings.objects.create()
+    salary_settings = SalaryAutomationSettings.objects.first() or SalaryAutomationSettings.objects.create()
     last_fee_job = AutomationJob.objects.order_by('-started_at').first()
     last_salary_job = SalaryAutomationJob.objects.order_by('-started_at').first()
     last_notif = NotificationQueue.objects.order_by('-created_at').first()
 
-    total_collected = FeeVoucher.objects.filter(status='PAID').aggregate(Sum('net_amount'))['net_amount__sum'] or 0
-    total_pending = FeeVoucher.objects.exclude(status='PAID').aggregate(Sum('net_amount'))['net_amount__sum'] or 0
+    total_collected_value = FeeVoucher.objects.filter(status='PAID').aggregate(Sum('net_amount'))['net_amount__sum'] or 0
+    total_pending_value = FeeVoucher.objects.exclude(status='PAID').aggregate(Sum('net_amount'))['net_amount__sum'] or 0
+    total_collected = total_collected_value
+    total_pending = total_pending_value
     total_all = total_collected + total_pending
     collection_rate = round((total_collected / total_all * 100), 1) if total_all else 0
 
@@ -402,22 +408,72 @@ def automation_dashboard(request):
         for n in NotificationQueue.objects.order_by('-created_at')[:5]
     ]
 
+    action_cards = [
+        {'label': 'Dashboard', 'url_name': 'automation-dashboard', 'icon': 'fa-chart-pie', 'metric': total_students + total_teachers, 'detail': 'Live account overview'},
+        {'label': 'Fee Automation', 'url_name': 'fee-automation', 'icon': 'fa-money-check-dollar', 'metric': AutomationJob.objects.count(), 'detail': 'Fee jobs'},
+        {'label': 'Voucher Management', 'url_name': 'voucher-management', 'icon': 'fa-file-invoice', 'metric': FeeVoucher.objects.count(), 'detail': 'Fee vouchers'},
+        {'label': 'Notification Queue', 'url_name': 'notification-queue', 'icon': 'fa-bell', 'metric': NotificationQueue.objects.count(), 'detail': 'Queued notifications'},
+        {'label': 'Salary Automation', 'url_name': 'salary-automation', 'icon': 'fa-money-bill-wave', 'metric': SalaryAutomationJob.objects.count(), 'detail': 'Salary jobs'},
+        {'label': 'Payslip Management', 'url_name': 'payslip-management', 'icon': 'fa-file-signature', 'metric': SalaryVoucher.objects.count(), 'detail': 'Salary vouchers'},
+        {'label': 'Automation Logs', 'url_name': 'automation-logs', 'icon': 'fa-clipboard-list', 'metric': len(recent_jobs), 'detail': 'Recent job records'},
+        {'label': 'Automation Settings', 'url_name': 'automation-settings', 'icon': 'fa-cogs', 'metric': 2, 'detail': 'Fee and salary settings'},
+    ]
+
+    crud_module_cards = []
+    crud_icons = {
+        'feehead': 'fa-tags', 'feeplan': 'fa-map', 'feeplandetail': 'fa-circle-info',
+        'transportroute': 'fa-bus', 'scholarship': 'fa-graduation-cap',
+        'feevoucher': 'fa-receipt', 'feevoucheritem': 'fa-list',
+        'feegenerationsettings': 'fa-sliders', 'feegenerationlog': 'fa-clock-rotate-left',
+        'student': 'fa-user-graduate', 'studentfeeassignment': 'fa-clipboard-check',
+        'studentledger': 'fa-book', 'studentbalance': 'fa-scale-balanced',
+        'studentperformance': 'fa-chart-line', 'teacher': 'fa-chalkboard-user',
+        'salarystructure': 'fa-sitemap', 'salaryvoucher': 'fa-envelope-open-text',
+        'salaryautomationsettings': 'fa-screwdriver-wrench', 'salaryautomationjob': 'fa-briefcase',
+        'salaryautomationjobdetail': 'fa-circle-info', 'staff': 'fa-users',
+        'transaction': 'fa-arrow-right-arrow-left', 'automationjob': 'fa-robot',
+        'automationjobdetail': 'fa-magnifying-glass-chart', 'notificationqueue': 'fa-flag',
+    }
+    for key, config in CRUD_REGISTRY.items():
+        model = config['model']
+        try:
+            record_count = model.objects.count()
+        except Exception:
+            record_count = 0
+        crud_module_cards.append({
+            'key': key,
+            'label': config['label'],
+            'count': record_count,
+            'icon': crud_icons.get(key, 'fa-database'),
+        })
+
     context = {
         'total_students': total_students,
         'total_teachers': total_teachers,
         'total_parents': 0,
         'notifications_today': NotificationQueue.objects.filter(created_at__date=date.today()).count(),
+        'last_refreshed': timezone.now(),
+        'fee_enabled': fee_settings.auto_enabled,
         'fee_last_run': last_fee_job.started_at if last_fee_job else None,
+        'fee_next_run': f"Day {fee_settings.generation_day} at {fee_settings.generation_time.strftime('%H:%M')}" if fee_settings else 'Not set',
         'fee_status': last_fee_job.status if last_fee_job else 'N/A',
+        'salary_enabled': salary_settings.auto_enabled,
         'salary_last_run': last_salary_job.started_at if last_salary_job else None,
+        'salary_next_run': f"Day {salary_settings.generation_day} at {salary_settings.generation_time.strftime('%H:%M')}" if salary_settings else 'Not set',
         'salary_status': last_salary_job.status if last_salary_job else 'N/A',
+        'notif_enabled': True,
         'notif_last_run': last_notif.created_at if last_notif else None,
+        'notif_next_run': 'Every 5 minutes',
         'notif_status': last_notif.status if last_notif else 'N/A',
         'total_collected': f"{total_collected:,.0f}",
         'total_pending': f"{total_pending:,.0f}",
+        'fee_chart_labels': ['Collected', 'Pending'],
+        'fee_chart_values': [float(total_collected_value), float(total_pending_value)],
         'collection_rate': collection_rate,
         'recent_jobs': recent_jobs,
         'recent_notifications': recent_notifications,
+        'action_cards': action_cards,
+        'crud_module_cards': crud_module_cards,
     }
     return render(request, 'automation/dashboard.html', context)
 

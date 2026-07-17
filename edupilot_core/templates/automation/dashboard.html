@@ -1,63 +1,646 @@
 {% extends 'automation/base_automation.html' %}
 {% block page_title %}Dashboard{% endblock %}
 {% block content %}
-<div class="stats-row">
-    <div class="stat-card"><div class="ic" style="background:#22c55e;"><i class="fa fa-user-graduate"></i></div><div><div class="num">{{ total_students }}</div><div class="lbl">Total Students</div></div></div>
-    <div class="stat-card"><div class="ic" style="background:#3b82f6;"><i class="fa fa-chalkboard-teacher"></i></div><div><div class="num">{{ total_teachers }}</div><div class="lbl">Total Teachers</div></div></div>
-    <div class="stat-card"><div class="ic" style="background:#a855f7;"><i class="fa fa-users"></i></div><div><div class="num">{{ total_parents }}</div><div class="lbl">Total Parents</div></div></div>
-    <div class="stat-card"><div class="ic" style="background:#f59e0b;"><i class="fa fa-envelope"></i></div><div><div class="num">{{ notifications_today }}</div><div class="lbl">Notifications Today</div></div></div>
-</div>
+<style>
+    .automation-dashboard-redesign {
+        --aa-teal: #88D0C5;
+        --aa-green: #8BC740;
+        --aa-bg: #F5F5FD;
+        --aa-border: #e9ecef;
+        --aa-muted: #6c757d;
+        --aa-text: #111111;
+        display: grid;
+        gap: 24px;
+    }
 
-<div class="card" style="margin-bottom:22px;">
-    <h3>Automation Status</h3>
-    <div class="stats-row">
-        <div><b>Fee Automation</b><br><span class="badge badge-green">Enabled</span><br>Last Run: {{ fee_last_run }}<br>Next Run: {{ fee_next_run }}<br>Status: <span class="badge badge-green">{{ fee_status }}</span></div>
-        <div><b>Salary Automation</b><br><span class="badge badge-green">Enabled</span><br>Last Run: {{ salary_last_run }}<br>Next Run: {{ salary_next_run }}<br>Status: <span class="badge badge-yellow">{{ salary_status }}</span></div>
-        <div><b>Notification Automation</b><br><span class="badge badge-green">Enabled</span><br>Last Run: {{ notif_last_run }}<br>Next Run: {{ notif_next_run }}<br>Status: <span class="badge badge-green">{{ notif_status }}</span></div>
-    </div>
-</div>
+    .automation-dashboard-redesign * {
+        letter-spacing: 0;
+    }
 
-<div class="grid-2">
-    <div class="card">
-        <h3>Fee Collection Overview</h3>
-        <canvas id="feeChart" height="120"></canvas>
-    </div>
-    <div class="card">
-        <h3>Fee Collection Summary</h3>
-        <p>Total Collected: <b>PKR {{ total_collected }}</b></p>
-        <p>Total Pending: <b style="color:#c0392b;">PKR {{ total_pending }}</b></p>
-        <p>Collection Rate: <b style="color:#137a4c;">{{ collection_rate }}%</b></p>
-    </div>
-</div>
+    .aa-intro,
+    .aa-card,
+    .aa-status-card,
+    .aa-module-card,
+    .aa-table-card {
+        background: #fff;
+        border: 1px solid var(--aa-border);
+        border-radius: 14px;
+        box-shadow: 0 10px 24px rgba(0, 0, 0, .04);
+    }
 
-<div class="grid-2">
-    <div class="card">
-        <h3>Recent Automation Jobs</h3>
-        <table>
-            <tr><th>Job Type</th><th>Started</th><th>Status</th><th>Success</th><th>Failed</th></tr>
-            {% for job in recent_jobs %}
-            <tr>
-                <td>{{ job.type }}</td><td>{{ job.started }}</td>
-                <td><span class="badge {% if job.status == 'Completed' %}badge-green{% else %}badge-red{% endif %}">{{ job.status }}</span></td>
-                <td>{{ job.success }}</td><td>{{ job.failed }}</td>
-            </tr>
+    .aa-intro {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        padding: 24px 28px;
+        background: linear-gradient(90deg, rgba(136,208,197,.22), rgba(245,245,253,.9));
+    }
+
+    .aa-intro h2,
+    .aa-section-head h2,
+    .aa-card h3,
+    .aa-table-card h3 {
+        margin: 0;
+        color: var(--aa-text);
+        font-weight: 500;
+    }
+
+    .aa-intro h2 {
+        font-size: 28px;
+    }
+
+    .aa-intro p,
+    .aa-section-head p,
+    .aa-card p {
+        margin: 6px 0 0;
+        color: var(--aa-muted);
+        font-size: 15px;
+        font-weight: 400;
+    }
+
+    .aa-refresh-pill,
+    .aa-status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border-radius: 999px;
+        padding: 9px 14px;
+        border: 1px solid rgba(136,208,197,.6);
+        background: rgba(136,208,197,.18);
+        color: var(--aa-text);
+        font-size: 13px;
+        font-weight: 500;
+        white-space: nowrap;
+    }
+
+    .aa-kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 22px;
+    }
+
+    .aa-kpi-card {
+        min-height: 148px;
+        border-radius: 14px;
+        padding: 26px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        color: #fff;
+        box-shadow: 0 12px 22px rgba(0, 0, 0, .08);
+    }
+
+    .aa-kpi-card:nth-child(1),
+    .aa-kpi-card:nth-child(4) {
+        background: var(--aa-teal);
+    }
+
+    .aa-kpi-card:nth-child(2) {
+        background: #46a9ef;
+    }
+
+    .aa-kpi-card:nth-child(3) {
+        background: var(--aa-green);
+    }
+
+    .aa-kpi-icon {
+        width: 62px;
+        height: 62px;
+        border-radius: 12px;
+        border: 1px solid rgba(255,255,255,.72);
+        background: rgba(255,255,255,.14);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-size: 28px;
+    }
+
+    .aa-kpi-copy {
+        text-align: right;
+    }
+
+    .aa-kpi-label {
+        display: block;
+        font-size: 20px;
+        font-weight: 500;
+        line-height: 1.25;
+    }
+
+    .aa-kpi-value {
+        display: block;
+        margin-top: 14px;
+        font-size: 48px;
+        font-weight: 500;
+        line-height: 1;
+    }
+
+    .aa-status-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 22px;
+    }
+
+    .aa-status-card {
+        padding: 22px;
+        background: var(--aa-bg);
+    }
+
+    .aa-status-top,
+    .aa-module-top {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .aa-soft-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: rgba(136,208,197,.28);
+        border: 1px solid rgba(136,208,197,.42);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #111;
+        font-size: 20px;
+    }
+
+    .aa-status-card h3,
+    .aa-module-card h3 {
+        margin: 18px 0 14px;
+        font-size: 20px;
+        font-weight: 500;
+    }
+
+    .aa-status-line {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 9px 0;
+        border-bottom: 1px solid rgba(0,0,0,.05);
+        color: var(--aa-muted);
+        font-size: 14px;
+    }
+
+    .aa-status-line span:last-child {
+        color: var(--aa-text);
+        text-align: right;
+    }
+
+    .aa-status-pill.success {
+        border-color: rgba(139,199,64,.5);
+        background: rgba(139,199,64,.14);
+        color: #568713;
+    }
+
+    .aa-status-pill.neutral {
+        background: rgba(245,245,253,.86);
+        border-color: var(--aa-border);
+        color: var(--aa-muted);
+    }
+
+    .aa-main-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.5fr) minmax(320px, .8fr);
+        gap: 24px;
+    }
+
+    .aa-card {
+        padding: 24px;
+    }
+
+    .aa-summary-list {
+        display: grid;
+        gap: 14px;
+        margin-top: 20px;
+    }
+
+    .aa-summary-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        border-radius: 12px;
+        background: var(--aa-bg);
+        padding: 16px;
+        color: var(--aa-muted);
+        font-size: 15px;
+    }
+
+    .aa-summary-row span:last-child {
+        color: var(--aa-text);
+        font-size: 22px;
+        font-weight: 500;
+    }
+
+    .aa-operations-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.2fr) minmax(320px, .8fr);
+        gap: 24px;
+    }
+
+    .aa-table-card {
+        padding: 24px;
+        overflow: hidden;
+    }
+
+    .aa-table-wrap {
+        overflow-x: auto;
+        margin-top: 16px;
+    }
+
+    .aa-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .aa-table th {
+        background: var(--aa-bg);
+        color: var(--aa-text);
+        font-size: 13px;
+        font-weight: 500;
+        text-transform: none;
+        padding: 14px;
+        border-bottom: 1px solid var(--aa-border);
+    }
+
+    .aa-table td {
+        padding: 14px;
+        color: var(--aa-text);
+        border-bottom: 1px solid var(--aa-border);
+        font-size: 14px;
+    }
+
+    .aa-notification-list {
+        display: grid;
+        gap: 12px;
+        margin-top: 16px;
+    }
+
+    .aa-notification-item {
+        border-radius: 12px;
+        background: var(--aa-bg);
+        padding: 14px 16px;
+    }
+
+    .aa-notification-item h4 {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 500;
+        color: var(--aa-text);
+    }
+
+    .aa-notification-item p {
+        margin: 5px 0 0;
+        font-size: 13px;
+        color: var(--aa-muted);
+    }
+
+    .aa-section-head {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 16px;
+    }
+
+    .aa-section-head h2 {
+        font-size: 24px;
+    }
+
+    .aa-module-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 18px;
+    }
+
+    .aa-module-card {
+        padding: 18px;
+        background: #fff;
+    }
+
+    .aa-module-card:nth-child(4n+1) {
+        background: rgba(136,208,197,.16);
+        border-color: rgba(136,208,197,.55);
+    }
+
+    .aa-module-card:nth-child(4n+2) {
+        background: rgba(245,245,253,.95);
+    }
+
+    .aa-module-card:nth-child(4n+3) {
+        background: rgba(139,199,64,.12);
+        border-color: rgba(139,199,64,.38);
+    }
+
+    .aa-module-card:nth-child(4n+4) {
+        background: rgba(255,244,229,.7);
+        border-color: rgba(255,139,26,.24);
+    }
+
+    .aa-module-card h3 {
+        min-height: 48px;
+        margin-bottom: 10px;
+        line-height: 1.25;
+    }
+
+    .aa-module-meta {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        margin: 14px 0;
+    }
+
+    .aa-module-metric {
+        border-radius: 10px;
+        background: rgba(255,255,255,.72);
+        border: 1px solid rgba(233,236,239,.75);
+        padding: 10px 12px;
+    }
+
+    .aa-module-metric strong {
+        display: block;
+        font-size: 22px;
+        font-weight: 500;
+        color: var(--aa-text);
+    }
+
+    .aa-module-metric span {
+        color: var(--aa-muted);
+        font-size: 12px;
+    }
+
+    .aa-action-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-height: 42px;
+        border-radius: 999px;
+        padding: 10px 18px;
+        background: var(--aa-teal);
+        color: #111 !important;
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 500;
+        border: 1px solid rgba(0,0,0,.04);
+        box-shadow: 0 6px 16px rgba(136,208,197,.22);
+    }
+
+    .aa-action-link:hover {
+        background: #77c8bc;
+        color: #111 !important;
+        text-decoration: none;
+    }
+
+    .aa-empty {
+        color: var(--aa-muted);
+        margin: 16px 0 0;
+    }
+
+    @media (max-width: 1300px) {
+        .aa-kpi-grid,
+        .aa-module-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .aa-status-grid,
+        .aa-main-grid,
+        .aa-operations-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 720px) {
+        .aa-intro,
+        .aa-section-head {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+        .aa-kpi-grid,
+        .aa-module-grid {
+            grid-template-columns: 1fr;
+        }
+        .aa-kpi-card {
+            min-height: 128px;
+        }
+        .aa-kpi-value {
+            font-size: 38px;
+        }
+    }
+</style>
+
+<div class="automation-dashboard-redesign">
+    <section class="aa-intro">
+        <div>
+            <h2>Account Automation Overview</h2>
+            <p>Live account, fee, salary, voucher, notification, and data management automation snapshot.</p>
+        </div>
+        <span class="aa-refresh-pill">
+            <i class="fa fa-rotate"></i>
+            Last refreshed {{ last_refreshed|date:"M d, Y H:i" }}
+        </span>
+    </section>
+
+    <section class="aa-kpi-grid" aria-label="Account automation top metrics">
+        <div class="aa-kpi-card">
+            <span class="aa-kpi-icon"><i class="fa fa-user-graduate"></i></span>
+            <span class="aa-kpi-copy"><span class="aa-kpi-label">Total Students</span><span class="aa-kpi-value">{{ total_students }}</span></span>
+        </div>
+        <div class="aa-kpi-card">
+            <span class="aa-kpi-icon"><i class="fa fa-chalkboard-teacher"></i></span>
+            <span class="aa-kpi-copy"><span class="aa-kpi-label">Total Teachers</span><span class="aa-kpi-value">{{ total_teachers }}</span></span>
+        </div>
+        <div class="aa-kpi-card">
+            <span class="aa-kpi-icon"><i class="fa fa-users"></i></span>
+            <span class="aa-kpi-copy"><span class="aa-kpi-label">Total Parents</span><span class="aa-kpi-value">{{ total_parents }}</span></span>
+        </div>
+        <div class="aa-kpi-card">
+            <span class="aa-kpi-icon"><i class="fa fa-envelope"></i></span>
+            <span class="aa-kpi-copy"><span class="aa-kpi-label">Notifications Today</span><span class="aa-kpi-value">{{ notifications_today }}</span></span>
+        </div>
+    </section>
+
+    <section>
+        <div class="aa-section-head">
+            <div>
+                <h2>Automation Status</h2>
+                <p>Fee, salary, and notification automation status with schedule and latest run details.</p>
+            </div>
+        </div>
+        <div class="aa-status-grid" style="margin-top:16px;">
+            <article class="aa-status-card">
+                <div class="aa-status-top">
+                    <span class="aa-soft-icon"><i class="fa fa-money-check-dollar"></i></span>
+                    <span class="aa-status-pill {% if fee_enabled %}success{% else %}neutral{% endif %}">{% if fee_enabled %}Enabled{% else %}Disabled{% endif %}</span>
+                </div>
+                <h3>Fee Automation</h3>
+                <div class="aa-status-line"><span>Last Run</span><span>{{ fee_last_run|default:"No activity yet" }}</span></div>
+                <div class="aa-status-line"><span>Next Run</span><span>{{ fee_next_run|default:"Not set" }}</span></div>
+                <div class="aa-status-line"><span>Status</span><span>{{ fee_status }}</span></div>
+            </article>
+            <article class="aa-status-card">
+                <div class="aa-status-top">
+                    <span class="aa-soft-icon"><i class="fa fa-money-bill-wave"></i></span>
+                    <span class="aa-status-pill {% if salary_enabled %}success{% else %}neutral{% endif %}">{% if salary_enabled %}Enabled{% else %}Disabled{% endif %}</span>
+                </div>
+                <h3>Salary Automation</h3>
+                <div class="aa-status-line"><span>Last Run</span><span>{{ salary_last_run|default:"No activity yet" }}</span></div>
+                <div class="aa-status-line"><span>Next Run</span><span>{{ salary_next_run|default:"Not set" }}</span></div>
+                <div class="aa-status-line"><span>Status</span><span>{{ salary_status }}</span></div>
+            </article>
+            <article class="aa-status-card">
+                <div class="aa-status-top">
+                    <span class="aa-soft-icon"><i class="fa fa-bell"></i></span>
+                    <span class="aa-status-pill success">Enabled</span>
+                </div>
+                <h3>Notification Automation</h3>
+                <div class="aa-status-line"><span>Last Run</span><span>{{ notif_last_run|default:"No activity yet" }}</span></div>
+                <div class="aa-status-line"><span>Next Run</span><span>{{ notif_next_run }}</span></div>
+                <div class="aa-status-line"><span>Status</span><span>{{ notif_status }}</span></div>
+            </article>
+        </div>
+    </section>
+
+    <section class="aa-main-grid">
+        <article class="aa-card">
+            <h3>Fee Collection Overview</h3>
+            <p>Collected and pending fee amount based on live voucher status.</p>
+            <canvas id="feeChart" height="120" style="margin-top:18px;"></canvas>
+        </article>
+        <article class="aa-card">
+            <h3>Fee Collection Summary</h3>
+            <p>Current fee totals across generated vouchers.</p>
+            <div class="aa-summary-list">
+                <div class="aa-summary-row"><span>Total Collected</span><span>PKR {{ total_collected }}</span></div>
+                <div class="aa-summary-row"><span>Total Pending</span><span>PKR {{ total_pending }}</span></div>
+                <div class="aa-summary-row"><span>Collection Rate</span><span>{{ collection_rate }}%</span></div>
+            </div>
+        </article>
+    </section>
+
+    <section class="aa-operations-grid">
+        <article class="aa-table-card">
+            <h3>Recent Automation Jobs</h3>
+            <div class="aa-table-wrap">
+                <table class="aa-table">
+                    <thead>
+                        <tr><th>Job Type</th><th>Started</th><th>Status</th><th>Success</th><th>Failed</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for job in recent_jobs %}
+                        <tr>
+                            <td>{{ job.type }}</td>
+                            <td>{{ job.started|default:"-" }}</td>
+                            <td><span class="badge {% if job.status == 'COMPLETED' or job.status == 'Completed' %}badge-green{% elif job.status == 'FAILED' %}badge-red{% else %}badge-yellow{% endif %}">{{ job.status }}</span></td>
+                            <td>{{ job.success }}</td>
+                            <td>{{ job.failed }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="5" class="aa-empty">No automation jobs yet.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </article>
+        <article class="aa-table-card">
+            <h3>Recent Notifications</h3>
+            <div class="aa-notification-list">
+                {% for n in recent_notifications %}
+                    <div class="aa-notification-item">
+                        <h4>{{ n.title }}</h4>
+                        <p>{{ n.type }} - {{ n.time }}</p>
+                    </div>
+                {% empty %}
+                    <p class="aa-empty">No recent notifications yet.</p>
+                {% endfor %}
+            </div>
+        </article>
+    </section>
+
+    <section>
+        <div class="aa-section-head">
+            <div>
+                <h2>Account Automation Screens</h2>
+                <p>Direct access to all main account automation screens and workflows.</p>
+            </div>
+            <span class="aa-refresh-pill">{{ action_cards|length }} screens</span>
+        </div>
+        <div class="aa-module-grid" style="margin-top:16px;">
+            {% for card in action_cards %}
+                <article class="aa-module-card">
+                    <div class="aa-module-top">
+                        <span class="aa-soft-icon"><i class="fa {{ card.icon }}"></i></span>
+                    </div>
+                    <h3>{{ card.label }}</h3>
+                    <div class="aa-module-meta">
+                        <div class="aa-module-metric"><strong>{{ card.metric }}</strong><span>{{ card.detail }}</span></div>
+                    </div>
+                    <a href="{% url card.url_name %}" class="aa-action-link">Open <i class="fa fa-arrow-right"></i></a>
+                </article>
             {% endfor %}
-        </table>
-    </div>
-    <div class="card">
-        <h3>Recent Notifications</h3>
-        {% for n in recent_notifications %}
-        <p style="margin-bottom:10px;"><b>{{ n.title }}</b><br><small style="color:#888;">{{ n.type }} · {{ n.time }}</small></p>
-        {% endfor %}
-    </div>
+        </div>
+    </section>
+
+    <section>
+        <div class="aa-section-head">
+            <div>
+                <h2>Data Management Properties</h2>
+                <p>All registered Account Automation data modules, record counts, and direct edit access.</p>
+            </div>
+            <span class="aa-refresh-pill">{{ crud_module_cards|length }} modules</span>
+        </div>
+        <div class="aa-module-grid" style="margin-top:16px;">
+            {% for module in crud_module_cards %}
+                <article class="aa-module-card">
+                    <div class="aa-module-top">
+                        <span class="aa-soft-icon"><i class="fa {{ module.icon }}"></i></span>
+                    </div>
+                    <h3>{{ module.label }}</h3>
+                    <div class="aa-module-meta">
+                        <div class="aa-module-metric"><strong>{{ module.count }}</strong><span>Records</span></div>
+                    </div>
+                    <a href="{% url 'crud-list' model_name=module.key %}" class="aa-action-link">Open <i class="fa fa-arrow-right"></i></a>
+                </article>
+            {% endfor %}
+        </div>
+    </section>
 </div>
 
 <script>
-new Chart(document.getElementById('feeChart'), {
-    type: 'line',
-    data: { labels: ['Jan','Feb','Mar','Apr','May','Jun'],
-        datasets: [{ label:'Collection', data:[40,55,45,70,65,80], borderColor:'#2dd4bf', backgroundColor:'rgba(45,212,191,0.15)', fill:true, tension:0.4 }] },
-    options: { plugins:{ legend:{ display:false } } }
-});
+(function () {
+    var chartEl = document.getElementById('feeChart');
+    if (!chartEl || typeof Chart === 'undefined') return;
+
+    new Chart(chartEl, {
+        type: 'line',
+        data: {
+            labels: {{ fee_chart_labels|safe }},
+            datasets: [{
+                label: 'Amount',
+                data: {{ fee_chart_values|safe }},
+                borderColor: '#88D0C5',
+                backgroundColor: 'rgba(136, 208, 197, 0.18)',
+                pointBackgroundColor: '#8BC740',
+                pointBorderColor: '#ffffff',
+                pointRadius: 5,
+                fill: true,
+                tension: 0.38
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                x: { grid: { display: false }, ticks: { color: '#6c757d' } },
+                y: { beginAtZero: true, ticks: { color: '#6c757d' }, grid: { color: '#e9ecef' } }
+            }
+        }
+    });
+})();
 </script>
 {% endblock %}

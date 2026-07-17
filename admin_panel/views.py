@@ -2505,6 +2505,59 @@ def teacher_list(request):
     })
 
 
+@permission_required('teacher_dashboard.view_teacher', raise_exception=True)
+def teacher_profile(request, pk):
+    teacher = get_object_or_404(Teacher.objects.prefetch_related('subjects'), pk=pk)
+
+    from admin_panel.models import (
+        AssignedPeriod,
+        ClassTeacher,
+        TeacherAppraisalSubmission,
+        TeacherFixture,
+    )
+    from teacher_dashboard.models import Attendance
+
+    assigned_periods_qs = (
+        AssignedPeriod.objects
+        .filter(teacher=teacher)
+        .select_related('class_fk', 'section', 'subject', 'period')
+        .order_by('day', 'period__start_time', 'period__id')
+    )
+    substitute_fixtures_qs = (
+        TeacherFixture.objects
+        .filter(substitute_teacher=teacher)
+        .select_related('class_fk', 'section', 'subject', 'period', 'absent_teacher')
+        .order_by('-fixture_date', 'period__start_time')
+    )
+    absent_fixtures_qs = TeacherFixture.objects.filter(absent_teacher=teacher)
+    class_teacher_assignments = (
+        ClassTeacher.objects
+        .filter(teacher=teacher)
+        .select_related('class_fk', 'section', 'academic_year')
+        .order_by('-assigned_date')
+    )
+
+    stats = {
+        'subjects_count': teacher.subjects.count(),
+        'assigned_periods_count': assigned_periods_qs.count(),
+        'substitute_duties_count': substitute_fixtures_qs.count(),
+        'absent_fixture_count': absent_fixtures_qs.count(),
+        'attendance_marked_count': Attendance.objects.filter(marked_by=teacher).count(),
+        'appraisal_submissions_count': TeacherAppraisalSubmission.objects.filter(teacher=teacher).count(),
+        'class_teacher_count': class_teacher_assignments.count(),
+        'employee_linked': bool(getattr(teacher, 'employee_id', None)),
+    }
+
+    context = {
+        'teacher': teacher,
+        'stats': stats,
+        'assigned_periods': assigned_periods_qs[:12],
+        'substitute_fixtures': substitute_fixtures_qs[:8],
+        'class_teacher_assignments': class_teacher_assignments[:6],
+    }
+    return render(request, 'admin_panel/teacher_profile.html', context)
+
+
 DEFAULT_TEACHER_PASSWORD = "ex"
 
 

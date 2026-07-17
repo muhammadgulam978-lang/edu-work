@@ -37,6 +37,7 @@ urlpatterns = [
     # path('parents/', views.parent_list, name='parent_list'),
     
     # path('reset/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
+    path('teachers/<int:pk>/profile/', views.teacher_profile, name='teacher_profile'),
     path('teachers/edit/<int:pk>/', views.teacher_update, name='teacher_edit'),
     path('teachers/delete/<int:pk>/', views.teacher_delete, name='teacher_delete'),
     path('periods/', views.period_list_view, name='period_list'),                

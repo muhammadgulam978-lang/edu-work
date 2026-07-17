@@ -3,214 +3,401 @@
 {% load widget_tweaks %}
 
 {% block title %}
-    {% if form.instance.pk %}Edit Teacher{% else %}Create Teacher{% endif %}
+  {% if form.instance.pk %}Edit Teacher{% else %}Create Teacher{% endif %}
 {% endblock %}
+
 {% block extra_head %}
-    <!-- Select2 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <link rel="stylesheet" href="{% static 'admin_panel/css/add_teacher.css' %}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/3.3.0/select2.css" />
 {% endblock %}
 
 {% block content %}
-<div class="card" style="background: #f8f9fa; margin-left: 20px; margin-right: 20px;">
-    <div class="card-header">
-        <h4 class="card-title">{% if form.instance.pk %}Edit Teacher{% else %}Create New Teacher{% endif %}</h4>
-    </div>
-    <div class="card-body">
-        <form method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
-            {% csrf_token %}
-
-            {% if form.errors %}
-            <div style="color:red; margin-bottom:1em;">
-                <ul>
-                    {% for field in form %}
-                        {% for error in field.errors %}
-                            <li><strong>{{ field.label }}:</strong> {{ error }}</li>
-                        {% endfor %}
-                    {% endfor %}
-                    {% for error in form.non_field_errors %}
-                        <li>{{ error }}</li>
-                    {% endfor %}
-                </ul>
-            </div>
-            {% endif %}
-
-            <div class="row">
-                <!-- Profile Picture -->
-                <div class="mb-3 row">
-                    <label class="col-lg-4 col-form-label">Profile Picture</label>
-                    <div class="col-lg-6 text-center">
-                        {% if form.instance.image %}
-                            <img src="{{ form.instance.image.url }}" class="rounded-circle mb-2" width="100" height="100" alt="Preview">
-                        {% else %}
-                            <img src="{% static 'admin_panel/images/dummy-profile.png' %}" class="rounded-circle mb-2" width="100" height="100" alt="No Image">
-                        {% endif %}
-                        {{ form.image }}
-                    </div>
-                </div>
-
-                <!-- Left Column -->
-                <div class="col-xl-6">
-                    <div class="mb-3 row">
-                        <label class="col-lg-4 col-form-label">Full Name</label>
-                        <div class="col-lg-6">
-                            {{ form.name|add_class:"form-control" }}
-                        </div>
-                    </div>
-                    <div class="mb-3 row">
-                        <label class="col-lg-4 col-form-label">Email</label>
-                        <div class="col-lg-6">
-                            {{ form.email|add_class:"form-control" }}
-                        </div>
-                    </div>
-                    <div class="mb-3 row">
-                        <label class="col-lg-4 col-form-label">Phone</label>
-                        <div class="col-lg-6">
-                            {{ form.phone|add_class:"form-control" }}
-                        </div>
-                    </div>
-                    <div class="mb-3 row">
-                        <label class="col-lg-4 col-form-label">Gender</label>
-                        <div class="col-lg-6">
-                            {{ form.gender|add_class:"form-control" }}
-                        </div>
-                    </div>
-                    <div class="mb-3 row">
-                        <label class="col-lg-4 col-form-label">Date of Birth</label>
-                        <div class="col-lg-6">
-                            {{ form.date_of_birth|add_class:"form-control" }}
-                        </div>
-                    </div>
-                    <div class="mb-3 row">
-                        <label class="col-lg-4 col-form-label">Qualification</label>
-                        <div class="col-lg-6">
-                            {{ form.qualification|add_class:"form-control" }}
-                        </div>
-                    </div>
-                    <div class="mb-3 row">
-                        <label class="col-lg-4 col-form-label">Address</label>
-                        <div class="col-lg-6">
-                            {{ form.Address|add_class:"form-control" }}
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Right Column -->
-                <div class="col-xl-6">
-                    {% if not form.instance.pk %}
-                    <div class="mb-3 row">
-                        <label class="col-lg-4 col-form-label">Login ID</label>
-                        <div class="col-lg-6">
-                            {{ form.login_id|add_class:"form-control" }}
-                        </div>
-                    </div>
-                    <div class="mb-3 row">
-                        <label class="col-lg-4 col-form-label">Password</label>
-                        <div class="col-lg-6">
-                            {{ form.password|add_class:"form-control" }}
-                        </div>
-                    </div>
-                    <div class="mb-3 row">
-                        <label class="col-lg-4 col-form-label">Confirm Password</label>
-                        <div class="col-lg-6">
-                            {{ form.confirm_password|add_class:"form-control" }}
-                        </div>
-                    </div>
-                    {% endif %}
-                    <div class="mb-3 row">
-                        <label class="col-lg-4 col-form-label">Faculty Group</label>
-                        <div class="col-lg-6">
-                            {{ form.faculty_group|add_class:"form-control select2" }}
-                        </div>
-                    </div>
-                    <div class="mb-3 row">
-                        <label class="col-lg-4 col-form-label">Department</label>
-                        <div class="col-lg-6">
-                            {{ form.department|add_class:"form-control" }}
-                        </div>
-                    </div>
-                    <!-- Subjects Multi-Select -->
-                  <!-- Subjects Multi-Select -->
-<div class="mb-3 row">
-    <label class="col-lg-4 col-form-label" for="{{ form.subjects.id_for_label }}">Subjects</label>
-    <div class="col-lg-6">
-        {{ form.subjects|add_class:"form-control select2" }}
-    </div>
-</div>
-<!-- jQuery -->
-<script src="https://code.jquery.com/jquery-1.8.3.min.js"></script>
-<!-- Select2 v3.3.0 JS -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/3.3.0/select2.min.js"></script>
-
-<!-- Init -->
-<script>
-$(document).ready(function() {
-    $(".select2").select2({
-        placeholder: "Select subjects",
-        allowClear: true,
-        closeOnSelect: false
-    });
-});
-</script>
-
-<!-- Tab style -->
 <style>
-.select2-search-choice {
-    background-color: #007bff !important;
-    border: none !important;
-    color: white !important;
-    padding: 4px 8px !important;
-    border-radius: 15px !important;
+  .teacher-form-page {
+    --edu-teal: #88D0C5;
+    --edu-green: #8BC740;
+    --edu-bg: #F5F5FD;
+    --edu-border: #e9ecef;
+    --edu-muted: #6c757d;
+    margin: 0 20px 30px;
+    color: #111;
+  }
+  .teacher-form-card {
+    border: 1px solid var(--edu-border);
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, .05);
+    overflow: hidden;
+  }
+  .teacher-form-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 24px 28px;
+    background: linear-gradient(90deg, rgba(136, 208, 197, .24), rgba(245, 245, 253, .9));
+    border-bottom: 1px solid var(--edu-border);
+  }
+  .teacher-form-header h4 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 500;
+  }
+  .teacher-form-header p {
+    margin: 6px 0 0;
+    color: var(--edu-muted);
+    font-size: 14px;
+    font-weight: 400;
+  }
+  .teacher-form-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .teacher-form-body {
+    padding: 28px;
+  }
+  .teacher-form-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 24px;
+  }
+  .teacher-form-section {
+    border: 1px solid var(--edu-border);
+    border-radius: 14px;
+    background: #fff;
+    padding: 22px;
+  }
+  .teacher-form-section h5 {
+    margin: 0 0 18px;
+    font-size: 18px;
+    font-weight: 500;
+  }
+  .teacher-field {
+    margin-bottom: 18px;
+  }
+  .teacher-field label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--edu-muted);
+    font-size: 14px;
+    font-weight: 400;
+  }
+  .teacher-field .form-control,
+  .teacher-field select,
+  .teacher-field textarea,
+  .teacher-field input[type="text"],
+  .teacher-field input[type="email"],
+  .teacher-field input[type="password"],
+  .teacher-field input[type="number"],
+  .teacher-field input[type="date"] {
+    width: 100%;
+    min-height: 48px;
+    border: 1px solid var(--edu-border);
+    border-radius: 12px;
+    background: #fff;
+    color: #111;
+    font-size: 14px;
+    font-weight: 400;
+    padding: 10px 14px;
+    outline: none;
+    box-shadow: none;
+  }
+  .teacher-field .form-control:focus,
+  .teacher-field select:focus,
+  .teacher-field input:focus {
+    border-color: var(--edu-teal);
+    box-shadow: 0 0 0 4px rgba(136, 208, 197, .18);
+  }
+  .teacher-photo-panel {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 18px;
+    align-items: center;
+    margin-bottom: 24px;
+    padding: 20px;
+    border: 1px solid var(--edu-border);
+    border-radius: 14px;
+    background: rgba(245, 245, 253, .65);
+  }
+  .teacher-photo-panel img {
+    width: 112px;
+    height: 112px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 5px solid #fff;
+    box-shadow: 0 10px 22px rgba(0, 0, 0, .07);
+    background: #fff;
+  }
+  .teacher-photo-panel input[type="file"] {
+    width: 100%;
+    border: 1px solid var(--edu-border);
+    border-radius: 12px;
+    background: #fff;
+    padding: 10px;
+    font-size: 14px;
+  }
+  .teacher-soft-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 10px 20px;
+    border: 1px solid rgba(136, 208, 197, .65);
+    border-radius: 999px;
+    background: var(--edu-teal);
+    color: #111;
+    font-weight: 500;
+    text-decoration: none;
+    box-shadow: 0 8px 18px rgba(136, 208, 197, .22);
+  }
+  .teacher-soft-btn:hover {
+    color: #111;
+    text-decoration: none;
+  }
+  .teacher-soft-btn.secondary {
+    background: #fff;
+    box-shadow: none;
+  }
+  .teacher-submit-row {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 24px;
+  }
+  .teacher-form-errors {
+    margin-bottom: 22px;
+    padding: 16px 18px;
+    border: 1px solid rgba(255, 77, 61, .22);
+    border-radius: 12px;
+    background: #FFEDEA;
+    color: #111;
+  }
+  .teacher-form-errors ul {
+    margin: 0;
+    padding-left: 18px;
+  }
+  .teacher-checkbox-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 48px;
+    padding: 10px 14px;
+    border: 1px solid var(--edu-border);
+    border-radius: 12px;
+    background: #fff;
+  }
+  .teacher-checkbox-wrap input {
+    width: 18px;
+    height: 18px;
+  }
+  .teacher-form-page .select2-container {
+    width: 100% !important;
+  }
+  .teacher-form-page .select2-container-multi .select2-choices,
+  .teacher-form-page .select2-container .select2-choice {
+    min-height: 48px;
+    border: 1px solid var(--edu-border) !important;
+    border-radius: 12px !important;
+    background: #fff !important;
+    box-shadow: none !important;
+    padding: 6px 10px;
+  }
+  .teacher-form-page .select2-container-multi .select2-choices .select2-search-choice {
+    margin: 4px 6px 4px 0;
+    padding: 7px 12px 7px 26px !important;
+    border: 1px solid rgba(136, 208, 197, .6) !important;
+    border-radius: 999px !important;
+    background: rgba(136, 208, 197, .28) !important;
+    color: #111 !important;
     font-size: 13px;
-}
-.select2-search-choice-close {
-    margin-top: 2px;
-}
+    font-weight: 400;
+    box-shadow: none !important;
+  }
+  .teacher-form-page .select2-search-choice-close {
+    top: 8px !important;
+    left: 9px !important;
+  }
+  @media (max-width: 992px) {
+    .teacher-form-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  @media (max-width: 680px) {
+    .teacher-form-page {
+      margin: 0 12px 24px;
+    }
+    .teacher-form-header,
+    .teacher-photo-panel {
+      align-items: flex-start;
+      flex-direction: column;
+      grid-template-columns: 1fr;
+    }
+    .teacher-form-body {
+      padding: 20px;
+    }
+    .teacher-submit-row,
+    .teacher-form-actions {
+      flex-direction: column;
+    }
+    .teacher-soft-btn {
+      width: 100%;
+    }
+  }
 </style>
 
-                    <div class="mb-3 row">
-                        <label class="col-lg-4 col-form-label">Status</label>
-                        <div class="col-lg-6">
-                            {{ form.status|add_class:"form-control" }}
-                        </div>
-                    </div>
-                    <div class="mb-3 row">
-                        <label class="col-lg-4 col-form-label">Experience (Years)</label>
-                        <div class="col-lg-6">
-                            {{ form.experience|add_class:"form-control" }}
-                        </div>
-                    </div>
-                    <div class="mb-3 row">
-                        <label class="col-lg-4 col-form-label">Joining Date</label>
-                        <div class="col-lg-6">
-                            {{ form.joining_date|add_class:"form-control" }}
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Submit Button -->
-                <div class="col-lg-12 text-center mt-4">
-                    <button type="submit" class="btn btn-primary">
-                        {% if form.instance.pk %}Update Teacher{% else %}Submit{% endif %}
-                    </button>
-                </div>
-            </div>
-        </form>
+<div class="teacher-form-page">
+  <div class="teacher-form-card">
+    <div class="teacher-form-header">
+      <div>
+        <h4>{% if form.instance.pk %}Edit Teacher{% else %}Create New Teacher{% endif %}</h4>
+        <p>{% if form.instance.pk %}Update profile, subjects, status, and teaching details.{% else %}Create teacher profile and portal login credentials.{% endif %}</p>
+      </div>
+      <div class="teacher-form-actions">
+        {% if form.instance.pk %}
+          <a href="{% url 'teacher_profile' form.instance.pk %}" class="teacher-soft-btn secondary"><i class="fa fa-eye"></i>View Profile</a>
+        {% endif %}
+        <a href="{% url 'teacher_list' %}" class="teacher-soft-btn secondary"><i class="fa fa-arrow-left"></i>Back to List</a>
+      </div>
     </div>
+
+    <div class="teacher-form-body">
+      <form method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
+        {% csrf_token %}
+
+        {% if form.errors %}
+          <div class="teacher-form-errors">
+            <ul>
+              {% for field in form %}
+                {% for error in field.errors %}
+                  <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                {% endfor %}
+              {% endfor %}
+              {% for error in form.non_field_errors %}
+                <li>{{ error }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% endif %}
+
+        <div class="teacher-photo-panel">
+          {% if form.instance.image %}
+            <img src="{{ form.instance.image.url }}" alt="{{ form.instance.name|default:'Teacher' }}">
+          {% else %}
+            <img src="{% static 'admin_panel/images/dummy-profile.png' %}" alt="Teacher avatar">
+          {% endif %}
+          <div class="teacher-field" style="margin-bottom:0;">
+            <label>Profile Picture</label>
+            {{ form.image }}
+          </div>
+        </div>
+
+        <div class="teacher-form-grid">
+          <section class="teacher-form-section">
+            <h5>Personal Details</h5>
+            <div class="teacher-field">
+              <label>Full Name</label>
+              {{ form.name|add_class:"form-control" }}
+            </div>
+            <div class="teacher-field">
+              <label>Email</label>
+              {{ form.email|add_class:"form-control" }}
+            </div>
+            <div class="teacher-field">
+              <label>Phone</label>
+              {{ form.phone|add_class:"form-control" }}
+            </div>
+            <div class="teacher-field">
+              <label>Gender</label>
+              {{ form.gender|add_class:"form-control" }}
+            </div>
+            <div class="teacher-field">
+              <label>Date of Birth</label>
+              {{ form.date_of_birth|add_class:"form-control" }}
+            </div>
+            <div class="teacher-field">
+              <label>Qualification</label>
+              {{ form.qualification|add_class:"form-control" }}
+            </div>
+            <div class="teacher-field">
+              <label>Address</label>
+              {{ form.Address|add_class:"form-control" }}
+            </div>
+          </section>
+
+          <section class="teacher-form-section">
+            <h5>Teaching & Portal Details</h5>
+            {% if not form.instance.pk %}
+              <div class="teacher-field">
+                <label>Login ID</label>
+                {{ form.login_id|add_class:"form-control" }}
+              </div>
+              <div class="teacher-field">
+                <label>Password</label>
+                {{ form.password|add_class:"form-control" }}
+              </div>
+              <div class="teacher-field">
+                <label>Confirm Password</label>
+                {{ form.confirm_password|add_class:"form-control" }}
+              </div>
+            {% endif %}
+            <div class="teacher-field">
+              <label>Faculty Group</label>
+              {{ form.faculty_group|add_class:"form-control select2" }}
+            </div>
+            <div class="teacher-field">
+              <label>Department</label>
+              {{ form.department|add_class:"form-control" }}
+            </div>
+            <div class="teacher-field">
+              <label for="{{ form.subjects.id_for_label }}">Subjects</label>
+              {{ form.subjects|add_class:"form-control select2" }}
+            </div>
+            <div class="teacher-field">
+              <label>Status</label>
+              {{ form.status|add_class:"form-control" }}
+            </div>
+            <div class="teacher-field">
+              <label>Experience (Years)</label>
+              {{ form.experience|add_class:"form-control" }}
+            </div>
+            <div class="teacher-field">
+              <label>Joining Date</label>
+              {{ form.joining_date|add_class:"form-control" }}
+            </div>
+            <div class="teacher-field">
+              <label>Merge Class</label>
+              <div class="teacher-checkbox-wrap">
+                {{ form.is_merge }}
+                <span>Allow merged class assignment</span>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <div class="teacher-submit-row">
+          <a href="{% url 'teacher_list' %}" class="teacher-soft-btn secondary">Cancel</a>
+          <button type="submit" class="teacher-soft-btn">
+            {% if form.instance.pk %}Update Teacher{% else %}Submit{% endif %}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>
-                                                      
+
 {% endblock %}
+
 {% block scripts %}
 <script src="https://code.jquery.com/jquery-1.8.3.min.js"></script>
-<!-- Select2 v3.3.0 JS -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/3.3.0/select2.min.js"></script>
-
 <script>
   $(document).ready(function() {
-      $('.select2').select2({
-          placeholder: "Select options",
-          allowClear: true
-      });
+    $('.select2').select2({
+      placeholder: "Select options",
+      allowClear: true,
+      closeOnSelect: false
+    });
   });
 </script>
 {% endblock %}

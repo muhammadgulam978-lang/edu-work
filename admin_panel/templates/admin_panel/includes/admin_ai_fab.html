@@ -1,0 +1,264 @@
+{% load static %}
+
+{% if request.user.is_authenticated %}
+    <style>
+        .admin-ai-fab {
+            position: fixed;
+            left: 26px;
+            bottom: 28px;
+            z-index: 2147483000;
+            width: 86px;
+            height: 86px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background:
+                radial-gradient(circle at 45% 38%, rgba(255, 255, 255, .95) 0 18%, rgba(136, 208, 197, .9) 30%, rgba(139, 199, 64, .72) 58%, rgba(136, 208, 197, .35) 72%, rgba(136, 208, 197, 0) 100%);
+            border: 1px solid rgba(255, 255, 255, .65);
+            color: #264c84;
+            text-decoration: none;
+            box-shadow:
+                0 0 16px rgba(136, 208, 197, .85),
+                0 0 34px rgba(139, 199, 64, .45),
+                0 8px 22px rgba(0, 0, 0, .16);
+            line-height: 1;
+            isolation: isolate;
+            overflow: visible;
+            touch-action: none;
+            user-select: none;
+            -webkit-user-drag: none;
+            -webkit-tap-highlight-color: transparent;
+            cursor: grab;
+            animation: adminAiPulse 2.8s ease-in-out infinite;
+        }
+        .admin-ai-fab.is-dragging {
+            cursor: grabbing;
+            animation-play-state: paused;
+        }
+        .admin-ai-fab::before,
+        .admin-ai-fab::after {
+            content: "";
+            position: absolute;
+            inset: 8px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, .78);
+            box-shadow: 0 0 16px rgba(136, 208, 197, .72);
+            pointer-events: none;
+            z-index: 0;
+        }
+        .admin-ai-fab::before {
+            transform: rotate(18deg) scaleX(1.22) scaleY(.82);
+            animation: adminAiOrbitOne 3.4s linear infinite;
+        }
+        .admin-ai-fab::after {
+            border-color: rgba(139, 199, 64, .62);
+            transform: rotate(-42deg) scaleX(1.16) scaleY(.86);
+            animation: adminAiOrbitTwo 4.2s linear infinite;
+        }
+        .admin-ai-fab:hover,
+        .admin-ai-fab:focus {
+            color: #264c84;
+            text-decoration: none;
+            outline: none;
+        }
+        .admin-ai-fab__mark {
+            position: relative;
+            z-index: 1;
+            width: 58px;
+            height: 58px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, .35);
+            color: #111;
+            border: 1px solid rgba(255, 255, 255, .58);
+            font-size: 17px;
+            font-weight: 500;
+            letter-spacing: 0;
+        }
+        .admin-ai-fab__tooltip {
+            position: absolute;
+            left: 96px;
+            top: 50%;
+            transform: translateY(-50%);
+            padding: 8px 10px;
+            border-radius: 8px;
+            background: #ffffff;
+            color: #495057;
+            border: 1px solid #e9ecef;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, .08);
+            font-size: 13px;
+            font-weight: 500;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .2s ease, transform .2s ease;
+        }
+        .admin-ai-fab:hover .admin-ai-fab__tooltip,
+        .admin-ai-fab:focus .admin-ai-fab__tooltip {
+            opacity: 1;
+            transform: translateY(-50%) translateX(4px);
+        }
+        .admin-ai-fab.is-positioned .admin-ai-fab__tooltip {
+            display: none;
+        }
+        @keyframes adminAiPulse {
+            0%, 100% {
+                box-shadow:
+                    0 0 16px rgba(136, 208, 197, .85),
+                    0 0 34px rgba(139, 199, 64, .45),
+                    0 8px 22px rgba(0, 0, 0, .16);
+            }
+            50% {
+                box-shadow:
+                    0 0 24px rgba(136, 208, 197, .95),
+                    0 0 48px rgba(139, 199, 64, .58),
+                    0 8px 22px rgba(0, 0, 0, .16);
+            }
+        }
+        @keyframes adminAiOrbitOne {
+            from { transform: rotate(18deg) scaleX(1.22) scaleY(.82); }
+            to { transform: rotate(378deg) scaleX(1.22) scaleY(.82); }
+        }
+        @keyframes adminAiOrbitTwo {
+            from { transform: rotate(-42deg) scaleX(1.16) scaleY(.86); }
+            to { transform: rotate(-402deg) scaleX(1.16) scaleY(.86); }
+        }
+        @media (max-width: 768px) {
+            .admin-ai-fab {
+                left: 16px;
+                bottom: 82px;
+                width: 70px;
+                height: 70px;
+            }
+            .admin-ai-fab__mark {
+                width: 48px;
+                height: 48px;
+                font-size: 15px;
+            }
+            .admin-ai-fab__tooltip {
+                display: none;
+            }
+        }
+    </style>
+
+    <a class="admin-ai-fab" href="{% url 'admin_ai_copilot' %}" title="Open Admin AI Agent" aria-label="Open Admin AI Agent" data-admin-ai-fab="true" draggable="false">
+        <span class="admin-ai-fab__mark" aria-hidden="true">AI</span>
+        <span class="admin-ai-fab__tooltip">Admin AI Agent</span>
+    </a>
+
+    <script>
+        (function() {
+            const fab = document.querySelector("[data-admin-ai-fab='true']");
+            if (!fab) return;
+
+            const storageKey = "edupilot_admin_ai_fab_position";
+            const dragThreshold = 6;
+            let startX = 0;
+            let startY = 0;
+            let startLeft = 0;
+            let startTop = 0;
+            let moved = false;
+            let activePointerId = null;
+
+            function clamp(value, min, max) {
+                return Math.min(Math.max(value, min), max);
+            }
+
+            function boundsFor(left, top) {
+                const rect = fab.getBoundingClientRect();
+                const margin = 8;
+                return {
+                    left: clamp(left, margin, window.innerWidth - rect.width - margin),
+                    top: clamp(top, margin, window.innerHeight - rect.height - margin)
+                };
+            }
+
+            function place(left, top, persist) {
+                const next = boundsFor(left, top);
+                fab.style.left = next.left + "px";
+                fab.style.top = next.top + "px";
+                fab.style.right = "auto";
+                fab.style.bottom = "auto";
+                fab.classList.add("is-positioned");
+                if (persist) {
+                    localStorage.setItem(storageKey, JSON.stringify(next));
+                }
+            }
+
+            function restorePosition() {
+                try {
+                    const saved = JSON.parse(localStorage.getItem(storageKey) || "null");
+                    if (saved && Number.isFinite(saved.left) && Number.isFinite(saved.top)) {
+                        place(saved.left, saved.top, false);
+                    }
+                } catch (error) {
+                    localStorage.removeItem(storageKey);
+                }
+            }
+
+            fab.addEventListener("pointerdown", function(event) {
+                if (event.button !== undefined && event.button !== 0) return;
+                event.preventDefault();
+                const rect = fab.getBoundingClientRect();
+                startX = event.clientX;
+                startY = event.clientY;
+                startLeft = rect.left;
+                startTop = rect.top;
+                moved = false;
+                activePointerId = event.pointerId;
+                fab.classList.add("is-dragging");
+                fab.setPointerCapture(event.pointerId);
+            });
+
+            fab.addEventListener("pointermove", function(event) {
+                if (activePointerId !== event.pointerId) return;
+                const dx = event.clientX - startX;
+                const dy = event.clientY - startY;
+                if (Math.abs(dx) > dragThreshold || Math.abs(dy) > dragThreshold) {
+                    moved = true;
+                }
+                if (moved) {
+                    event.preventDefault();
+                    place(startLeft + dx, startTop + dy, false);
+                }
+            });
+
+            function endDrag(event) {
+                if (activePointerId !== event.pointerId) return;
+                activePointerId = null;
+                fab.classList.remove("is-dragging");
+                try {
+                    fab.releasePointerCapture(event.pointerId);
+                } catch (error) {}
+                if (moved) {
+                    const rect = fab.getBoundingClientRect();
+                    place(rect.left, rect.top, true);
+                }
+            }
+
+            fab.addEventListener("pointerup", endDrag);
+            fab.addEventListener("pointercancel", endDrag);
+            fab.addEventListener("dragstart", function(event) {
+                event.preventDefault();
+            });
+            fab.addEventListener("click", function(event) {
+                if (moved) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    moved = false;
+                }
+            });
+            window.addEventListener("resize", function() {
+                const rect = fab.getBoundingClientRect();
+                if (fab.classList.contains("is-positioned")) {
+                    place(rect.left, rect.top, true);
+                }
+            });
+
+            restorePosition();
+        })();
+    </script>
+{% endif %}
