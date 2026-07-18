@@ -25,6 +25,7 @@ from django.contrib.auth.models import User, Group, Permission
 from django.http import HttpResponseForbidden
 from django.db.models import Q, Sum, Count
 from .forms import RoleForm, AssignRoleForm
+from .models import UserRole, RoleActivityLog
 
 
 
@@ -90,6 +91,200 @@ def setup_default_roles():
 # ===================================================
 # 🔹 STEP 2 — CREATE CUSTOM ROLE
 # ===================================================
+def _detect_user_profile_type(user):
+    profile_checks = (
+        ("Teacher", "teacher"),
+        ("Student", "student"),
+        ("Parent", "parent"),
+        ("Employee", "employee_profile"),
+    )
+    for label, attr in profile_checks:
+        try:
+            if hasattr(user, attr) and getattr(user, attr):
+                return label
+        except Exception:
+            continue
+    if user.is_superuser:
+        return "Admin"
+    if user.is_staff:
+        return "Staff"
+    return "User"
+
+
+def _group_permissions_by_model(permissions):
+    grouped_permissions = {}
+    for perm in permissions:
+        model_name = perm.content_type.model.replace('_', ' ').title()
+        grouped_permissions.setdefault(model_name, []).append(perm)
+    return grouped_permissions
+
+
+def _split_full_name(full_name):
+    parts = (full_name or "").strip().split()
+    if not parts:
+        return "", ""
+    if len(parts) == 1:
+        return parts[0], ""
+    return parts[0], " ".join(parts[1:])
+
+
+def _record_role_activity(action_by, action_type, message, target_user=None, target_role=None, metadata=None):
+    RoleActivityLog.objects.create(
+        action_by=action_by if getattr(action_by, "is_authenticated", False) else None,
+        action_type=action_type,
+        target_user=target_user,
+        target_role=target_role,
+        message=message,
+        metadata=metadata or {},
+    )
+
+
+def _role_management_context(active_tab="users", role_form=None, assign_form=None):
+    groups = Group.objects.prefetch_related('permissions').annotate(user_count=Count('user')).order_by('name')
+    users = User.objects.prefetch_related('groups').order_by('-date_joined', 'username')
+    permissions = Permission.objects.select_related('content_type').order_by(
+        'content_type__app_label',
+        'content_type__model',
+        'codename'
+    )
+
+    users_with_meta = []
+    for user in users:
+        user_roles = list(user.groups.all())
+        users_with_meta.append({
+            "user": user,
+            "roles": user_roles,
+            "primary_role": user_roles[0].name if user_roles else "No Role",
+            "profile_type": _detect_user_profile_type(user),
+        })
+
+    role_rows = []
+    for group in groups:
+        role_name = group.name.lower()
+        role_rows.append({
+            "group": group,
+            "role_type": "System" if role_name in {"admin", "teacher", "student", "parent"} else "Custom",
+            "permissions_count": group.permissions.count(),
+            "users_count": group.user_count,
+        })
+
+    permission_rows = []
+    for perm in permissions:
+        permission_rows.append({
+            "permission": perm,
+            "module": perm.content_type.app_label.replace("_", " ").title(),
+            "model": perm.content_type.model.replace("_", " ").title(),
+        })
+
+    return {
+        "active_tab": active_tab,
+        "role_form": role_form or RoleForm(),
+        "assign_form": assign_form or AssignRoleForm(),
+        "users_with_meta": users_with_meta,
+        "role_rows": role_rows,
+        "role_cards": role_rows,
+        "groups": groups,
+        "permission_groups": _group_permissions_by_model(permissions),
+        "permission_rows": permission_rows,
+        "activity_logs": RoleActivityLog.objects.select_related("action_by", "target_user", "target_role")[:50],
+        "stats": {
+            "total_users": users.count(),
+            "active_users": users.filter(is_active=True).count(),
+            "total_roles": groups.count(),
+            "total_permissions": permissions.count(),
+        },
+        "recent_users": users[:8],
+        "recent_roles": groups[:8],
+    }
+
+
+@login_required
+@permission_required('auth.view_group', raise_exception=True)
+def user_role_management(request):
+    active_tab = request.POST.get('active_tab') or request.GET.get('tab') or "users"
+    role_form = RoleForm()
+    assign_form = AssignRoleForm()
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+
+        if action == 'create_role':
+            if not request.user.has_perm('auth.add_group'):
+                return HttpResponseForbidden("You do not have permission to create roles.")
+            active_tab = "roles"
+            role_form = RoleForm(request.POST)
+            if role_form.is_valid():
+                role_name = role_form.cleaned_data['name'].strip()
+                permissions = role_form.cleaned_data['permissions']
+                if Group.objects.filter(name__iexact=role_name).exists():
+                    messages.error(request, f"Role '{role_name}' already exists.")
+                    _record_role_activity(
+                        request.user,
+                        RoleActivityLog.ACTION_VALIDATION_FAILED,
+                        f"Duplicate role creation attempt for '{role_name}'.",
+                        metadata={"role_name": role_name},
+                    )
+                else:
+                    group = Group.objects.create(name=role_name)
+                    group.permissions.set(permissions)
+                    _record_role_activity(
+                        request.user,
+                        RoleActivityLog.ACTION_ROLE_CREATED,
+                        f"Role '{role_name}' created with {permissions.count()} permission(s).",
+                        target_role=group,
+                        metadata={"permissions": list(permissions.values_list("codename", flat=True))},
+                    )
+                    messages.success(request, f"Role '{role_name}' created successfully.")
+                    return redirect('user_role_management')
+
+        elif action == 'assign_role':
+            if not request.user.has_perm('auth.change_user'):
+                return HttpResponseForbidden("You do not have permission to assign roles.")
+            active_tab = "assign"
+            assign_form = AssignRoleForm(request.POST)
+            if assign_form.is_valid():
+                role = assign_form.cleaned_data['role']
+                first_name, last_name = _split_full_name(assign_form.cleaned_data.get('full_name'))
+                user = User.objects.create_user(
+                    username=assign_form.cleaned_data['username'],
+                    email=assign_form.cleaned_data['email'],
+                    password=assign_form.cleaned_data['password'],
+                    first_name=first_name,
+                    last_name=last_name,
+                    is_active=assign_form.cleaned_data.get('is_active', True),
+                    is_staff=assign_form.cleaned_data.get('is_staff') or role.name.lower() == 'admin',
+                )
+                user.groups.set([role])
+                UserRole.objects.update_or_create(user=user, defaults={'role': role})
+                _record_role_activity(
+                    request.user,
+                    RoleActivityLog.ACTION_USER_CREATED,
+                    f"User '{user.username}' created and assigned to '{role.name}'.",
+                    target_user=user,
+                    target_role=role,
+                    metadata={
+                        "email": user.email,
+                        "is_active": user.is_active,
+                        "is_staff": user.is_staff,
+                    },
+                )
+                _record_role_activity(
+                    request.user,
+                    RoleActivityLog.ACTION_ROLE_ASSIGNED,
+                    f"Role '{role.name}' assigned to '{user.username}'.",
+                    target_user=user,
+                    target_role=role,
+                )
+                messages.success(request, f"User '{user.username}' created with role '{role.name}'.")
+                return redirect('user_role_management')
+
+    return render(
+        request,
+        'admin_panel/user_role_management.html',
+        _role_management_context(active_tab=active_tab, role_form=role_form, assign_form=assign_form)
+    )
+
+
 @login_required
 @permission_required('auth.add_group', raise_exception=True)
 def create_role(request):
@@ -101,18 +296,31 @@ def create_role(request):
 
             if Group.objects.filter(name__iexact=role_name).exists():
                 messages.error(request, f"❌ Role '{role_name}' already exists.")
+                _record_role_activity(
+                    request.user,
+                    RoleActivityLog.ACTION_VALIDATION_FAILED,
+                    f"Duplicate role creation attempt for '{role_name}'.",
+                    metadata={"role_name": role_name},
+                )
                 return redirect('create_role')
 
             group = Group.objects.create(name=role_name)
             group.permissions.set(permissions)
             group.save()
+            _record_role_activity(
+                request.user,
+                RoleActivityLog.ACTION_ROLE_CREATED,
+                f"Role '{role_name}' created with {permissions.count()} permission(s).",
+                target_role=group,
+                metadata={"permissions": list(permissions.values_list("codename", flat=True))},
+            )
 
             messages.success(request, f"✅ Role '{role_name}' created successfully!")
-            return redirect('list_roles')
+            return redirect('user_role_management')
     else:
         form = RoleForm()
 
-    return render(request, 'admin_panel/create_role.html', {'form': form})
+    return render(request, 'admin_panel/user_role_management.html', _role_management_context(active_tab="roles", role_form=form))
 
 
 # ===================================================
@@ -122,11 +330,7 @@ def create_role(request):
 @permission_required('auth.view_group', raise_exception=True)
 def list_roles(request):
     groups = Group.objects.prefetch_related('permissions').all()
-    return render(request, 'admin_panel/list_roles.html', {'groups': groups})
-
-
-from .models import UserRole
-
+    return render(request, 'admin_panel/user_role_management.html', _role_management_context(active_tab="roles"))
 
 # ===================================================
 # 🔹 HELPER — Safe Role Assignment
@@ -173,27 +377,50 @@ def assign_role(request):
     if request.method == 'POST':
         form = AssignRoleForm(request.POST)
         if form.is_valid():
+            role = form.cleaned_data['role']
+            first_name, last_name = _split_full_name(form.cleaned_data.get('full_name'))
             user = User.objects.create_user(
                 username=form.cleaned_data['username'],
                 email=form.cleaned_data['email'],
                 password=form.cleaned_data['password'],
-                is_staff=form.cleaned_data['role'].name.lower() == 'admin',
+                first_name=first_name,
+                last_name=last_name,
+                is_active=form.cleaned_data.get('is_active', True),
+                is_staff=form.cleaned_data.get('is_staff') or role.name.lower() == 'admin',
             )
-            role = form.cleaned_data['role']
 
             user.groups.clear()
             user.groups.add(role)
             user.save()
+            UserRole.objects.update_or_create(user=user, defaults={'role': role})
+            _record_role_activity(
+                request.user,
+                RoleActivityLog.ACTION_USER_CREATED,
+                f"User '{user.username}' created and assigned to '{role.name}'.",
+                target_user=user,
+                target_role=role,
+                metadata={
+                    "email": user.email,
+                    "is_active": user.is_active,
+                    "is_staff": user.is_staff,
+                },
+            )
+            _record_role_activity(
+                request.user,
+                RoleActivityLog.ACTION_ROLE_ASSIGNED,
+                f"Role '{role.name}' assigned to '{user.username}'.",
+                target_user=user,
+                target_role=role,
+            )
 
             messages.success(request, f"User '{user.username}' created with role '{role.name}'.")
-            return redirect('assign_role')
+            return redirect('user_role_management')
     else:
         form = AssignRoleForm()
 
-    return render(request, 'admin_panel/assign_role.html', {
-        'form': form,
-        'users_with_roles': users_with_roles
-    })
+    context = _role_management_context(active_tab="assign", assign_form=form)
+    context['users_with_roles'] = users_with_roles
+    return render(request, 'admin_panel/user_role_management.html', context)
 
 
 # ===================================================
@@ -2287,10 +2514,364 @@ from .forms import ClassForm
 
 @permission_required('admin_panel.view_class', raise_exception=True)
 def class_list(request):
-    classes = Class.objects.annotate(
-        approved_students=Count('admission', filter=Q(admission__admission_status='approved'))
-    )
-    return render(request, 'admin_panel/class_list.html', {'classes': classes})
+    from django.db.models import Avg, F
+    from django.utils import timezone
+    from student_profile.models import Student as PortalStudent
+    from teacher_dashboard.models import Attendance, Assignment
+    from .models import AssignedPeriod, ClassTeacher, ExamResult, FeeVoucher, Student as FeeStudent, Subject
+
+    today = timezone.localdate()
+    selected = {
+        'q': request.GET.get('q', '').strip(),
+        'class_name': request.GET.get('class_name', '').strip(),
+        'grade': request.GET.get('grade', '').strip(),
+        'section': request.GET.get('section', '').strip(),
+        'teacher': request.GET.get('teacher', '').strip(),
+        'campus': request.GET.get('campus', '').strip(),
+        'academic_session': request.GET.get('academic_session', '').strip(),
+        'curriculum': request.GET.get('curriculum', '').strip(),
+        'house': request.GET.get('house', '').strip(),
+        'shift': request.GET.get('shift', '').strip(),
+        'status': request.GET.get('status', '').strip(),
+        'strength': request.GET.get('strength', '').strip(),
+        'timetable_status': request.GET.get('timetable_status', '').strip(),
+        'attendance': request.GET.get('attendance', '').strip(),
+        'fee': request.GET.get('fee', '').strip(),
+        'performance': request.GET.get('performance', '').strip(),
+    }
+
+    classes_qs = Class.objects.select_related('group').order_by('class_name')
+    if selected['q']:
+        classes_qs = classes_qs.filter(
+            Q(class_name__icontains=selected['q']) |
+            Q(group__group_name__icontains=selected['q'])
+        )
+    if selected['class_name']:
+        classes_qs = classes_qs.filter(class_name__icontains=selected['class_name'])
+    if selected['grade']:
+        classes_qs = classes_qs.filter(class_name__icontains=selected['grade'])
+    if selected['curriculum']:
+        classes_qs = classes_qs.filter(group__group_name__icontains=selected['curriculum'])
+
+    academic_years = list(AcademicYear.objects.all().order_by('-is_active', '-id'))
+    sections = list(Section.objects.select_related('academic_year', 'class_fk').order_by('class_fk__class_name', 'section_name'))
+    class_teachers = list(ClassTeacher.objects.select_related('academic_year', 'class_fk', 'section', 'teacher'))
+    assigned_periods = list(AssignedPeriod.objects.select_related('class_fk', 'section', 'subject', 'teacher'))
+
+    if selected['academic_session']:
+        sections = [s for s in sections if str(s.academic_year_id) == selected['academic_session']]
+        class_teachers = [ct for ct in class_teachers if str(ct.academic_year_id) == selected['academic_session']]
+    if selected['section']:
+        sections = [s for s in sections if s.section_name.lower() == selected['section'].lower()]
+    if selected['teacher']:
+        class_teachers = [ct for ct in class_teachers if str(ct.teacher_id) == selected['teacher']]
+
+    student_counts = PortalStudent.objects.values('class_fk_id').annotate(total=Count('id'))
+    student_count_map = {item['class_fk_id']: item['total'] for item in student_counts}
+    male_counts = PortalStudent.objects.filter(gender__iexact='Male').values('class_fk_id').annotate(total=Count('id'))
+    female_counts = PortalStudent.objects.filter(gender__iexact='Female').values('class_fk_id').annotate(total=Count('id'))
+    male_map = {item['class_fk_id']: item['total'] for item in male_counts}
+    female_map = {item['class_fk_id']: item['total'] for item in female_counts}
+
+    records = []
+    ai_alerts = []
+    totals = {
+        'classes': 0,
+        'active_classes': 0,
+        'students': 0,
+        'capacity': 0,
+        'vacant_classes': 0,
+        'without_teacher': 0,
+        'without_timetable': 0,
+        'low_attendance': 0,
+        'ai_alerts': 0,
+    }
+
+    for class_obj in classes_qs:
+        class_sections = [s for s in sections if s.class_fk_id == class_obj.id]
+        if selected['section'] and not class_sections:
+            continue
+
+        teacher_assignments = [ct for ct in class_teachers if ct.class_fk_id == class_obj.id]
+        if selected['teacher'] and not teacher_assignments:
+            continue
+
+        timetable_periods = [ap for ap in assigned_periods if ap.class_fk_id == class_obj.id]
+        if selected['campus']:
+            campus_exists = Admission.objects.filter(class_fk=class_obj, campus__icontains=selected['campus']).exists()
+            if not campus_exists:
+                continue
+
+        section_names = sorted({s.section_name for s in class_sections}) or ['Not Assigned']
+        session_names = sorted({s.academic_year.year for s in class_sections if s.academic_year}) or ['Not Assigned']
+        teacher_names = sorted({ct.teacher.name for ct in teacher_assignments if ct.teacher}) or ['Not Assigned']
+        capacity = sum(s.capacity for s in class_sections)
+        students = student_count_map.get(class_obj.id, 0)
+        male = male_map.get(class_obj.id, 0)
+        female = female_map.get(class_obj.id, 0)
+        vacant = max(capacity - students, 0) if capacity else 0
+        capacity_percent = min(round((students / capacity) * 100), 100) if capacity else 0
+
+        present_today = Attendance.objects.filter(class_fk=class_obj, date=today, status='present').count()
+        attendance_marked = Attendance.objects.filter(class_fk=class_obj, date=today).count()
+        attendance_percent = round((present_today / attendance_marked) * 100) if attendance_marked else 0
+
+        result_avg = ExamResult.objects.filter(class_fk=class_obj).aggregate(
+            avg=Avg(100.0 * F('marks_obtained') / F('total_marks'))
+        )['avg']
+        performance_percent = round(result_avg or 0)
+
+        finance_students = FeeStudent.objects.filter(current_class__iexact=class_obj.class_name)
+        fee_total = FeeVoucher.objects.filter(student__in=finance_students).count()
+        fee_paid = FeeVoucher.objects.filter(student__in=finance_students, status='PAID').count()
+        fee_percent = round((fee_paid / fee_total) * 100) if fee_total else 0
+
+        homework_pending = Assignment.objects.filter(class_fk=class_obj, due_date__gte=today).count()
+        subject_names = list(Subject.objects.filter(class_fk=class_obj).order_by('sort_order', 'name').values_list('name', flat=True)[:6])
+        top_performers = list(PortalStudent.objects.filter(class_fk=class_obj).order_by('roll_no', 'name').values_list('name', flat=True)[:3])
+        weak_students = list(PortalStudent.objects.filter(class_fk=class_obj).order_by('-id').values_list('name', flat=True)[:3])
+
+        if not class_sections:
+            status = 'Vacant'
+        elif students >= capacity and capacity:
+            status = 'Full'
+        else:
+            status = 'Active'
+
+        if not timetable_periods:
+            timetable_status = 'Not Assigned'
+        elif len(timetable_periods) < max(len(class_sections), 1) * 5:
+            timetable_status = 'Pending'
+        else:
+            timetable_status = 'Completed'
+
+        if selected['status'] and selected['status'].lower() != status.lower():
+            continue
+        if selected['timetable_status'] and selected['timetable_status'].lower() != timetable_status.lower():
+            continue
+
+        if attendance_percent and attendance_percent < 75:
+            ai_level = 'Critical'
+            ai_tone = 'critical'
+            recommendation = 'Review attendance and contact families today.'
+        elif not teacher_assignments or timetable_status != 'Completed' or performance_percent < 70:
+            ai_level = 'Attention Needed'
+            ai_tone = 'warning'
+            recommendation = 'Assign missing ownership and schedule a revision session.'
+        else:
+            ai_level = 'Excellent'
+            ai_tone = 'healthy'
+            recommendation = 'Keep current timetable, homework, and fee follow-up rhythm.'
+
+        if selected['attendance'] == 'low' and attendance_percent >= 75:
+            continue
+        if selected['fee'] == 'low' and fee_percent >= 75:
+            continue
+        if selected['performance'] == 'low' and performance_percent >= 70:
+            continue
+        if selected['strength'] == 'full' and status != 'Full':
+            continue
+        if selected['strength'] == 'vacant' and not vacant:
+            continue
+
+        alert_text = ''
+        if ai_tone == 'critical':
+            alert_text = 'Low attendance detected'
+        elif not teacher_assignments:
+            alert_text = 'Class teacher not assigned'
+        elif timetable_status != 'Completed':
+            alert_text = 'Timetable needs completion'
+        elif performance_percent < 70:
+            alert_text = 'Performance needs review'
+
+        if alert_text:
+            ai_alerts.append(f"{class_obj.class_name}: {alert_text}")
+
+        records.append({
+            'class_obj': class_obj,
+            'sections': ', '.join(section_names),
+            'sessions': ', '.join(session_names),
+            'campus': Admission.objects.filter(class_fk=class_obj).values_list('campus', flat=True).first() or 'Main Campus',
+            'curriculum': class_obj.group.group_name if class_obj.group else 'Core',
+            'teacher_names': ', '.join(teacher_names),
+            'students': students,
+            'male': male,
+            'female': female,
+            'capacity': capacity,
+            'vacant': vacant,
+            'capacity_percent': capacity_percent,
+            'attendance_percent': attendance_percent,
+            'performance_percent': performance_percent,
+            'homework_percent': max(100 - min(homework_pending * 8, 100), 0),
+            'homework_pending': homework_pending,
+            'fee_percent': fee_percent,
+            'timetable_status': timetable_status,
+            'status': status,
+            'ai_level': ai_level,
+            'ai_tone': ai_tone,
+            'recommendation': recommendation,
+            'alert_text': alert_text or 'No operational alert',
+            'subjects': subject_names,
+            'top_performers': top_performers,
+            'weak_students': weak_students,
+            'period_count': len(timetable_periods),
+            'section_count': len(class_sections),
+        })
+
+        totals['classes'] += 1
+        totals['students'] += students
+        totals['capacity'] += capacity
+        totals['active_classes'] += 1 if status == 'Active' else 0
+        totals['vacant_classes'] += 1 if not students else 0
+        totals['without_teacher'] += 1 if not teacher_assignments else 0
+        totals['without_timetable'] += 1 if timetable_status == 'Not Assigned' else 0
+        totals['low_attendance'] += 1 if attendance_percent and attendance_percent < 75 else 0
+        totals['ai_alerts'] += 1 if alert_text else 0
+
+    totals['average_strength'] = round(totals['students'] / totals['classes']) if totals['classes'] else 0
+
+    context = {
+        'classes': records,
+        'summary': totals,
+        'selected': selected,
+        'academic_years': academic_years,
+        'section_options': sorted({s.section_name for s in Section.objects.all()}),
+        'teacher_options': ClassTeacher.objects.select_related('teacher').order_by('teacher__name'),
+        'campus_options': sorted({c for c in Admission.objects.exclude(campus='').values_list('campus', flat=True).distinct()}),
+        'curriculum_options': Class.objects.exclude(group__isnull=True).select_related('group').values_list('group__group_name', flat=True).distinct(),
+        'ai_alerts': ai_alerts[:6],
+    }
+    return render(request, 'admin_panel/class_list.html', context)
+
+
+@permission_required('admin_panel.view_class', raise_exception=True)
+def class_students(request, pk):
+    from django.db.models import Avg, F
+    from django.utils import timezone
+    from student_profile.models import AssignmentSubmission, Student as PortalStudent
+    from teacher_dashboard.models import Assignment, Attendance
+    from .models import ExamResult, FeeVoucher, Student as FeeStudent
+
+    class_obj = get_object_or_404(Class.objects.select_related('group'), pk=pk)
+    today = timezone.localdate()
+    selected = {
+        'q': request.GET.get('q', '').strip(),
+        'section': request.GET.get('section', '').strip(),
+        'gender': request.GET.get('gender', '').strip(),
+        'academic_year': request.GET.get('academic_year', '').strip(),
+        'attendance': request.GET.get('attendance', '').strip(),
+        'performance': request.GET.get('performance', '').strip(),
+        'missing': request.GET.get('missing', '').strip(),
+    }
+
+    students_qs = PortalStudent.objects.select_related('academic_year', 'class_fk', 'section').filter(class_fk=class_obj)
+    if selected['q']:
+        students_qs = students_qs.filter(
+            Q(name__icontains=selected['q']) |
+            Q(student_id__icontains=selected['q']) |
+            Q(roll_no__icontains=selected['q']) |
+            Q(email__icontains=selected['q']) |
+            Q(phone__icontains=selected['q']) |
+            Q(father_name__icontains=selected['q']) |
+            Q(mother_name__icontains=selected['q'])
+        )
+    if selected['section']:
+        students_qs = students_qs.filter(section_id=selected['section'])
+    if selected['gender']:
+        students_qs = students_qs.filter(gender__iexact=selected['gender'])
+    if selected['academic_year']:
+        students_qs = students_qs.filter(academic_year_id=selected['academic_year'])
+    if selected['missing'] == 'photo':
+        students_qs = students_qs.filter(Q(photo='') | Q(photo__isnull=True))
+    if selected['missing'] == 'contact':
+        students_qs = students_qs.filter(Q(phone='') | Q(phone__isnull=True) | Q(email=''))
+
+    sections = Section.objects.filter(class_fk=class_obj).select_related('academic_year').order_by('section_name')
+    academic_years = AcademicYear.objects.filter(section__class_fk=class_obj).distinct().order_by('-is_active', '-id')
+    assignments = Assignment.objects.filter(class_fk=class_obj)
+    assignment_ids = list(assignments.values_list('id', flat=True))
+    total_assignments = assignments.count()
+
+    student_cards = []
+    total_students = 0
+    attendance_sum = 0
+    performance_sum = 0
+    fee_sum = 0
+    risk_count = 0
+
+    for student in students_qs.order_by('section__section_name', 'roll_no', 'name'):
+        attendance_total = Attendance.objects.filter(student=student, class_fk=class_obj).count()
+        attendance_present = Attendance.objects.filter(student=student, class_fk=class_obj, status='present').count()
+        attendance_percent = round((attendance_present / attendance_total) * 100) if attendance_total else 0
+
+        result_avg = ExamResult.objects.filter(student=student, class_fk=class_obj).aggregate(
+            avg=Avg(100.0 * F('marks_obtained') / F('total_marks'))
+        )['avg']
+        performance_percent = round(result_avg or 0)
+
+        submitted_assignments = AssignmentSubmission.objects.filter(
+            student=student,
+            assignment_id__in=assignment_ids
+        ).count() if assignment_ids else 0
+        pending_assignments = max(total_assignments - submitted_assignments, 0)
+
+        finance_student = FeeStudent.objects.filter(student_id=student.student_id).first()
+        if not finance_student:
+            finance_student = FeeStudent.objects.filter(full_name__iexact=student.name, current_class__iexact=class_obj.class_name).first()
+        fee_total = FeeVoucher.objects.filter(student=finance_student).count() if finance_student else 0
+        fee_paid = FeeVoucher.objects.filter(student=finance_student, status='PAID').count() if finance_student else 0
+        fee_percent = round((fee_paid / fee_total) * 100) if fee_total else 0
+        fee_status = 'Paid' if fee_total and fee_paid == fee_total else 'Pending' if fee_total else 'Not Linked'
+
+        if attendance_percent and attendance_percent < 75:
+            ai_level = 'Critical'
+            ai_tone = 'critical'
+        elif pending_assignments or performance_percent < 70 or fee_status == 'Pending':
+            ai_level = 'Attention Needed'
+            ai_tone = 'warning'
+        else:
+            ai_level = 'Healthy'
+            ai_tone = 'healthy'
+
+        if selected['attendance'] == 'low' and attendance_percent >= 75:
+            continue
+        if selected['performance'] == 'low' and performance_percent >= 70:
+            continue
+
+        student_cards.append({
+            'student': student,
+            'attendance_percent': attendance_percent,
+            'performance_percent': performance_percent,
+            'total_assignments': total_assignments,
+            'pending_assignments': pending_assignments,
+            'fee_percent': fee_percent,
+            'fee_status': fee_status,
+            'ai_level': ai_level,
+            'ai_tone': ai_tone,
+        })
+        total_students += 1
+        attendance_sum += attendance_percent
+        performance_sum += performance_percent
+        fee_sum += fee_percent
+        risk_count += 1 if ai_tone != 'healthy' else 0
+
+    summary = {
+        'students': total_students,
+        'average_attendance': round(attendance_sum / total_students) if total_students else 0,
+        'average_performance': round(performance_sum / total_students) if total_students else 0,
+        'average_fee': round(fee_sum / total_students) if total_students else 0,
+        'risk_count': risk_count,
+    }
+
+    context = {
+        'class_obj': class_obj,
+        'students': student_cards,
+        'summary': summary,
+        'selected': selected,
+        'sections': sections,
+        'academic_years': academic_years,
+    }
+    return render(request, 'admin_panel/class_students.html', context)
 
 
 @permission_required('admin_panel.add_class', raise_exception=True)

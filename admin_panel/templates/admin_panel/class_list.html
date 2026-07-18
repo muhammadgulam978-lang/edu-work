@@ -1,60 +1,511 @@
 {% extends "admin_panel/bases.html" %}
 {% load static %}
 
-{% block title %}Class List{% endblock %}
+{% block title %}Class Management Center{% endblock %}
 
 {% block head %}
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'admin_panel/css/class_list.css' %}?v=ui-repair-1">
 {% endblock %}
 
 {% block content %}
-<div class="card" style="margin-left: 20px; margin-right: 20px; background-color: #ffffff">
-  <div class="card-header d-flex justify-content-between align-items-center">
-    <h4 class="card-title">Class List</h4>
-   <a href="{% url 'class_create' %}" class="btn btn-primary me-2">
-  <span class="me-2"><i class="fa fa-plus"></i></span>Add Class
-</a>
+<div class="class-center">
+  <div class="class-center__sticky">
+    <div class="class-center__titlebar">
+      <div>
+        <p class="eyebrow">Academics Command Center</p>
+        <h1>Class Management Center</h1>
+        <p class="title-subtext">Card-first class intelligence with live capacity, attendance, timetable, fees, performance, and AI health.</p>
+      </div>
+      <div class="title-actions">
+        <a href="{% url 'class_create' %}" class="btn btn-primary"><i class="fa fa-plus"></i>Add Class</a>
+        <button type="button" class="btn btn-light" data-open-panel="importExport"><i class="fa fa-upload"></i>Import / Export</button>
+        <button type="button" class="btn btn-light" data-open-panel="columnsPanel"><i class="fa fa-columns"></i>Columns</button>
+      </div>
+    </div>
 
+    <form method="get" class="class-search">
+      <div class="search-grid search-grid--primary">
+        <label><span>Global Search</span><input name="q" value="{{ selected.q }}" placeholder="Class, group, teacher, campus"></label>
+        <label><span>Class Name</span><input name="class_name" value="{{ selected.class_name }}" placeholder="Grade 8, Nursery, O Level"></label>
+        <label><span>Grade</span><input name="grade" value="{{ selected.grade }}" placeholder="8, 9, Junior"></label>
+        <label>
+          <span>Section</span>
+          <select name="section">
+            <option value="">All Sections</option>
+            {% for section in section_options %}
+              <option value="{{ section }}" {% if selected.section == section %}selected{% endif %}>{{ section }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label>
+          <span>Class Teacher</span>
+          <select name="teacher">
+            <option value="">All Teachers</option>
+            {% for item in teacher_options %}
+              <option value="{{ item.teacher.id }}" {% if selected.teacher == item.teacher.id|stringformat:"s" %}selected{% endif %}>{{ item.teacher.name }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label>
+          <span>Campus</span>
+          <select name="campus">
+            <option value="">All Campuses</option>
+            {% for campus in campus_options %}
+              <option value="{{ campus }}" {% if selected.campus == campus %}selected{% endif %}>{{ campus }}</option>
+            {% endfor %}
+          </select>
+        </label>
+      </div>
+
+      <details class="filter-panel" {% if selected.academic_session or selected.curriculum or selected.status or selected.timetable_status or selected.attendance or selected.fee or selected.performance or selected.strength %}open{% endif %}>
+        <summary>
+          <span><i class="fa fa-filter"></i> Advanced Filters</span>
+          <small>Session, curriculum, status, strength, attendance, fees, performance</small>
+        </summary>
+        <div class="search-grid">
+          <label>
+            <span>Academic Session</span>
+            <select name="academic_session">
+              <option value="">All Sessions</option>
+              {% for year in academic_years %}
+                <option value="{{ year.id }}" {% if selected.academic_session == year.id|stringformat:"s" %}selected{% endif %}>{{ year.year }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label>
+            <span>Curriculum</span>
+            <select name="curriculum">
+              <option value="">All Curricula</option>
+              {% for curriculum in curriculum_options %}
+                <option value="{{ curriculum }}" {% if selected.curriculum == curriculum %}selected{% endif %}>{{ curriculum }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label><span>House</span><input name="house" value="{{ selected.house }}" placeholder="All houses"></label>
+          <label><span>Shift</span><input name="shift" value="{{ selected.shift }}" placeholder="Morning / Evening"></label>
+          <label>
+            <span>Status</span>
+            <select name="status">
+              <option value="">Any Status</option>
+              <option value="Active" {% if selected.status == "Active" %}selected{% endif %}>Active</option>
+              <option value="Vacant" {% if selected.status == "Vacant" %}selected{% endif %}>Vacant</option>
+              <option value="Full" {% if selected.status == "Full" %}selected{% endif %}>Full</option>
+            </select>
+          </label>
+          <label>
+            <span>Student Strength</span>
+            <select name="strength">
+              <option value="">Any Strength</option>
+              <option value="full" {% if selected.strength == "full" %}selected{% endif %}>Full / Nearly Full</option>
+              <option value="vacant" {% if selected.strength == "vacant" %}selected{% endif %}>Has Vacant Seats</option>
+            </select>
+          </label>
+          <label>
+            <span>Timetable Status</span>
+            <select name="timetable_status">
+              <option value="">Any Timetable</option>
+              <option value="Completed" {% if selected.timetable_status == "Completed" %}selected{% endif %}>Completed</option>
+              <option value="Pending" {% if selected.timetable_status == "Pending" %}selected{% endif %}>Pending</option>
+              <option value="Not Assigned" {% if selected.timetable_status == "Not Assigned" %}selected{% endif %}>Not Assigned</option>
+            </select>
+          </label>
+          <label>
+            <span>Attendance %</span>
+            <select name="attendance">
+              <option value="">Any Attendance</option>
+              <option value="low" {% if selected.attendance == "low" %}selected{% endif %}>Below 75%</option>
+            </select>
+          </label>
+          <label>
+            <span>Fee Collection %</span>
+            <select name="fee">
+              <option value="">Any Fee Status</option>
+              <option value="low" {% if selected.fee == "low" %}selected{% endif %}>Below 75%</option>
+            </select>
+          </label>
+          <label>
+            <span>Performance Level</span>
+            <select name="performance">
+              <option value="">Any Performance</option>
+              <option value="low" {% if selected.performance == "low" %}selected{% endif %}>Below 70%</option>
+            </select>
+          </label>
+        </div>
+      </details>
+
+      <div class="filter-actions">
+        <button type="submit" class="btn btn-primary"><i class="fa fa-search"></i>Apply Search</button>
+        <a href="{% url 'class_list' %}" class="btn btn-light"><i class="fa fa-refresh"></i>Reset</a>
+        <button type="button" class="btn btn-light" data-open-panel="savedFilters"><i class="fa fa-bookmark"></i>Saved Filters</button>
+      </div>
+    </form>
   </div>
 
-  <div class="card-body">
-    <div class="table-responsive">
-      <table class="table table-responsive-md">
-        <thead>
-          <tr>
-            <th><strong>#</strong></th>
-            <th><strong>Class Name</strong></th>
-            <th><strong>Total Students</strong></th>
-            <th><strong>Group</strong></th>
-            <th><strong>Actions</strong></th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for c in classes %}
-          <tr>
-            <td><strong>{{ forloop.counter|stringformat:"02d" }}</strong></td>
-            <td>{{ c.class_name }}</td>
-            <td>{{ c.approved_students }}</td>
-            <td>{{ c.group.group_name|default:"No Group" }}</td>
-            <td>
-              <div class="d-flex">
-                <a href="{% url 'class_update' c.id %}" class="btn btn-primary shadow btn-xs sharp me-1" title="Edit">
-                  <i class="fas fa-pencil-alt"></i>
-                </a>
-                <a href="{% url 'class_delete' c.id %}" class="btn btn-danger shadow btn-xs sharp" title="Delete">
-                  <i class="fa fa-trash"></i>
-                </a>
-              </div>
-            </td>
-          </tr>
-          {% empty %}
-          <tr>
-            <td colspan="5">No classes found.</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+  <div class="summary-grid">
+    <div class="summary-card"><span>Total Classes</span><strong>{{ summary.classes }}</strong><small>Operational sections grouped by class</small></div>
+    <div class="summary-card healthy"><span>Active Classes</span><strong>{{ summary.active_classes }}</strong><small>Open with assigned sections</small></div>
+    <div class="summary-card"><span>Total Students</span><strong>{{ summary.students }}</strong><small>Portal roster count</small></div>
+    <div class="summary-card"><span>Average Strength</span><strong>{{ summary.average_strength }}</strong><small>Students per class</small></div>
+    <div class="summary-card warning"><span>Vacant Classes</span><strong>{{ summary.vacant_classes }}</strong><small>No students currently enrolled</small></div>
+    <div class="summary-card warning"><span>Without Teacher</span><strong>{{ summary.without_teacher }}</strong><small>Needs class teacher assignment</small></div>
+    <div class="summary-card critical"><span>Without Timetable</span><strong>{{ summary.without_timetable }}</strong><small>Missing assigned periods</small></div>
+    <div class="summary-card warning"><span>Low Attendance</span><strong>{{ summary.low_attendance }}</strong><small>Below 75% today</small></div>
+    <div class="summary-card ai"><span>AI Alerts</span><strong>{{ summary.ai_alerts }}</strong><small>Actionable class risks</small></div>
+  </div>
+
+  <div class="saved-filter-row" id="savedFilters">
+    <button type="button" data-fill-filter="grade9">Principal: Grade 9</button>
+    <button type="button" data-fill-filter="fee">Finance: Fee Pending</button>
+    <button type="button" data-fill-filter="teacher">HR: No Teacher Assigned</button>
+  </div>
+
+  <div class="view-switcher" role="group" aria-label="Class view switcher">
+    <button type="button" class="is-active" data-view-button="card"><i class="fa fa-th-large"></i>Card View</button>
+    <button type="button" data-view-button="list"><i class="fa fa-list"></i>List View</button>
+  </div>
+
+  <div class="class-layout">
+    <main>
+      <div class="bulk-bar class-bulk-card">
+        <div><input type="checkbox" id="selectAllClasses"><label for="selectAllClasses">Bulk select classes</label></div>
+        <div class="bulk-actions">
+          <button type="button">Assign Teacher</button>
+          <button type="button">Assign Subjects</button>
+          <button type="button">Assign Timetable</button>
+          <button type="button">Generate Reports</button>
+          <button type="button">Download</button>
+          <button type="button">Promote</button>
+          <button type="button">Deactivate</button>
+          <button type="button">Archive</button>
+          <button type="button" class="danger">Delete</button>
+        </div>
+      </div>
+
+      <section class="class-card-grid" data-view-panel="card">
+        {% for rec in classes %}
+        <article class="class-profile-card {{ rec.ai_tone }}">
+          <div class="class-card-top">
+            <label class="card-check"><input type="checkbox" class="row-check"><span></span></label>
+            <span class="rating-badge {{ rec.ai_tone }}"><i class="fa fa-star"></i>{{ rec.ai_level }}</span>
+          </div>
+          <a href="{% url 'class_students' rec.class_obj.id %}" class="class-avatar-link" aria-label="Open {{ rec.class_obj.class_name }} students">
+            <div class="class-avatar">{{ rec.class_obj.class_name|slice:":2" }}</div>
+          </a>
+          <h2><a href="{% url 'class_students' rec.class_obj.id %}">{{ rec.class_obj.class_name }}</a></h2>
+          <p class="class-role">{{ rec.curriculum }} • {{ rec.sections }}</p>
+          <div class="class-location"><i class="fa fa-map-marker-alt"></i>{{ rec.campus }} | {{ rec.sessions }}</div>
+          <div class="teacher-line"><strong>Teacher</strong><span>{{ rec.teacher_names }}</span></div>
+          <div class="match-line">
+            <strong>{{ rec.capacity_percent }}% filled</strong>
+            <span>{{ rec.students }} / {{ rec.capacity|default:"0" }} students</span>
+          </div>
+          <div class="strength"><i><b style="width: {{ rec.capacity_percent }}%"></b></i></div>
+          <div class="class-card-metrics">
+            <div><span>Attendance</span><strong>{{ rec.attendance_percent }}%</strong></div>
+            <div><span>Performance</span><strong>{{ rec.performance_percent }}%</strong></div>
+            <div><span>Fee</span><strong>{{ rec.fee_percent }}%</strong></div>
+            <div><span>Homework</span><strong>{{ rec.homework_pending }} Pending</strong></div>
+          </div>
+          <div class="class-card-details">
+            <span><i class="fa fa-male"></i>Male {{ rec.male }}</span>
+            <span><i class="fa fa-female"></i>Female {{ rec.female }}</span>
+            <span><i class="fa fa-chair"></i>Vacant {{ rec.vacant }}</span>
+            <span><i class="fa fa-clock"></i>{{ rec.timetable_status }}</span>
+          </div>
+          <p class="card-recommendation">{{ rec.recommendation }}</p>
+          <div class="class-card-actions">
+            <a href="{% url 'class_students' rec.class_obj.id %}" class="card-primary-action">View Students</a>
+            <a href="{% url 'class_update' rec.class_obj.id %}" title="Edit"><i class="fas fa-pencil-alt"></i></a>
+            <button type="button" class="ai-summary"
+              data-class="{{ rec.class_obj.class_name }}"
+              data-students="{{ rec.students }}"
+              data-attendance="{{ rec.attendance_percent }}"
+              data-performance="{{ rec.performance_percent }}"
+              data-fee="{{ rec.fee_percent }}"
+              data-homework="{{ rec.homework_percent }}"
+              data-behavior="{{ rec.ai_level }}"
+              data-recommendation="{{ rec.recommendation }}"
+              title="AI Summary"><i class="fa fa-magic"></i></button>
+            <a href="{% url 'timetable_view' %}" title="Timetable"><i class="fa fa-calendar-alt"></i></a>
+            <a href="{% url 'ai_analytics_dashboard' %}" title="Analytics"><i class="fa fa-chart-line"></i></a>
+            <button type="button" title="Download PDF"><i class="fa fa-file-pdf"></i></button>
+          </div>
+        </article>
+        {% empty %}
+        <div class="empty-state card-empty">No classes found for the selected filters.</div>
+        {% endfor %}
+      </section>
+
+      <section class="class-table-card is-hidden" data-view-panel="list">
+        <div class="table-responsive class-table-wrap">
+          <table class="table class-table">
+            <thead>
+              <tr>
+                <th></th>
+                <th data-col="class">Class</th>
+                <th data-col="section">Section</th>
+                <th data-col="session">Academic Session</th>
+                <th data-col="campus">Campus</th>
+                <th data-col="curriculum">Curriculum</th>
+                <th data-col="teacher">Class Teacher</th>
+                <th data-col="students">Students</th>
+                <th data-col="male">Male</th>
+                <th data-col="female">Female</th>
+                <th data-col="capacity">Capacity</th>
+                <th data-col="vacant">Vacant Seats</th>
+                <th data-col="attendance">Attendance %</th>
+                <th data-col="performance">Performance</th>
+                <th data-col="timetable">Timetable</th>
+                <th data-col="status">Status</th>
+                <th data-col="ai">AI Health</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for rec in classes %}
+              <tr class="class-row" data-row="{{ rec.class_obj.id }}">
+                <td><input type="checkbox" class="row-check"></td>
+                <td data-col="class">
+                  <button class="row-expand" type="button" aria-expanded="false" data-target="detail-{{ rec.class_obj.id }}"><i class="fa fa-chevron-right"></i></button>
+                  <a href="{% url 'class_students' rec.class_obj.id %}"><strong>{{ rec.class_obj.class_name }}</strong></a>
+                  {% if rec.alert_text != "No operational alert" %}<span class="alert-dot" title="{{ rec.alert_text }}">!</span>{% endif %}
+                </td>
+                <td data-col="section">{{ rec.sections }}</td>
+                <td data-col="session">{{ rec.sessions }}</td>
+                <td data-col="campus">{{ rec.campus }}</td>
+                <td data-col="curriculum">{{ rec.curriculum }}</td>
+                <td data-col="teacher">{{ rec.teacher_names }}</td>
+                <td data-col="students"><div class="strength"><span>{{ rec.students }} / {{ rec.capacity|default:"0" }}</span><i><b style="width: {{ rec.capacity_percent }}%"></b></i></div></td>
+                <td data-col="male">{{ rec.male }}</td>
+                <td data-col="female">{{ rec.female }}</td>
+                <td data-col="capacity">{{ rec.capacity }}</td>
+                <td data-col="vacant">{{ rec.vacant }}</td>
+                <td data-col="attendance"><span class="metric-pill">{{ rec.attendance_percent }}%</span></td>
+                <td data-col="performance"><span class="metric-pill">{{ rec.performance_percent }}%</span></td>
+                <td data-col="timetable"><span class="status-chip status-{{ rec.timetable_status|slugify }}">{{ rec.timetable_status }}</span></td>
+                <td data-col="status"><span class="status-chip status-{{ rec.status|slugify }}">{{ rec.status }}</span></td>
+                <td data-col="ai"><span class="ai-chip {{ rec.ai_tone }}">{{ rec.ai_level }}</span></td>
+                <td>
+                  <div class="action-stack">
+                    <a href="{% url 'class_students' rec.class_obj.id %}" class="icon-btn" title="Students"><i class="fa fa-users"></i></a>
+                    <button type="button" class="icon-btn" title="View" data-expand-id="detail-{{ rec.class_obj.id }}"><i class="fa fa-eye"></i></button>
+                    <a href="{% url 'class_update' rec.class_obj.id %}" class="icon-btn" title="Edit"><i class="fas fa-pencil-alt"></i></a>
+                    <button type="button" class="icon-btn ai-summary"
+                      data-class="{{ rec.class_obj.class_name }}"
+                      data-students="{{ rec.students }}"
+                      data-attendance="{{ rec.attendance_percent }}"
+                      data-performance="{{ rec.performance_percent }}"
+                      data-fee="{{ rec.fee_percent }}"
+                      data-homework="{{ rec.homework_percent }}"
+                      data-behavior="{{ rec.ai_level }}"
+                      data-recommendation="{{ rec.recommendation }}"
+                      title="AI Summary"><i class="fa fa-magic"></i></button>
+                    <a href="{% url 'timetable_view' %}" class="icon-btn" title="Timetable"><i class="fa fa-clock"></i></a>
+                    <a href="{% url 'ai_analytics_dashboard' %}" class="icon-btn" title="Analytics"><i class="fa fa-chart-line"></i></a>
+                    <button type="button" class="icon-btn" title="Download PDF"><i class="fa fa-file-pdf"></i></button>
+                  </div>
+                </td>
+              </tr>
+              <tr class="detail-row" id="detail-{{ rec.class_obj.id }}">
+                <td colspan="18">
+                  <div class="detail-dashboard">
+                    <section>
+                      <h3>{{ rec.class_obj.class_name }} Overview</h3>
+                      <div class="detail-tabs">
+                        <span>Overview</span><span>Students</span><span>Teachers</span><span>Subjects</span><span>Attendance</span><span>Fees</span><span>Results</span><span>Behavior</span><span>Homework</span><span>Assignments</span><span>Documents</span><span>Analytics</span><span>AI Summary</span><span>Reports</span>
+                      </div>
+                      <div class="mini-metrics">
+                        <div><span>Attendance</span><strong>{{ rec.attendance_percent }}%</strong></div>
+                        <div><span>Performance</span><strong>{{ rec.performance_percent }}%</strong></div>
+                        <div><span>Homework</span><strong>{{ rec.homework_percent }}%</strong></div>
+                        <div><span>Fee</span><strong>{{ rec.fee_percent }}%</strong></div>
+                        <div><span>Assignments</span><strong>{{ rec.homework_pending }} Pending</strong></div>
+                        <div><span>Periods</span><strong>{{ rec.period_count }}</strong></div>
+                      </div>
+                    </section>
+                    <section>
+                      <h3>Subjects</h3>
+                      <p>{% for subject in rec.subjects %}{{ subject }}{% if not forloop.last %}, {% endif %}{% empty %}No subjects assigned.{% endfor %}</p>
+                      <h3>Top Performers</h3>
+                      <p>{% for student in rec.top_performers %}{{ student }}{% if not forloop.last %}, {% endif %}{% empty %}No student data yet.{% endfor %}</p>
+                      <h3>Weak Students</h3>
+                      <p>{% for student in rec.weak_students %}{{ student }}{% if not forloop.last %}, {% endif %}{% empty %}No risk list yet.{% endfor %}</p>
+                    </section>
+                    <section>
+                      <h3>AI Insights</h3>
+                      <p>{{ rec.alert_text }}</p>
+                      <p><strong>Recommendation:</strong> {{ rec.recommendation }}</p>
+                      <div class="report-buttons">
+                        <button type="button">PDF</button><button type="button">Excel</button><button type="button">Word</button><button type="button">PowerPoint</button><button type="button">Share</button><button type="button">Email</button><button type="button">WhatsApp</button>
+                      </div>
+                    </section>
+                  </div>
+                </td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="18" class="empty-state">No classes found for the selected filters.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <aside class="ai-insights">
+      <h2>AI Insights</h2>
+      <div class="insight-stat"><span>Attendance dropped</span><strong>{{ summary.low_attendance }}</strong></div>
+      <div class="insight-stat"><span>Homework pending</span><strong>Live</strong></div>
+      <div class="insight-stat"><span>Fee collection</span><strong>Tracked</strong></div>
+      <h3>Recommendations</h3>
+      {% for alert in ai_alerts %}
+        <p class="insight-alert">{{ alert }}</p>
+      {% empty %}
+        <p class="insight-alert healthy">No urgent class alerts. Keep monitoring attendance, fees, and timetable completion.</p>
+      {% endfor %}
+      <div class="prediction-box">
+        <h3>AI Prediction</h3>
+        <span>Attendance</span><span>Results</span><span>Fee Collection</span><span>Dropout</span><span>Admissions</span><span>Teacher Requirement</span>
+      </div>
+      <button type="button" class="ask-ai"><i class="fa fa-comments"></i>Ask AI</button>
+      <p class="prompt-examples">Try: "Why is Grade 8 attendance low?", "Show weak students.", or "Compare with last month."</p>
+    </aside>
+  </div>
+</div>
+
+<div class="floating-panel" id="columnsPanel" aria-hidden="true">
+  <div>
+    <button class="panel-close" type="button">x</button>
+    <h2>Column Customization</h2>
+    <div class="column-options">
+      <label><input type="checkbox" data-column-toggle="class" checked> Class</label>
+      <label><input type="checkbox" data-column-toggle="section" checked> Section</label>
+      <label><input type="checkbox" data-column-toggle="session" checked> Academic Session</label>
+      <label><input type="checkbox" data-column-toggle="campus" checked> Campus</label>
+      <label><input type="checkbox" data-column-toggle="curriculum" checked> Curriculum</label>
+      <label><input type="checkbox" data-column-toggle="teacher" checked> Class Teacher</label>
+      <label><input type="checkbox" data-column-toggle="students" checked> Students</label>
+      <label><input type="checkbox" data-column-toggle="male" checked> Male</label>
+      <label><input type="checkbox" data-column-toggle="female" checked> Female</label>
+      <label><input type="checkbox" data-column-toggle="capacity" checked> Capacity</label>
+      <label><input type="checkbox" data-column-toggle="vacant" checked> Vacant Seats</label>
+      <label><input type="checkbox" data-column-toggle="attendance" checked> Attendance %</label>
+      <label><input type="checkbox" data-column-toggle="performance" checked> Performance</label>
+      <label><input type="checkbox" data-column-toggle="timetable" checked> Timetable</label>
+      <label><input type="checkbox" data-column-toggle="status" checked> Status</label>
+      <label><input type="checkbox" data-column-toggle="ai" checked> AI Health</label>
     </div>
   </div>
 </div>
+
+<div class="floating-panel" id="importExport" aria-hidden="true">
+  <div>
+    <button class="panel-close" type="button">x</button>
+    <h2>Import, Export, Clone</h2>
+    <div class="import-grid">
+      <button type="button">Import Classes</button>
+      <button type="button">Export Classes</button>
+      <button type="button">Duplicate Class</button>
+      <button type="button">Clone Previous Session</button>
+    </div>
+  </div>
+</div>
+
+<div class="ai-modal" id="aiSummaryModal" aria-hidden="true">
+  <div class="ai-modal__card">
+    <button class="panel-close" type="button">x</button>
+    <h2 id="aiClassName">AI Summary</h2>
+    <div class="mini-metrics">
+      <div><span>Students</span><strong id="aiStudents">0</strong></div>
+      <div><span>Attendance</span><strong id="aiAttendance">0%</strong></div>
+      <div><span>Performance</span><strong id="aiPerformance">0%</strong></div>
+      <div><span>Fee Collection</span><strong id="aiFee">0%</strong></div>
+      <div><span>Homework</span><strong id="aiHomework">0%</strong></div>
+      <div><span>Behavior</span><strong id="aiBehavior">Good</strong></div>
+    </div>
+    <h3>AI Recommendation</h3>
+    <p id="aiRecommendation">No recommendation.</p>
+  </div>
+</div>
+
+<script>
+  (function () {
+    document.querySelectorAll('[data-view-button]').forEach(function (button) {
+      button.addEventListener('click', function () {
+        var view = button.dataset.viewButton;
+        document.querySelectorAll('[data-view-button]').forEach(function (item) {
+          item.classList.toggle('is-active', item === button);
+        });
+        document.querySelectorAll('[data-view-panel]').forEach(function (panel) {
+          panel.classList.toggle('is-hidden', panel.dataset.viewPanel !== view);
+        });
+      });
+    });
+
+    document.querySelectorAll('.row-expand, [data-expand-id]').forEach(function (button) {
+      button.addEventListener('click', function () {
+        var target = button.dataset.target || button.dataset.expandId;
+        var row = document.getElementById(target);
+        if (!row) return;
+        row.classList.toggle('is-open');
+        var icon = document.querySelector('[data-target="' + target + '"] i');
+        if (icon) icon.classList.toggle('fa-chevron-down');
+      });
+    });
+
+    document.querySelectorAll('[data-open-panel]').forEach(function (button) {
+      button.addEventListener('click', function () {
+        var panel = document.getElementById(button.dataset.openPanel);
+        if (panel) panel.setAttribute('aria-hidden', 'false');
+      });
+    });
+
+    document.querySelectorAll('.panel-close').forEach(function (button) {
+      button.addEventListener('click', function () {
+        var panel = button.closest('.floating-panel, .ai-modal');
+        if (panel) panel.setAttribute('aria-hidden', 'true');
+      });
+    });
+
+    document.querySelectorAll('[data-column-toggle]').forEach(function (input) {
+      input.addEventListener('change', function () {
+        document.querySelectorAll('[data-col="' + input.dataset.columnToggle + '"]').forEach(function (cell) {
+          cell.classList.toggle('is-hidden', !input.checked);
+        });
+      });
+    });
+
+    var selectAll = document.getElementById('selectAllClasses');
+    if (selectAll) {
+      selectAll.addEventListener('change', function () {
+        document.querySelectorAll('.row-check').forEach(function (box) { box.checked = selectAll.checked; });
+      });
+    }
+
+    document.querySelectorAll('.ai-summary').forEach(function (button) {
+      button.addEventListener('click', function () {
+        document.getElementById('aiClassName').textContent = button.dataset.class;
+        document.getElementById('aiStudents').textContent = button.dataset.students;
+        document.getElementById('aiAttendance').textContent = button.dataset.attendance + '%';
+        document.getElementById('aiPerformance').textContent = button.dataset.performance + '%';
+        document.getElementById('aiFee').textContent = button.dataset.fee + '%';
+        document.getElementById('aiHomework').textContent = button.dataset.homework + '%';
+        document.getElementById('aiBehavior').textContent = button.dataset.behavior;
+        document.getElementById('aiRecommendation').textContent = button.dataset.recommendation;
+        document.getElementById('aiSummaryModal').setAttribute('aria-hidden', 'false');
+      });
+    });
+
+    document.querySelectorAll('[data-fill-filter]').forEach(function (button) {
+      button.addEventListener('click', function () {
+        var form = document.querySelector('.class-search');
+        if (!form) return;
+        if (button.dataset.fillFilter === 'grade9') form.querySelector('[name="grade"]').value = '9';
+        if (button.dataset.fillFilter === 'fee') form.querySelector('[name="fee"]').value = 'low';
+        if (button.dataset.fillFilter === 'teacher') form.querySelector('[name="status"]').value = 'Active';
+        form.submit();
+      });
+    });
+  })();
+</script>
 {% endblock %}

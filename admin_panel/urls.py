@@ -17,6 +17,7 @@ urlpatterns = [
     path('query/', views.query, name='query'),
     path('classes/', views.class_list, name='class_list'),            # Read (List all)
     path('classes/add/', views.class_create, name='class_create'),    # Create 
+    path('classes/<int:pk>/students/', views.class_students, name='class_students'),
     path('classes/<int:pk>/edit/', views.class_update, name='class_update'),  # Update
     path('classes/<int:pk>/delete/', views.class_delete, name='class_delete'), # Delete
     path('classes/', views.class_list, name='class_list'),
@@ -107,6 +108,7 @@ urlpatterns = [
     # ---- Test Page for generator ----
     path("generate-paper/<int:format_id>/", views.generate_question_paper, name="generate_question_paper"),
     
+    path('user-role-management/', views.user_role_management, name='user_role_management'),
     path('create-role/', views.create_role, name='create_role'),
     path('roles/', views.list_roles, name='list_roles'),
     path('assign-role/', views.assign_role, name='assign_role'),

@@ -23,10 +23,22 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   // 2) Highlight the current page link + auto-open its parent menu
-  var currentPath = window.location.pathname;
+  var currentPath = window.location.pathname.replace(/\/+$/, '') || '/';
   menu.querySelectorAll('a[href]').forEach(function (link) {
     var href = link.getAttribute('href');
-    if (href && href !== '#' && href !== 'javascript:void(0)' && currentPath.indexOf(href) === 0) {
+    if (!href || href === '#' || href === 'javascript:void(0)') return;
+
+    var linkPath;
+    try {
+      linkPath = new URL(href, window.location.origin).pathname.replace(/\/+$/, '') || '/';
+    } catch (error) {
+      return;
+    }
+
+    var isDashboardLink = linkPath === '/admin_panel';
+    var isCurrent = currentPath === linkPath || (!isDashboardLink && currentPath.indexOf(linkPath + '/') === 0);
+
+    if (isCurrent) {
       link.classList.add('active-link');
       var parentLi = link.closest('ul')?.closest('li.has-menu');
       if (parentLi) parentLi.classList.add('mm-active');

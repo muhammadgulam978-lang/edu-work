@@ -6,7 +6,8 @@
     <title>{% block title %}Admin Panel{% endblock %}</title>
     
     <link rel="stylesheet" href="{% static 'admin_panel/css/style.css' %}">
-    <link rel="stylesheet" href="{% static 'admin_panel/css/admin-inner-theme.css' %}?v=admin-pill-buttons-3">
+    <link rel="stylesheet" href="{% static 'admin_panel/css/admin-inner-theme.css' %}?v=admin-sidebar-color-icons-2">
+    {% block head %}{% endblock %}
     
 </head>
 <body>
@@ -21,6 +22,7 @@
     </div>
 
     <script src="{% static 'admin_panel/js/admin-header-live.js' %}?v=header-live-solid-1"></script>
+    <script src="{% static 'admin_panel/js/deznav-sidebar.js' %}?v=admin-sidebar-stable-1"></script>
     {% include 'admin_panel/includes/admin_ai_fab.html' %}
     {% include 'admin_panel/footer.html' %}
 </body>

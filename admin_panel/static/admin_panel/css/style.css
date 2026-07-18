@@ -29416,7 +29416,6 @@ html[dir="rtl"] [direction="rtl"][data-sidebar-style="compact"]:not([data-layout
 
 .deznav {
     background-color: #88D0C5 !important;
-<<<<<<< HEAD
 }
 div.dataTables_wrapper div.dataTables_paginate {
     position: sticky;
@@ -29425,6 +29424,3 @@ div.dataTables_wrapper div.dataTables_paginate {
     padding: 10px;
     z-index: 999;
 }
-=======
-}
->>>>>>> 685cbac8b9cc64fc9d3928333393120ec0f53f9e

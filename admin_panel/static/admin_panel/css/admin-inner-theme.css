@@ -1,4 +1,4 @@
-/*
+﻿/*
   EduPilot inner admin screen theme.
   Visual-only layer for screens opened from sidebar tabs. The main dashboard
   (admin_panel/index.html) intentionally does not load this file.
@@ -1596,8 +1596,17 @@ body,
   display: inline-flex !important;
   align-items: stretch !important;
   flex-wrap: nowrap !important;
-  max-width: min(420px, 42vw) !important;
+  width: clamp(460px, 38vw, 620px) !important;
+  max-width: calc(100vw - 760px) !important;
   overflow: visible !important;
+}
+
+#main-wrapper .header .admin-header-wide-search,
+.admin-inner-page .header .admin-header-wide-search {
+  width: 640px !important;
+  min-width: 560px !important;
+  max-width: 46vw !important;
+  flex: 0 0 auto !important;
 }
 
 #main-wrapper .header .search-area .form-control,
@@ -1755,7 +1764,15 @@ body,
 @media (max-width: 767px) {
   #main-wrapper .header .search-area,
   .admin-inner-page .header .search-area {
+    width: min(360px, 70vw) !important;
     max-width: 100% !important;
+  }
+
+  #main-wrapper .header .admin-header-wide-search,
+  .admin-inner-page .header .admin-header-wide-search {
+    width: min(360px, 70vw) !important;
+    min-width: 0 !important;
+    max-width: min(360px, 70vw) !important;
   }
 
   #main-wrapper .btn,
@@ -1784,5 +1801,242 @@ body,
   .automation-admin-page .dataTables_paginate {
     justify-content: flex-start !important;
     flex-wrap: wrap !important;
+  }
+}
+
+/* Stable admin sidebar behavior.
+   Keeps the existing EduPilot sidebar look while preventing active/expanded
+   shapes from overlapping multiline labels and submenu items. */
+.admin-sidebar-stable,
+.deznav.admin-sidebar-stable {
+  background-color: #88D0C5 !important;
+  overflow: hidden !important;
+}
+
+.admin-sidebar-stable .deznav-scroll {
+  overflow-x: hidden !important;
+}
+
+.admin-sidebar-stable ul.metismenu {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+  padding: 12px 0 18px 0 !important;
+}
+
+.admin-sidebar-stable ul.metismenu > li {
+  display: block !important;
+  position: relative !important;
+  margin: 0 !important;
+  padding: 0 0 0 18px !important;
+  min-height: 0 !important;
+}
+
+.admin-sidebar-stable ul.metismenu > li > a {
+  position: relative !important;
+  z-index: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  width: calc(100% - 8px) !important;
+  min-height: 48px !important;
+  height: auto !important;
+  padding: 9px 36px 9px 24px !important;
+  margin: 0 !important;
+  border-radius: 26px 0 0 26px !important;
+  color: #111111 !important;
+  background: transparent !important;
+  line-height: 1.25 !important;
+  white-space: normal !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+
+.admin-sidebar-stable ul.metismenu > li > a::before,
+.admin-sidebar-stable ul.metismenu > li.has-menu::after {
+  display: none !important;
+  content: none !important;
+}
+
+.admin-sidebar-stable ul.metismenu > li > a:not(.has-arrow)::after {
+  display: none !important;
+  content: none !important;
+}
+
+.admin-sidebar-stable ul.metismenu > li > a i {
+  align-items: center !important;
+  background: rgba(255, 255, 255, 0.58) !important;
+  border-radius: 10px !important;
+  display: inline-flex !important;
+  flex: 0 0 30px !important;
+  height: 30px !important;
+  justify-content: center !important;
+  width: 30px !important;
+  min-width: 30px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  text-align: center !important;
+  font-size: 15px !important;
+  line-height: 1 !important;
+  color: #176d63 !important;
+  opacity: 1 !important;
+}
+
+.admin-sidebar-stable ul.metismenu > li.sidebar-dashboard > a i { background: #e5f1ff !important; color: #2f80ed !important; }
+.admin-sidebar-stable ul.metismenu > li.sidebar-ai > a i { background: #f0e7ff !important; color: #7c3aed !important; }
+.admin-sidebar-stable ul.metismenu > li.sidebar-accounts > a i { background: #dff8f3 !important; color: #0f766e !important; }
+.admin-sidebar-stable ul.metismenu > li.sidebar-teachers > a i { background: #fff0df !important; color: #ea580c !important; }
+.admin-sidebar-stable ul.metismenu > li.sidebar-roles > a i { background: #ffe5f0 !important; color: #be185d !important; }
+.admin-sidebar-stable ul.metismenu > li.sidebar-students > a i { background: #e6efff !important; color: #2563eb !important; }
+.admin-sidebar-stable ul.metismenu > li.sidebar-timetable > a i { background: #dbf7f4 !important; color: #0d9488 !important; }
+.admin-sidebar-stable ul.metismenu > li.sidebar-academics > a i { background: #e5f8eb !important; color: #16a34a !important; }
+.admin-sidebar-stable ul.metismenu > li.sidebar-hr > a i { background: #f3e8ff !important; color: #9333ea !important; }
+.admin-sidebar-stable ul.metismenu > li.sidebar-appraisal > a i { background: #fff7d6 !important; color: #ca8a04 !important; }
+.admin-sidebar-stable ul.metismenu > li.sidebar-exams > a i { background: #ffe4e6 !important; color: #dc2626 !important; }
+
+.admin-sidebar-stable ul.metismenu > li > a .nav-text {
+  display: block !important;
+  flex: 1 1 auto !important;
+  max-width: 172px !important;
+  color: #111111 !important;
+  font-size: 16px !important;
+  font-weight: 500 !important;
+  line-height: 1.18 !important;
+  white-space: normal !important;
+  overflow-wrap: normal !important;
+}
+
+.admin-sidebar-stable ul.metismenu > li > a:hover,
+.admin-sidebar-stable ul.metismenu > li:hover > a,
+.admin-sidebar-stable ul.metismenu > li > a.mm-active,
+.admin-sidebar-stable ul.metismenu > li.mm-active > a,
+.admin-sidebar-stable ul.metismenu > li > a.active-link {
+  background: rgba(255, 255, 255, 0.78) !important;
+  color: #111111 !important;
+  box-shadow: none !important;
+}
+
+.admin-sidebar-stable ul.metismenu > li > a.has-arrow::after {
+  display: block !important;
+  content: "" !important;
+  position: absolute !important;
+  right: 16px !important;
+  top: 50% !important;
+  width: 8px !important;
+  height: 8px !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-right: 1.5px solid currentColor !important;
+  border-bottom: 1.5px solid currentColor !important;
+  transform: translateY(-50%) rotate(-45deg) !important;
+  transition: transform 0.18s ease !important;
+}
+
+.admin-sidebar-stable ul.metismenu > li.mm-active > a.has-arrow::after {
+  transform: translateY(-50%) rotate(45deg) !important;
+}
+
+.admin-sidebar-stable ul.metismenu > li > ul {
+  position: static !important;
+  z-index: 0 !important;
+  display: none;
+  width: auto !important;
+  max-height: none !important;
+  margin: 5px 18px 9px 56px !important;
+  padding: 7px 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+
+.admin-sidebar-stable ul.metismenu > li.mm-active > ul {
+  display: block !important;
+}
+
+.admin-sidebar-stable ul.metismenu > li > ul::before,
+.admin-sidebar-stable ul.metismenu > li > ul::after {
+  display: none !important;
+  content: none !important;
+}
+
+.admin-sidebar-stable ul.metismenu > li > ul > li {
+  display: block !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.admin-sidebar-stable ul.metismenu > li > ul > li > a {
+  display: block !important;
+  min-height: 0 !important;
+  height: auto !important;
+  padding: 7px 10px !important;
+  margin: 0 !important;
+  border-radius: 10px !important;
+  background: transparent !important;
+  color: #111111 !important;
+  font-size: 13px !important;
+  font-weight: 400 !important;
+  line-height: 1.25 !important;
+  white-space: normal !important;
+}
+
+.admin-sidebar-stable ul.metismenu > li > ul > li > a::before,
+.admin-sidebar-stable ul.metismenu > li > ul > li > a::after {
+  display: none !important;
+  content: none !important;
+}
+
+.admin-sidebar-stable ul.metismenu > li > ul > li > a:hover,
+.admin-sidebar-stable ul.metismenu > li > ul > li > a.active-link,
+.admin-sidebar-stable ul.metismenu > li > ul > li > a.mm-active {
+  background: rgba(255, 255, 255, 0.48) !important;
+  color: #111111 !important;
+}
+
+.admin-sidebar-stable .menu-title {
+  padding: 10px 10px 6px !important;
+  color: rgba(17, 17, 17, 0.72) !important;
+  font-size: 12px !important;
+  font-weight: 400 !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+}
+
+.menu-toggle .admin-sidebar-stable ul.metismenu > li {
+  padding-left: 10px !important;
+}
+
+.menu-toggle .admin-sidebar-stable ul.metismenu > li > a {
+  justify-content: center !important;
+  width: 58px !important;
+  min-height: 54px !important;
+  padding: 0 !important;
+  border-radius: 999px !important;
+}
+
+.menu-toggle .admin-sidebar-stable ul.metismenu > li > a .nav-text,
+.menu-toggle .admin-sidebar-stable ul.metismenu > li > a.has-arrow::after,
+.menu-toggle .admin-sidebar-stable ul.metismenu > li > ul {
+  display: none !important;
+}
+
+@media (max-width: 767px) {
+  .admin-sidebar-stable ul.metismenu > li {
+    padding-left: 16px !important;
+  }
+
+  .admin-sidebar-stable ul.metismenu > li > a {
+    min-height: 46px !important;
+    padding: 8px 34px 8px 22px !important;
+  }
+
+  .admin-sidebar-stable ul.metismenu > li > a .nav-text {
+    font-size: 15px !important;
+    max-width: 160px !important;
+  }
+
+  .admin-sidebar-stable ul.metismenu > li > ul {
+    margin-left: 48px !important;
   }
 }

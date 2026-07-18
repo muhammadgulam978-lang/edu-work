@@ -32,6 +32,52 @@ class UserRole(models.Model):
     def __str__(self):
         return f"{self.user.username} → {self.role.name if self.role else 'No Role'}"
 
+class RoleActivityLog(models.Model):
+    ACTION_ROLE_CREATED = "role_created"
+    ACTION_USER_CREATED = "user_created"
+    ACTION_ROLE_ASSIGNED = "role_assigned"
+    ACTION_VALIDATION_FAILED = "validation_failed"
+
+    ACTION_CHOICES = [
+        (ACTION_ROLE_CREATED, "Role Created"),
+        (ACTION_USER_CREATED, "User Created"),
+        (ACTION_ROLE_ASSIGNED, "Role Assigned"),
+        (ACTION_VALIDATION_FAILED, "Validation Failed"),
+    ]
+
+    action_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="role_activity_actions",
+    )
+    action_type = models.CharField(max_length=50, choices=ACTION_CHOICES)
+    target_user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="role_activity_targets",
+    )
+    target_role = models.ForeignKey(
+        Group,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="role_activity_logs",
+    )
+    message = models.CharField(max_length=255)
+    metadata = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.get_action_type_display()} - {self.created_at:%Y-%m-%d %H:%M}"
+
+
 # -----------------------------------------------
 
 class AcademicYear(models.Model):

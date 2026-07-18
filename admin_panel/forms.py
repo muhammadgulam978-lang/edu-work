@@ -40,10 +40,13 @@ class RoleForm(forms.ModelForm):
 
 class AssignRoleForm(forms.Form):
     username = forms.CharField(max_length=150, label="Login ID")
+    full_name = forms.CharField(max_length=150, label="Full Name", required=False)
     email = forms.EmailField()
     password = forms.CharField(widget=forms.PasswordInput)
     confirm_password = forms.CharField(widget=forms.PasswordInput)
     role = forms.ModelChoiceField(queryset=Group.objects.all(), label="Assign Role")
+    is_active = forms.BooleanField(label="Active Login", required=False, initial=True)
+    is_staff = forms.BooleanField(label="Staff Access", required=False)
 
     def clean_username(self):
         username = self.cleaned_data["username"].strip()
@@ -60,6 +63,13 @@ class AssignRoleForm(forms.Form):
         if password:
             validate_password(password)
         return cleaned_data
+
+    def clean_is_staff(self):
+        role = self.cleaned_data.get("role")
+        is_staff = self.cleaned_data.get("is_staff")
+        if role and role.name.lower() == "admin":
+            return True
+        return bool(is_staff)
 
 
 

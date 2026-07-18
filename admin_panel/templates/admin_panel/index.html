@@ -14,7 +14,7 @@
     <link href="{% static 'admin_panel/vendor/owl-carousel/owl.carousel.css' %}" rel="stylesheet">
     <link href="https://cdn.lineicons.com/2.0/LineIcons.css" rel="stylesheet">
     <link href="{% static 'admin_panel/css/style.css' %}" rel="stylesheet">
-    <link href="{% static 'admin_panel/css/admin-inner-theme.css' %}?v=admin-pill-buttons-3" rel="stylesheet">
+    <link href="{% static 'admin_panel/css/admin-inner-theme.css' %}?v=admin-sidebar-color-icons-2" rel="stylesheet">
 
     <style>
         .timetable-automation-nav > a {
@@ -813,7 +813,7 @@
                         </div>
                         <ul class="navbar-nav header-right">
                             <li class="nav-item">
-                                <form class="input-group search-area d-xl-inline-flex d-none" action="{% url 'admin_search' %}" method="get" data-admin-search-form>
+                                <form class="input-group search-area admin-header-wide-search d-xl-inline-flex d-none" action="{% url 'admin_search' %}" method="get" data-admin-search-form>
                                     <input type="text" class="form-control" name="q" placeholder="Search something here..." autocomplete="off" data-admin-search>
                                     <div class="input-group-append">
                                         <button class="input-group-text" type="submit"><i class="flaticon-381-search-2"></i></button>
@@ -879,206 +879,7 @@
         </div>
 
         <!-- Sidebar -->
-        <div class="deznav">
-            <div class="deznav-scroll">
-                <ul class="metismenu" id="menu">
-
-                    <li>
-                        <a href="{% url 'admin_panel_dashboard' %}" class="ai-icon">
-                            <i class="flaticon-381-networking"></i>
-                            <span class="nav-text">Dashboard</span>
-                        </a>
-                    </li>
-
-                    <li>
-                        <a href="{% url 'ai_analytics_dashboard' %}" class="ai-icon">
-                            <i class="flaticon-381-search-2"></i>
-                            <span class="nav-text">AI Analytics</span>
-                        </a>
-                    </li>
-
-                    <li>
-                        <a href="{% url 'automation-dashboard' %}" class="ai-icon">
-                            <i class="flaticon-381-controls-3"></i>
-                            <span class="nav-text">Account Automation</span>
-                        </a>
-                    </li>
-
-                    {% if perms.teacher_dashboard.view_teacher or perms.teacher_dashboard.add_teacher %}
-                    <li class="has-menu">
-                        <a class="has-arrow ai-icon" href="javascript:void(0)">
-                            <i class="flaticon-381-networking"></i>
-                            <span class="nav-text">Teachers Gateway</span>
-                        </a>
-                        <ul>
-                            {% if perms.teacher_dashboard.view_teacher %}
-                                <li><a href="{% url 'teacher_list' %}">Teacher List</a></li>
-                            {% endif %}
-                            {% if perms.teacher_dashboard.add_teacher %}
-                                <li><a href="{% url 'teacher_add' %}">Create Teacher</a></li>
-                                
-                            {% endif %}
-                        </ul>
-                    </li>
-                    {% endif %}
-
-                    {% if perms.auth.add_group or perms.auth.view_group or perms.auth.change_user %}
-                    <li class="has-menu">
-                        <a class="has-arrow ai-icon" href="javascript:void(0)">
-                            <i class="flaticon-381-settings-2"></i>
-                            <span class="nav-text">User Role Management</span>
-                        </a>
-                        <ul>
-                            {% if perms.auth.add_group %}
-                                <li><a href="{% url 'create_role' %}">Create Role</a></li>
-                            {% endif %}
-                            {% if perms.auth.view_group %}
-                                <li><a href="{% url 'list_roles' %}">View Roles</a></li>
-                            {% endif %}
-                            {% if perms.auth.change_user %}
-                                <li><a href="{% url 'assign_role' %}">Assign Role</a></li>
-                            {% endif %}
-                        </ul>
-                    </li>
-                    {% endif %}
-
-                    <li class="has-menu">
-                        <a class="has-arrow ai-icon" href="javascript:void(0)">
-                            <i class="flaticon-381-networking"></i>
-                            <span class="nav-text">Student Gateway</span>
-                        </a>
-                        <ul>
-                            <li><a href="{% url 'academic_year_list' %}">Academic Year</a></li>
-                            {% if perms.admin_panel.add_student %}
-                                <li><a href="{% url 'registration' %}">Registration</a></li>
-                        
-                              
-                            {% endif %}
-                            {% if perms.student_profile.view_studentidcard %}
-                                <li><a href="{% url 'student_id_card_list' %}">ID Card Generate</a></li>
-                            {% endif %}
-                        </ul>
-                    </li>
-
-                    {% if perms.admin_panel.view_subjectperiod %}
-                    <li class="timetable-automation-nav">
-                        <a href="{% url 'timetable_automation' %}" class="ai-icon">
-                            <i class="flaticon-381-calendar-1"></i>
-                            <span class="nav-text">Timetable Automation</span>
-                        </a>
-                    </li>
-                    {% endif %}
-
-                    {% if perms.admin_panel.view_class %}
-                    <li class="has-menu">
-                        <a class="has-arrow ai-icon" href="javascript:void(0)">
-                            <i class="flaticon-381-controls-3"></i>
-                            <span class="nav-text">Academics</span>
-                        </a>
-                        <ul>
-                            <li><a href="{% url 'class_list' %}">Classes</a></li>
-                            {% if perms.admin_panel.view_section %}
-                                <li><a href="{% url 'section_list' %}">Sections Capacity</a></li>
-                            {% endif %}
-                            {% if perms.admin_panel.view_subject %}
-                                <li><a href="{% url 'subject_list' %}">Subjects</a></li>
-                            {% endif %}
-                            {% if perms.admin_panel.view_classgroup %}
-                                <li><a href="{% url 'class_group_list' %}">Class Groups</a></li>
-                            {% endif %}
-                            {% if perms.admin_panel.view_subjectperiod %}
-                                <li><a href="{% url 'timetable_automation' %}">Timetable Automation</a></li>
-                            {% endif %}
-                            {% if perms.admin_panel.view_createperiod %}
-                            {% endif %}
-                            {% if perms.admin_panel.add_assignedperiod %}
-                            {% endif %}
-                            {% if perms.admin_panel.view_classteacher %}
-                                <li><a href="{% url 'class_teacher_list' %}">Class Teacher</a></li>
-                            {% endif %}
-                            {% if perms.admin_panel.view_assignedperiod %}
-                                <li><a href="{% url 'portfolio_timetable' %}">PDF Timetable</a></li>
-                            {% endif %}
-                        </ul>
-                    </li>
-                    {% endif %}
-
-                    {% if perms.admin_panel.view_department or perms.admin_panel.view_employee %}
-                    <li class="has-menu">
-                        <a class="has-arrow ai-icon" href="javascript:void(0)">
-                            <i class="flaticon-381-user-7"></i>
-                            <span class="nav-text">HR</span>
-                        </a>
-                        <ul>
-                            {% if perms.admin_panel.view_department %}
-                                <li><a href="{% url 'department_list' %}">Departments</a></li>
-                            {% endif %}
-                            {% if perms.admin_panel.view_designation %}
-                                <li><a href="{% url 'designation_list' %}">Designations</a></li>
-                            {% endif %}
-                            {% if perms.admin_panel.view_all_employee %}
-                                <li><a href="{% url 'employee_list' %}">Employees</a></li>
-                            {% endif %}
-                            {% if perms.admin_panel.add_employee %}
-                                <li><a href="{% url 'employee_create' %}">Create Employee</a></li>
-                            {% endif %}
-                            {% if perms.admin_panel.view_leaveapplication %}
-                                <li><a href="{% url 'leave_list' %}">Leave Applications</a></li>
-                            {% endif %}
-                            {% if perms.admin_panel.add_leaveapplication %}
-                                <li><a href="{% url 'leave_create' %}">Apply Leave</a></li>
-                            {% endif %}
-                        </ul>
-                    </li>
-                    {% endif %}
-
-                    <li class="has-menu">
-                        <a class="has-arrow ai-icon" href="javascript:void(0)">
-                            <i class="flaticon-381-analytics"></i>
-                            <span class="nav-text">Appraisal</span>
-                        </a>
-                        <ul>
-                            <li><a href="{% url 'admin_kpi_builder' %}">KPI Builder</a></li>
-                            <li><a href="{% url 'admin_appraisal_list' %}">All Submissions</a></li>
-                            <!-- <li><a href="{% url 'teacher_appraisal_submit' %}">My Appraisal</a></li> -->
-                        </ul>
-                    </li>
-
-                    <li>
-                        <a href="{% url 'academic_calendar_page' %}" class="ai-icon">
-                            <i class="flaticon-381-calendar-1"></i>
-                            <span class="nav-text">Academic Calendar</span>
-                        </a>
-                    </li>
-
-                    {% if perms.admin_panel.view_examformat %}
-                    <li class="has-menu">
-                        <a class="has-arrow ai-icon" href="javascript:void(0)">
-                            <i class="flaticon-381-edit"></i>
-                            <span class="nav-text">Exam Management</span>
-                        </a>
-                        <ul>
-                            <li><a href="{% url 'staff_category_list' %}">Staff Categories</a></li>
-                            <li><a href="{% url 'job_type_list' %}">Job Types</a></li>
-                            {% if perms.admin_panel.view_examformat %}
-                                <li><a href="{% url 'format_list' %}">Exam Formats</a></li>
-                            {% endif %}
-                            {% if perms.admin_panel.add_examformat %}
-                                <li><a href="{% url 'create_format' %}">Create Format</a></li>
-                            {% endif %}
-                            {% if perms.admin_panel.view_question %}
-                                <li><a href="{% url 'all_questions' %}">All Questions</a></li>
-                            {% endif %}
-                        </ul>
-                    </li>
-                    {% endif %}
-
-                </ul>
-                <!-- <div class="copyright">
-                    <p>EDUPILOT Dashboard</p>
-                </div> -->
-            </div>
-        </div>
+        {% include 'admin_panel/sidebar.html' %}
         <!-- Sidebar End -->
 
         <!-- Content Body -->
@@ -1487,6 +1288,7 @@
     <script src="{% static 'admin_panel/js/dashboard/dashboard-1.js' %}"></script>
     <script src="{% static 'admin_panel/js/custom.min.js' %}"></script>
     <script src="{% static 'admin_panel/js/deznav-init.js' %}"></script>
+    <script src="{% static 'admin_panel/js/deznav-sidebar.js' %}?v=admin-sidebar-stable-1"></script>
     <script src="{% static 'admin_panel/js/admin-header-live.js' %}?v=header-live-solid-1"></script>
 
     {% include "admin_ai/includes/auto_report_modal.html" %}

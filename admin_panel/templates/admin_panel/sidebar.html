@@ -11,30 +11,55 @@
         max-width: 190px;
         overflow-wrap: normal;
     }
+
+    .admin-sidebar-stable .sidebar-dashboard > a i,
+    .admin-sidebar-stable .sidebar-dashboard > a i::before { color: #2f80ed !important; }
+    .admin-sidebar-stable .sidebar-ai > a i,
+    .admin-sidebar-stable .sidebar-ai > a i::before { color: #7c3aed !important; }
+    .admin-sidebar-stable .sidebar-accounts > a i,
+    .admin-sidebar-stable .sidebar-accounts > a i::before { color: #0f766e !important; }
+    .admin-sidebar-stable .sidebar-teachers > a i,
+    .admin-sidebar-stable .sidebar-teachers > a i::before { color: #ea580c !important; }
+    .admin-sidebar-stable .sidebar-roles > a i,
+    .admin-sidebar-stable .sidebar-roles > a i::before { color: #be185d !important; }
+    .admin-sidebar-stable .sidebar-students > a i,
+    .admin-sidebar-stable .sidebar-students > a i::before { color: #2563eb !important; }
+    .admin-sidebar-stable .sidebar-timetable > a i,
+    .admin-sidebar-stable .sidebar-timetable > a i::before { color: #0d9488 !important; }
+    .admin-sidebar-stable .sidebar-academics > a i,
+    .admin-sidebar-stable .sidebar-academics > a i::before { color: #16a34a !important; }
+    .admin-sidebar-stable .sidebar-hr > a i,
+    .admin-sidebar-stable .sidebar-hr > a i::before { color: #9333ea !important; }
+    .admin-sidebar-stable .sidebar-appraisal > a i,
+    .admin-sidebar-stable .sidebar-appraisal > a i::before { color: #ca8a04 !important; }
+    .admin-sidebar-stable .sidebar-exams > a i,
+    .admin-sidebar-stable .sidebar-exams > a i::before { color: #dc2626 !important; }
+
+    .admin-sidebar-stable ul.metismenu > li > a i,
+    .admin-sidebar-stable ul.metismenu > li > a i::before {
+        color: var(--sidebar-icon-color, #176d63) !important;
+    }
 </style>
 
 <!--**********************************
     Sidebar start
 ***********************************-->
-<div class="deznav">
+<div class="deznav admin-sidebar-stable">
     <div class="deznav-brand">
-        <span class="deznav-brand-icon"><i class="fas fa-graduation-cap"></i></span>
-        <span class="deznav-brand-text">EduPilot</span>
     </div>
 
     <div class="deznav-scroll">
         <ul class="metismenu" id="menu">
-
-            <!-- Dashboard -->
-            <li>
+            <li class="sidebar-dashboard" style="--sidebar-icon-color: #2f80ed; --sidebar-icon-bg: #e5f1ff;">
                 <a href="{% url 'admin_panel_dashboard' %}" class="ai-icon" aria-expanded="false">
-                    <i class="fas fa-th-large"></i>
+                    <i class="fas fa-tachometer-alt" style="color: #2f80ed !important; background: #e5f1ff !important;"></i>
                     <span class="nav-text">Dashboard</span>
                 </a>
             </li>
-            <li class="has-menu">
+
+            <li class="has-menu sidebar-ai" style="--sidebar-icon-color: #7c3aed; --sidebar-icon-bg: #f0e7ff;">
                 <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
-                    <i class="fas fa-brain"></i>
+                    <i class="fas fa-brain" style="color: #7c3aed !important; background: #f0e7ff !important;"></i>
                     <span class="nav-text">AI Analytics</span>
                 </a>
                 <ul aria-expanded="false">
@@ -45,17 +70,17 @@
                     <li><a href="{% url 'admin_ai_student_intelligence' %}">Student Insight Profile</a></li>
                 </ul>
             </li>
-            <li>
-    <a href="{% url 'automation-dashboard' %}" class="ai-icon" aria-expanded="false">
-        <i class="fas fa-th-large"></i>
-        <span class="nav-text">Accounts</span>
-    </a>
-</li>
 
-            <!-- Teachers Gateway -->
-            <li class="has-menu">
+            <li class="sidebar-accounts" style="--sidebar-icon-color: #0f766e; --sidebar-icon-bg: #dff8f3;">
+                <a href="{% url 'automation-dashboard' %}" class="ai-icon" aria-expanded="false">
+                    <i class="fas fa-wallet" style="color: #0f766e !important; background: #dff8f3 !important;"></i>
+                    <span class="nav-text">Accounts</span>
+                </a>
+            </li>
+
+            <li class="has-menu sidebar-teachers" style="--sidebar-icon-color: #ea580c; --sidebar-icon-bg: #fff0df;">
                 <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
-                    <i class="fas fa-chalkboard-teacher"></i>
+                    <i class="fas fa-user-tie" style="color: #ea580c !important; background: #fff0df !important;"></i>
                     <span class="nav-text">Teachers Gateway</span>
                 </a>
                 <ul aria-expanded="false">
@@ -64,31 +89,30 @@
                 </ul>
             </li>
 
-            <!-- User Role Management -->
-            <li class="has-menu">
+            <li class="has-menu sidebar-roles" style="--sidebar-icon-color: #be185d; --sidebar-icon-bg: #ffe5f0;">
                 <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
-                    <i class="fas fa-user-shield"></i>
+                    <i class="fas fa-user-lock" style="color: #be185d !important; background: #ffe5f0 !important;"></i>
                     <span class="nav-text">User Role Management</span>
                 </a>
                 <ul aria-expanded="false">
-                    {% if 'auth.add_group' in user_permissions %}
-                        <li><a href="{% url 'create_role' %}">Create Role</a></li>
+                    {% if perms.auth.view_group or 'auth.view_group' in user_permissions %}
+                        <li><a href="{% url 'user_role_management' %}">Overview</a></li>
                     {% endif %}
-
-                    {% if 'auth.view_group' in user_permissions %}
-                        <li><a href="{% url 'list_roles' %}">View Roles</a></li>
+                    {% if perms.auth.add_group or 'auth.add_group' in user_permissions %}
+                        <li><a href="{% url 'create_role' %}#roles">Create Role</a></li>
                     {% endif %}
-
-                    {% if 'auth.change_user' in user_permissions %}
-                        <li><a href="{% url 'assign_role' %}">Assign Role</a></li>
+                    {% if perms.auth.view_group or 'auth.view_group' in user_permissions %}
+                        <li><a href="{% url 'list_roles' %}#roles">View Roles</a></li>
+                    {% endif %}
+                    {% if perms.auth.change_user or 'auth.change_user' in user_permissions %}
+                        <li><a href="{% url 'assign_role' %}#assign">Assign Role</a></li>
                     {% endif %}
                 </ul>
             </li>
 
-            <!-- Student Gateway -->
-            <li class="has-menu">
+            <li class="has-menu sidebar-students" style="--sidebar-icon-color: #2563eb; --sidebar-icon-bg: #e6efff;">
                 <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
-                    <i class="fas fa-user-graduate"></i>
+                    <i class="fas fa-user-graduate" style="color: #2563eb !important; background: #e6efff !important;"></i>
                     <span class="nav-text">Student Gateway</span>
                 </a>
                 <ul aria-expanded="false">
@@ -100,17 +124,16 @@
                 </ul>
             </li>
 
-            <li class="timetable-automation-nav">
+            <li class="timetable-automation-nav sidebar-timetable" style="--sidebar-icon-color: #0d9488; --sidebar-icon-bg: #dbf7f4;">
                 <a href="{% url 'timetable_automation' %}" class="ai-icon" aria-expanded="false">
-                    <i class="fas fa-calendar-alt"></i>
+                    <i class="fas fa-calendar-check" style="color: #0d9488 !important; background: #dbf7f4 !important;"></i>
                     <span class="nav-text">Timetable Automation</span>
                 </a>
             </li>
 
-            <!-- Academics -->
-            <li class="has-menu">
+            <li class="has-menu sidebar-academics" style="--sidebar-icon-color: #16a34a; --sidebar-icon-bg: #e5f8eb;">
                 <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
-                    <i class="fas fa-book-open"></i>
+                    <i class="fas fa-book-reader" style="color: #16a34a !important; background: #e5f8eb !important;"></i>
                     <span class="nav-text">Academics</span>
                 </a>
                 <ul aria-expanded="false">
@@ -122,13 +145,13 @@
                     <li><a href="{% url 'manage_fixture' %}">Fixture Management</a></li>
                     <li><a href="{% url 'class_teacher_list' %}">Create Class Teacher</a></li>
                     <li><a href="{% url 'portfolio_timetable' %}">PDF Generate Classwise</a></li>
+                    <li><a href="{% url 'academic_calendar_page' %}">Academic Calendar</a></li>
                 </ul>
             </li>
 
-            <!-- Human Resources -->
-            <li class="has-menu">
+            <li class="has-menu sidebar-hr" style="--sidebar-icon-color: #9333ea; --sidebar-icon-bg: #f3e8ff;">
                 <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
-                    <i class="fas fa-users-cog"></i>
+                    <i class="fas fa-id-badge" style="color: #9333ea !important; background: #f3e8ff !important;"></i>
                     <span class="nav-text">HR</span>
                 </a>
                 <ul aria-expanded="false">
@@ -138,9 +161,7 @@
                     <li><a href="{% url 'designation_list' %}">Designations</a></li>
                     <li><a href="{% url 'employee_list' %}">Employees</a></li>
                     <li><a href="{% url 'employee_create' %}">Create Employee</a></li>
-
                     <li class="menu-title">Leave Management</li>
-
                     <li><a href="{% url 'leave_type_list' %}">Leave Types</a></li>
                     <li><a href="{% url 'leave_type_create' %}">Add Leave Type</a></li>
                     <li><a href="{% url 'leave_list' %}">Leave Applications</a></li>
@@ -148,10 +169,20 @@
                 </ul>
             </li>
 
-            <!-- Exam Management -->
-            <li class="has-menu">
+            <li class="has-menu sidebar-appraisal" style="--sidebar-icon-color: #ca8a04; --sidebar-icon-bg: #fff7d6;">
                 <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
-                    <i class="fas fa-file-signature"></i>
+                    <i class="fas fa-chart-bar" style="color: #ca8a04 !important; background: #fff7d6 !important;"></i>
+                    <span class="nav-text">Appraisal</span>
+                </a>
+                <ul aria-expanded="false">
+                    <li><a href="{% url 'admin_kpi_builder' %}">KPI Builder</a></li>
+                    <li><a href="{% url 'admin_appraisal_list' %}">All Submissions</a></li>
+                </ul>
+            </li>
+
+            <li class="has-menu sidebar-exams" style="--sidebar-icon-color: #dc2626; --sidebar-icon-bg: #ffe4e6;">
+                <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
+                    <i class="fas fa-clipboard-list" style="color: #dc2626 !important; background: #ffe4e6 !important;"></i>
                     <span class="nav-text">Exam Management</span>
                 </a>
                 <ul aria-expanded="false">
@@ -159,15 +190,14 @@
                     <li><a href="{% url 'exam_plan_list' %}">Exam Plans</a></li>
                     <li><a href="{% url 'admin_paper_queue' %}">Paper Approval Queue</a></li>
                     <li><a href="{% url 'analytics_dashboard' %}">Exam Analytics</a></li>
+                    <li><a href="{% url 'format_list' %}">Exam Formats</a></li>
+                    <li><a href="{% url 'create_format' %}">Create Format</a></li>
+                    <li><a href="{% url 'all_questions' %}">All Questions</a></li>
                 </ul>
             </li>
-
         </ul>
 
-        <div class="copyright">
-            <p>Forecaster Dashboard</p>
-        </div>
-
+        <div class="copyright"></div>
     </div>
 </div>
 <!--**********************************
