@@ -5,24 +5,30 @@
 <style>
   :root{
     --card-radius: 16px;
-    --soft-border: rgba(0,0,0,.08);
-    --soft-bg: rgba(0,0,0,.02);
+    --soft-border: #e9ecef;
+    --soft-bg: #F5F5FD;
+    --edu-teal: #88D0C5;
+    --edu-green: #8BC740;
+    --edu-mint: #DDF7F2;
+    --edu-soft-green: #EEF9E5;
+    --edu-muted: #6c757d;
   }
 
   .page-wrap{
-    padding: 18px 18px 28px;
+    padding: 22px;
   }
 
   .kpi-card{
     border-radius: var(--card-radius);
     border: 1px solid var(--soft-border);
     overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0,0,0,.04) !important;
   }
 
   .kpi-card .card-header{
-    background: #fff;
+    background: linear-gradient(90deg, var(--edu-mint) 0%, var(--soft-bg) 100%);
     border-bottom: 1px solid var(--soft-border);
-    padding: 16px 18px;
+    padding: 26px 30px;
   }
 
   .kpi-card .card-body{
@@ -34,12 +40,13 @@
     border-radius: 14px;
     border: 1px solid var(--soft-border);
     background: #fff;
+    box-shadow: 0 3px 14px rgba(0,0,0,.035);
   }
 
   .section-card .section-header{
     padding: 14px 16px;
     border-bottom: 1px solid var(--soft-border);
-    background: linear-gradient(180deg, #fff, var(--soft-bg));
+    background: linear-gradient(90deg, var(--edu-mint) 0%, var(--soft-bg) 100%);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -51,7 +58,7 @@
   }
 
   .muted{
-    color: rgba(0,0,0,.6);
+    color: var(--edu-muted);
   }
 
   .pill{
@@ -61,7 +68,7 @@
     border-radius: 999px;
     padding: 6px 10px;
     border: 1px solid var(--soft-border);
-    background: var(--soft-bg);
+    background: rgba(255,255,255,.72);
     font-size: 13px;
   }
 
@@ -72,9 +79,9 @@
   }
 
   .table-pro thead th{
-    background: #f6f7f9 !important;
+    background: var(--soft-bg) !important;
     border-bottom: 1px solid var(--soft-border) !important;
-    font-weight: 600;
+    font-weight: 500;
     font-size: 13px;
     text-transform: none;
     white-space: nowrap;
@@ -89,10 +96,10 @@
   }
 
   .badge-linear{
-    background: rgba(108,117,125,.12);
-    color: rgba(108,117,125,1);
-    border: 1px solid rgba(108,117,125,.2);
-    font-weight: 600;
+    background: var(--edu-soft-green);
+    color: #4f6f0d;
+    border: 1px solid rgba(139,199,64,.35);
+    font-weight: 500;
   }
 
   .btn-rounded{
@@ -100,16 +107,32 @@
     padding: 10px 14px;
   }
 
+  .btn-primary,
+  .btn-success {
+    background: var(--edu-teal) !important;
+    border-color: var(--edu-teal) !important;
+    color: #111 !important;
+    font-weight: 500 !important;
+    box-shadow: 0 8px 18px rgba(136,208,197,.18);
+  }
+
+  .btn-outline-danger {
+    border-radius: 999px !important;
+    color: #ff4d3d !important;
+    border-color: #ffd0ca !important;
+    font-weight: 500 !important;
+  }
+
   .empty-state{
     padding: 26px 10px;
     text-align: center;
   }
   .empty-state .title{
-    font-weight: 700;
+    font-weight: 500;
     margin-bottom: 4px;
   }
   .empty-state .desc{
-    color: rgba(0,0,0,.55);
+    color: var(--edu-muted);
     font-size: 13px;
   }
 
@@ -142,7 +165,7 @@
 
   .form-check-input:checked {
     background-color: #fff !important;
-    border-color: #495057;
+    border-color: var(--edu-teal);
   }
 
   .form-check-input:checked[type="checkbox"] {
@@ -157,8 +180,8 @@
     left: 50%;
     transform: translate(-50%, -58%);
     font-size: 15px;
-    font-weight: 700;
-    color: #212529;
+    font-weight: 500;
+    color: #111;
   }
 
   .form-check-input:focus {
@@ -167,7 +190,7 @@
 
   .weight-indicator{
     font-size: 13px;
-    font-weight: 700;
+    font-weight: 500;
     padding: 8px 10px;
     border-radius: 12px;
     border: 1px solid var(--soft-border);
@@ -176,9 +199,47 @@
     text-align: center;
   }
 
-  .weight-indicator.ok{ color: #198754; border-color: rgba(25,135,84,.25); background: rgba(25,135,84,.06); }
+  .weight-indicator.ok{ color: #4f6f0d; border-color: rgba(139,199,64,.35); background: var(--edu-soft-green); }
   .weight-indicator.warn{ color: #b08900; border-color: rgba(255,193,7,.3); background: rgba(255,193,7,.10); }
   .weight-indicator.bad{ color: #dc3545; border-color: rgba(220,53,69,.25); background: rgba(220,53,69,.08); }
+
+  .appraisal-title,
+  .section-title,
+  .kpi-card strong,
+  .section-card strong,
+  .fw-bold,
+  .fw-semibold{
+    font-weight: 500 !important;
+  }
+
+  .appraisal-title{
+    letter-spacing: 0;
+  }
+
+  @media (max-width: 768px){
+    .page-wrap{
+      padding: 14px;
+    }
+
+    .kpi-card .card-header{
+      padding: 20px;
+    }
+
+    .section-card .section-header{
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .action-bar{
+      width: 100%;
+      flex-wrap: wrap;
+    }
+
+    .weight-indicator,
+    .action-bar .btn{
+      width: 100%;
+    }
+  }
 </style>
 
 <div class="page-wrap">
@@ -188,14 +249,14 @@
       <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
         <div>
           <div class="d-flex align-items-center gap-2">
-            <h4 class="mb-0">KPI Builder</h4>
+            <h4 class="mb-0 appraisal-title">KPI Builder</h4>
             <span class="pill">
               <span class="badge badge-linear">linear</span>
               <span class="muted">fixed method</span>
             </span>
           </div>
           <div class="mt-1 muted" style="font-size:13px;">
-            Cycle: <strong>{{ cycle.name }}</strong> · Auto KPIs predefined · Manual KPIs addable
+            Cycle: <strong>{{ cycle.name }}</strong> - Auto KPIs predefined - Manual KPIs addable
           </div>
         </div>
 
@@ -224,8 +285,8 @@
         <div class="section-card mb-4">
           <div class="section-header">
             <div>
-              <div class="fw-bold">Auto (System) KPIs</div>
-              <div class="muted" style="font-size:13px;">Title + KPI fixed. Sirf weight set karo (active toggle optional).</div>
+              <div class="section-title">Auto (System) KPIs</div>
+              <div class="muted" style="font-size:13px;">Title and KPI key are fixed. Set weight and active status only.</div>
             </div>
 
             <div class="d-flex align-items-center gap-2">
@@ -255,18 +316,18 @@
                       <td class="text-center">
                         <input type="checkbox"
                                class="form-check-input auto-active"
-                               name="auto_active_{{ k.key }}"
+                               name="auto_active_{{ k.kpi_key }}"
                                {% if k.is_active %}checked{% endif %} />
                       </td>
 
                       <td>
-                        <div class="fw-semibold">{{ k.title }}</div>
+                        <div class="section-title">{{ k.title }}</div>
                         <div class="muted" style="font-size:12px;">Predefined</div>
                       </td>
 
                       <td>
-                        <div class="muted" style="font-size:13px;">{{ k.label }}</div>
-                        <div class="muted" style="font-size:12px;">Key: <code>{{ k.key }}</code></div>
+                        <div class="muted" style="font-size:13px;">{{ k.kpi_key }}</div>
+                        <div class="muted" style="font-size:12px;">Key: <code>{{ k.kpi_key }}</code></div>
                       </td>
 
                       <td>
@@ -275,9 +336,9 @@
                                max="100"
                                step="0.01"
                                class="form-control auto-weight"
-                               name="auto_weight_{{ k.key }}"
+                               name="auto_weight_{{ k.kpi_key }}"
                                value="{{ k.weight }}"
-                               placeholder="0–100" />
+                               placeholder="0-100" />
                         <div class="muted mt-1" style="font-size:12px;">Higher = more impact</div>
                       </td>
 
@@ -290,7 +351,7 @@
                       <td colspan="5">
                         <div class="empty-state">
                           <div class="title">No auto KPIs found</div>
-                          <div class="desc">Rules choices empty hain ya context missing hai.</div>
+                          <div class="desc">No predefined KPI rules are available yet.</div>
                         </div>
                       </td>
                     </tr>
@@ -305,9 +366,9 @@
         <div class="section-card mb-4">
           <div class="section-header">
             <div>
-              <div class="fw-bold">Manual KPIs</div>
+              <div class="section-title">Manual KPIs</div>
               <div class="muted" style="font-size:13px;">
-                Admin title + weight set karega. System title se KPI key auto-generate karega (e.g. <code>conducting_workshop</code>). Teacher evidence based scoring (0–10).
+                Add a title and weight. The KPI key is generated from the title, and teacher evidence is scored from 0-10.
               </div>
             </div>
 
@@ -332,7 +393,7 @@
                     <td colspan="4">
                       <div class="empty-state">
                         <div class="title">No manual KPI added yet</div>
-                        <div class="desc">“Add Manual KPI” pe click karke row add karo.</div>
+                        <div class="desc">Click Add Manual KPI to add a new row.</div>
                       </div>
                     </td>
                   </tr>
@@ -341,7 +402,7 @@
             </div>
 
             <div class="muted mt-2" style="font-size:13px;">
-              Manual KPIs teacher evidence se 0–10 auto score banate hain. KPI key title se automatically banega.
+              Manual KPIs use teacher evidence to calculate a 0-10 score. KPI keys are generated from the title.
             </div>
           </div>
         </div>
@@ -350,8 +411,8 @@
         <div class="section-card">
           <div class="section-header">
             <div>
-              <div class="fw-bold">Existing Manual KPIs</div>
-              <div class="muted" style="font-size:13px;">Edit title/weight, active toggle, ya delete mark karke save karo.</div>
+              <div class="section-title">Existing Manual KPIs</div>
+              <div class="muted" style="font-size:13px;">Edit title, weight, active status, or mark a KPI for delete, then save.</div>
             </div>
           </div>
 
@@ -385,7 +446,6 @@
                                value="{{ r.title }}"
                                placeholder="Manual KPI Title" />
 
-                        <!-- ✅ show actual generated key -->
                         <div class="muted mt-1" style="font-size:12px;">
                           KPI Key: <code>{{ r.kpi_key }}</code>
                         </div>
@@ -399,7 +459,7 @@
                                class="form-control manual-existing-weight"
                                name="manual_weight_{{ r.id }}"
                                value="{{ r.weight }}"
-                               placeholder="0–100" />
+                               placeholder="0-100" />
                       </td>
 
                       <td class="text-center">
@@ -415,7 +475,7 @@
                       <td colspan="5">
                         <div class="empty-state">
                           <div class="title">No saved manual KPIs</div>
-                          <div class="desc">Upar se manual KPI add karke save kar do.</div>
+                          <div class="desc">Add and save a manual KPI from the section above.</div>
                         </div>
                       </td>
                     </tr>
@@ -515,7 +575,7 @@
                step="0.01"
                class="form-control manual-new-weight"
                name="manual_weight[]"
-               placeholder="0–100" />
+               placeholder="0-100" />
         <div class="muted mt-1" style="font-size:12px;">Weight impact</div>
       </td>
 

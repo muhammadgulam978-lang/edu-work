@@ -3,67 +3,40 @@
 
 {% block title %}Add Section{% endblock %}
 
+{% block head %}
+<link rel="stylesheet" href="{% static 'admin_panel/css/academics_gateway.css' %}">
+{% endblock %}
+
 {% block content %}
-<div class="card" style="background: #f8f9fa; margin-left: 20px; margin-right: 20px;">
-    <div class="card-header">
-        <h4 class="card-title">Add New Section</h4>
-        <a href="{% url 'section_list' %}" class="btn btn-primary me-2">
-            <span class="me-2"><i class="fa fa-arrow-left"></i></span>Back to Section List
-        </a>
+<div class="academics-gateway">
+  <div class="ag-card">
+    <div class="ag-header">
+      <div>
+        <p class="ag-kicker">Academics</p>
+        <h4 class="ag-title">Add Section</h4>
+        <p class="ag-subtitle">Create a section with capacity for the selected academic year and class.</p>
+      </div>
+      <a href="{% url 'section_list' %}" class="ag-btn ag-btn-secondary"><i class="fa fa-arrow-left"></i> Back to Sections</a>
     </div>
 
-    <div class="card-body">
-        <form method="post">
-            {% csrf_token %}
-            <div class="row">
-                <!-- Left Column -->
-                <div class="col-xl-6">
-
-                    <!-- Academic Year -->
-                    <div class="mb-3 row">
-                        <label class="col-lg-4 col-form-label">Academic Year</label>
-                        <div class="col-lg-6">
-                            {{ form.academic_year }}
-                        </div>
-                    </div>
-
-                    <!-- Section Name -->
-                    <div class="mb-3 row">
-                        <label class="col-lg-4 col-form-label">Section Name</label>
-                        <div class="col-lg-6">
-                            {{ form.section_name }}
-                        </div>
-                    </div>
-
-                </div>
-
-                <!-- Right Column -->
-                <div class="col-xl-6">
-
-                    <!-- Class -->
-                    <div class="mb-3 row">
-                        <label class="col-lg-4 col-form-label">Class</label>
-                        <div class="col-lg-6">
-                            {{ form.class_fk }}
-                        </div>
-                    </div>
-
-                    <!-- Capacity -->
-                    <div class="mb-3 row">
-                        <label class="col-lg-4 col-form-label">Capacity</label>
-                        <div class="col-lg-6">
-                            {{ form.capacity }}
-                        </div>
-                    </div>
-
-                </div>
-
-                <!-- Submit Button -->
-                <div class="col-lg-12 ms-auto text-center mt-4">
-                    <button type="submit" class="btn btn-primary">Create Section</button>
-                </div>
-            </div>
-        </form>
+    <div class="ag-body">
+      <form method="post">
+        {% csrf_token %}
+        <div class="ag-panel">
+          <h5 class="ag-section-title"><i class="fa fa-layer-group"></i> Section Details</h5>
+          <div class="ag-grid ag-grid-2">
+            <div class="ag-field"><label>Academic Year</label>{{ form.academic_year }}</div>
+            <div class="ag-field"><label>Class</label>{{ form.class_fk }}</div>
+            <div class="ag-field"><label>Section Name</label>{{ form.section_name }}</div>
+            <div class="ag-field"><label>Capacity</label>{{ form.capacity }}</div>
+          </div>
+        </div>
+        <div class="ag-form-actions">
+          <button type="submit" class="ag-btn ag-btn-primary"><i class="fa fa-save"></i> Create Section</button>
+          <a href="{% url 'section_list' %}" class="ag-btn ag-btn-secondary">Cancel</a>
+        </div>
+      </form>
     </div>
+  </div>
 </div>
 {% endblock %}

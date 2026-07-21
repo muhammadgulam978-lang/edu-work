@@ -1,58 +1,56 @@
 {% extends 'admin_panel/bases.html' %}
 {% load static %}
 
-{% block title %}
-  Class Teacher Assign
-{% endblock %}
+{% block title %}Class Teacher Assignments{% endblock %}
 
 {% block head %}
-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'admin_panel/css/academics_gateway.css' %}">
 {% endblock %}
 
 {% block content %}
-<div class="card" style="margin: 20px; background-color: #ffffff;">
-  <div class="card-header d-flex justify-content-between align-items-center">
-    <h4 class="card-title">Class Teacher Assign</h4>
-    <a href="{% url 'class_teacher_create' %}" class="btn btn-primary btn-sm">+ Assign New</a>
-  </div>
+<div class="academics-gateway">
+  <div class="ag-card">
+    <div class="ag-header">
+      <div>
+        <p class="ag-kicker">Academics</p>
+        <h4 class="ag-title">Create Class Teacher</h4>
+        <p class="ag-subtitle">Assign teachers to academic year, class, and section combinations.</p>
+      </div>
+      <a href="{% url 'class_teacher_create' %}" class="ag-btn ag-btn-primary"><i class="fa fa-plus"></i> Assign New</a>
+    </div>
 
-  <div class="card-body">
-    <div class="table-responsive">
-      <table class="table table-responsive-md">
-        <thead>
-          <tr>
-            <th><strong>Academic Year</strong></th>
-            <th><strong>Class</strong></th>
-            <th><strong>Section</strong></th>
-            <th><strong>Teacher</strong></th>
-            <th><strong>Actions</strong></th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for ct in assignments %}
-          <tr>
-            <td>{{ ct.academic_year.year }}</td>
-            <td>{{ ct.class_fk.class_name }}</td>
-            <td>{{ ct.section.section_name }}</td>
-            <td>{{ ct.teacher.name }}</td>
-            <td>
-              <div class="d-flex">
-                <a href="{% url 'class_teacher_update' ct.id %}" class="btn btn-primary shadow btn-xs sharp me-1" title="Edit">
-                  <i class="fas fa-pencil-alt"></i>
-                </a>
-                <a href="{% url 'class_teacher_delete' ct.id %}" class="btn btn-danger shadow btn-xs sharp" title="Delete">
-                  <i class="fa fa-trash"></i>
-                </a>
-              </div>
-            </td>
-          </tr>
-          {% empty %}
-          <tr>
-            <td colspan="5" class="text-center">No assignments found.</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+    <div class="ag-body">
+      <div class="ag-table-wrap">
+        <table class="table table-responsive-md">
+          <thead>
+            <tr>
+              <th>Academic Year</th>
+              <th>Class</th>
+              <th>Section</th>
+              <th>Teacher</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for ct in assignments %}
+            <tr>
+              <td>{{ ct.academic_year.year }}</td>
+              <td>{{ ct.class_fk.class_name }}</td>
+              <td><span class="ag-badge ag-badge-info">{{ ct.section.section_name }}</span></td>
+              <td>{{ ct.teacher.name }}</td>
+              <td>
+                <div class="ag-inline-actions">
+                  <a href="{% url 'class_teacher_update' ct.id %}" class="ag-btn ag-icon-btn ag-btn-primary" title="Edit"><i class="fas fa-pencil-alt"></i></a>
+                  <a href="{% url 'class_teacher_delete' ct.id %}" class="ag-btn ag-icon-btn ag-btn-danger" title="Delete"><i class="fa fa-trash"></i></a>
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="ag-empty">No assignments found.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </div>

@@ -1,12 +1,13 @@
 from django.db.models import Sum
 from django.shortcuts import render, redirect
+from django.http import JsonResponse
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Sum
 from django.views.decorators.csrf import csrf_protect
 from django.utils import timezone
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import (
@@ -18,6 +19,44 @@ from .models import (
 from .forms import StudentRegistrationForm
 from .services import FeeGenerationService, SalaryAutomationService, NotificationDispatcherService
 from .crud_config import CRUD_REGISTRY
+
+
+def _build_fee_collection_chart(period='this_month', start_date=None, end_date=None):
+    try:
+        from admin_ai.services import resolve_date_range
+        range_start, range_end, _ = resolve_date_range(period or 'this_month', start_date, end_date)
+    except Exception:
+        range_end = date.today()
+        range_start = range_end - timedelta(days=30)
+
+    labels = []
+    collected = []
+    pending = []
+    total_days = (range_end - range_start).days
+
+    if total_days <= 45:
+        current = range_start
+        while current <= range_end:
+            next_day = current + timedelta(days=1)
+            labels.append(current.strftime('%b %d'))
+            collected.append(float(FeeVoucher.objects.filter(issue_date__gte=current, issue_date__lt=next_day, status='PAID').aggregate(Sum('net_amount'))['net_amount__sum'] or 0))
+            pending.append(float(FeeVoucher.objects.filter(issue_date__gte=current, issue_date__lt=next_day).exclude(status='PAID').aggregate(Sum('net_amount'))['net_amount__sum'] or 0))
+            current = next_day
+    else:
+        current = range_start.replace(day=1)
+        while current <= range_end:
+            start = current
+            end = start.replace(year=start.year + 1, month=1, day=1) if start.month == 12 else start.replace(month=start.month + 1, day=1)
+            labels.append(start.strftime('%b %Y'))
+            collected.append(float(FeeVoucher.objects.filter(issue_date__gte=start, issue_date__lt=end, status='PAID').aggregate(Sum('net_amount'))['net_amount__sum'] or 0))
+            pending.append(float(FeeVoucher.objects.filter(issue_date__gte=start, issue_date__lt=end).exclude(status='PAID').aggregate(Sum('net_amount'))['net_amount__sum'] or 0))
+            current = end
+
+    return {
+        'labels': labels,
+        'collected': collected,
+        'pending': pending,
+    }
 
 # --- LOGIN/LOGOUT ---
 @csrf_protect
@@ -447,6 +486,8 @@ def automation_dashboard(request):
             'icon': crud_icons.get(key, 'fa-database'),
         })
 
+    fee_chart_data = _build_fee_collection_chart('this_month')
+
     context = {
         'total_students': total_students,
         'total_teachers': total_teachers,
@@ -467,8 +508,21 @@ def automation_dashboard(request):
         'notif_status': last_notif.status if last_notif else 'N/A',
         'total_collected': f"{total_collected:,.0f}",
         'total_pending': f"{total_pending:,.0f}",
-        'fee_chart_labels': ['Collected', 'Pending'],
+        'fee_chart_labels': fee_chart_data['labels'],
+        'fee_chart_collected': fee_chart_data['collected'],
+        'fee_chart_pending': fee_chart_data['pending'],
         'fee_chart_values': [float(total_collected_value), float(total_pending_value)],
+        'period_options': [
+            ('today', 'Today'),
+            ('yesterday', 'Yesterday'),
+            ('week', 'This Week'),
+            ('this_month', 'This Month'),
+            ('last_month', 'Last Month'),
+            ('3_months', 'Last 3 Months'),
+            ('6_months', 'Last 6 Months'),
+            ('annual', 'Annual'),
+            ('custom', 'Custom'),
+        ],
         'collection_rate': collection_rate,
         'recent_jobs': recent_jobs,
         'recent_notifications': recent_notifications,
@@ -476,6 +530,17 @@ def automation_dashboard(request):
         'crud_module_cards': crud_module_cards,
     }
     return render(request, 'automation/dashboard.html', context)
+
+
+@login_required(login_url='login')
+def automation_graph_data(request):
+    return JsonResponse({
+        'fees': _build_fee_collection_chart(
+            request.GET.get('period') or 'this_month',
+            request.GET.get('start_date'),
+            request.GET.get('end_date'),
+        )
+    })
 
 
 def fee_automation_view(request):

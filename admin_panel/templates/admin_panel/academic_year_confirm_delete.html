@@ -1,30 +1,49 @@
 {% extends 'admin_panel/bases.html' %}
 {% load static %}
 
-{% block title %}
-  Delete Academic Year
-{% endblock %}
+{% block title %}Delete Academic Year{% endblock %}
 
 {% block head %}
-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'admin_panel/css/student_gateway.css' %}?v=student-gateway-1">
 {% endblock %}
 
 {% block content %}
-<div class="card" style="margin-left: 20px; margin-right: 20px; background-color: #ffffff">
-  <div class="card-header d-flex justify-content-between align-items-center">
-    <h4 class="card-title">Delete Academic Year</h4>
-    <a href="{% url 'academic_year_list' %}" class="btn btn-primary mt-3">← Back to List</a>
-  </div>
+<div class="student-gateway">
+  <section class="sg-card">
+    <div class="sg-header">
+      <div>
+        <p class="sg-kicker">Student Gateway</p>
+        <h1 class="sg-title">Delete Academic Year</h1>
+        <p class="sg-subtitle">Confirm before removing this academic session from the system.</p>
+      </div>
+      <div class="sg-actions">
+        <a href="{% url 'academic_year_list' %}" class="sg-btn sg-btn-secondary">
+          <i class="fa fa-arrow-left"></i>
+          <span>Back to List</span>
+        </a>
+      </div>
+    </div>
 
-  <div class="card-body">
-    <p>Are you sure you want to delete <strong>{{ year.year }}</strong>?</p>
+    <div class="sg-body">
+      <div class="sg-panel">
+        <h2 class="sg-section-title">
+          <i class="fa fa-exclamation-triangle"></i>
+          Delete Confirmation
+        </h2>
+        <div class="sg-alert sg-warning">
+          Are you sure you want to delete <strong>{{ year.year }}</strong>? This can affect records linked to this academic year.
+        </div>
 
-    <form method="post" class="mt-4 d-flex align-items-center">
-      {% csrf_token %}
-      <button type="submit" class="btn btn-danger mt-3" style="margin-right: 10px;">Yes, Delete</button>
-
-      <a href="{% url 'academic_year_list' %}" class="btn btn-primary mt-3">Cancel</a>
-    </form>
-  </div>
+        <form method="post" class="sg-actions">
+          {% csrf_token %}
+          <button type="submit" class="sg-btn sg-btn-danger">
+            <i class="fa fa-trash"></i>
+            <span>Yes, Delete</span>
+          </button>
+          <a href="{% url 'academic_year_list' %}" class="sg-btn sg-btn-secondary">Cancel</a>
+        </form>
+      </div>
+    </div>
+  </section>
 </div>
 {% endblock %}

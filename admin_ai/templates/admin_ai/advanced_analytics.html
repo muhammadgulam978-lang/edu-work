@@ -20,30 +20,33 @@
   .ai-table{width:100%;border-collapse:collapse}.ai-table th,.ai-table td{padding:12px;border-bottom:1px solid #e9ecef;text-align:left;font-weight:400}.ai-table th{background:#F5F5FD;font-weight:500}
   @media(max-width:1100px){.ai-kpi-grid,.ai-chart-grid,.ai-filter-grid{grid-template-columns:1fr 1fr}}@media(max-width:700px){.ai-kpi-grid,.ai-chart-grid,.ai-filter-grid{grid-template-columns:1fr}}
 </style>
+<link rel="stylesheet" href="{% static 'admin_panel/css/ai-graphs.css' %}?v=ai-graphs-1">
 
 <div class="ai-advanced">
   <section class="ai-advanced-card ai-advanced-hero">
     <h2>Advanced AI Analytics</h2>
     <p class="ai-muted">Filtered operational intelligence with live ERP data, graph comparisons, and report-ready snapshots.</p>
-    <form class="ai-filter-grid" method="get">
-      <select name="period">
+    <form class="ai-filter-grid ai-graph-toolbar" method="get">
+      <div class="ai-graph-control"><label>Period</label><select name="period">
         {% for key,label in period_options %}
           <option value="{{ key }}" {% if analytics.filters.period == key %}selected{% endif %}>{{ label }}</option>
         {% endfor %}
-      </select>
-      <select name="class_id">
+      </select></div>
+      <div class="ai-graph-control"><label>Class</label><select name="class_id">
         <option value="">All Classes</option>
         {% for class in classes %}<option value="{{ class.id }}" {% if analytics.filters.class_id == class.id|stringformat:"s" %}selected{% endif %}>{{ class.class_name }}</option>{% endfor %}
-      </select>
-      <select name="section_id">
+      </select></div>
+      <div class="ai-graph-control"><label>Section</label><select name="section_id">
         <option value="">All Sections</option>
         {% for section in sections %}<option value="{{ section.id }}" {% if analytics.filters.section_id == section.id|stringformat:"s" %}selected{% endif %}>{{ section }}</option>{% endfor %}
-      </select>
-      <input type="date" name="start_date" value="{{ analytics.filters.start_date }}">
-      <input type="date" name="end_date" value="{{ analytics.filters.end_date }}">
-      <button type="submit">Apply Filter</button>
+      </select></div>
+      <div class="ai-graph-control"><label>Start</label><input type="date" name="start_date" value="{{ analytics.filters.start_date }}"></div>
+      <div class="ai-graph-control"><label>End</label><input type="date" name="end_date" value="{{ analytics.filters.end_date }}"></div>
+      <div class="ai-graph-actions">
+      <button type="submit" class="ai-graph-btn">Apply</button>
+      <a href="{% url 'ai_analytics_advanced' %}" class="ai-graph-btn secondary">Reset</a>
       <button
-        class="ai-btn"
+        class="ai-graph-btn secondary"
         type="button"
         data-auto-report
         data-report-type="full"
@@ -55,6 +58,7 @@
         data-report-title="Advanced AI Analytics Report"
         data-source="advanced_analytics"
       >Generate Report</button>
+      </div>
     </form>
   </section>
 
@@ -95,15 +99,28 @@
 
 {{ analytics.charts|json_script:"advanced-chart-data" }}
 <script src="{% static 'admin_panel/vendor/chart.js/Chart.bundle.min.js' %}"></script>
+<script src="{% static 'admin_panel/js/ai-graphs.js' %}?v=ai-graphs-1"></script>
 <script>
 (function(){
   const data=JSON.parse(document.getElementById('advanced-chart-data').textContent);
-  const colors={teal:'#88D0C5',green:'#8BC740',blue:'#6EA8FE',warning:'#f5b461',danger:'#ff7a68'};
-  function chart(id,type,labels,datasets){const el=document.getElementById(id); if(!el)return; new Chart(el,{type, data:{labels,datasets}, options:{responsive:true,maintainAspectRatio:false,legend:{position:'bottom'}}});}
-  chart('attendanceChart','line',data.attendance.labels,[{label:'Present',data:data.attendance.present,borderColor:colors.green,fill:false},{label:'Absent',data:data.attendance.absent,borderColor:colors.danger,fill:false},{label:'Leave',data:data.attendance.leave,borderColor:colors.warning,fill:false}]);
-  chart('feeChart','bar',data.fees.labels,[{label:'Billed',data:data.fees.total,backgroundColor:colors.blue},{label:'Paid',data:data.fees.paid,backgroundColor:colors.green}]);
-  chart('admissionsChart','line',data.admissions.labels,[{label:'Admissions',data:data.admissions.values,borderColor:colors.teal,backgroundColor:'rgba(136,208,197,.25)',fill:true}]);
-  chart('workloadChart','bar',data.teacher_workload.labels,[{label:'Periods',data:data.teacher_workload.values,backgroundColor:colors.teal}]);
+  const graphs = window.EduPilotAIGraphs;
+  if (!graphs) return;
+  const colors=graphs.palette;
+  graphs.lineChart('attendanceChart', data.attendance.labels, [
+    {label:'Present',data:data.attendance.present,color:colors.green},
+    {label:'Absent',data:data.attendance.absent,color:colors.pink},
+    {label:'Leave',data:data.attendance.leave,color:colors.yellow}
+  ]);
+  graphs.lineChart('feeChart', data.fees.labels, [
+    {label:'Billed',data:data.fees.total,color:colors.blue},
+    {label:'Paid',data:data.fees.paid,color:colors.green}
+  ]);
+  graphs.lineChart('admissionsChart', data.admissions.labels, [
+    {label:'Admissions',data:data.admissions.values,color:colors.teal}
+  ], {legend:{display:false}});
+  graphs.lineChart('workloadChart', data.teacher_workload.labels, [
+    {label:'Assigned Periods',data:data.teacher_workload.values,color:colors.lavender}
+  ], {legend:{display:false}});
 })();
 </script>
 {% endblock %}

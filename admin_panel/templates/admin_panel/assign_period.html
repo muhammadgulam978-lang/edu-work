@@ -1,138 +1,112 @@
 {% extends 'admin_panel/bases.html' %}
 {% load static %}
+
 {% block title %}Assign Period Dashboard{% endblock %}
 
+{% block head %}
+<link rel="stylesheet" href="{% static 'admin_panel/css/academics_gateway.css' %}">
+{% endblock %}
+
 {% block content %}
- 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Class Assignment Dashboard</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    .workflow-strip { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 14px 0 22px; }
-    .workflow-step { background: #fff; border: 1px solid #e9ecef; border-radius: 999px; padding: 8px 12px; color: #495057; font-size: 13px; box-shadow: 0 2px 8px rgba(0,0,0,.04); }
-    .workflow-arrow { color: #88D0C5; align-self: center; font-weight: 600; }
-    .assignment-badge { display: inline-flex; align-items: center; border-radius: 999px; padding: 4px 9px; font-size: 12px; font-weight: 500; }
-    .assignment-badge-day { background: #F5F5FD; color: #495057; }
-    .assignment-badge-subject { background: rgba(136,208,197,.22); color: #264c84; }
-    .assignment-badge-teacher { background: rgba(139,199,64,.22); color: #3c5f19; }
-  </style>
-  
-</head>
-<body class="bg-gradient-to-br from-gray-50 to-gray-200 min-h-screen flex flex-col font-sans">
-  <div class="container mx-auto p-4 sm:p-6 max-w-5xl">
-    <header class="mb-8 text-center">
-      <h4 class="card-title">Asssign classes to teachers</h4>
-      <p class="mt-2 text-sm sm:text-base text-gray-600">Effortlessly assign classes with real-time updates</p>
-      <div class="workflow-strip" aria-label="Assignment workflow">
-        <span class="workflow-step">Class</span><span class="workflow-arrow">-</span>
-        <span class="workflow-step">Section</span><span class="workflow-arrow">-</span>
-        <span class="workflow-step">Subject</span><span class="workflow-arrow">-</span>
-        <span class="workflow-step">Day</span><span class="workflow-arrow">-</span>
-        <span class="workflow-step">Period</span><span class="workflow-arrow">-</span>
-        <span class="workflow-step">Teacher</span>
+<div class="academics-gateway">
+  <div class="ag-card">
+    <div class="ag-header">
+      <div>
+        <p class="ag-kicker">Timetable Automation</p>
+        <h4 class="ag-title">Assign Classes to Teachers</h4>
+        <p class="ag-subtitle">Choose class, section, subject, day, period, and teacher with live availability checks.</p>
+        <div class="workflow-strip" aria-label="Assignment workflow">
+          <span class="workflow-step">Class</span><span class="workflow-arrow">-</span>
+          <span class="workflow-step">Section</span><span class="workflow-arrow">-</span>
+          <span class="workflow-step">Subject</span><span class="workflow-arrow">-</span>
+          <span class="workflow-step">Day</span><span class="workflow-arrow">-</span>
+          <span class="workflow-step">Period</span><span class="workflow-arrow">-</span>
+          <span class="workflow-step">Teacher</span>
+        </div>
       </div>
-    </header>
-
-    <!-- Form -->
-    <div class="bg-white rounded-xl shadow-lg p-4 sm:p-6 mb-8 transform hover:scale-[1.01] transition-transform duration-300">
-      <form method="post" action="{% url 'assign_period' %}" class="flex flex-col sm:flex-row sm:items-end gap-4 flex-wrap">
-        {% csrf_token %}
-        <div class="flex-1">
-          <label for="id_class" class="block text-sm font-medium text-gray-700">Class</label>
-          <select name="class_fk" id="id_class" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm input-focus sm:text-sm">
-            <option value="">Select Class</option>
-            {% for cls in classes %}
-              <option value="{{ cls.id }}">{{ cls.class_name }}</option>
-            {% endfor %}
-          </select>
-        </div>
-
-        <div class="flex-1">
-          <label for="id_section" class="block text-sm font-medium text-gray-700">Section</label>
-          <select name="section" id="id_section" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm input-focus sm:text-sm">
-            <option value="">Select Class First</option>
-          </select>
-        </div>
-
-        <div class="flex-1">
-          <label for="id_subject" class="block text-sm font-medium text-gray-700">Subject</label>
-          <select name="subject" id="id_subject" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm input-focus sm:text-sm">
-            <option value="">Select Section First</option>
-          </select>
-        </div>
-
-        <div class="flex-1">
-          <label for="id_day" class="block text-sm font-medium text-gray-700">Day</label>
-          <select name="day" id="id_day" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm input-focus sm:text-sm">
-            <option value="">Select Subject First</option>
-          </select>
-        </div>
-
-        <div class="flex-1">
-          <label for="id_period" class="block text-sm font-medium text-gray-700">Period</label>
-          <select name="period" id="id_period" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm input-focus sm:text-sm">
-            <option value="">Select Day First</option>
-          </select>
-        </div>
-
-        <div class="flex-1">
-          <label for="id_teacher" class="block text-sm font-medium text-gray-700">Teacher</label>
-          <select name="teacher" id="id_teacher" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm input-focus sm:text-sm">
-            <option value="">Select Subject First</option>
-          </select>
-        </div>
-
-        <!-- ✅ Bypass Checkbox -->
-        <div class="flex items-center space-x-2 mt-2 sm:mt-6">
-          <input type="checkbox" name="is_bypass" id="id_is_bypass" class="form-check-input h-4 w-4 text-gray-600 border-gray-300 rounded focus:ring-gray-500">
-          <label for="id_is_bypass" class="text-sm text-gray-700">Allow same teacher on same period across multiple sections</label>
-        </div>
-
-        
-        <div class="col-lg-12 ms-auto text-center mt-4">
-                        <button type="submit" class="btn btn-primary">Assign</button>
-                    </div>
-               
-      </form>
     </div>
 
-    <!-- Table -->
-  <div class="card" style="margin-left:20px; margin-right:20px; background-color: #ffffff">
-  <div class="card-header d-flex justify-content-between align-items-center">
-    <h4 class="card-title">Assigned Classes</h4>
-  </div>
+    <div class="ag-body">
+      <div class="ag-panel">
+        <h5 class="ag-section-title"><i class="fa fa-calendar-check"></i> Assignment Details</h5>
+        <form method="post" action="{% url 'assign_period' %}">
+          {% csrf_token %}
+          <div class="ag-grid">
+            <div class="ag-field">
+              <label for="id_class">Class</label>
+              <select name="class_fk" id="id_class">
+                <option value="">Select Class</option>
+                {% for cls in classes %}
+                  <option value="{{ cls.id }}">{{ cls.class_name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="ag-field">
+              <label for="id_section">Section</label>
+              <select name="section" id="id_section">
+                <option value="">Select Class First</option>
+              </select>
+            </div>
+            <div class="ag-field">
+              <label for="id_subject">Subject</label>
+              <select name="subject" id="id_subject">
+                <option value="">Select Section First</option>
+              </select>
+            </div>
+            <div class="ag-field">
+              <label for="id_day">Day</label>
+              <select name="day" id="id_day">
+                <option value="">Select Subject First</option>
+              </select>
+            </div>
+            <div class="ag-field">
+              <label for="id_period">Period</label>
+              <select name="period" id="id_period">
+                <option value="">Select Day First</option>
+              </select>
+            </div>
+            <div class="ag-field">
+              <label for="id_teacher">Teacher</label>
+              <select name="teacher" id="id_teacher">
+                <option value="">Select Subject First</option>
+              </select>
+            </div>
+            <div class="ag-field ag-field-full">
+              <label class="ag-checkline" for="id_is_bypass">
+                <input type="checkbox" name="is_bypass" id="id_is_bypass" class="form-check-input">
+                Allow same teacher on same period across multiple sections
+              </label>
+            </div>
+          </div>
+          <div class="ag-form-actions">
+            <button type="submit" class="ag-btn ag-btn-primary"><i class="fa fa-link"></i> Assign</button>
+          </div>
+        </form>
+      </div>
 
-  <div class="card-body">
-    <div class="table-responsive">
-      <table class="table table-responsive-md">
-        <thead>
-          <tr>
-            <th><strong>Class</strong></th>
-            <th><strong>Section</strong></th>
-            <th><strong>Subject</strong></th>
-            <th><strong>Day</strong></th>
-            <th><strong>Period</strong></th>
-            <th><strong>Teacher</strong></th>
-            <th><strong>Actions</strong></th>
-          </tr>
-        </thead>
-        <tbody id="assigned-classes-table"></tbody>
-      </table>
+      <div class="ag-panel">
+        <h5 class="ag-section-title"><i class="fa fa-list-check"></i> Assigned Classes</h5>
+        <div class="ag-table-wrap">
+          <table class="table table-responsive-md">
+            <thead>
+              <tr>
+                <th>Class</th>
+                <th>Section</th>
+                <th>Subject</th>
+                <th>Day</th>
+                <th>Period</th>
+                <th>Teacher</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="assigned-classes-table"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
+  <div id="toast" class="toast"></div>
 </div>
 
-  </div>
-
-  <div id="toast" class="toast"></div>
-
-  <!-- JavaScript -->
- <script src="{% static 'admin_panel/js/assign_period.js' %}"></script> 
-</body>
-</html>
-
+<script src="{% static 'admin_panel/js/assign_period.js' %}"></script>
 {% endblock %}

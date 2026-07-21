@@ -654,3 +654,115 @@ class StudentRegistrationForm(forms.ModelForm):
             'date_of_birth': forms.DateInput(attrs={'type': 'date'}),
             'admission_date': forms.DateInput(attrs={'type': 'date'}),
         }
+
+
+from .models import (
+    ProcurementCategory, Vendor, PurchaseRequest, InventoryItem, StockMovement,
+    Vehicle, RouteVehicleAssignment, TransportTrip, VehicleMaintenance, TransportRoute
+)
+
+
+class OperationFormMixin:
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name, field in self.fields.items():
+            widget = field.widget
+            if isinstance(widget, forms.CheckboxInput):
+                widget.attrs.setdefault("class", "form-check-input")
+            elif isinstance(widget, forms.Select):
+                widget.attrs.setdefault("class", "form-control")
+            elif isinstance(widget, forms.Textarea):
+                widget.attrs.setdefault("class", "form-control")
+                widget.attrs.setdefault("rows", 3)
+            else:
+                widget.attrs.setdefault("class", "form-control")
+
+
+class ProcurementCategoryForm(OperationFormMixin, forms.ModelForm):
+    class Meta:
+        model = ProcurementCategory
+        fields = ["name", "description", "is_active"]
+
+
+class VendorForm(OperationFormMixin, forms.ModelForm):
+    class Meta:
+        model = Vendor
+        fields = ["name", "contact_person", "phone", "email", "address", "status"]
+
+
+class PurchaseRequestForm(OperationFormMixin, forms.ModelForm):
+    class Meta:
+        model = PurchaseRequest
+        fields = [
+            "title", "category", "vendor", "needed_by", "priority",
+            "estimated_cost", "status", "description"
+        ]
+        widgets = {
+            "needed_by": forms.DateInput(attrs={"type": "date"}),
+        }
+
+
+class InventoryItemForm(OperationFormMixin, forms.ModelForm):
+    class Meta:
+        model = InventoryItem
+        fields = [
+            "name", "sku", "category", "vendor", "quantity",
+            "reorder_level", "unit", "unit_cost", "status"
+        ]
+
+
+class StockMovementForm(OperationFormMixin, forms.ModelForm):
+    class Meta:
+        model = StockMovement
+        fields = ["item", "movement_type", "quantity", "note"]
+
+
+class TransportRouteOperationForm(OperationFormMixin, forms.ModelForm):
+    class Meta:
+        model = TransportRoute
+        fields = ["route_name", "amount"]
+
+
+class VehicleForm(OperationFormMixin, forms.ModelForm):
+    class Meta:
+        model = Vehicle
+        fields = [
+            "vehicle_no", "vehicle_type", "capacity", "driver_name",
+            "driver_phone", "registration_expiry", "status", "notes"
+        ]
+        widgets = {
+            "registration_expiry": forms.DateInput(attrs={"type": "date"}),
+        }
+
+
+class RouteVehicleAssignmentForm(OperationFormMixin, forms.ModelForm):
+    class Meta:
+        model = RouteVehicleAssignment
+        fields = ["route", "vehicle", "driver_name", "start_date", "end_date", "is_active"]
+        widgets = {
+            "start_date": forms.DateInput(attrs={"type": "date"}),
+            "end_date": forms.DateInput(attrs={"type": "date"}),
+        }
+
+
+class TransportTripForm(OperationFormMixin, forms.ModelForm):
+    class Meta:
+        model = TransportTrip
+        fields = [
+            "route", "vehicle", "service_date", "scheduled_departure",
+            "actual_departure", "students_transported", "status", "notes",
+        ]
+        widgets = {
+            "service_date": forms.DateInput(attrs={"type": "date"}),
+            "scheduled_departure": forms.TimeInput(attrs={"type": "time"}),
+            "actual_departure": forms.TimeInput(attrs={"type": "time"}),
+        }
+
+
+class VehicleMaintenanceForm(OperationFormMixin, forms.ModelForm):
+    class Meta:
+        model = VehicleMaintenance
+        fields = ["vehicle", "maintenance_type", "service_date", "cost", "status", "notes"]
+        widgets = {
+            "service_date": forms.DateInput(attrs={"type": "date"}),
+        }

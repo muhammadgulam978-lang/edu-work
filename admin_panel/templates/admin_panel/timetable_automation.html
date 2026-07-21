@@ -1,6 +1,11 @@
 {% extends "admin_panel/bases.html" %}
+{% load static %}
 
 {% block title %}Timetable Automation{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'admin_panel/css/academics_gateway.css' %}">
+{% endblock %}
 
 {% block content %}
 <style>
@@ -47,6 +52,7 @@
   @media (max-width: 768px) { .ta-grid, .ta-workflow { grid-template-columns: 1fr; } .ta-wrap { margin: 12px; } .ta-selector { width: 100%; max-width: none; } }
 </style>
 
+<div class="academics-gateway">
 <div class="ta-wrap">
   <div class="ta-card">
     <div class="ta-card-body">
@@ -365,5 +371,6 @@
       </div>
     </div>
   </div>
+</div>
 </div>
 {% endblock %}

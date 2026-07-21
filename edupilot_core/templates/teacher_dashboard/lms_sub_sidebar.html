@@ -3,143 +3,106 @@
 {% block extra_css %}
 <link href="{% static 'teacher_dashboard/vendor/bootstrap-select/dist/css/bootstrap-select.min.css' %}" rel="stylesheet">
 <link href="{% static 'teacher_dashboard/css/style.css' %}" rel="stylesheet">
+<link href="{% static 'admin_panel/css/reference-sidebar.css' %}?v=reference-sidebar-7" rel="stylesheet">
 {% endblock %}
 
 {% block content %}
-<div class="deznav">
+<div class="deznav edu-reference-sidebar">
+    <div class="deznav-brand">
+        <a href="{% url 'lms_dashboard' %}" class="brand-logo">
+            <img src="{% static 'admin_panel/images/edupilot-logo-2026-nav.png' %}?v=reference-sidebar-1" alt="EDUPILOT">
+        </a>
+    </div>
+
     <div class="deznav-scroll">
         <ul class="metismenu" id="menu">
-
-            <!-- LMS Dashboard -->
-            <li>
+            <li style="--sidebar-icon-color:#0ea5e9; --sidebar-icon-bg:#dff6ff;">
                 <a href="{% url 'lms_dashboard' %}" class="ai-icon" aria-expanded="false">
-                    <i class="flaticon-381-settings-2"></i>
+                    <i class="fas fa-home"></i>
                     <span class="nav-text">LMS Dashboard</span>
                 </a>
             </li>
-<li class="has-menu">
-    <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
-        <i class="flaticon-381-book"></i>
-        <span class="nav-text">Lesson Planning</span>
-    </a>
-    <ul aria-expanded="false">
-        {% if class_obj and section_obj and subject_obj %}
-            <li>
-                <a href="{% url 'lms_books_list' class_obj.id section_obj.id subject_obj.id %}">
-                    📘 Books & Lesson Plans
-                </a>
-            </li>
-        {% else %}
-            <li>
-                <a href="javascript:void(0)">📘 Select Subject First</a>
-            </li>
-        {% endif %}
-    </ul>
-</li>
 
-            <!-- Lecture Notes -->
-            <li class="has-menu">
-                <a class="has-arrow ai-icon" href="javascript:void(0);" aria-expanded="false">
-                    <i class="flaticon-381-television"></i>
+            <li class="sidebar-section">Learning</li>
+
+            <li class="has-menu" style="--sidebar-icon-color:#0f766e; --sidebar-icon-bg:#dff8f3;">
+                <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
+                    <i class="fas fa-book-open"></i>
+                    <span class="nav-text">Lesson Planning</span>
+                </a>
+                <ul aria-expanded="false">
+                    {% if class_obj and section_obj and subject_obj %}
+                        <li><a href="{% url 'lms_books_list' class_obj.id section_obj.id subject_obj.id %}"><i class="fas fa-book"></i> Books &amp; Lesson Plans</a></li>
+                    {% else %}
+                        <li><a href="javascript:void(0)"><i class="fas fa-circle-info"></i> Select Subject First</a></li>
+                    {% endif %}
+                </ul>
+            </li>
+
+            <li class="has-menu" style="--sidebar-icon-color:#2563eb; --sidebar-icon-bg:#e6efff;">
+                <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
+                    <i class="fas fa-file-alt"></i>
                     <span class="nav-text">Lecture Notes</span>
                 </a>
                 <ul aria-expanded="false">
                     {% if class_obj and section_obj and subject_obj %}
-                        <li>
-                            <a href="{% url 'upload_lecture_note' class_obj.id section_obj.id subject_obj.id %}">
-                                📘 Upload Lecture Notes
-                            </a>
-                        </li>
+                        <li><a href="{% url 'upload_lecture_note' class_obj.id section_obj.id subject_obj.id %}"><i class="fas fa-upload"></i> Upload Lecture Notes</a></li>
                     {% else %}
-                        <li><a href="javascript:void(0)">📘 Upload Lecture Notes (Select Subject)</a></li>
+                        <li><a href="javascript:void(0)"><i class="fas fa-circle-info"></i> Upload Lecture Notes</a></li>
                     {% endif %}
                 </ul>
             </li>
 
-            <!-- Assignments -->
-            <li class="has-menu">
+            <li class="has-menu" style="--sidebar-icon-color:#7c3aed; --sidebar-icon-bg:#ede9fe;">
                 <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
-                    <i class="flaticon-381-controls-3"></i>
+                    <i class="fas fa-clipboard-list"></i>
                     <span class="nav-text">Assignments</span>
                 </a>
                 <ul aria-expanded="false">
                     {% if class_obj and section_obj and subject_obj %}
-                        <li>
-                            <a href="{% url 'upload_assignment' class_obj.id section_obj.id subject_obj.id %}">
-                                📝 Upload Assignments
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{% url 'view_assignments' class_obj.id section_obj.id subject_obj.id %}">
-                                📂 View Submissions
-                            </a>
-                        </li>
+                        <li><a href="{% url 'upload_assignment' class_obj.id section_obj.id subject_obj.id %}"><i class="fas fa-upload"></i> Upload Assignments</a></li>
+                        <li><a href="{% url 'view_assignments' class_obj.id section_obj.id subject_obj.id %}"><i class="fas fa-folder-open"></i> View Submissions</a></li>
                     {% else %}
-                        <li><a href="javascript:void(0)">📝 Upload Assignments (Select Subject)</a></li>
-                        <li><a href="javascript:void(0)">📂 View Submissions (Select Subject)</a></li>
+                        <li><a href="javascript:void(0)"><i class="fas fa-circle-info"></i> Upload Assignments</a></li>
+                        <li><a href="javascript:void(0)"><i class="fas fa-circle-info"></i> View Submissions</a></li>
                     {% endif %}
                 </ul>
             </li>
 
-            <!-- Quizzes -->
-            <li class="has-menu">
+            <li class="has-menu" style="--sidebar-icon-color:#f59e0b; --sidebar-icon-bg:#fff7d6;">
                 <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
-                    <i class="flaticon-381-internet"></i>
+                    <i class="fas fa-question-circle"></i>
                     <span class="nav-text">Quizzes</span>
                 </a>
                 <ul aria-expanded="false">
                     {% if class_obj and section_obj and subject_obj %}
-                        <li>
-                            <a href="{% url 'upload_quiz' class_obj.id section_obj.id subject_obj.id %}">
-                                🧠 Upload Quiz
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{% url 'view_quiz_submissions' class_obj.id section_obj.id subject_obj.id %}">
-                                📋 Quiz Submissions
-                            </a>
-                        </li>
+                        <li><a href="{% url 'upload_quiz' class_obj.id section_obj.id subject_obj.id %}"><i class="fas fa-upload"></i> Upload Quiz</a></li>
+                        <li><a href="{% url 'view_quiz_submissions' class_obj.id section_obj.id subject_obj.id %}"><i class="fas fa-tasks"></i> Quiz Submissions</a></li>
                     {% else %}
-                        <li><a href="javascript:void(0)">🧠 Upload Quiz (Select Subject)</a></li>
-                        <li><a href="javascript:void(0)">📋 Quiz Submissions (Select Subject)</a></li>
+                        <li><a href="javascript:void(0)"><i class="fas fa-circle-info"></i> Upload Quiz</a></li>
+                        <li><a href="javascript:void(0)"><i class="fas fa-circle-info"></i> Quiz Submissions</a></li>
                     {% endif %}
                 </ul>
             </li>
 
-            <!-- Daily Diary -->
-            <li class="has-menu">
+            <li class="has-menu" style="--sidebar-icon-color:#16a34a; --sidebar-icon-bg:#dcfce7;">
                 <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
-                    <i class="flaticon-381-notepad"></i>
+                    <i class="fas fa-note-sticky"></i>
                     <span class="nav-text">Daily Diary</span>
                 </a>
                 <ul aria-expanded="false">
                     {% if class_obj and section_obj and subject_obj %}
-                        <li>
-                            <a href="{% url 'submit_diary' class_obj.id section_obj.id subject_obj.id %}">
-                                📔 Assign Diary
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{% url 'view_diary_student' class_obj.id section_obj.id subject_obj.id %}">
-                                📖 View Diary
-                            </a>
-                        </li>
+                        <li><a href="{% url 'submit_diary' class_obj.id section_obj.id subject_obj.id %}"><i class="fas fa-pen"></i> Assign Diary</a></li>
+                        <li><a href="{% url 'view_diary_student' class_obj.id section_obj.id subject_obj.id %}"><i class="fas fa-book-reader"></i> View Diary</a></li>
                     {% else %}
-                        <li><a href="javascriptvoid(0)">📔 Assign Diary (Select Subject)</a></li>
-                        <li><a href="javascript:void(0)">📖 View Diary (Select Subject)</a></li>
+                        <li><a href="javascript:void(0)"><i class="fas fa-circle-info"></i> Assign Diary</a></li>
+                        <li><a href="javascript:void(0)"><i class="fas fa-circle-info"></i> View Diary</a></li>
                     {% endif %}
                 </ul>
             </li>
-
-            <!-- ================================================================================ -->
-<!-- Exam Formats -->
-
-
         </ul>
 
-        <div class="copyright">
-            <p>Forecaster Dashboard</p>
-        </div>
+        <div class="copyright">EduPilot &copy; {% now "Y" %}</div>
     </div>
 </div>
 {% endblock %}

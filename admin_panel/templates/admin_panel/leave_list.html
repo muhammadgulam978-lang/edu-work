@@ -1,58 +1,86 @@
 {% extends "admin_panel/bases.html" %}
+{% load static %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'admin_panel/css/hr_admin.css' %}?v=hr-admin-2">
+{% endblock %}
+
 {% block content %}
+<div class="hr-page">
+    <div class="hr-hero">
+        <div class="hr-title-wrap">
+            <span class="hr-icon purple"><i class="fas fa-calendar-check"></i></span>
+            <div>
+                <p class="hr-kicker">Leave Management</p>
+                <h2>Leave Applications</h2>
+                <p class="hr-subtitle">Review submitted leave requests and take approval actions.</p>
+            </div>
+        </div>
+        <div class="hr-actions">
+            <a href="{% url 'leave_create' %}" class="btn btn-primary"><i class="fas fa-plus"></i> Apply Leave</a>
+        </div>
+    </div>
 
-<div class="container-fluid">
-    <h4>Leave Applications</h4>
+    <div class="hr-stats">
+        <div class="hr-stat-card green">
+            <i class="fas fa-calendar-check"></i>
+            <div><span>Total Requests</span><strong>{{ leaves|length }}</strong></div>
+        </div>
+    </div>
 
-    <div class="card">
-        <div class="card-body">
-            <table class="table table-hover">
-                <thead class="table-light">
-                    <tr>
-                        <th>Employee</th>
-                        <th>Leave Type</th>
-                        <th>Dates</th>
-                        <th>Status</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for l in leaves %}
-                    <tr>
-                        <td>{{ l.employee.name }}</td>
-                        <td>{{ l.leave_type.name }}</td>
-                        <td>{{ l.start_date }} → {{ l.end_date }}</td>
-                        <td>
-                            {% if l.status == 'approved' %}
-                                <span class="badge bg-success">Approved</span>
-                            {% elif l.status == 'rejected' %}
-                                <span class="badge bg-danger">Rejected</span>
-                            {% else %}
-                                <span class="badge bg-warning">Pending</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if perms.admin_panel.change_leaveapplication %}
-                                {% if l.status == 'pending' %}
-                                    <a href="{% url 'leave_action' l.id 'approved' %}" class="btn btn-sm btn-success">Approve</a>
-                                    <a href="{% url 'leave_action' l.id 'rejected' %}" class="btn btn-sm btn-danger">Reject</a>
+    <div class="hr-panel">
+        <div class="hr-panel-header">
+            <h4>Leave Requests</h4>
+        </div>
+        <div class="hr-panel-body">
+            <div class="hr-table-wrap">
+                <table class="table hr-table">
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Leave Type</th>
+                            <th>Dates</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for l in leaves %}
+                        <tr>
+                            <td><strong>{{ l.employee.name }}</strong></td>
+                            <td>{{ l.leave_type.name }}</td>
+                            <td>{{ l.start_date }} - {{ l.end_date }}</td>
+                            <td>
+                                {% if l.status == 'approved' %}
+                                    <span class="badge bg-success">Approved</span>
+                                {% elif l.status == 'rejected' %}
+                                    <span class="badge bg-danger">Rejected</span>
                                 {% else %}
-                                    —
+                                    <span class="badge bg-warning">Pending</span>
                                 {% endif %}
-                            {% else %}
-                                —
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="5" class="text-center">No Leave Requests</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                            </td>
+                            <td>
+                                {% if perms.admin_panel.change_leaveapplication %}
+                                    {% if l.status == 'pending' %}
+                                        <a href="{% url 'leave_action' l.id 'approved' %}" class="btn btn-sm btn-success">Approve</a>
+                                        <a href="{% url 'leave_action' l.id 'rejected' %}" class="btn btn-sm btn-danger">Reject</a>
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="hr-empty">No Leave Requests</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
-
 {% endblock %}

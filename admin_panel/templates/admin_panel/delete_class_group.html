@@ -1,29 +1,36 @@
 {% extends 'admin_panel/bases.html' %}
 {% load static %}
 
-{% block title %}
-    Delete Class Group
-{% endblock %}
+{% block title %}Delete Class Group{% endblock %}
 
 {% block head %}
-<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'admin_panel/css/academics_gateway.css' %}">
 {% endblock %}
 
 {% block content %}
-<div class="card" style="margin-left: 20px; margin-right: 20px; background-color: #ffffff">
-  <div class="card-header d-flex justify-content-between align-items-center">
-    <h4 class="card-title">Delete Class Group</h4>
-    <a href="{% url 'class_group_list' %}" class="btn btn-primary mt-3">← Back to List</a>
-  </div>
-
-  <div class="card-body">
-    <p>Are you sure you want to delete the class group "<strong>{{ class_group.group_name }}</strong>"?</p>
-
-    <form method="post" class="mt-4 d-flex align-items-center">
-      {% csrf_token %}
-      <button type="submit" class="btn btn-danger me-3">Yes, Delete</button>
-      <a href="{% url 'class_group_list' %}" class="btn btn-secondary">Cancel</a>
-    </form>
+<div class="academics-gateway">
+  <div class="ag-card">
+    <div class="ag-header">
+      <div>
+        <p class="ag-kicker">Academics</p>
+        <h4 class="ag-title">Delete Class Group</h4>
+        <p class="ag-subtitle">Confirm before removing this group.</p>
+      </div>
+      <a href="{% url 'class_group_list' %}" class="ag-btn ag-btn-secondary"><i class="fa fa-arrow-left"></i> Back to Groups</a>
+    </div>
+    <div class="ag-body">
+      <div class="ag-confirm">
+        <i class="fa fa-triangle-exclamation"></i>
+        <div>
+          <p>Are you sure you want to delete class group <strong>{{ class_group.group_name }}</strong>?</p>
+          <form method="post" class="ag-form-actions">
+            {% csrf_token %}
+            <button type="submit" class="ag-btn ag-btn-danger"><i class="fa fa-trash"></i> Yes, Delete</button>
+            <a href="{% url 'class_group_list' %}" class="ag-btn ag-btn-secondary">Cancel</a>
+          </form>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 {% endblock %}

@@ -4,64 +4,86 @@
 {% block title %}Student ID Card List{% endblock %}
 
 {% block head %}
-<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'admin_panel/vendor/datatables/css/jquery.dataTables.min.css' %}">
+  <link rel="stylesheet" href="{% static 'admin_panel/css/student_gateway.css' %}?v=student-gateway-1">
 {% endblock %}
 
 {% block content %}
-<div class="card" style="margin-left:20px; margin-right:20px; background-color: #ffffff">
-  <div class="card-header d-flex justify-content-between align-items-center">
-    <h4 class="card-title">Student ID Card List</h4>
-  </div>
-
-  <div class="card-body">
-    <div class="table-responsive">
-      <table class="table table-responsive-md">
-        <thead>
-          <tr>
-            <th class="width80"><strong>ID</strong></th>
-            <th><strong>Name</strong></th>
-            <th><strong>Class</strong></th>
-            <th><strong>Photo</strong></th>
-            <th><strong>Upload New Photo</strong></th>
-            <th><strong>Action</strong></th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for student in students %}
-          <tr>
-            <td>{{ student.id }}</td>
-            <td>{{ student.name }}</td>
-            <td>{{ student.class_name }}</td>
-            <td class="sorting_1">
-              {% if student.photo %}
-                <img class="rounded-circle" width="50" height="50" src="{{ student.photo.url }}" alt="">
-              {% else %}
-                <span class="badge light badge-danger">No Photo</span>
-              {% endif %}
-            </td>
-            <td>
-              <form method="POST" enctype="multipart/form-data" action="{% url 'upload_student_photo' student.id %}">
-                {% csrf_token %}
-                <div class="input-group mb-3">
-                  <div class="form-file">
-                    <input type="file" name="photo" accept="image/*" required class="form-file-input form-control">
-                  </div>
-                  <button type="submit" class="input-group-text btn btn-sm btn-primary">Upload</button>
-                </div>
-              </form>
-            </td>
-            <td>
-              <a href="{% url 'generate_id_card' student.id %}" target="_blank" class="btn btn-primary btn-sm">Generate ID Card</a>
-            </td>
-          </tr>
-          {% empty %}
-          <tr>
-            <td colspan="6">No students found.</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+<div class="student-gateway">
+  <section class="sg-card">
+    <div class="sg-header">
+      <div>
+        <p class="sg-kicker">Student Gateway</p>
+        <h1 class="sg-title">Student ID Card List</h1>
+        <p class="sg-subtitle">Upload student photos and generate printable identity cards.</p>
+      </div>
+      <div class="sg-actions">
+        <a href="{% url 'registration' %}" class="sg-btn sg-btn-primary">
+          <i class="fa fa-plus"></i>
+          <span>New Enrollment</span>
+        </a>
+      </div>
     </div>
-  </div>
+
+    <div class="sg-body">
+      <div class="sg-table-wrap">
+        <table id="example3" class="display dataTable no-footer sg-table" style="width:100%;">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Class</th>
+              <th>Photo</th>
+              <th>Upload New Photo</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for student in students %}
+              <tr>
+                <td>{{ student.id }}</td>
+                <td>{{ student.name }}</td>
+                <td>{{ student.class_fk.class_name|default:"No Class" }}</td>
+                <td>
+                  <span class="sg-photo">
+                    {% if student.photo %}
+                      <img src="{{ student.photo.url }}" alt="{{ student.name }}">
+                    {% else %}
+                      <i class="fa fa-user-graduate"></i>
+                    {% endif %}
+                  </span>
+                </td>
+                <td>
+                  <form method="POST" enctype="multipart/form-data" action="{% url 'upload_student_photo' student.id %}" class="sg-upload-form">
+                    {% csrf_token %}
+                    <input type="file" name="photo" accept="image/*" required>
+                    <button type="submit" class="sg-btn sg-btn-secondary">
+                      <i class="fa fa-upload"></i>
+                      <span>Upload</span>
+                    </button>
+                  </form>
+                </td>
+                <td>
+                  <a href="{% url 'generate_id_card' student.id %}" target="_blank" class="sg-btn sg-btn-primary">
+                    <i class="fa fa-id-card"></i>
+                    <span>Generate ID Card</span>
+                  </a>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="6" class="sg-empty">No students found.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
 </div>
+
+<script src="{% static 'admin_panel/vendor/global/global.min.js' %}"></script>
+<script src="{% static 'admin_panel/vendor/bootstrap-select/dist/js/bootstrap-select.min.js' %}"></script>
+<script src="{% static 'admin_panel/vendor/datatables/js/jquery.dataTables.min.js' %}"></script>
+<script src="{% static 'admin_panel/js/plugins-init/datatables.init.js' %}"></script>
 {% endblock %}

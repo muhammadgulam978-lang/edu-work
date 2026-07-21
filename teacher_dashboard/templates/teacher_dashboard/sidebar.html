@@ -1,147 +1,100 @@
+{% load static %}
 
-<div class="deznav">
+<div class="deznav edu-reference-sidebar">
+    <div class="deznav-brand">
+        <a href="{% url 'teacher_dashboard' %}" class="brand-logo">
+            <img src="{% static 'admin_panel/images/edupilot-logo-2026-nav.png' %}?v=reference-sidebar-1" alt="EDUPILOT">
+        </a>
+    </div>
+
     <div class="deznav-scroll">
         <ul class="metismenu" id="menu">
+            <li style="--sidebar-icon-color:#0ea5e9; --sidebar-icon-bg:#dff6ff;">
+                <a href="{% url 'teacher_dashboard' %}" class="ai-icon" aria-expanded="false">
+                    <i class="fas fa-home"></i>
+                    <span class="nav-text">Dashboard</span>
+                </a>
+            </li>
 
-            <!-- ==========================================
-                 LESSON PLANS
-            =========================================== -->
-            <li class="has-menu">
+            <li class="sidebar-section">Teaching</li>
+
+            <li class="has-menu" style="--sidebar-icon-color:#0f766e; --sidebar-icon-bg:#dff8f3;">
                 <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
-                    <i class="flaticon-381-notepad"></i>
+                    <i class="fas fa-book-open"></i>
                     <span class="nav-text">Lesson Plans</span>
                 </a>
                 <ul aria-expanded="false">
-                    <li><a href="{% url 'lesson_plans_list' %}">My Lesson Plans</a></li>
+                    <li><a href="{% url 'lesson_plans_list' %}"><i class="fas fa-list"></i> My Lesson Plans</a></li>
                 </ul>
             </li>
 
-            <!-- ==========================================
-                 CENTRALIZED EXAM SYSTEM
-            =========================================== -->
-
-            <!-- Question Bank -->
-            <li class="has-menu">
-                <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
-                    <i class="flaticon-381-list"></i>
-                    <span class="nav-text">Question Bank</span>
-                </a>
-                <ul aria-expanded="false">
-                    <li><a href="{% url 'question_bank_list' %}">All Question Banks</a></li>
-                    <li>
-                        <a href="{% url 'question_bank_list' %}?pending=1">
-                            Pending Approval
-                            <span class="badge badge-xs badge-warning light">Review</span>
-                        </a>
-                    </li>
-                </ul>
-            </li>
-
-            <!-- Exam Plans & Blueprint -->
-            <li class="has-menu">
-                <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
-                    <i class="flaticon-381-calendar"></i>
-                    <span class="nav-text">Exam Plans</span>
-                </a>
-                <ul aria-expanded="false">
-                    <li><a href="{% url 'exam_plan_list' %}">All Exam Plans</a></li>
-                    <li><a href="{% url 'create_exam_plan' %}">Create New Plan</a></li>
-                </ul>
-            </li>
-
-            <!-- Paper Generation -->
-            <li class="has-menu">
-                <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
-                    <i class="flaticon-381-file"></i>
-                    <span class="nav-text">Paper Generation</span>
-                </a>
-                <ul aria-expanded="false">
-                    <li>
-                        <a href="{% url 'exam_plan_list' %}">
-                            Generate Paper (AI)
-                            <span class="badge badge-xs badge-primary light">AI</span>
-                        </a>
-                    </li>
-                    <li><a href="{% url 'exam_plan_list' %}">Approval Workflow</a></li>
-                </ul>
-            </li>
-
-            <!-- Exam Conduct -->
-            <li class="has-menu">
-                <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
-                    <i class="flaticon-381-clock"></i>
-                    <span class="nav-text">Exam Conduct</span>
-                </a>
-                <ul aria-expanded="false">
-                    <li><a href="{% url 'exam_plan_list' %}">Seating Plans</a></li>
-                    <li><a href="{% url 'exam_plan_list' %}">Mark Attendance</a></li>
-                    <li><a href="{% url 'exam_plan_list' %}">Invigilator Duty</a></li>
-                </ul>
-            </li>
-
-            <!-- Marking -->
-            <li class="has-menu">
-                <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
-                    <i class="flaticon-381-check-box"></i>
-                    <span class="nav-text">Marking</span>
-                </a>
-                <ul aria-expanded="false">
-                    <li><a href="{% url 'exam_plan_list' %}">Answer Sheets</a></li>
-                    <li>
-                        <a href="{% url 'exam_plan_list' %}">
-                            AI Marking + Verify
-                            <span class="badge badge-xs badge-primary light">AI</span>
-                        </a>
-                    </li>
-                </ul>
-            </li>
-
-            <!-- Results & Analytics -->
-            <li class="has-menu">
-                <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
-                    <i class="flaticon-381-diploma-1"></i>
-                    <span class="nav-text">Results & Analytics</span>
-                </a>
-                <ul aria-expanded="false">
-                    <li><a href="{% url 'exam_plan_list' %}">Compile Results</a></li>
-                    <li><a href="{% url 'analytics_dashboard' %}">Analytics Dashboard</a></li>
-                </ul>
-            </li>
-
-
-
-            <li class="has-menu">
-    <a class="has-arrow ai-icon" href="javascript:void(0)">
-        <i class="flaticon-381-bar-chart"></i>
-        <span class="nav-text">Appraisal KPI</span>
-    </a>
-
-    <ul aria-expanded="false">
-        <li>
-            <a href="{% url 'teacher_appraisal_submit' %}">
-                My Appraisal
-            </a>
-        </li>
-
-        <li>
-            <a href="{% url 'teacher_appraisal_submit' %}">
-                KPI Activities
-            </a>
-        </li>
-    </ul>
-</li>
-
-            <li>
+            <li style="--sidebar-icon-color:#16a34a; --sidebar-icon-bg:#dcfce7;">
                 <a href="{% url 'lms_dashboard' %}" class="ai-icon" aria-expanded="false">
-                    <i class="flaticon-381-settings-2"></i>
+                    <i class="fas fa-chalkboard"></i>
                     <span class="nav-text">LMS</span>
                 </a>
             </li>
 
+            <li class="sidebar-section">Examination</li>
+
+            <li class="has-menu" style="--sidebar-icon-color:#2563eb; --sidebar-icon-bg:#e6efff;">
+                <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
+                    <i class="fas fa-question-circle"></i>
+                    <span class="nav-text">Question Bank</span>
+                </a>
+                <ul aria-expanded="false">
+                    <li><a href="{% url 'question_bank_list' %}"><i class="fas fa-list"></i> All Question Banks</a></li>
+                    <li><a href="{% url 'question_bank_list' %}?pending=1"><i class="fas fa-clock"></i> Pending Approval</a></li>
+                </ul>
+            </li>
+
+            <li class="has-menu" style="--sidebar-icon-color:#0d9488; --sidebar-icon-bg:#dbf7f4;">
+                <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
+                    <i class="fas fa-clipboard-check"></i>
+                    <span class="nav-text">Exam Plans</span>
+                </a>
+                <ul aria-expanded="false">
+                    <li><a href="{% url 'exam_plan_list' %}"><i class="fas fa-tasks"></i> All Exam Plans</a></li>
+                    <li><a href="{% url 'create_exam_plan' %}"><i class="fas fa-plus"></i> Create New Plan</a></li>
+                </ul>
+            </li>
+
+            <li class="has-menu" style="--sidebar-icon-color:#7c3aed; --sidebar-icon-bg:#ede9fe;">
+                <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
+                    <i class="fas fa-file-circle-plus"></i>
+                    <span class="nav-text">Paper Generation</span>
+                </a>
+                <ul aria-expanded="false">
+                    <li><a href="{% url 'exam_plan_list' %}"><i class="fas fa-magic"></i> Generate Paper AI</a></li>
+                    <li><a href="{% url 'exam_plan_list' %}"><i class="fas fa-route"></i> Approval Workflow</a></li>
+                </ul>
+            </li>
+
+            <li class="has-menu" style="--sidebar-icon-color:#f59e0b; --sidebar-icon-bg:#fff7d6;">
+                <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
+                    <i class="fas fa-chart-pie"></i>
+                    <span class="nav-text">Results &amp; Analytics</span>
+                </a>
+                <ul aria-expanded="false">
+                    <li><a href="{% url 'exam_plan_list' %}"><i class="fas fa-file-alt"></i> Compile Results</a></li>
+                    <li><a href="{% url 'analytics_dashboard' %}"><i class="fas fa-chart-line"></i> Analytics Dashboard</a></li>
+                </ul>
+            </li>
+
+            <li class="sidebar-section">People &amp; HR</li>
+
+            <li class="has-menu" style="--sidebar-icon-color:#f59e0b; --sidebar-icon-bg:#fff7d6;">
+                <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
+                    <i class="fas fa-star"></i>
+                    <span class="nav-text">Appraisal KPI</span>
+                </a>
+                <ul aria-expanded="false">
+                    <li><a href="{% url 'teacher_appraisal_submit' %}"><i class="fas fa-user-check"></i> My Appraisal</a></li>
+                    <li><a href="{% url 'teacher_appraisal_submit' %}"><i class="fas fa-chart-bar"></i> KPI Activities</a></li>
+                </ul>
+            </li>
         </ul>
 
-        <div class="copyright">
-            <p>Forecaster Dashboard</p>
-        </div>
+        <div class="copyright">EduPilot &copy; {% now "Y" %}</div>
     </div>
 </div>

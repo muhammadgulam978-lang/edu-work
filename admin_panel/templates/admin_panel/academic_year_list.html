@@ -4,28 +4,30 @@
 {% block title %}Academic Year List{% endblock %}
 
 {% block head %}
-    <link rel="stylesheet" href="{% static 'admin_panel/css/query.css' %}">
-    <link rel="stylesheet" href="{% static 'admin_panel/vendor/datatables/css/jquery.dataTables.min.css' %}">
+  <link rel="stylesheet" href="{% static 'admin_panel/vendor/datatables/css/jquery.dataTables.min.css' %}">
+  <link rel="stylesheet" href="{% static 'admin_panel/css/student_gateway.css' %}?v=student-gateway-1">
 {% endblock %}
 
 {% block content %}
-
-<div class="col-12">
-  <div class="card" style="background:#f8f9fa; margin:20px;">
-
-    <!-- Card Header -->
-    <div class="card-header d-flex justify-content-between align-items-center">
-      <h4 class="card-title mb-0">Academic Year List</h4>
-      <a href="{% url 'add_academic_year' %}" class="btn btn-success btn-sm">
-        <i class="fa fa-plus"></i> Add Year
-      </a>
+<div class="student-gateway">
+  <section class="sg-card">
+    <div class="sg-header">
+      <div>
+        <p class="sg-kicker">Student Gateway</p>
+        <h1 class="sg-title">Academic Year List</h1>
+        <p class="sg-subtitle">Create sessions and keep one active academic year for admissions, sections, subjects, and exams.</p>
+      </div>
+      <div class="sg-actions">
+        <a href="{% url 'add_academic_year' %}" class="sg-btn sg-btn-primary">
+          <i class="fa fa-plus"></i>
+          <span>Add Year</span>
+        </a>
+      </div>
     </div>
 
-    <!-- Card Body -->
-    <div class="card-body">
-
-      <div class="table-responsive">
-        <table id="example3" class="display table-responsive-lg dataTable no-footer" style="width:100%;">
+    <div class="sg-body">
+      <div class="sg-table-wrap">
+        <table id="example3" class="display dataTable no-footer sg-table" style="width:100%;">
           <thead>
             <tr>
               <th>#</th>
@@ -34,59 +36,43 @@
               <th>Actions</th>
             </tr>
           </thead>
-
           <tbody>
             {% for year in years %}
-            <tr>
-              <td><strong>{{ forloop.counter }}</strong></td>
-
-              <td>{{ year.year }}</td>
-
-              <td>
-                {% if year.is_active %}
-                  <span class="badge badge-success light">Active</span>
-                {% else %}
-                  <span class="badge badge-danger light">Inactive</span>
-                {% endif %}
-              </td>
-
-              <td>
-                <div class="d-flex">
-
-                  <!-- Edit Button -->
-                  <a href="{% url 'update_academic_year' year.pk %}"
-                     class="btn btn-primary shadow btn-xs sharp me-1" title="Edit">
+              <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ year.year }}</td>
+                <td>
+                  {% if year.is_active %}
+                    <span class="sg-badge sg-badge-active">Active</span>
+                  {% else %}
+                    <span class="sg-badge sg-badge-inactive">Inactive</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <div class="sg-inline-actions">
+                    <a href="{% url 'update_academic_year' year.pk %}" class="sg-btn sg-btn-secondary sg-icon-btn" title="Edit">
                       <i class="fas fa-pencil-alt"></i>
-                  </a>
-
-                  <!-- Delete Button -->
-                  <a href="{% url 'delete_academic_year' year.pk %}"
-                     class="btn btn-danger shadow btn-xs sharp" title="Delete">
+                    </a>
+                    <a href="{% url 'delete_academic_year' year.pk %}" class="sg-btn sg-btn-danger sg-icon-btn" title="Delete">
                       <i class="fa fa-trash"></i>
-                  </a>
-
-                </div>
-              </td>
-            </tr>
+                    </a>
+                  </div>
+                </td>
+              </tr>
             {% empty %}
-            <tr>
-              <td colspan="4" class="text-center text-muted">No academic years found.</td>
-            </tr>
+              <tr>
+                <td colspan="4" class="sg-empty">No academic years found.</td>
+              </tr>
             {% endfor %}
           </tbody>
-
         </table>
       </div>
-
     </div>
-
-  </div>
+  </section>
 </div>
 
-<!-- Required Scripts -->
 <script src="{% static 'admin_panel/vendor/global/global.min.js' %}"></script>
 <script src="{% static 'admin_panel/vendor/bootstrap-select/dist/js/bootstrap-select.min.js' %}"></script>
 <script src="{% static 'admin_panel/vendor/datatables/js/jquery.dataTables.min.js' %}"></script>
 <script src="{% static 'admin_panel/js/plugins-init/datatables.init.js' %}"></script>
-
 {% endblock %}

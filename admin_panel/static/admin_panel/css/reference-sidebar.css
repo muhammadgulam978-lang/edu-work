@@ -1,0 +1,343 @@
+/* Shared EduPilot reference sidebar skin. Scoped to avoid changing page content. */
+.edu-reference-sidebar,
+.deznav.edu-reference-sidebar {
+  background: #bfeee7 !important;
+  border-radius: 0 !important;
+  color: #0f2521 !important;
+  overflow: hidden !important;
+}
+
+.nav-header {
+  background: #bfeee7 !important;
+  border-color: transparent !important;
+}
+
+.nav-header .brand-logo {
+  background: #bfeee7 !important;
+  padding: 6px 22px !important;
+  overflow: visible !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+
+.nav-header .brand-logo img.logo-abbr[src*="edupilot-logo-2026-nav"] {
+  width: 205px !important;
+  max-width: calc(100% - 8px) !important;
+  height: auto !important;
+  max-height: 78px !important;
+  margin: 0 !important;
+  object-fit: contain !important;
+}
+
+#sidebar.edu-reference-sidebar {
+  width: 280px !important;
+  min-width: 280px !important;
+  min-height: 100vh !important;
+  flex: 0 0 280px !important;
+}
+
+#sidebar.edu-reference-sidebar.collapsed {
+  width: 84px !important;
+  min-width: 84px !important;
+  flex-basis: 84px !important;
+}
+
+#sidebar.edu-reference-sidebar.collapsed .deznav-brand {
+  min-height: 90px !important;
+  padding: 12px 8px !important;
+}
+
+#sidebar.edu-reference-sidebar.collapsed .brand-logo img {
+  width: 56px !important;
+  max-height: 56px !important;
+}
+
+#sidebar.edu-reference-sidebar.collapsed .sidebar-section,
+#sidebar.edu-reference-sidebar.collapsed .menu-title,
+#sidebar.edu-reference-sidebar.collapsed ul.metismenu > li > a .nav-text,
+#sidebar.edu-reference-sidebar.collapsed ul.metismenu > li > a span:not(.badge),
+#sidebar.edu-reference-sidebar.collapsed ul.metismenu > li > a.has-arrow::after,
+#sidebar.edu-reference-sidebar.collapsed ul.metismenu > li > ul,
+#sidebar.edu-reference-sidebar.collapsed .copyright {
+  display: none !important;
+}
+
+#sidebar.edu-reference-sidebar.collapsed ul.metismenu {
+  padding-left: 10px !important;
+  padding-right: 10px !important;
+}
+
+#sidebar.edu-reference-sidebar.collapsed ul.metismenu > li > a {
+  justify-content: center !important;
+  min-height: 46px !important;
+  padding: 8px !important;
+}
+
+.edu-reference-sidebar .deznav-brand,
+.edu-reference-sidebar .edu-sidebar-brand {
+  min-height: 132px !important;
+  padding: 16px 18px 12px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.admin-sidebar-stable.edu-reference-sidebar .deznav-brand {
+  display: none !important;
+}
+
+.admin-sidebar-stable.edu-reference-sidebar ul.metismenu {
+  padding-top: 10px !important;
+}
+
+.edu-reference-sidebar .brand-logo,
+.edu-reference-sidebar .edu-sidebar-brand a {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  text-decoration: none !important;
+}
+
+.edu-reference-sidebar .brand-logo img,
+.edu-reference-sidebar .edu-sidebar-brand img {
+  width: 205px !important;
+  max-width: calc(100% - 24px) !important;
+  height: auto !important;
+  max-height: 104px !important;
+  object-fit: contain !important;
+  display: block !important;
+}
+
+.edu-reference-sidebar .deznav-scroll {
+  overflow-x: hidden !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(15, 37, 33, .22) transparent !important;
+}
+
+.edu-reference-sidebar .deznav-scroll::-webkit-scrollbar {
+  width: 5px !important;
+}
+
+.edu-reference-sidebar .deznav-scroll::-webkit-scrollbar-thumb {
+  background: rgba(15, 37, 33, .22) !important;
+  border-radius: 999px !important;
+}
+
+.edu-reference-sidebar ul.metismenu {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 3px !important;
+  padding: 0 18px 18px !important;
+  margin: 0 !important;
+  list-style: none !important;
+}
+
+.edu-reference-sidebar ul.metismenu,
+.edu-reference-sidebar ul.metismenu ul {
+  list-style: none !important;
+}
+
+.edu-reference-sidebar ul.metismenu > li {
+  margin: 0 !important;
+  padding: 0 !important;
+  position: relative !important;
+}
+
+.edu-reference-sidebar .sidebar-section,
+.edu-reference-sidebar .menu-title {
+  margin: 10px 0 3px !important;
+  padding: 0 0 0 3px !important;
+  color: #17655d !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  letter-spacing: .02em !important;
+  line-height: 1.2 !important;
+  text-transform: uppercase !important;
+}
+
+.edu-reference-sidebar .sidebar-section::after,
+.edu-reference-sidebar .menu-title::after {
+  content: "" !important;
+  height: 1px !important;
+  flex: 1 1 auto !important;
+  background: rgba(23, 101, 93, .22) !important;
+}
+
+.edu-reference-sidebar ul.metismenu > li > a {
+  min-height: 44px !important;
+  width: 100% !important;
+  padding: 9px 16px !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  color: #11211f !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  text-decoration: none !important;
+  line-height: 1.25 !important;
+  white-space: normal !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.edu-reference-sidebar ul.metismenu > li > a:hover,
+.edu-reference-sidebar ul.metismenu > li > a.active-link,
+.edu-reference-sidebar ul.metismenu > li > a.mm-active,
+.edu-reference-sidebar ul.metismenu > li.mm-active > a {
+  background: #fff !important;
+  color: #0b1715 !important;
+  box-shadow: 0 8px 18px rgba(20, 80, 73, .08) !important;
+}
+
+.edu-reference-sidebar ul.metismenu > li > a i {
+  width: 32px !important;
+  min-width: 32px !important;
+  height: 32px !important;
+  margin: 0 !important;
+  border-radius: 7px !important;
+  background: var(--sidebar-icon-bg, rgba(255, 255, 255, .62)) !important;
+  color: var(--sidebar-icon-color, #0f9f94) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 16px !important;
+  line-height: 1 !important;
+  text-align: center !important;
+  opacity: 1 !important;
+  flex: 0 0 32px !important;
+}
+
+.edu-reference-sidebar ul.metismenu > li > a .nav-text,
+.edu-reference-sidebar ul.metismenu > li > a span:not(.badge) {
+  color: inherit !important;
+  flex: 1 1 auto !important;
+  display: block !important;
+  font-size: 16px !important;
+  font-weight: 400 !important;
+  letter-spacing: 0 !important;
+  line-height: 1.2 !important;
+  overflow-wrap: anywhere !important;
+}
+
+.edu-reference-sidebar ul.metismenu > li > a.has-arrow::after {
+  display: block !important;
+  content: "" !important;
+  width: 8px !important;
+  height: 8px !important;
+  margin-left: auto !important;
+  border: 0 !important;
+  border-right: 1.6px solid currentColor !important;
+  border-bottom: 1.6px solid currentColor !important;
+  transform: rotate(-45deg) !important;
+  transition: transform .18s ease !important;
+  position: static !important;
+}
+
+.edu-reference-sidebar ul.metismenu > li.mm-active > a.has-arrow::after {
+  transform: rotate(45deg) !important;
+}
+
+.edu-reference-sidebar ul.metismenu > li > ul {
+  margin: 4px 0 8px 44px !important;
+  padding: 5px 0 !important;
+  background: rgba(255, 255, 255, .28) !important;
+  border-radius: 7px !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  overflow: hidden !important;
+}
+
+.edu-reference-sidebar ul.metismenu > li > ul > li {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.edu-reference-sidebar ul.metismenu > li > ul > li > a {
+  min-height: 34px !important;
+  padding: 7px 10px !important;
+  border-radius: 6px !important;
+  color: #152522 !important;
+  background: transparent !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 9px !important;
+  font-size: 13px !important;
+  font-weight: 400 !important;
+  line-height: 1.22 !important;
+  text-decoration: none !important;
+  white-space: normal !important;
+}
+
+.edu-reference-sidebar ul.metismenu > li > ul > li > a:hover,
+.edu-reference-sidebar ul.metismenu > li > ul > li > a.active-link,
+.edu-reference-sidebar ul.metismenu > li > ul > li > a.mm-active {
+  background: rgba(255, 255, 255, .68) !important;
+}
+
+.edu-reference-sidebar ul.metismenu > li > ul > li > a i {
+  width: 20px !important;
+  min-width: 20px !important;
+  height: 20px !important;
+  border-radius: 6px !important;
+  background: transparent !important;
+  color: var(--sidebar-icon-color, #17655d) !important;
+  font-size: 12px !important;
+}
+
+.edu-reference-sidebar .copyright {
+  display: none !important;
+}
+
+.menu-toggle .edu-reference-sidebar ul.metismenu {
+  padding-left: 10px !important;
+  padding-right: 10px !important;
+}
+
+.menu-toggle .edu-reference-sidebar .deznav-brand,
+.menu-toggle .edu-reference-sidebar .edu-sidebar-brand {
+  min-height: 88px !important;
+  padding: 12px 8px !important;
+}
+
+.menu-toggle .edu-reference-sidebar .brand-logo img,
+.menu-toggle .edu-reference-sidebar .edu-sidebar-brand img {
+  width: 56px !important;
+  max-height: 56px !important;
+}
+
+.menu-toggle .edu-reference-sidebar ul.metismenu > li > a {
+  justify-content: center !important;
+  min-height: 46px !important;
+  padding: 8px !important;
+}
+
+.menu-toggle .edu-reference-sidebar .sidebar-section,
+.menu-toggle .edu-reference-sidebar .menu-title,
+.menu-toggle .edu-reference-sidebar ul.metismenu > li > a .nav-text,
+.menu-toggle .edu-reference-sidebar ul.metismenu > li > a span:not(.badge),
+.menu-toggle .edu-reference-sidebar ul.metismenu > li > a.has-arrow::after,
+.menu-toggle .edu-reference-sidebar ul.metismenu > li > ul,
+.menu-toggle .edu-reference-sidebar .copyright {
+  display: none !important;
+}
+
+@media (max-width: 767px) {
+  .edu-reference-sidebar ul.metismenu {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+
+  .edu-reference-sidebar ul.metismenu > li > a {
+    min-height: 44px !important;
+    padding: 9px 14px !important;
+  }
+
+  .edu-reference-sidebar ul.metismenu > li > a .nav-text,
+  .edu-reference-sidebar ul.metismenu > li > a span:not(.badge) {
+    font-size: 15px !important;
+  }
+}

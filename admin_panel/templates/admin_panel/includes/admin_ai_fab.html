@@ -4,7 +4,8 @@
     <style>
         .admin-ai-fab {
             position: fixed;
-            left: 26px;
+            left: auto;
+            right: 26px;
             bottom: 28px;
             z-index: 2147483000;
             width: 86px;
@@ -80,7 +81,8 @@
         }
         .admin-ai-fab__tooltip {
             position: absolute;
-            left: 96px;
+            left: auto;
+            right: 96px;
             top: 50%;
             transform: translateY(-50%);
             padding: 8px 10px;
@@ -99,7 +101,7 @@
         .admin-ai-fab:hover .admin-ai-fab__tooltip,
         .admin-ai-fab:focus .admin-ai-fab__tooltip {
             opacity: 1;
-            transform: translateY(-50%) translateX(4px);
+            transform: translateY(-50%) translateX(-4px);
         }
         .admin-ai-fab.is-positioned .admin-ai-fab__tooltip {
             display: none;
@@ -128,7 +130,8 @@
         }
         @media (max-width: 768px) {
             .admin-ai-fab {
-                left: 16px;
+                left: auto;
+                right: 16px;
                 bottom: 82px;
                 width: 70px;
                 height: 70px;
@@ -154,7 +157,7 @@
             const fab = document.querySelector("[data-admin-ai-fab='true']");
             if (!fab) return;
 
-            const storageKey = "edupilot_admin_ai_fab_position";
+            const storageKey = "edupilot_admin_ai_fab_position_v2";
             const dragThreshold = 6;
             let startX = 0;
             let startY = 0;
@@ -192,6 +195,11 @@
                 try {
                     const saved = JSON.parse(localStorage.getItem(storageKey) || "null");
                     if (saved && Number.isFinite(saved.left) && Number.isFinite(saved.top)) {
+                        const sidebarBoundary = Math.min(380, window.innerWidth * 0.3);
+                        if (saved.left < sidebarBoundary) {
+                            localStorage.removeItem(storageKey);
+                            return;
+                        }
                         place(saved.left, saved.top, false);
                     }
                 } catch (error) {

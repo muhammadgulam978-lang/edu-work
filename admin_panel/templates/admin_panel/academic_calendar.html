@@ -3,9 +3,12 @@
 
 {% block title %}Academic Calendar{% endblock %}
 
-{% block content %}
-
+{% block head %}
 <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'admin_panel/css/academics_gateway.css' %}">
+{% endblock %}
+
+{% block content %}
 
 <style>
   .ac-wrap{display:flex; gap:16px; align-items:flex-start;}
@@ -30,23 +33,25 @@
   .ac-mini-btn{border-radius:999px;}
 </style>
 
-<div class="container-fluid">
+<div class="academics-gateway">
+<div class="ag-card">
+  <div class="ag-header">
+    <div>
+      <p class="ag-kicker">Academics</p>
+      <h4 class="ag-title">Academic Calendar</h4>
+      <p class="ag-subtitle">Create events, filter calendar types, and export yearly calendar PDFs.</p>
+    </div>
 
-  <div class="row mb-3">
-    <div class="col-12 d-flex justify-content-between align-items-center">
-      <div>
-        <h4 class="ac-title mb-1">Academic Calendar</h4>
-        <div class="ac-muted">Create events + neeche list + yearly PDF export</div>
-      </div>
-
-      <div class="ac-actions">
-        <input id="searchInput" class="form-control form-control-sm" style="width:220px;" placeholder="Search...">
-        <select id="yearSelect" class="form-control form-control-sm" style="width:140px;"></select>
-        <button id="btnExportPdf" class="btn btn-outline-primary btn-sm ac-mini-btn">Download Year PDF</button>
-        <button id="btnCreateTop" class="btn btn-success btn-sm ac-mini-btn">Create</button>
-      </div>
+    <div class="ag-actions">
+      <input id="searchInput" class="form-control form-control-sm" style="width:220px;" placeholder="Search...">
+      <select id="yearSelect" class="form-control form-control-sm" style="width:140px;"></select>
+      <button id="btnExportPdf" class="ag-btn ag-btn-secondary" type="button"><i class="fa fa-download"></i> Year PDF</button>
+      <button id="btnCreateTop" class="ag-btn ag-btn-primary" type="button"><i class="fa fa-plus"></i> Create</button>
     </div>
   </div>
+
+<div class="ag-body">
+<div class="container-fluid">
 
   <div class="ac-wrap">
 
@@ -200,6 +205,9 @@
 
     </div>
   </div>
+</div>
+</div>
+</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>

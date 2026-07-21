@@ -1,69 +1,82 @@
 {% extends 'admin_panel/bases.html' %}
-{% block content %}
+{% load static %}
 
-<div class="card m-4">
-  <div class="card-header">
-    <h4>Create Job Type</h4>
+{% block head %}
+<link rel="stylesheet" href="{% static 'admin_panel/css/hr_admin.css' %}?v=hr-admin-2">
+{% endblock %}
+
+{% block content %}
+<div class="hr-page">
+  <div class="hr-hero">
+    <div class="hr-title-wrap">
+      <span class="hr-icon blue"><i class="fas fa-briefcase"></i></span>
+      <div>
+        <p class="hr-kicker">Employment Rules</p>
+        <h2>Create Job Type</h2>
+        <p class="hr-subtitle">Create a new job type and configure leave and benefit settings.</p>
+      </div>
+    </div>
   </div>
 
-  <div class="card-body">
-    <form method="post">
-      {% csrf_token %}
+  <div class="hr-panel">
+    <div class="hr-panel-header">
+      <h4>Basic Information</h4>
+    </div>
+    <div class="hr-panel-body">
+      <form method="post">
+        {% csrf_token %}
 
-      <!-- Name -->
-      <div class="mb-3">
-        <label class="form-label">Job Type Name</label>
-        {{ form.name }}
-      </div>
-
-      <!-- Probation -->
-      <div class="mb-3">
-        <label class="form-label">Probation Months</label>
-        {{ form.probation_months }}
-      </div>
-
-      <!-- Is Leave Eligible -->
-      <div class="form-check mb-3">
-        {{ form.is_leave_eligible }}
-        <label class="form-check-label" for="id_is_leave_eligible">
-          Is Leave Eligible
-        </label>
-      </div>
-
-      <!-- Allowed Leave Types -->
-      <div id="leave-types-box" style="display:none;">
-        <hr>
-        <h5>Allowed Leave Types</h5>
-
-        {% for checkbox in form.allowed_leave_types %}
-          <div class="form-check custom-checkbox">
-            {{ checkbox.tag }}
-            <label class="form-check-label">
-              {{ checkbox.choice_label }}
-            </label>
+        <div class="hr-form-grid">
+          <div class="hr-field">
+            <label class="form-label">Job Type Name</label>
+            {{ form.name }}
           </div>
-        {% endfor %}
-      </div>
 
-      <!-- Has Benefits -->
-      <div class="form-check mt-3">
-        {{ form.has_benefits }}
-        <label class="form-check-label">
-          Has Benefits
-        </label>
-      </div>
+          <div class="hr-field">
+            <label class="form-label">Probation Months</label>
+            {{ form.probation_months }}
+          </div>
+        </div>
 
-      <!-- Buttons -->
-      <div class="mt-4">
-        <button type="submit" class="btn btn-primary">Save</button>
-        <a href="{% url 'job_type_list' %}" class="btn btn-secondary">Cancel</a>
-      </div>
+        <h5 class="hr-section-title">Leave Settings</h5>
+        <div class="hr-check-row">
+          {{ form.is_leave_eligible }}
+          <label class="form-check-label" for="id_is_leave_eligible">Is Leave Eligible</label>
+        </div>
 
-    </form>
+        <div id="leave-types-box" style="display:none;">
+          <div class="hr-panel" style="margin-top:14px; box-shadow:none;">
+            <div class="hr-panel-header">
+              <h5>Allowed Leave Types</h5>
+            </div>
+            <div class="hr-panel-body">
+              <div class="hr-check-grid">
+                {% for checkbox in form.allowed_leave_types %}
+                  <div class="form-check custom-checkbox">
+                    {{ checkbox.tag }}
+                    <label class="form-check-label">{{ checkbox.choice_label }}</label>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h5 class="hr-section-title">Benefit Settings</h5>
+        <div class="hr-check-row">
+          {{ form.has_benefits }}
+          <label class="form-check-label">Has Benefits</label>
+        </div>
+
+        <div class="hr-form-actions">
+          <a href="{% url 'job_type_list' %}" class="btn btn-secondary">Cancel</a>
+          <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save</button>
+        </div>
+      </form>
+    </div>
   </div>
 </div>
 
-<!-- ✅ JS -->
 <script>
 const leaveEligibleCheckbox = document.getElementById('id_is_leave_eligible');
 const leaveBox = document.getElementById('leave-types-box');
@@ -81,21 +94,17 @@ leaveEligibleCheckbox.addEventListener('change', toggleLeaveTypes);
 toggleLeaveTypes();
 </script>
 
-<!-- ✅ CSS -->
 <style>
-/* Force native checkbox with tick ✔️ */
 input[type="checkbox"] {
   appearance: checkbox;
   -webkit-appearance: checkbox;
   -moz-appearance: checkbox;
-  accent-color: auto;
+  accent-color: #0f766e;
 }
 
-/* Remove bootstrap fill */
 .form-check-input:checked {
   background-color: transparent !important;
   border-color: #6c757d !important;
 }
 </style>
-
 {% endblock %}

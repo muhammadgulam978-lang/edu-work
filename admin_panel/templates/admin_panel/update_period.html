@@ -3,26 +3,36 @@
 
 {% block title %}Update Period{% endblock %}
 
+{% block head %}
+<link rel="stylesheet" href="{% static 'admin_panel/css/academics_gateway.css' %}">
+{% endblock %}
+
 {% block content %}
-<div class="card" style="margin-left:20px; margin-right:20px; background-color: #ffffff">
-  <div class="card-header">
-    <h4 class="card-title">Update Period</h4>
-    <div class="mt-3">
-      <a href="{% url 'period_list' %}" class="btn btn-secondary btn-sm">Back to List</a>
-    </div>
-  </div>
-
-  <div class="card-body">
-    <form method="post">
-      {% csrf_token %}
-      {{ form.as_p }}
-
-      <div class="text-center mt-3">
-        <button type="submit" class="btn btn-primary" style="width: 150px;">Update</button>
+<div class="academics-gateway">
+  <div class="ag-card">
+    <div class="ag-header">
+      <div>
+        <p class="ag-kicker">Timetable Automation</p>
+        <h4 class="ag-title">Update Period</h4>
+        <p class="ag-subtitle">Edit the selected timetable period slot.</p>
       </div>
-    </form>
-
-    
+      <a href="{% url 'period_list' %}" class="ag-btn ag-btn-secondary"><i class="fa fa-arrow-left"></i> Back to Periods</a>
+    </div>
+    <div class="ag-body">
+      <form method="post">
+        {% csrf_token %}
+        <div class="ag-panel">
+          <h5 class="ag-section-title"><i class="fa fa-clock"></i> Period Details</h5>
+          <div class="ag-grid ag-grid-2">
+            {{ form.as_p }}
+          </div>
+        </div>
+        <div class="ag-form-actions">
+          <button type="submit" class="ag-btn ag-btn-primary"><i class="fa fa-save"></i> Update Period</button>
+          <a href="{% url 'period_list' %}" class="ag-btn ag-btn-secondary">Cancel</a>
+        </div>
+      </form>
+    </div>
   </div>
 </div>
 {% endblock %}

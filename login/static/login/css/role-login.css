@@ -368,9 +368,11 @@ body.role-login-body {
 }
 
 .role-select-brand img {
-    width: 74px;
-    height: 74px;
+    width: min(220px, 70%);
+    height: auto;
+    max-height: 130px;
     object-fit: contain;
+    border-radius: 10px;
 }
 
 .role-select-brand h1 {

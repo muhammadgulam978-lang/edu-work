@@ -1,0 +1,53 @@
+{% extends "admin_panel/bases.html" %}
+{% load static %}
+
+{% block title %}{{ title }} | EduPilot{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{% static 'admin_panel/css/operations_admin.css' %}?v=operations-1">
+{% endblock %}
+
+{% block content %}
+<div class="ops-page">
+    {% if messages %}
+    <div class="ops-messages">
+        {% for message in messages %}<div class="ops-message {{ message.tags }}">{{ message }}</div>{% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="ops-heading">
+        <div class="ops-title">
+            <span class="ops-title-icon"><i class="fas {{ icon }}"></i></span>
+            <div><h2>{{ title }}</h2><p>{{ subtitle }}</p></div>
+        </div>
+        <a href="{% url create_url %}" class="ops-btn ops-btn-primary"><i class="fas fa-plus"></i> Add {{ singular }}</a>
+    </div>
+
+    <section class="ops-panel">
+        <div class="ops-toolbar">
+            <form method="get" class="ops-search">
+                <i class="fas fa-search"></i>
+                <input type="search" name="q" value="{{ query }}" placeholder="Search {{ title|lower }}..." aria-label="Search {{ title }}">
+            </form>
+            <span class="ops-count">{{ rows|length }} record{{ rows|length|pluralize }}</span>
+        </div>
+        <div class="ops-table-wrap">
+            <table class="ops-table">
+                <thead><tr>{% for header in headers %}<th>{{ header }}</th>{% endfor %}<th class="ops-actions-col">Actions</th></tr></thead>
+                <tbody>
+                    {% for row in rows %}
+                    <tr>
+                        {% for cell in row.cells %}<td>{{ cell }}</td>{% endfor %}
+                        <td class="ops-row-actions">
+                            <a href="{% url edit_url row.object.pk %}" class="ops-icon-btn" title="Edit {{ singular }}"><i class="fas fa-pen"></i></a>
+                            <a href="{% url delete_url row.object.pk %}" class="ops-icon-btn danger" title="Delete {{ singular }}"><i class="fas fa-trash-alt"></i></a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="20" class="ops-empty"><i class="fas {{ icon }}"></i><strong>No {{ title }} Found</strong><span>Create the first record to get started.</span></td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+{% endblock %}

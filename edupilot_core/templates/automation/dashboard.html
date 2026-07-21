@@ -1,5 +1,11 @@
 {% extends 'automation/base_automation.html' %}
+{% load static %}
 {% block page_title %}Dashboard{% endblock %}
+{% block extra_head %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'admin_panel/css/ai-graphs.css' %}?v=ai-graphs-1">
+<script src="{% static 'admin_panel/js/ai-graphs.js' %}?v=ai-graphs-1"></script>
+{% endblock %}
 {% block content %}
 <style>
     .automation-dashboard-redesign {
@@ -508,7 +514,31 @@
         <article class="aa-card">
             <h3>Fee Collection Overview</h3>
             <p>Collected and pending fee amount based on live voucher status.</p>
-            <canvas id="feeChart" height="120" style="margin-top:18px;"></canvas>
+            <form class="ai-graph-toolbar" id="automationFeeGraphFilters">
+                <div class="ai-graph-control">
+                    <label for="aa-period">Date Range</label>
+                    <select id="aa-period" name="period">
+                        {% for key,label in period_options %}
+                            <option value="{{ key }}" {% if key == "this_month" %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="ai-graph-control">
+                    <label for="aa-start">Start</label>
+                    <input id="aa-start" type="date" name="start_date">
+                </div>
+                <div class="ai-graph-control">
+                    <label for="aa-end">End</label>
+                    <input id="aa-end" type="date" name="end_date">
+                </div>
+                <div class="ai-graph-actions">
+                    <button class="ai-graph-btn" type="submit">Apply</button>
+                    <button class="ai-graph-btn secondary" type="button" data-ai-graph-reset>Reset</button>
+                </div>
+            </form>
+            <div class="ai-chart-box">
+                <canvas id="feeChart"></canvas>
+            </div>
         </article>
         <article class="aa-card">
             <h3>Fee Collection Summary</h3>
@@ -609,38 +639,56 @@
     </section>
 </div>
 
+{{ fee_chart_labels|json_script:"automation-fee-labels" }}
+{{ fee_chart_collected|json_script:"automation-fee-collected" }}
+{{ fee_chart_pending|json_script:"automation-fee-pending" }}
 <script>
 (function () {
-    var chartEl = document.getElementById('feeChart');
-    if (!chartEl || typeof Chart === 'undefined') return;
+    var graphs = window.EduPilotAIGraphs;
+    var form = document.getElementById('automationFeeGraphFilters');
+    if (!graphs || typeof Chart === 'undefined') return;
 
-    new Chart(chartEl, {
-        type: 'line',
-        data: {
-            labels: {{ fee_chart_labels|safe }},
-            datasets: [{
-                label: 'Amount',
-                data: {{ fee_chart_values|safe }},
-                borderColor: '#88D0C5',
-                backgroundColor: 'rgba(136, 208, 197, 0.18)',
-                pointBackgroundColor: '#8BC740',
-                pointBorderColor: '#ffffff',
-                pointRadius: 5,
-                fill: true,
-                tension: 0.38
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: { display: false }
-            },
-            scales: {
-                x: { grid: { display: false }, ticks: { color: '#6c757d' } },
-                y: { beginAtZero: true, ticks: { color: '#6c757d' }, grid: { color: '#e9ecef' } }
-            }
+    function readJson(id) {
+        var node = document.getElementById(id);
+        if (!node) return [];
+        try { return JSON.parse(node.textContent || '[]'); } catch (error) { return []; }
+    }
+
+    function render(payload) {
+        var fees = payload && payload.fees ? payload.fees : {
+            labels: readJson('automation-fee-labels'),
+            collected: readJson('automation-fee-collected'),
+            pending: readJson('automation-fee-pending')
+        };
+        graphs.lineChart('feeChart', fees.labels || [], [
+            { label: 'Collected', data: fees.collected || [], color: graphs.palette.green },
+            { label: 'Pending', data: fees.pending || [], color: graphs.palette.yellow }
+        ]);
+    }
+
+    function refresh() {
+        var params = form ? graphs.queryFromForm(form).toString() : '';
+        var url = "{% url 'automation-graph-data' %}" + (params ? '?' + params : '');
+        fetch(url, {headers: {'X-Requested-With': 'XMLHttpRequest'}})
+            .then(function (response) { return response.ok ? response.json() : Promise.reject(); })
+            .then(render)
+            .catch(function () {});
+    }
+
+    if (form) {
+        form.addEventListener('submit', function (event) {
+            event.preventDefault();
+            refresh();
+        });
+        var reset = form.querySelector('[data-ai-graph-reset]');
+        if (reset) {
+            reset.addEventListener('click', function () {
+                form.reset();
+                refresh();
+            });
         }
-    });
+    }
+    render();
 })();
 </script>
 {% endblock %}

@@ -3,166 +3,123 @@
 
 {% block title %}{% if subject %}Edit Subject{% else %}Add Subject{% endif %}{% endblock %}
 
+{% block head %}
+<link rel="stylesheet" href="{% static 'admin_panel/css/academics_gateway.css' %}">
+{% endblock %}
+
 {% block content %}
-<div class="card" style="background: #f8f9fa; margin-left: 20px; margin-right: 20px;">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h4 class="card-title">{% if subject %}Edit Subject{% else %}Add Subject{% endif %}</h4>
-        <a href="{% url 'subject_list' %}" class="btn btn-primary me-2">
-            <span class="me-2"><i class="fa fa-arrow-left"></i></span>Back to List
-        </a>
+<div class="academics-gateway">
+  <div class="ag-card">
+    <div class="ag-header">
+      <div>
+        <p class="ag-kicker">Academics</p>
+        <h4 class="ag-title">{% if subject %}Edit Subject{% else %}Add Subject{% endif %}</h4>
+        <p class="ag-subtitle">Keep class subjects organized with stream, format, type, grading, and description.</p>
+      </div>
+      <a href="{% url 'subject_list' %}" class="ag-btn ag-btn-secondary"><i class="fa fa-arrow-left"></i> Back to Subjects</a>
     </div>
 
-    <div class="card-body">
-        <div class="form-validation">
-            <form method="POST" class="needs-validation" novalidate>
-                {% csrf_token %}
+    <div class="ag-body">
+      <form method="POST" class="needs-validation" novalidate>
+        {% csrf_token %}
 
-                <!-- Show Form Errors -->
-                {% if form.errors %}
-                    <div class="alert alert-danger">
-                        <ul class="mb-0">
-                            {% for field in form %}
-                                {% for error in field.errors %}
-                                    <li><strong>{{ field.label }}:</strong> {{ error }}</li>
-                                {% endfor %}
-                            {% endfor %}
-                            {% for error in form.non_field_errors %}
-                                <li>{{ error }}</li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                {% endif %}
+        {% if form.errors %}
+          <div class="alert alert-danger">
+            <ul class="mb-0">
+              {% for field in form %}
+                {% for error in field.errors %}
+                  <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                {% endfor %}
+              {% endfor %}
+              {% for error in form.non_field_errors %}
+                <li>{{ error }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% endif %}
 
-                <div class="row">
-                    <!-- Left Column -->
-                    <div class="col-xl-6">
-
-                        <!-- Academic Year -->
-                        <div class="mb-3 row">
-                            <label class="col-lg-4 col-form-label" for="academic_year">Academic Year</label>
-                            <div class="col-lg-6">
-                                <select class="form-control" id="academic_year" name="academic_year" required>
-                                    <option value="">Select Academic Year</option>
-                                    {% for year in form.academic_year.field.queryset %}
-                                        <option value="{{ year.id }}" {% if form.academic_year.value == year.id %}selected{% endif %}>{{ year.year }}</option>
-                                    {% endfor %}
-                                </select>
-                                <div class="invalid-feedback">Please select academic year.</div>
-                            </div>
-                        </div>
-                        <div class="mb-3 row">
-                            <label class="col-lg-4 col-form-label" for="stream">Stream</label>
-                                <div class="col-lg-6">
-                              <select class="form-control" id="stream" name="stream" required>
-                             <option value="">Select Stream</option>
-                                  {% for stm in form.stream.field.queryset %}
-                              <option value="{{ stm.id }}" {% if form.stream.value == stm.id %}selected{% endif %}>{{ stm.stream_name }}</option>
-                                 {% endfor %}
-                               </select>
-                                  <div class="invalid-feedback">Please select a stream.</div>
-                                </div>
-                            </div>
-                        <!-- Class -->
-                        <div class="mb-3 row">
-                            <label class="col-lg-4 col-form-label" for="class_fk">Class</label>
-                            <div class="col-lg-6">
-                                <select class="form-control" id="class_fk" name="class_fk" required>
-                                    <option value="">Select Class</option>
-                                    {% for cls in form.class_fk.field.queryset %}
-                                        <option value="{{ cls.id }}" {% if form.class_fk.value == cls.id %}selected{% endif %}>{{ cls.class_name }}</option>
-                                    {% endfor %}
-                                </select>
-                                <div class="invalid-feedback">Please select a class.</div>
-                            </div>
-                        </div>
-
-                        <!-- Subject Name -->
-                        <div class="mb-3 row">
-                            <label class="col-lg-4 col-form-label" for="name">Subject Name</label>
-                            <div class="col-lg-6">
-                                <input type="text" class="form-control" id="name" name="name" value="{{ form.name.value|default_if_none:'' }}" required>
-                                <div class="invalid-feedback">Please enter subject name.</div>
-                            </div>
-                        </div>
-
-                        <!-- Subject Format -->
-                        <div class="mb-3 row">
-                            <label class="col-lg-4 col-form-label" for="subject_format">Subject Format</label>
-                            <div class="col-lg-6">
-                                <select class="form-control" id="subject_format" name="subject_format" required>
-                                    <option value="">Select Format</option>
-                                    {% for choice in form.subject_format.field.choices %}
-                                        <option value="{{ choice.0 }}" {% if form.subject_format.value == choice.0 %}selected{% endif %}>{{ choice.1 }}</option>
-                                    {% endfor %}
-                                </select>
-                                <div class="invalid-feedback">Please select subject format.</div>
-                            </div>
-                        </div>
-
-                        <!-- Short Code -->
-                        <div class="mb-3 row">
-                            <label class="col-lg-4 col-form-label" for="short_code">Short Code</label>
-                            <div class="col-lg-6">
-                                <input type="text" class="form-control" id="short_code" name="short_code" value="{{ form.short_code.value|default_if_none:'' }}">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Right Column -->
-                    <div class="col-xl-6">
-
-                        <!-- Subject Type -->
-                        <div class="mb-3 row">
-                            <label class="col-lg-4 col-form-label" for="subject_type">Subject Type</label>
-                            <div class="col-lg-6">
-                                <select class="form-control" id="subject_type" name="subject_type" required>
-                                    <option value="">Select Subject Type</option>
-                                    {% for choice in form.subject_type.field.choices %}
-                                        <option value="{{ choice.0 }}" {% if form.subject_type.value == choice.0 %}selected{% endif %}>{{ choice.1 }}</option>
-                                    {% endfor %}
-                                </select>
-                                <div class="invalid-feedback">Please select subject type.</div>
-                            </div>
-                        </div>
-
-                        <!-- Grading Type -->
-                        <div class="mb-3 row">
-                            <label class="col-lg-4 col-form-label" for="grading_type">Grading Type</label>
-                            <div class="col-lg-6">
-                                <select class="form-control" id="grading_type" name="grading_type" required>
-                                    <option value="">Select Grading</option>
-                                    {% for choice in form.grading_type.field.choices %}
-                                        <option value="{{ choice.0 }}" {% if form.grading_type.value == choice.0 %}selected{% endif %}>{{ choice.1 }}</option>
-                                    {% endfor %}
-                                </select>
-                                <div class="invalid-feedback">Please select grading type.</div>
-                            </div>
-                        </div>
-
-                        <!-- Sort Order -->
-                        <div class="mb-3 row">
-                            <label class="col-lg-4 col-form-label" for="sort_order">Sort Order</label>
-                            <div class="col-lg-6">
-                                <input type="number" class="form-control" id="sort_order" name="sort_order" value="{{ form.sort_order.value|default_if_none:'' }}">
-                            </div>
-                        </div>
-
-                        <!-- Description -->
-                        <div class="mb-3 row">
-                            <label class="col-lg-4 col-form-label" for="course_description">Description</label>
-                            <div class="col-lg-6">
-                                <textarea class="form-control" id="course_description" name="course_description" rows="4">{{ form.course_description.value|default_if_none:'' }}</textarea>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Submit Button -->
-                    <div class="col-lg-12 text-center mt-4">
-                        <button type="submit" class="btn btn-primary">{% if subject %}Update{% else %}Save{% endif %}</button>
-                    </div>
-                </div>
-            </form>
+        <div class="ag-panel">
+          <h5 class="ag-section-title"><i class="fa fa-book-open"></i> Subject Details</h5>
+          <div class="ag-grid">
+            <div class="ag-field">
+              <label for="academic_year">Academic Year</label>
+              <select class="form-control" id="academic_year" name="academic_year" required>
+                <option value="">Select Academic Year</option>
+                {% for year in form.academic_year.field.queryset %}
+                  <option value="{{ year.id }}" {% if form.academic_year.value|stringformat:"s" == year.id|stringformat:"s" %}selected{% endif %}>{{ year.year }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="ag-field">
+              <label for="stream">Stream</label>
+              <select class="form-control" id="stream" name="stream" required>
+                <option value="">Select Stream</option>
+                {% for stm in form.stream.field.queryset %}
+                  <option value="{{ stm.id }}" {% if form.stream.value|stringformat:"s" == stm.id|stringformat:"s" %}selected{% endif %}>{{ stm.stream_name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="ag-field">
+              <label for="class_fk">Class</label>
+              <select class="form-control" id="class_fk" name="class_fk" required>
+                <option value="">Select Class</option>
+                {% for cls in form.class_fk.field.queryset %}
+                  <option value="{{ cls.id }}" {% if form.class_fk.value|stringformat:"s" == cls.id|stringformat:"s" %}selected{% endif %}>{{ cls.class_name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="ag-field">
+              <label for="name">Subject Name</label>
+              <input type="text" class="form-control" id="name" name="name" value="{{ form.name.value|default_if_none:'' }}" required>
+            </div>
+            <div class="ag-field">
+              <label for="subject_format">Subject Format</label>
+              <select class="form-control" id="subject_format" name="subject_format" required>
+                <option value="">Select Format</option>
+                {% for choice in form.subject_format.field.choices %}
+                  <option value="{{ choice.0 }}" {% if form.subject_format.value|stringformat:"s" == choice.0|stringformat:"s" %}selected{% endif %}>{{ choice.1 }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="ag-field">
+              <label for="short_code">Short Code</label>
+              <input type="text" class="form-control" id="short_code" name="short_code" value="{{ form.short_code.value|default_if_none:'' }}">
+            </div>
+            <div class="ag-field">
+              <label for="subject_type">Subject Type</label>
+              <select class="form-control" id="subject_type" name="subject_type" required>
+                <option value="">Select Subject Type</option>
+                {% for choice in form.subject_type.field.choices %}
+                  <option value="{{ choice.0 }}" {% if form.subject_type.value|stringformat:"s" == choice.0|stringformat:"s" %}selected{% endif %}>{{ choice.1 }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="ag-field">
+              <label for="grading_type">Grading Type</label>
+              <select class="form-control" id="grading_type" name="grading_type" required>
+                <option value="">Select Grading</option>
+                {% for choice in form.grading_type.field.choices %}
+                  <option value="{{ choice.0 }}" {% if form.grading_type.value|stringformat:"s" == choice.0|stringformat:"s" %}selected{% endif %}>{{ choice.1 }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="ag-field">
+              <label for="sort_order">Sort Order</label>
+              <input type="number" class="form-control" id="sort_order" name="sort_order" value="{{ form.sort_order.value|default_if_none:'' }}">
+            </div>
+            <div class="ag-field ag-field-full">
+              <label for="course_description">Description</label>
+              <textarea class="form-control" id="course_description" name="course_description" rows="4">{{ form.course_description.value|default_if_none:'' }}</textarea>
+            </div>
+          </div>
         </div>
+
+        <div class="ag-form-actions">
+          <button type="submit" class="ag-btn ag-btn-primary"><i class="fa fa-save"></i> {% if subject %}Update{% else %}Save{% endif %} Subject</button>
+          <a href="{% url 'subject_list' %}" class="ag-btn ag-btn-secondary">Cancel</a>
+        </div>
+      </form>
     </div>
+  </div>
 </div>
 {% endblock %}

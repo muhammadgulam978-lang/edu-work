@@ -1111,6 +1111,336 @@ def build_dashboard_summary_data():
     }
 
 
+def _reference_date_range(period="last_7_days", start_date=None, end_date=None):
+    from datetime import datetime, timedelta
+    from django.utils import timezone
+
+    today = timezone.localdate()
+    labels = {
+        "today": "Today",
+        "week": "This Week",
+        "this_month": "This Month",
+        "last_7_days": "Last 7 Days",
+        "custom": "Custom Range",
+    }
+    if period == "today":
+        start = end = today
+    elif period == "week":
+        start, end = today - timedelta(days=today.weekday()), today
+    elif period == "this_month":
+        start, end = today.replace(day=1), today
+    elif period == "custom":
+        try:
+            start = datetime.strptime(str(start_date), "%Y-%m-%d").date()
+            end = datetime.strptime(str(end_date), "%Y-%m-%d").date()
+        except (TypeError, ValueError):
+            start, end = today - timedelta(days=6), today
+            period = "last_7_days"
+        if start > end:
+            start, end = end, start
+        if (end - start).days > 366:
+            start = end - timedelta(days=366)
+    else:
+        start, end = today - timedelta(days=6), today
+        period = "last_7_days"
+
+    duration = (end - start).days + 1
+    previous_end = start - timedelta(days=1)
+    previous_start = previous_end - timedelta(days=duration - 1)
+    return start, end, previous_start, previous_end, labels.get(period, "Last 7 Days"), period
+
+
+def _reference_delta(current, previous):
+    current = float(current or 0)
+    previous = float(previous or 0)
+    if previous == 0:
+        return 100.0 if current > 0 else 0.0
+    return round(((current - previous) / previous) * 100, 1)
+
+
+def _reference_money(value):
+    value = float(value or 0)
+    if abs(value) >= 1000000:
+        return f"PKR {value / 1000000:.1f}M"
+    if abs(value) >= 1000:
+        return f"PKR {value / 1000:.1f}K"
+    return f"PKR {value:,.0f}"
+
+
+def _reference_buckets(start, end):
+    from datetime import timedelta
+
+    if (end - start).days <= 31:
+        buckets = []
+        current = start
+        while current <= end:
+            buckets.append({"key": current.isoformat(), "label": current.strftime("%a" if (end - start).days <= 7 else "%b %d"), "start": current, "end": current})
+            current += timedelta(days=1)
+        return buckets, "day"
+
+    buckets = []
+    current = start.replace(day=1)
+    while current <= end:
+        next_month = current.replace(year=current.year + 1, month=1, day=1) if current.month == 12 else current.replace(month=current.month + 1, day=1)
+        bucket_start = max(current, start)
+        bucket_end = min(next_month - timedelta(days=1), end)
+        buckets.append({"key": current.strftime("%Y-%m"), "label": current.strftime("%b %Y"), "start": bucket_start, "end": bucket_end})
+        current = next_month
+    return buckets, "month"
+
+
+def _reference_bucket_key(value, mode):
+    if hasattr(value, "date") and not hasattr(value, "day"):
+        value = value.date()
+    return value.strftime("%Y-%m") if mode == "month" else value.isoformat()
+
+
+def build_reference_dashboard_data(period="last_7_days", start_date=None, end_date=None):
+    from collections import defaultdict
+    from datetime import timedelta
+    from django.db.models import Count, Q, Sum
+    from django.db.models.functions import TruncDate
+    from django.utils import timezone
+    from student_profile.models import Student as PortalStudent
+    from teacher_dashboard.models import Assignment, Attendance, Teacher as PortalTeacher
+    from exam_system.models import ExamSchedule, GeneratedPaper
+    from edupilot_core.models import (
+        AutomationJobDetail as CoreAutomationJobDetail,
+        FeeVoucher as CoreFeeVoucher,
+        NotificationQueue as CoreNotificationQueue,
+        StudentBalance as CoreStudentBalance,
+        StudentLedger as CoreStudentLedger,
+        Transaction as CoreTransaction,
+    )
+    from .models import (
+        Admission, AssignedPeriod, Employee, InventoryItem, LeaveApplication,
+        PurchaseRequest, RouteVehicleAssignment, TeacherAbsence, TransportTrip,
+        Vehicle, VehicleMaintenance, Vendor,
+    )
+
+    start, end, previous_start, previous_end, range_label, normalized_period = _reference_date_range(period, start_date, end_date)
+    today = timezone.localdate()
+    buckets, bucket_mode = _reference_buckets(start, end)
+    bucket_keys = [bucket["key"] for bucket in buckets]
+    chart_labels = [bucket["label"] for bucket in buckets]
+
+    def sum_value(queryset, field):
+        return queryset.aggregate(total=Sum(field))["total"] or 0
+
+    def values_for_buckets(rows, date_key, value_key):
+        values = defaultdict(float)
+        for row in rows:
+            value_date = row[date_key]
+            if value_date is not None:
+                values[_reference_bucket_key(value_date, bucket_mode)] += float(row[value_key] or 0)
+        return [round(values[key], 2) for key in bucket_keys]
+
+    total_students = PortalStudent.objects.count()
+    active_teachers = PortalTeacher.objects.filter(status="active").count()
+    teacher_hires = PortalTeacher.objects.filter(joining_date__range=(start, end)).count()
+    previous_teacher_hires = PortalTeacher.objects.filter(joining_date__range=(previous_start, previous_end)).count()
+
+    today_attendance = Attendance.objects.filter(date=today)
+    marked_today = today_attendance.count()
+    present_today = today_attendance.filter(status="present").count()
+    absent_today = today_attendance.filter(status="absent").count()
+    leave_today = today_attendance.filter(status="leave").count()
+    attendance_rate = round((present_today / marked_today) * 100, 1) if marked_today else 0
+    previous_day = today - timedelta(days=1)
+    previous_marked = Attendance.objects.filter(date=previous_day).count()
+    previous_present = Attendance.objects.filter(date=previous_day, status="present").count()
+    previous_attendance_rate = round((previous_present / previous_marked) * 100, 1) if previous_marked else 0
+
+    billed = sum_value(CoreFeeVoucher.objects.filter(issue_date__range=(start, end)), "net_amount")
+    previous_billed = sum_value(CoreFeeVoucher.objects.filter(issue_date__range=(previous_start, previous_end)), "net_amount")
+    received = sum_value(CoreStudentLedger.objects.filter(date__range=(start, end)), "credit")
+    previous_received = sum_value(CoreStudentLedger.objects.filter(date__range=(previous_start, previous_end)), "credit")
+    fee_rate = round((float(received) / float(billed)) * 100, 1) if billed else 0
+    previous_fee_rate = round((float(previous_received) / float(previous_billed)) * 100, 1) if previous_billed else 0
+
+    pending_admissions = Admission.objects.filter(admission_status="pending").count()
+    pending_leaves = LeaveApplication.objects.filter(status="pending").count()
+    pending_papers = GeneratedPaper.objects.filter(status="REVIEW").count()
+    pending_purchases = PurchaseRequest.objects.filter(status="pending").count()
+    pending_approvals = pending_admissions + pending_leaves + pending_papers + pending_purchases
+    active_vehicles = Vehicle.objects.filter(status="active").count()
+    vehicle_additions = Vehicle.objects.filter(created_at__date__range=(start, end)).count()
+    previous_vehicle_additions = Vehicle.objects.filter(created_at__date__range=(previous_start, previous_end)).count()
+
+    kpis = [
+        {"key": "students", "label": "Total Students", "value": total_students, "display": f"{total_students:,}", "delta": None, "trend_label": "current enrolment", "icon": "fa-user-graduate", "tone": "teal", "url": _safe_reverse("admission_list")},
+        {"key": "teachers", "label": "Teaching Staff", "value": active_teachers, "display": f"{active_teachers:,}", "delta": _reference_delta(teacher_hires, previous_teacher_hires), "trend_label": "new hires vs prior period", "icon": "fa-chalkboard-teacher", "tone": "blue", "url": _safe_reverse("teacher_list")},
+        {"key": "attendance", "label": "Attendance Today", "value": attendance_rate, "display": f"{attendance_rate:.1f}%", "delta": round(attendance_rate - previous_attendance_rate, 1), "trend_label": "points vs yesterday", "icon": "fa-user-check", "tone": "green", "url": _safe_reverse("ai_analytics_dashboard")},
+        {"key": "fees", "label": "Fee Collected", "value": fee_rate, "display": f"{fee_rate:.1f}%", "delta": round(fee_rate - previous_fee_rate, 1), "trend_label": "points vs prior period", "icon": "fa-wallet", "tone": "amber", "url": _safe_reverse("fee-automation")},
+        {"key": "approvals", "label": "Pending Approvals", "value": pending_approvals, "display": f"{pending_approvals:,}", "delta": None, "trend_label": "requires action", "icon": "fa-user-clock", "tone": "rose", "url": _safe_reverse("leave_list")},
+        {"key": "vehicles", "label": "Active Vehicles", "value": active_vehicles, "display": f"{active_vehicles:,}", "delta": _reference_delta(vehicle_additions, previous_vehicle_additions), "trend_label": "new vehicles vs prior period", "icon": "fa-bus", "tone": "purple", "url": _safe_reverse("operation_vehicle_list")},
+    ]
+
+    attendance_rows = Attendance.objects.filter(date__range=(start, end)).values("date", "status").annotate(total=Count("id"))
+    attendance_map = defaultdict(lambda: {"present": 0, "absent": 0, "leave": 0})
+    for row in attendance_rows:
+        attendance_map[_reference_bucket_key(row["date"], bucket_mode)][row["status"]] += row["total"]
+    attendance_percentages = []
+    for key in bucket_keys:
+        values = attendance_map[key]
+        total = values["present"] + values["absent"] + values["leave"]
+        attendance_percentages.append(round((values["present"] / total) * 100, 1) if total else 0)
+
+    weekday = today.strftime("%A")
+    classes_today = AssignedPeriod.objects.filter(day__iexact=weekday).values("class_fk_id", "section_id").distinct().count()
+    exams_scheduled = ExamSchedule.objects.filter(exam_date__range=(start, end)).count()
+    assignments_due = Assignment.objects.filter(due_date__range=(start, end)).count()
+    range_attendance_total = sum(sum(values.values()) for values in attendance_map.values())
+    range_present_total = sum(values["present"] for values in attendance_map.values())
+    range_attendance_rate = round((range_present_total / range_attendance_total) * 100, 1) if range_attendance_total else 0
+
+    active_employees = Employee.objects.filter(is_active=True)
+    active_employee_count = active_employees.count()
+    unlinked_teachers = PortalTeacher.objects.filter(status="active", employee__isnull=True).count()
+    workforce_total = active_employee_count + unlinked_teachers
+    leave_employee_ids = set(LeaveApplication.objects.filter(status="approved", start_date__lte=today, end_date__gte=today).values_list("employee_id", flat=True))
+    absence_rows = TeacherAbsence.objects.filter(absence_date=today).select_related("teacher__employee")
+    absent_employee_ids = {row.teacher.employee_id for row in absence_rows if row.teacher.employee_id}
+    absent_unlinked = sum(1 for row in absence_rows if not row.teacher.employee_id)
+    unavailable_employee_ids = leave_employee_ids | absent_employee_ids
+    workforce_leave = len(leave_employee_ids)
+    workforce_absent = max(len(unavailable_employee_ids) - workforce_leave, 0) + absent_unlinked
+    workforce_available = max(workforce_total - workforce_leave - workforce_absent, 0)
+
+    outstanding = sum_value(CoreStudentBalance.objects.all(), "outstanding_amount")
+    expenses = sum_value(CoreTransaction.objects.filter(type__iexact="EXPENSE", date__range=(start, end)), "amount")
+    pending_vouchers = CoreFeeVoucher.objects.exclude(status="PAID").count()
+    income_rows = CoreStudentLedger.objects.filter(date__range=(start, end)).values("date").annotate(total=Sum("credit"))
+    expense_rows = CoreTransaction.objects.filter(type__iexact="EXPENSE", date__range=(start, end)).values("date").annotate(total=Sum("amount"))
+    income_series = values_for_buckets(income_rows, "date", "total")
+    expense_series = values_for_buckets(expense_rows, "date", "total")
+
+    total_requests = PurchaseRequest.objects.count()
+    active_vendors = Vendor.objects.filter(status="active").count()
+    inventory_items = list(InventoryItem.objects.filter(status="active").only("quantity", "reorder_level"))
+    low_stock = sum(1 for item in inventory_items if item.quantity <= item.reorder_level)
+    procurement_value = sum_value(PurchaseRequest.objects.filter(created_at__date__range=(start, end), status__in=["approved", "ordered", "received"]), "estimated_cost")
+    received_requests = PurchaseRequest.objects.filter(created_at__date__range=(start, end), status="received").count()
+    overdue_requests = PurchaseRequest.objects.filter(needed_by__lt=today).exclude(status__in=["received", "rejected"]).count()
+    procurement_rows = PurchaseRequest.objects.filter(created_at__date__range=(start, end), status__in=["approved", "ordered", "received"]).annotate(day=TruncDate("created_at")).values("day").annotate(total=Sum("estimated_cost"))
+    procurement_series = values_for_buckets(procurement_rows, "day", "total")
+
+    active_assignments = RouteVehicleAssignment.objects.filter(is_active=True).count()
+    fleet_capacity = sum_value(Vehicle.objects.filter(status="active"), "capacity")
+    under_maintenance = Vehicle.objects.filter(status="maintenance").count()
+    trips_in_range = TransportTrip.objects.filter(service_date__range=(start, end))
+    students_transported = sum_value(trips_in_range, "students_transported")
+    on_time_trips = trips_in_range.filter(status__in=["on_time", "completed"]).count()
+    delayed_trips = trips_in_range.filter(status="delayed").count()
+    total_performance_trips = on_time_trips + delayed_trips
+    on_time_rate = round((on_time_trips / total_performance_trips) * 100, 1) if total_performance_trips else 0
+    route_rows = list(
+        trips_in_range.values("route__route_name")
+        .annotate(total=Count("id"), on_time=Count("id", filter=Q(status__in=["on_time", "completed"])), delayed=Count("id", filter=Q(status="delayed")))
+        .order_by("route__route_name")[:6]
+    )
+    route_performance = [{
+        "name": row["route__route_name"] or "Route",
+        "rate": round((row["on_time"] / row["total"]) * 100, 1) if row["total"] else 0,
+        "status": "Delayed" if row["delayed"] else "On Time",
+    } for row in route_rows]
+
+    expiring_registrations = Vehicle.objects.filter(registration_expiry__range=(today, today + timedelta(days=30))).count()
+    maintenance_due = VehicleMaintenance.objects.filter(status="scheduled", service_date__lte=today + timedelta(days=7)).count()
+    unpaid_fees = CoreFeeVoucher.objects.exclude(status="PAID").count()
+    failed_automation = CoreAutomationJobDetail.objects.filter(status="FAILED").count()
+    failed_notifications = CoreNotificationQueue.objects.filter(status="FAILED").count()
+
+    alerts = []
+    def add_alert(key, tone, icon, title, detail, action, url, count):
+        if count:
+            alerts.append({"key": key, "tone": tone, "icon": icon, "title": title, "detail": detail, "action": action, "url": url, "count": count})
+
+    add_alert("approvals", "purple", "fa-clipboard-check", f"{pending_approvals} approvals require review", "Admissions, leaves, exams and purchases are awaiting action.", "Review Approvals", _safe_reverse("leave_list"), pending_approvals)
+    add_alert("stock", "amber", "fa-box-open", f"{low_stock} inventory items are low", "Current quantity has reached the configured reorder level.", "View Low Stock", _safe_reverse("operation_inventory_item_list"), low_stock)
+    add_alert("procurement", "green", "fa-shopping-cart", f"{overdue_requests} purchase requests are overdue", "Required date has passed and the request is not received.", "Review Requests", _safe_reverse("operation_purchase_request_list"), overdue_requests)
+    add_alert("trips", "red", "fa-clock", f"{delayed_trips} transport trips were delayed", f"Recorded within {range_label.lower()}.", "View Trips", _safe_reverse("operation_transport_trip_list"), delayed_trips)
+    add_alert("vehicles", "blue", "fa-id-card", f"{expiring_registrations} registrations expire soon", "Vehicle registration expiry is within 30 days.", "View Vehicles", _safe_reverse("operation_vehicle_list"), expiring_registrations)
+    add_alert("maintenance", "blue", "fa-tools", f"{maintenance_due} maintenance records are due", "Scheduled service is due within seven days.", "View Maintenance", _safe_reverse("operation_vehicle_maintenance_list"), maintenance_due)
+    add_alert("fees", "amber", "fa-file-invoice-dollar", f"{unpaid_fees} fee vouchers are pending", "Includes unpaid, partial and overdue vouchers.", "View Vouchers", _safe_reverse("voucher-management"), unpaid_fees)
+    add_alert("attendance", "red", "fa-user-check", "Attendance is below 85% today", f"Current marked attendance is {attendance_rate:.1f}%.", "View Attendance", _safe_reverse("ai_analytics_dashboard"), 1 if marked_today and attendance_rate < 85 else 0)
+    add_alert("automation", "red", "fa-exclamation-triangle", f"{failed_automation + failed_notifications} system records failed", "Automation jobs or notifications need review.", "Open Logs", _safe_reverse("automation-logs"), failed_automation + failed_notifications)
+    if not alerts:
+        alerts.append({"key": "clear", "tone": "green", "icon": "fa-check-circle", "title": "All systems are clear", "detail": "No actionable operational alerts right now.", "action": "View Dashboard", "url": _safe_reverse("admin_panel_dashboard"), "count": 0})
+
+    return {
+        "meta": {
+            "generated_at": timezone.localtime().strftime("%d %b %Y, %I:%M %p"),
+            "period": normalized_period,
+            "range_label": range_label,
+            "start_date": start.isoformat(),
+            "end_date": end.isoformat(),
+        },
+        "kpis": kpis,
+        "academics": {
+            "metrics": [
+                {"label": "Attendance", "value": f"{range_attendance_rate:.1f}%"},
+                {"label": "Classes Today", "value": classes_today},
+                {"label": "Exams Scheduled", "value": exams_scheduled},
+                {"label": "Assignments Due", "value": assignments_due},
+            ],
+            "chart": {"labels": chart_labels, "attendance": attendance_percentages},
+            "primary_url": _safe_reverse("class_list"), "report_url": _safe_reverse("ai_analytics_reports"),
+        },
+        "hr": {
+            "metrics": [
+                {"label": "Total Workforce", "value": workforce_total},
+                {"label": "Available Today", "value": workforce_available},
+                {"label": "On Leave", "value": workforce_leave},
+                {"label": "Pending Requests", "value": pending_leaves},
+            ],
+            "chart": {"labels": ["Available", "On Leave", "Absent"], "values": [workforce_available, workforce_leave, workforce_absent]},
+            "primary_url": _safe_reverse("employee_list"), "report_url": _safe_reverse("ai_analytics_reports"),
+        },
+        "finance": {
+            "metrics": [
+                {"label": "Fee Received", "value": _reference_money(received)},
+                {"label": "Outstanding", "value": _reference_money(outstanding)},
+                {"label": "Expenses", "value": _reference_money(expenses)},
+                {"label": "Pending Vouchers", "value": pending_vouchers},
+            ],
+            "chart": {"labels": chart_labels, "income": income_series, "expense": expense_series},
+            "primary_url": _safe_reverse("automation-dashboard"), "report_url": _safe_reverse("ai_analytics_reports"),
+        },
+        "procurement": {
+            "metrics": [
+                {"label": "Purchase Requests", "value": total_requests},
+                {"label": "Pending Approvals", "value": pending_purchases},
+                {"label": "Active Vendors", "value": active_vendors},
+                {"label": "Low Stock Items", "value": low_stock},
+            ],
+            "chart": {"labels": chart_labels, "spend": procurement_series},
+            "summary": {"value": _reference_money(procurement_value), "received": received_requests, "overdue": overdue_requests},
+            "primary_url": _safe_reverse("operation_procurement_dashboard"), "report_url": _safe_reverse("operation_purchase_request_list"),
+        },
+        "fleet": {
+            "metrics": [
+                {"label": "Active Vehicles", "value": active_vehicles},
+                {"label": "Routes Operating", "value": active_assignments},
+                {"label": "Students Transported", "value": int(students_transported)},
+                {"label": "Under Maintenance", "value": under_maintenance},
+            ],
+            "summary": {"on_time": on_time_trips, "delayed": delayed_trips, "on_time_rate": on_time_rate, "capacity": int(fleet_capacity)},
+            "routes": route_performance,
+            "primary_url": _safe_reverse("operation_transportation_dashboard"), "report_url": _safe_reverse("operation_transport_trip_list"),
+        },
+        "alerts": alerts[:6],
+        "quick_actions": [
+            {"label": "Register Student", "icon": "fa-user-plus", "url": _safe_reverse("registration")},
+            {"label": "Add Teacher", "icon": "fa-chalkboard-teacher", "url": _safe_reverse("teacher_add")},
+            {"label": "Upload Students", "icon": "fa-file-upload", "url": _safe_reverse("bulk_upload_students")},
+            {"label": "Upload Teachers", "icon": "fa-file-upload", "url": _safe_reverse("bulk_upload_teachers")},
+            {"label": "Automation", "icon": "fa-cogs", "url": _safe_reverse("automation-dashboard")},
+            {"label": "Reports", "icon": "fa-chart-bar", "url": _safe_reverse("ai_analytics_reports")},
+        ],
+    }
+
+
 def build_admin_dashboard_context():
     dashboard_summary = build_dashboard_summary_data()
     return {
@@ -1120,35 +1450,60 @@ def build_admin_dashboard_context():
         "recent_activity_items": dashboard_summary["recent_activity"],
         "quick_action_cards": dashboard_summary["quick_actions"],
         "automation_overview_cards": build_automation_overview_data(),
+        "reference_dashboard_data": build_reference_dashboard_data(),
     }
 
 
-def build_ai_analytics_data():
+def build_ai_analytics_data(filters=None):
     from django.utils import timezone
     from django.db.models import Count, Sum
     from datetime import timedelta
+    from admin_ai.services import PERIOD_LABELS, resolve_date_range
     from student_profile.models import Student as PortalStudent
     from teacher_dashboard.models import Attendance, Assignment, LectureNote, Quiz, Teacher as PortalTeacher
+    from edupilot_core.models import AutomationJob, FeeVoucher, NotificationQueue, SalaryAutomationJob
     from .models import (
-        Admission, AssignedPeriod, AutomationJob, Class, FeeVoucher, LeaveApplication,
-        NotificationQueue, SalaryAutomationJob, Subject, TeacherFixture,
-        TeacherFixtureNotificationLog,
+        Admission, AssignedPeriod, Class, LeaveApplication, Section, Subject,
+        TeacherFixture, TeacherFixtureNotificationLog,
     )
 
+    filters = filters or {"period": "this_month"}
     today = timezone.localdate()
     month_start = today.replace(day=1)
+    selected_period = filters.get("period") or "this_month"
+    class_filter = filters.get("class_id")
+    section_filter = filters.get("section_id")
+    chart_start, chart_end, period_label = resolve_date_range(
+        selected_period,
+        filters.get("start_date"),
+        filters.get("end_date"),
+    )
+
+    def scoped_attendance_qs(qs):
+        if class_filter:
+            qs = qs.filter(class_fk_id=class_filter)
+        if section_filter:
+            qs = qs.filter(section_id=section_filter)
+        return qs
+
+    def scoped_admission_qs(qs):
+        if class_filter:
+            qs = qs.filter(class_fk_id=class_filter)
+        if section_filter:
+            qs = qs.filter(section_id=section_filter)
+        return qs
 
     total_students = _safe_value(lambda: PortalStudent.objects.count())
     total_teachers = _safe_value(lambda: PortalTeacher.objects.count())
     total_classes = _safe_value(lambda: Class.objects.count())
     total_subjects = _safe_value(lambda: Subject.objects.count())
 
-    attendance_today = _safe_value(lambda: Attendance.objects.filter(date=today).count())
-    absent_today = _safe_value(lambda: Attendance.objects.filter(date=today, status="absent").count())
-    present_today = _safe_value(lambda: Attendance.objects.filter(date=today, status="present").count())
+    attendance_today = _safe_value(lambda: scoped_attendance_qs(Attendance.objects.filter(date=today)).count())
+    absent_today = _safe_value(lambda: scoped_attendance_qs(Attendance.objects.filter(date=today, status="absent")).count())
+    present_today = _safe_value(lambda: scoped_attendance_qs(Attendance.objects.filter(date=today, status="present")).count())
     attendance_rate = round((present_today / attendance_today) * 100, 1) if attendance_today else 0
 
-    admissions_month = _safe_value(lambda: Admission.objects.filter(admission_date__gte=month_start).count())
+    admissions_month = _safe_value(lambda: scoped_admission_qs(Admission.objects.filter(admission_date__gte=month_start)).count())
     pending_admissions = _safe_value(lambda: Admission.objects.filter(admission_status="pending").count())
     approved_admissions = _safe_value(lambda: Admission.objects.filter(admission_status="approved").count())
 
@@ -1203,6 +1558,14 @@ def build_ai_analytics_data():
     risk_score += min(failed_notifications * 5, 10)
     risk_score = min(risk_score, 100)
 
+    risk_breakdown = [
+        {"key": "attendance", "label": "Absent today", "value": absent_today, "points": min(absent_today * 6, 30), "max_points": 30, "icon": "fas fa-user-times", "url": "#attendance-intelligence"},
+        {"key": "admissions", "label": "Pending admissions", "value": pending_admissions, "points": min(pending_admissions * 4, 20), "max_points": 20, "icon": "fas fa-user-clock", "url": _safe_reverse("admission_list")},
+        {"key": "fees", "label": "Unpaid vouchers", "value": unpaid_vouchers, "points": min(unpaid_vouchers * 3, 20), "max_points": 20, "icon": "fas fa-file-invoice-dollar", "url": _safe_reverse("voucher-management")},
+        {"key": "fixtures", "label": "Uncovered fixtures", "value": uncovered_fixtures, "points": min(uncovered_fixtures * 8, 20), "max_points": 20, "icon": "fas fa-calendar-times", "url": _safe_reverse("timetable_automation")},
+        {"key": "notifications", "label": "Failed notifications", "value": failed_notifications, "points": min(failed_notifications * 5, 10), "max_points": 10, "icon": "fas fa-bell-slash", "url": _safe_reverse("notification-queue")},
+    ]
+
     def status_for(value, warning=1):
         if value >= warning:
             return "Needs Review"
@@ -1226,15 +1589,19 @@ def build_ai_analytics_data():
 
     alerts = []
     if absent_today:
-        alerts.append({"title": "Attendance attention", "detail": f"{absent_today} absence record(s) found today.", "priority": "High", "url": "#"})
+        alerts.append({"title": "Attendance attention", "detail": f"{absent_today} absence record(s) found today.", "priority": "High", "tone": "danger", "icon": "fas fa-user-times", "url": "#attendance-intelligence", "action": "Review attendance"})
     if pending_admissions:
-        alerts.append({"title": "Admissions pending", "detail": f"{pending_admissions} admission request(s) need review.", "priority": "Medium", "url": _safe_reverse("admission_list")})
+        alerts.append({"title": "Admissions pending", "detail": f"{pending_admissions} admission request(s) need review.", "priority": "Medium", "tone": "purple", "icon": "fas fa-user-clock", "url": _safe_reverse("admission_list"), "action": "Review admissions"})
     if uncovered_fixtures:
-        alerts.append({"title": "Uncovered fixture risk", "detail": f"{uncovered_fixtures} fixture(s) need substitute review.", "priority": "Critical", "url": _safe_reverse("timetable_automation")})
+        alerts.append({"title": "Uncovered fixture risk", "detail": f"{uncovered_fixtures} fixture(s) need substitute review.", "priority": "Critical", "tone": "warning", "icon": "fas fa-calendar-times", "url": _safe_reverse("timetable_automation"), "action": "Open fixtures"})
     if failed_notifications:
-        alerts.append({"title": "Notification delivery issue", "detail": f"{failed_notifications} failed delivery log(s).", "priority": "High", "url": _safe_reverse("notification-queue")})
+        alerts.append({"title": "Notification delivery issue", "detail": f"{failed_notifications} failed delivery log(s).", "priority": "High", "tone": "danger", "icon": "fas fa-bell-slash", "url": _safe_reverse("notification-queue"), "action": "Open delivery logs"})
+    if attendance_today and attendance_rate < 85:
+        alerts.append({"title": "Low attendance signal", "detail": f"Attendance is {attendance_rate}% today, below the 85% review threshold.", "priority": "Warning", "tone": "warning", "icon": "fas fa-chart-line", "url": "#attendance-intelligence", "action": "View trend"})
+    if fee_total and fee_collection_rate < 75:
+        alerts.append({"title": "Fee collection below target", "detail": f"Collection is {fee_collection_rate}% against issued vouchers.", "priority": "Info", "tone": "info", "icon": "fas fa-wallet", "url": _safe_reverse("voucher-management"), "action": "View vouchers"})
     if not alerts:
-        alerts.append({"title": "All clear", "detail": "No critical operational alerts detected from current data.", "priority": "Low", "url": "#"})
+        alerts.append({"title": "All clear", "detail": "No critical operational alerts detected from current data.", "priority": "Low", "tone": "success", "icon": "fas fa-check-circle", "url": "#system-health", "action": "View system health"})
 
     trends = [
         {"label": "Present", "value": present_today, "max": max(attendance_today, 1), "tone": "green"},
@@ -1281,25 +1648,60 @@ def build_ai_analytics_data():
     fee_paid_series = []
     fixture_manual_series = []
     fixture_auto_series = []
-    for offset in range(-5, 1):
-        start, end = month_bounds(today, offset)
-        month_labels.append(start.strftime("%b"))
-        admissions_series.append(_safe_value(lambda s=start, e=end: Admission.objects.filter(admission_date__gte=s, admission_date__lt=e).count()))
-        fee_total_series.append(float(_safe_value(lambda s=start, e=end: FeeVoucher.objects.filter(issue_date__gte=s, issue_date__lt=e).aggregate(total=Sum("net_amount"))["total"], 0) or 0))
-        fee_paid_series.append(float(_safe_value(lambda s=start, e=end: FeeVoucher.objects.filter(issue_date__gte=s, issue_date__lt=e, status="PAID").aggregate(total=Sum("net_amount"))["total"], 0) or 0))
-        fixture_manual_series.append(_safe_value(lambda s=start, e=end: TeacherFixture.objects.filter(fixture_date__gte=s, fixture_date__lt=e, assignment_mode="manual").count()))
-        fixture_auto_series.append(_safe_value(lambda s=start, e=end: TeacherFixture.objects.filter(fixture_date__gte=s, fixture_date__lt=e).exclude(assignment_mode="manual").count()))
+    if chart_start and chart_end:
+        total_days = (chart_end - chart_start).days
+        if total_days <= 45:
+            current = chart_start
+            while current <= chart_end:
+                next_day = current + timedelta(days=1)
+                month_labels.append(current.strftime("%b %d"))
+                admissions_series.append(_safe_value(lambda s=current, e=next_day: scoped_admission_qs(Admission.objects.filter(admission_date__gte=s, admission_date__lt=e)).count()))
+                fee_total_series.append(float(_safe_value(lambda s=current, e=next_day: FeeVoucher.objects.filter(issue_date__gte=s, issue_date__lt=e).aggregate(total=Sum("net_amount"))["total"], 0) or 0))
+                fee_paid_series.append(float(_safe_value(lambda s=current, e=next_day: FeeVoucher.objects.filter(issue_date__gte=s, issue_date__lt=e, status="PAID").aggregate(total=Sum("net_amount"))["total"], 0) or 0))
+                fixture_manual_series.append(_safe_value(lambda s=current, e=next_day: TeacherFixture.objects.filter(fixture_date__gte=s, fixture_date__lt=e, assignment_mode="manual").count()))
+                fixture_auto_series.append(_safe_value(lambda s=current, e=next_day: TeacherFixture.objects.filter(fixture_date__gte=s, fixture_date__lt=e).exclude(assignment_mode="manual").count()))
+                current = next_day
+        else:
+            current = chart_start.replace(day=1)
+            while current <= chart_end:
+                start = current
+                end = start.replace(year=start.year + 1, month=1, day=1) if start.month == 12 else start.replace(month=start.month + 1, day=1)
+                month_labels.append(start.strftime("%b %Y"))
+                admissions_series.append(_safe_value(lambda s=start, e=end: scoped_admission_qs(Admission.objects.filter(admission_date__gte=s, admission_date__lt=e)).count()))
+                fee_total_series.append(float(_safe_value(lambda s=start, e=end: FeeVoucher.objects.filter(issue_date__gte=s, issue_date__lt=e).aggregate(total=Sum("net_amount"))["total"], 0) or 0))
+                fee_paid_series.append(float(_safe_value(lambda s=start, e=end: FeeVoucher.objects.filter(issue_date__gte=s, issue_date__lt=e, status="PAID").aggregate(total=Sum("net_amount"))["total"], 0) or 0))
+                fixture_manual_series.append(_safe_value(lambda s=start, e=end: TeacherFixture.objects.filter(fixture_date__gte=s, fixture_date__lt=e, assignment_mode="manual").count()))
+                fixture_auto_series.append(_safe_value(lambda s=start, e=end: TeacherFixture.objects.filter(fixture_date__gte=s, fixture_date__lt=e).exclude(assignment_mode="manual").count()))
+                current = end
+    else:
+        for offset in range(-5, 1):
+            start, end = month_bounds(today, offset)
+            month_labels.append(start.strftime("%b"))
+            admissions_series.append(_safe_value(lambda s=start, e=end: scoped_admission_qs(Admission.objects.filter(admission_date__gte=s, admission_date__lt=e)).count()))
+            fee_total_series.append(float(_safe_value(lambda s=start, e=end: FeeVoucher.objects.filter(issue_date__gte=s, issue_date__lt=e).aggregate(total=Sum("net_amount"))["total"], 0) or 0))
+            fee_paid_series.append(float(_safe_value(lambda s=start, e=end: FeeVoucher.objects.filter(issue_date__gte=s, issue_date__lt=e, status="PAID").aggregate(total=Sum("net_amount"))["total"], 0) or 0))
+            fixture_manual_series.append(_safe_value(lambda s=start, e=end: TeacherFixture.objects.filter(fixture_date__gte=s, fixture_date__lt=e, assignment_mode="manual").count()))
+            fixture_auto_series.append(_safe_value(lambda s=start, e=end: TeacherFixture.objects.filter(fixture_date__gte=s, fixture_date__lt=e).exclude(assignment_mode="manual").count()))
 
     day_labels = []
     present_series = []
     absent_series = []
     leave_series = []
-    for offset in range(6, -1, -1):
-        day = today - timedelta(days=offset)
-        day_labels.append(day.strftime("%a"))
-        present_series.append(_safe_value(lambda d=day: Attendance.objects.filter(date=d, status="present").count()))
-        absent_series.append(_safe_value(lambda d=day: Attendance.objects.filter(date=d, status="absent").count()))
-        leave_series.append(_safe_value(lambda d=day: Attendance.objects.filter(date=d, status="leave").count()))
+    if chart_start and chart_end:
+        current = chart_start
+        while current <= chart_end:
+            day_labels.append(current.strftime("%b %d"))
+            present_series.append(_safe_value(lambda d=current: scoped_attendance_qs(Attendance.objects.filter(date=d, status="present")).count()))
+            absent_series.append(_safe_value(lambda d=current: scoped_attendance_qs(Attendance.objects.filter(date=d, status="absent")).count()))
+            leave_series.append(_safe_value(lambda d=current: scoped_attendance_qs(Attendance.objects.filter(date=d, status="leave")).count()))
+            current = current + timedelta(days=1)
+    else:
+        for offset in range(6, -1, -1):
+            day = today - timedelta(days=offset)
+            day_labels.append(day.strftime("%a"))
+            present_series.append(_safe_value(lambda d=day: scoped_attendance_qs(Attendance.objects.filter(date=d, status="present")).count()))
+            absent_series.append(_safe_value(lambda d=day: scoped_attendance_qs(Attendance.objects.filter(date=d, status="absent")).count()))
+            leave_series.append(_safe_value(lambda d=day: scoped_attendance_qs(Attendance.objects.filter(date=d, status="leave")).count()))
 
     workload_rows = _safe_value(
         lambda: list(
@@ -1343,9 +1745,42 @@ def build_ai_analytics_data():
         },
     }
 
+    failed_automation_jobs = failed_fee_jobs + failed_salary_jobs
+    health_issue_count = failed_automation_jobs + failed_notifications + uncovered_fixtures
+    system_health = {
+        "status": "Healthy" if health_issue_count == 0 else "Needs Attention",
+        "tone": "success" if health_issue_count == 0 else "warning",
+        "issue_count": health_issue_count,
+        "items": [
+            {"key": "automation", "label": "Failed automation jobs", "value": failed_automation_jobs, "icon": "fas fa-cogs", "url": _safe_reverse("automation-logs")},
+            {"key": "notifications", "label": "Failed deliveries", "value": failed_notifications, "icon": "fas fa-bell", "url": _safe_reverse("notification-queue")},
+            {"key": "fixtures", "label": "Uncovered fixtures", "value": uncovered_fixtures, "icon": "fas fa-calendar-alt", "url": _safe_reverse("timetable_automation")},
+        ],
+    }
+
+    snapshot = [
+        {"key": "students", "label": "Students", "value": total_students},
+        {"key": "teachers", "label": "Teachers", "value": total_teachers},
+        {"key": "classes", "label": "Classes", "value": total_classes},
+        {"key": "subjects", "label": "Subjects", "value": total_subjects},
+        {"key": "admissions", "label": "Admissions", "sublabel": "This Month", "value": admissions_month},
+        {"key": "pending_leaves", "label": "Leave", "sublabel": "Pending", "value": pending_leaves},
+    ]
+
     return {
         "generated_at": timezone.now().strftime("%B %d, %Y, %I:%M %p"),
+        "meta": {
+            "period": selected_period,
+            "period_label": period_label,
+            "start_date": chart_start.isoformat(),
+            "end_date": chart_end.isoformat(),
+            "class_id": class_filter or "",
+            "section_id": section_filter or "",
+        },
         "kpis": kpis,
+        "snapshot": snapshot,
+        "risk": {"score": risk_score, "tone": "success" if risk_score < 35 else "warning", "breakdown": risk_breakdown},
+        "system_health": system_health,
         "modules": modules,
         "alerts": alerts,
         "trends": trends,
@@ -1357,7 +1792,9 @@ def build_ai_analytics_data():
             "teachers": total_teachers,
             "classes": total_classes,
             "subjects": total_subjects,
-            "failed_jobs": failed_fee_jobs + failed_salary_jobs,
+            "admissions": admissions_month,
+            "pending_leaves": pending_leaves,
+            "failed_jobs": failed_automation_jobs,
         },
     }
 
@@ -1365,15 +1802,32 @@ def build_ai_analytics_data():
 @login_required
 @permission_required('auth.view_group', raise_exception=True)
 def ai_analytics_dashboard(request):
+    from admin_ai.services import PERIOD_LABELS
+    from admin_ai.models import AdminAIConversation
+    from .models import Class, Section
+    default_filters = {"period": "this_month"}
+    conversation = AdminAIConversation.objects.filter(created_by=request.user).first()
+    if not conversation:
+        conversation = AdminAIConversation.objects.create(created_by=request.user)
     return render(request, "admin_panel/ai_analytics.html", {
-        "ai_analytics": build_ai_analytics_data(),
+        "ai_analytics": build_ai_analytics_data(default_filters),
+        "ai_conversation": conversation,
+        "period_options": PERIOD_LABELS.items(),
+        "classes": Class.objects.all().order_by("class_name"),
+        "sections": Section.objects.all().order_by("section_name"),
     })
 
 
 @login_required
 @permission_required('auth.view_group', raise_exception=True)
 def ai_analytics_data(request):
-    return JsonResponse(build_ai_analytics_data())
+    from admin_ai.services import parse_filter_request
+    filters = parse_filter_request(request)
+    if filters["period"] == "custom" and (not filters["start_date"] or not filters["end_date"]):
+        return JsonResponse({"error": "Choose both a start date and an end date for a custom range."}, status=400)
+    if filters["start_date"] and filters["end_date"] and filters["start_date"] > filters["end_date"]:
+        return JsonResponse({"error": "Start date cannot be after end date."}, status=400)
+    return JsonResponse(build_ai_analytics_data(filters))
 
 
 @login_required
@@ -1495,7 +1949,14 @@ def automation_overview_data(request):
 @login_required
 @permission_required('auth.view_group', raise_exception=True)
 def dashboard_summary_data(request):
-    return JsonResponse(build_dashboard_summary_data())
+    reference_data = build_reference_dashboard_data(
+        period=request.GET.get("period", "last_7_days"),
+        start_date=request.GET.get("start_date"),
+        end_date=request.GET.get("end_date"),
+    )
+    # Keep legacy keys during the dashboard transition for existing consumers.
+    reference_data.update(build_dashboard_summary_data())
+    return JsonResponse(reference_data)
 
 
 def _admin_role_label(user):
@@ -2462,7 +2923,7 @@ def query(request):
     status       = request.GET.get('status', '')
     academic_year = request.GET.get('academic_year', '')
 
-    admissions = Admission.objects.select_related('section', 'class_fk', 'academic_year')
+    admissions = Admission.objects.select_related('section', 'class_fk', 'academic_year').order_by('id')
 
     if q_val:
         admissions = admissions.filter(
@@ -2500,6 +2961,7 @@ def query(request):
         'query':        q_val,
         'status':       status,
         'academic_year': academic_year,
+        'academic_years': AcademicYear.objects.all().order_by('-is_active', '-id'),
         'page_obj':     page_obj,
     }
 
@@ -3800,8 +4262,10 @@ def edit_class_group(request, group_id):
 
 def delete_class_group(request, group_id):
     group = get_object_or_404(ClassGroup, id=group_id)
-    group.delete()
-    return redirect('class_group_list')
+    if request.method == 'POST':
+        group.delete()
+        return redirect('class_group_list')
+    return render(request, 'admin_panel/delete_class_group.html', {'class_group': group})
 
 
 # -------------------- Class Teacher --------------------
@@ -5887,3 +6351,258 @@ def parent_dashboard(request):
 def automation_logs(request):
     logs = AutomationJobDetail.objects.all().order_by('-id')
     return render(request, 'automation/logs.html', {'logs': logs})
+
+
+# ==================== OPERATIONS ====================
+# Admin-only procurement, inventory and fleet screens. TransportRoute remains
+# the same model used by fee assignments, so its existing behavior is preserved.
+from django.db.models.deletion import ProtectedError
+from .models import (
+    ProcurementCategory, Vendor, PurchaseRequest, InventoryItem, StockMovement,
+    Vehicle, RouteVehicleAssignment, TransportTrip, VehicleMaintenance, TransportRoute,
+)
+from .forms import (
+    ProcurementCategoryForm, VendorForm, PurchaseRequestForm, InventoryItemForm,
+    StockMovementForm, TransportRouteOperationForm, VehicleForm,
+    RouteVehicleAssignmentForm, TransportTripForm, VehicleMaintenanceForm,
+)
+
+
+def _operation_configs():
+    return {
+        "procurement_category": {
+            "model": ProcurementCategory, "form": ProcurementCategoryForm,
+            "title": "Categories", "singular": "Procurement Category",
+            "subtitle": "Organize purchasing and inventory records.", "icon": "fa-tags",
+            "list_url": "operation_procurement_category_list",
+            "create_url": "operation_procurement_category_create",
+            "edit_url": "operation_procurement_category_edit",
+            "delete_url": "operation_procurement_category_delete",
+            "headers": ["Name", "Description", "Status", "Created"],
+            "cells": lambda obj: [obj.name, obj.description or "-", "Active" if obj.is_active else "Inactive", obj.created_at.strftime("%d %b %Y")],
+            "search": ["name", "description"],
+        },
+        "vendor": {
+            "model": Vendor, "form": VendorForm, "title": "Vendors", "singular": "Vendor",
+            "subtitle": "Manage supplier contacts and availability.", "icon": "fa-handshake",
+            "list_url": "operation_vendor_list", "create_url": "operation_vendor_create",
+            "edit_url": "operation_vendor_edit", "delete_url": "operation_vendor_delete",
+            "headers": ["Vendor", "Contact", "Phone", "Email", "Status"],
+            "cells": lambda obj: [obj.name, obj.contact_person or "-", obj.phone or "-", obj.email or "-", obj.get_status_display()],
+            "search": ["name", "contact_person", "phone", "email"],
+        },
+        "purchase_request": {
+            "model": PurchaseRequest, "form": PurchaseRequestForm,
+            "title": "Purchase Requests", "singular": "Purchase Request",
+            "subtitle": "Track requested purchases from approval to receipt.", "icon": "fa-clipboard-list",
+            "list_url": "operation_purchase_request_list", "create_url": "operation_purchase_request_create",
+            "edit_url": "operation_purchase_request_edit", "delete_url": "operation_purchase_request_delete",
+            "headers": ["Request", "Category", "Priority", "Estimated Cost", "Needed By", "Status"],
+            "cells": lambda obj: [obj.title, str(obj.category or "-"), obj.get_priority_display(), f"PKR {obj.estimated_cost:,.2f}", obj.needed_by.strftime("%d %b %Y") if obj.needed_by else "-", obj.get_status_display()],
+            "search": ["title", "description", "category__name", "vendor__name"],
+            "select_related": ["category", "vendor", "requested_by"],
+        },
+        "inventory_item": {
+            "model": InventoryItem, "form": InventoryItemForm,
+            "title": "Inventory Items", "singular": "Inventory Item",
+            "subtitle": "Monitor quantities, reorder levels and unit costs.", "icon": "fa-boxes",
+            "list_url": "operation_inventory_item_list", "create_url": "operation_inventory_item_create",
+            "edit_url": "operation_inventory_item_edit", "delete_url": "operation_inventory_item_delete",
+            "headers": ["Item", "SKU", "Category", "Quantity", "Reorder Level", "Unit Cost", "Status"],
+            "cells": lambda obj: [obj.name, obj.sku or "-", str(obj.category or "-"), f"{obj.quantity} {obj.unit}", obj.reorder_level, f"PKR {obj.unit_cost:,.2f}", obj.get_status_display()],
+            "search": ["name", "sku", "category__name", "vendor__name"],
+            "select_related": ["category", "vendor"],
+        },
+        "stock_movement": {
+            "model": StockMovement, "form": StockMovementForm,
+            "title": "Stock Movements", "singular": "Stock Movement",
+            "subtitle": "Review stock additions, removals and adjustments.", "icon": "fa-exchange-alt",
+            "list_url": "operation_stock_movement_list", "create_url": "operation_stock_movement_create",
+            "edit_url": "operation_stock_movement_edit", "delete_url": "operation_stock_movement_delete",
+            "headers": ["Item", "Movement", "Quantity", "Note", "Created By", "Date"],
+            "cells": lambda obj: [obj.item.name, obj.get_movement_type_display(), obj.quantity, obj.note or "-", obj.created_by.get_username() if obj.created_by else "-", obj.created_at.strftime("%d %b %Y, %I:%M %p")],
+            "search": ["item__name", "item__sku", "note"],
+            "select_related": ["item", "created_by"],
+        },
+        "vehicle": {
+            "model": Vehicle, "form": VehicleForm, "title": "Vehicles", "singular": "Vehicle",
+            "subtitle": "Manage the school transport fleet and drivers.", "icon": "fa-shuttle-van",
+            "list_url": "operation_vehicle_list", "create_url": "operation_vehicle_create",
+            "edit_url": "operation_vehicle_edit", "delete_url": "operation_vehicle_delete",
+            "headers": ["Vehicle No.", "Type", "Capacity", "Driver", "Phone", "Registration Expiry", "Status"],
+            "cells": lambda obj: [obj.vehicle_no, obj.get_vehicle_type_display(), obj.capacity, obj.driver_name or "-", obj.driver_phone or "-", obj.registration_expiry.strftime("%d %b %Y") if obj.registration_expiry else "-", obj.get_status_display()],
+            "search": ["vehicle_no", "driver_name", "driver_phone"],
+        },
+        "transport_route": {
+            "model": TransportRoute, "form": TransportRouteOperationForm,
+            "title": "Transport Routes", "singular": "Transport Route",
+            "subtitle": "Manage routes while preserving their fee assignments.", "icon": "fa-route",
+            "list_url": "operation_transport_route_list", "create_url": "operation_transport_route_create",
+            "edit_url": "operation_transport_route_edit", "delete_url": "operation_transport_route_delete",
+            "headers": ["Route", "Monthly Fee", "Assigned Vehicles"],
+            "cells": lambda obj: [obj.route_name, f"PKR {obj.amount:,.2f}", obj.vehicle_assignments.count()],
+            "search": ["route_name"],
+        },
+        "route_assignment": {
+            "model": RouteVehicleAssignment, "form": RouteVehicleAssignmentForm,
+            "title": "Route Assignments", "singular": "Route Assignment",
+            "subtitle": "Assign vehicles and drivers to transport routes.", "icon": "fa-map-marked-alt",
+            "list_url": "operation_route_assignment_list", "create_url": "operation_route_assignment_create",
+            "edit_url": "operation_route_assignment_edit", "delete_url": "operation_route_assignment_delete",
+            "headers": ["Route", "Vehicle", "Driver", "Start Date", "End Date", "Status"],
+            "cells": lambda obj: [obj.route.route_name, obj.vehicle.vehicle_no, obj.driver_name or obj.vehicle.driver_name or "-", obj.start_date.strftime("%d %b %Y"), obj.end_date.strftime("%d %b %Y") if obj.end_date else "-", "Active" if obj.is_active else "Inactive"],
+            "search": ["route__route_name", "vehicle__vehicle_no", "driver_name"],
+            "select_related": ["route", "vehicle"],
+        },
+        "transport_trip": {
+            "model": TransportTrip, "form": TransportTripForm,
+            "title": "Transport Trips", "singular": "Transport Trip",
+            "subtitle": "Record route service, departure performance and transported students.", "icon": "fa-road",
+            "list_url": "operation_transport_trip_list", "create_url": "operation_transport_trip_create",
+            "edit_url": "operation_transport_trip_edit", "delete_url": "operation_transport_trip_delete",
+            "headers": ["Service Date", "Route", "Vehicle", "Scheduled", "Actual", "Students", "Status"],
+            "cells": lambda obj: [obj.service_date.strftime("%d %b %Y"), obj.route.route_name, obj.vehicle.vehicle_no, obj.scheduled_departure.strftime("%I:%M %p"), obj.actual_departure.strftime("%I:%M %p") if obj.actual_departure else "-", obj.students_transported, obj.get_status_display()],
+            "search": ["route__route_name", "vehicle__vehicle_no", "notes", "status"],
+            "select_related": ["route", "vehicle"],
+        },
+        "vehicle_maintenance": {
+            "model": VehicleMaintenance, "form": VehicleMaintenanceForm,
+            "title": "Maintenance Records", "singular": "Maintenance Record",
+            "subtitle": "Track scheduled and completed vehicle servicing.", "icon": "fa-tools",
+            "list_url": "operation_vehicle_maintenance_list", "create_url": "operation_vehicle_maintenance_create",
+            "edit_url": "operation_vehicle_maintenance_edit", "delete_url": "operation_vehicle_maintenance_delete",
+            "headers": ["Vehicle", "Service", "Service Date", "Cost", "Status", "Notes"],
+            "cells": lambda obj: [obj.vehicle.vehicle_no, obj.maintenance_type, obj.service_date.strftime("%d %b %Y"), f"PKR {obj.cost:,.2f}", obj.get_status_display(), obj.notes or "-"],
+            "search": ["vehicle__vehicle_no", "maintenance_type", "notes"],
+            "select_related": ["vehicle"],
+        },
+    }
+
+
+def _operation_list(request, key):
+    config = _operation_configs()[key]
+    queryset = config["model"].objects.all()
+    if config.get("select_related"):
+        queryset = queryset.select_related(*config["select_related"])
+    query = request.GET.get("q", "").strip()
+    if query:
+        condition = Q()
+        for field in config["search"]:
+            condition |= Q(**{f"{field}__icontains": query})
+        queryset = queryset.filter(condition)
+    rows = [{"object": obj, "cells": config["cells"](obj)} for obj in queryset]
+    return render(request, "admin_panel/operations_list.html", {**config, "rows": rows, "query": query})
+
+
+def _operation_save(request, key, pk=None):
+    config = _operation_configs()[key]
+    instance = get_object_or_404(config["model"], pk=pk) if pk else None
+    form = config["form"](request.POST or None, instance=instance)
+    if request.method == "POST" and form.is_valid():
+        obj = form.save(commit=False)
+        if key == "purchase_request" and not obj.requested_by_id:
+            obj.requested_by = request.user
+        if key == "stock_movement" and not obj.created_by_id:
+            obj.created_by = request.user
+        obj.save()
+        messages.success(request, f"{config['singular']} saved successfully.")
+        return redirect(config["list_url"])
+    return render(request, "admin_panel/operations_form.html", {
+        **config, "form": form, "is_edit": bool(instance),
+    })
+
+
+def _operation_delete(request, key, pk):
+    config = _operation_configs()[key]
+    obj = get_object_or_404(config["model"], pk=pk)
+    if request.method == "POST":
+        try:
+            obj.delete()
+            messages.success(request, f"{config['singular']} deleted successfully.")
+        except ProtectedError:
+            messages.error(request, f"{config['singular']} is in use and cannot be deleted.")
+        return redirect(config["list_url"])
+    return render(request, "admin_panel/operations_confirm_delete.html", {**config, "object": obj})
+
+
+@login_required
+@user_passes_test(is_admin)
+def operation_procurement_dashboard(request):
+    items = list(InventoryItem.objects.all())
+    pending = PurchaseRequest.objects.filter(status="pending").count()
+    approved_value = PurchaseRequest.objects.filter(status__in=["approved", "ordered", "received"]).aggregate(total=Sum("estimated_cost"))["total"] or 0
+    context = {
+        "module": "procurement", "title": "Procurement & Inventory",
+        "stats": [
+            ("Purchase Requests", PurchaseRequest.objects.count(), "fa-clipboard-list", "blue"),
+            ("Pending Approvals", pending, "fa-hourglass-half", "amber"),
+            ("Inventory Items", len(items), "fa-boxes", "green"),
+            ("Low Stock Items", sum(1 for item in items if item.quantity <= item.reorder_level), "fa-exclamation-triangle", "red"),
+        ],
+        "approved_value": approved_value,
+        "recent_requests": PurchaseRequest.objects.select_related("category").all()[:6],
+    }
+    return render(request, "admin_panel/operations_dashboard.html", context)
+
+
+@login_required
+@user_passes_test(is_admin)
+def operation_transportation_dashboard(request):
+    context = {
+        "module": "fleet", "title": "Transportation & Fleet",
+        "stats": [
+            ("Total Vehicles", Vehicle.objects.count(), "fa-bus", "blue"),
+            ("Active Vehicles", Vehicle.objects.filter(status="active").count(), "fa-check-circle", "green"),
+            ("Transport Routes", TransportRoute.objects.count(), "fa-route", "amber"),
+            ("Under Maintenance", Vehicle.objects.filter(status="maintenance").count(), "fa-tools", "red"),
+        ],
+        "active_assignments": RouteVehicleAssignment.objects.filter(is_active=True).select_related("route", "vehicle")[:6],
+        "upcoming_maintenance": VehicleMaintenance.objects.exclude(status="completed").select_related("vehicle")[:6],
+    }
+    return render(request, "admin_panel/operations_dashboard.html", context)
+
+
+def _operation_view_set(key):
+    @login_required
+    @user_passes_test(is_admin)
+    def list_view(request):
+        return _operation_list(request, key)
+
+    @login_required
+    @user_passes_test(is_admin)
+    def create_view(request):
+        return _operation_save(request, key)
+
+    @login_required
+    @user_passes_test(is_admin)
+    def edit_view(request, pk):
+        return _operation_save(request, key, pk)
+
+    @login_required
+    @user_passes_test(is_admin)
+    def delete_view(request, pk):
+        return _operation_delete(request, key, pk)
+
+    return list_view, create_view, edit_view, delete_view
+
+
+(operation_procurement_category_list, operation_procurement_category_create,
+ operation_procurement_category_edit, operation_procurement_category_delete) = _operation_view_set("procurement_category")
+(operation_vendor_list, operation_vendor_create,
+ operation_vendor_edit, operation_vendor_delete) = _operation_view_set("vendor")
+(operation_purchase_request_list, operation_purchase_request_create,
+ operation_purchase_request_edit, operation_purchase_request_delete) = _operation_view_set("purchase_request")
+(operation_inventory_item_list, operation_inventory_item_create,
+ operation_inventory_item_edit, operation_inventory_item_delete) = _operation_view_set("inventory_item")
+(operation_stock_movement_list, operation_stock_movement_create,
+ operation_stock_movement_edit, operation_stock_movement_delete) = _operation_view_set("stock_movement")
+(operation_vehicle_list, operation_vehicle_create,
+ operation_vehicle_edit, operation_vehicle_delete) = _operation_view_set("vehicle")
+(operation_transport_route_list, operation_transport_route_create,
+ operation_transport_route_edit, operation_transport_route_delete) = _operation_view_set("transport_route")
+(operation_route_assignment_list, operation_route_assignment_create,
+ operation_route_assignment_edit, operation_route_assignment_delete) = _operation_view_set("route_assignment")
+(operation_transport_trip_list, operation_transport_trip_create,
+ operation_transport_trip_edit, operation_transport_trip_delete) = _operation_view_set("transport_trip")
+(operation_vehicle_maintenance_list, operation_vehicle_maintenance_create,
+ operation_vehicle_maintenance_edit, operation_vehicle_maintenance_delete) = _operation_view_set("vehicle_maintenance")

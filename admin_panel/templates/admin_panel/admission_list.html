@@ -3,313 +3,176 @@
 
 {% block title %}Admission List{% endblock %}
 
+{% block head %}
+  <link rel="stylesheet" href="{% static 'admin_panel/vendor/datatables/css/jquery.dataTables.min.css' %}">
+  <link rel="stylesheet" href="{% static 'admin_panel/css/student_gateway.css' %}?v=student-gateway-1">
+{% endblock %}
+
 {% block content %}
-
-<div class="col-12">
-
-    <div class="card" style="background:#f8f9fa; margin-left:20px; margin-right:20px;">
-
-        <!-- CARD HEADER -->
-        <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
-
-            <h4 class="card-title mb-0">
-                Admission List
-            </h4>
-
-            <div class="d-flex gap-2 flex-wrap">
-
-                <a href="{% url 'registration' %}">
-                    <button type="button" class="btn btn-primary">
-                        <i class="fa fa-plus me-2"></i>
-                        New Enrollment
-                    </button>
-                </a>
-
-                <!-- DELETE SELECTED -->
-                <button type="button"
-                        class="btn btn-danger"
-                        id="bulkDeleteBtn"
-                        disabled
-                        onclick="submitBulkDelete()">
-
-                    <i class="fa fa-trash me-2"></i>
-                    Delete Selected
-                </button>
-
-                <!-- DELETE ALL -->
-                <button type="button"
-                        class="btn btn-outline-danger"
-                        onclick="confirmDeleteAll()">
-
-                    <i class="fa fa-trash me-2"></i>
-                    Delete All
-                </button>
-
-            </div>
-
-        </div>
-
-        <!-- CARD BODY -->
-        <div class="card-body">
-
-            <!-- BULK DELETE FORM -->
-            <form id="bulkDeleteForm"
-                  method="POST"
-                  action="{% url 'bulk_delete_students' %}">
-
-                {% csrf_token %}
-
-                <input type="hidden"
-                       name="delete_all"
-                       id="deleteAllInput"
-                       value="off">
-
-                <div class="table-responsive">
-
-                    <table id="example3"
-                           class="display table table-bordered table-striped"
-                           style="width:100%">
-
-                        <thead>
-
-                            <tr>
-
-                                <th style="width:40px;">
-                                    <input type="checkbox"
-                                           id="selectAllCheckbox"
-                                           onchange="toggleSelectAll(this)">
-                                </th>
-
-                                <th>Campus</th>
-                                <th>Academic Year</th>
-                                <th>Branch</th>
-                                <th>Reference No</th>
-                                <th>Student Name</th>
-                                <th>Class</th>
-                                <th>DOB</th>
-                                <th>Gender</th>
-                                <th>Email</th>
-                                <th>Contact</th>
-                                <th>Address</th>
-                                <th>Admission Date</th>
-                                <th>Father Name</th>
-                                <th>Mother Name</th>
-                                <th>Father Contact</th>
-                                <th>Father Email</th>
-                                <th>Father Occupation</th>
-                                <th>Father CNIC</th>
-                                <th>Nationality</th>
-                                <th>Status</th>
-
-                            </tr>
-
-                        </thead>
-
-                        <tbody>
-
-                            {% for admission in admissions %}
-
-                            <tr>
-
-                                <!-- CHECKBOX -->
-                                <td>
-                                    <input type="checkbox"
-                                           name="student_ids"
-                                           value="{{ admission.id }}"
-                                           class="row-checkbox"
-                                           onchange="updateBulkDeleteBtn()">
-                                </td>
-
-                                <td>{{ admission.campus }}</td>
-                                <td>{{ admission.academic_year }}</td>
-                                <td>{{ admission.branch }}</td>
-                                <td>{{ admission.ref_no }}</td>
-                                <td>{{ admission.name }}</td>
-                                <td>{{ admission.class_fk.class_name }}</td>
-                                <td>{{ admission.dob }}</td>
-                                <td>{{ admission.gender }}</td>
-                                <td>{{ admission.email }}</td>
-                                <td>{{ admission.contact }}</td>
-                                <td>{{ admission.address }}</td>
-                                <td>{{ admission.admission_date }}</td>
-                                <td>{{ admission.father_name }}</td>
-                                <td>{{ admission.mother_name }}</td>
-                                <td>{{ admission.father_contact }}</td>
-                                <td>{{ admission.father_email }}</td>
-                                <td>{{ admission.father_occupation }}</td>
-                                <td>{{ admission.father_cnic }}</td>
-                                <td>{{ admission.nationality }}</td>
-
-                                <!-- STATUS -->
-                                <td>
-
-                                    <form method="POST"
-                                          action="{% url 'change_admission_status' admission.id %}">
-
-                                        {% csrf_token %}
-
-                                        <select name="admission_status"
-                                                class="form-select"
-                                                onchange="submitStatusForm(this)">
-
-                                            <option value="pending"
-                                                {% if admission.admission_status == 'pending' %}selected{% endif %}>
-                                                Pending
-                                            </option>
-
-                                            <option value="approved"
-                                                {% if admission.admission_status == 'approved' %}selected{% endif %}>
-                                                Approved
-                                            </option>
-
-                                            <option value="rejected"
-                                                {% if admission.admission_status == 'rejected' %}selected{% endif %}>
-                                                Rejected
-                                            </option>
-
-                                        </select>
-
-                                    </form>
-
-                                </td>
-
-                            </tr>
-
-                            {% endfor %}
-
-                        </tbody>
-
-                    </table>
-
-                </div>
-
-            </form>
-
-        </div>
-
+<div class="student-gateway">
+  <section class="sg-card">
+    <div class="sg-header">
+      <div>
+        <p class="sg-kicker">Student Gateway</p>
+        <h1 class="sg-title">Admission List</h1>
+        <p class="sg-subtitle">Review active-year admissions, change status, and manage bulk actions.</p>
+      </div>
+      <div class="sg-actions">
+        <a href="{% url 'registration' %}" class="sg-btn sg-btn-primary">
+          <i class="fa fa-plus"></i>
+          <span>New Enrollment</span>
+        </a>
+        <button type="button" class="sg-btn sg-btn-danger" id="bulkDeleteBtn" disabled onclick="submitBulkDelete()">
+          <i class="fa fa-trash"></i>
+          <span>Delete Selected</span>
+        </button>
+        <button type="button" class="sg-btn sg-btn-danger" onclick="confirmDeleteAll()">
+          <i class="fa fa-trash-alt"></i>
+          <span>Delete All</span>
+        </button>
+      </div>
     </div>
 
+    <div class="sg-body">
+      <form id="bulkDeleteForm" method="POST" action="{% url 'bulk_delete_students' %}">
+        {% csrf_token %}
+        <input type="hidden" name="delete_all" id="deleteAllInput" value="off">
+      </form>
+
+      <div class="sg-table-wrap">
+        <table id="example3" class="display dataTable no-footer sg-table" style="width:100%;">
+            <thead>
+              <tr>
+                <th style="width:44px;">
+                  <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this)" aria-label="Select all admissions">
+                </th>
+                <th>Campus</th>
+                <th>Academic Year</th>
+                <th>Branch</th>
+                <th>Reference No</th>
+                <th>Student Name</th>
+                <th>Class</th>
+                <th>DOB</th>
+                <th>Gender</th>
+                <th>Email</th>
+                <th>Contact</th>
+                <th>Address</th>
+                <th>Admission Date</th>
+                <th>Father Name</th>
+                <th>Mother Name</th>
+                <th>Father Contact</th>
+                <th>Father Email</th>
+                <th>Father Occupation</th>
+                <th>Father CNIC</th>
+                <th>Nationality</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for admission in admissions %}
+                <tr>
+                  <td>
+                    <input type="checkbox" form="bulkDeleteForm" name="student_ids" value="{{ admission.id }}" class="row-checkbox" onchange="updateBulkDeleteBtn()" aria-label="Select {{ admission.name }}">
+                  </td>
+                  <td>{{ admission.campus }}</td>
+                  <td>{{ admission.academic_year }}</td>
+                  <td>{{ admission.branch }}</td>
+                  <td>{{ admission.ref_no }}</td>
+                  <td>{{ admission.name }}</td>
+                  <td>{{ admission.class_fk.class_name }}</td>
+                  <td>{{ admission.dob }}</td>
+                  <td>{{ admission.gender }}</td>
+                  <td>{{ admission.email }}</td>
+                  <td>{{ admission.contact }}</td>
+                  <td>{{ admission.address }}</td>
+                  <td>{{ admission.admission_date }}</td>
+                  <td>{{ admission.father_name }}</td>
+                  <td>{{ admission.mother_name }}</td>
+                  <td>{{ admission.father_contact }}</td>
+                  <td>{{ admission.father_email }}</td>
+                  <td>{{ admission.father_occupation }}</td>
+                  <td>{{ admission.father_cnic }}</td>
+                  <td>{{ admission.nationality }}</td>
+                  <td>
+                    <form method="POST" action="{% url 'change_admission_status' admission.id %}">
+                      {% csrf_token %}
+                      <select name="admission_status" class="form-select sg-status-select" onchange="submitStatusForm(this)">
+                        <option value="pending" {% if admission.admission_status == 'pending' %}selected{% endif %}>Pending</option>
+                        <option value="approved" {% if admission.admission_status == 'approved' %}selected{% endif %}>Approved</option>
+                        <option value="rejected" {% if admission.admission_status == 'rejected' %}selected{% endif %}>Rejected</option>
+                      </select>
+                    </form>
+                  </td>
+                </tr>
+              {% empty %}
+                <tr>
+                  <td colspan="21" class="sg-empty">No admissions found for the active academic year.</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
 </div>
 
-<!-- ========================= SCRIPTS ========================= -->
-
 <script src="{% static 'admin_panel/vendor/global/global.min.js' %}"></script>
-
 <script src="{% static 'admin_panel/vendor/bootstrap-select/dist/js/bootstrap-select.min.js' %}"></script>
-
 <script src="{% static 'admin_panel/vendor/datatables/js/jquery.dataTables.min.js' %}"></script>
-
 <script src="{% static 'admin_panel/js/plugins-init/datatables.init.js' %}"></script>
 
 <script>
+  function submitStatusForm(selectElement) {
+    const form = selectElement.closest('form');
 
-    // =========================================================
-    // STATUS FORM SUBMIT
-    // =========================================================
-
-    function submitStatusForm(selectElement) {
-
-        const form = selectElement.closest('form');
-
-        if (selectElement.value === 'rejected') {
-
-            const admissionId =
-                form.action.split('/').filter(Boolean).pop();
-
-            window.location.href =
-                `/admin_panel/rejection_reason/${admissionId}/`;
-
-            return;
-        }
-
-        if (selectElement.value === 'approved') {
-
-            const admissionId =
-                form.action.split('/').filter(Boolean).pop();
-
-            window.location.href =
-                `/admin_panel/admission/${admissionId}/approve-credentials/`;
-
-            return;
-        }
-
-        form.submit();
+    if (selectElement.value === 'rejected') {
+      const admissionId = form.action.split('/').filter(Boolean).pop();
+      window.location.href = `/admin_panel/rejection_reason/${admissionId}/`;
+      return;
     }
 
-    // =========================================================
-    // SELECT ALL
-    // =========================================================
-
-    function toggleSelectAll(masterCheckbox) {
-
-        document.querySelectorAll('.row-checkbox').forEach(cb => {
-            cb.checked = masterCheckbox.checked;
-        });
-
-        updateBulkDeleteBtn();
+    if (selectElement.value === 'approved') {
+      const admissionId = form.action.split('/').filter(Boolean).pop();
+      window.location.href = `/admin_panel/admission/${admissionId}/approve-credentials/`;
+      return;
     }
 
-    // =========================================================
-    // ENABLE DELETE BUTTON
-    // =========================================================
+    form.submit();
+  }
 
-    function updateBulkDeleteBtn() {
+  function toggleSelectAll(masterCheckbox) {
+    document.querySelectorAll('.row-checkbox').forEach(function(cb) {
+      cb.checked = masterCheckbox.checked;
+    });
 
-        const checked =
-            document.querySelectorAll('.row-checkbox:checked').length;
+    updateBulkDeleteBtn();
+  }
 
-        document.getElementById('bulkDeleteBtn').disabled =
-            checked === 0;
+  function updateBulkDeleteBtn() {
+    const checked = document.querySelectorAll('.row-checkbox:checked').length;
+    const total = document.querySelectorAll('.row-checkbox').length;
+    const master = document.getElementById('selectAllCheckbox');
 
-        const total =
-            document.querySelectorAll('.row-checkbox').length;
+    document.getElementById('bulkDeleteBtn').disabled = checked === 0;
+    master.checked = checked === total && total > 0;
+    master.indeterminate = checked > 0 && checked < total;
+  }
 
-        const master =
-            document.getElementById('selectAllCheckbox');
+  function submitBulkDelete() {
+    const checked = document.querySelectorAll('.row-checkbox:checked').length;
+    if (checked === 0) return;
 
-        master.checked = checked === total && total > 0;
-
-        master.indeterminate =
-            checked > 0 && checked < total;
+    if (confirm(`${checked} selected admission record(s) will be permanently deleted. Continue?`)) {
+      document.getElementById('deleteAllInput').value = 'off';
+      document.getElementById('bulkDeleteForm').submit();
     }
+  }
 
-    // =========================================================
-    // DELETE SELECTED
-    // =========================================================
-
-    function submitBulkDelete() {
-
-        const checked =
-            document.querySelectorAll('.row-checkbox:checked').length;
-
-        if (checked === 0) return;
-
-        if (confirm(
-            `⚠️ Are you sure?\n\n${checked} selected students will be permanently deleted.`
-        )) {
-
-            document.getElementById('deleteAllInput').value = 'off';
-
-            document.getElementById('bulkDeleteForm').submit();
-        }
+  function confirmDeleteAll() {
+    if (confirm('All admission records in this list will be permanently deleted. Continue?')) {
+      document.getElementById('deleteAllInput').value = 'on';
+      document.getElementById('bulkDeleteForm').submit();
     }
-
-    // =========================================================
-    // DELETE ALL
-    // =========================================================
-
-    function confirmDeleteAll() {
-
-        if (confirm(
-            '🚨 WARNING!\n\nAll students will be permanently deleted.'
-        )) {
-
-            document.getElementById('deleteAllInput').value = 'on';
-
-            document.getElementById('bulkDeleteForm').submit();
-        }
-    }
-
+  }
 </script>
-
 {% endblock %}

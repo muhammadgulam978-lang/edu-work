@@ -1,40 +1,49 @@
 {% extends "admin_panel/bases.html" %}
+{% load static %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'admin_panel/css/hr_admin.css' %}?v=hr-admin-2">
+{% endblock %}
+
 {% block content %}
-
-<div class="container-fluid">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-
-            <div class="card">
-                <div class="card-header">
-                    <h5>Create Department</h5>
-                </div>
-
-                <div class="card-body">
-                    <form method="post">
-                        {% csrf_token %}
-
-                        <div class="mb-3">
-                            <label class="form-label">Department Name</label>
-                            <input type="text" name="name" class="form-control" required>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Description</label>
-                            <textarea name="description" class="form-control" rows="3"></textarea>
-                        </div>
-
-                        <div class="text-end">
-                            <button class="btn btn-success">Save</button>
-                            <a href="{% url 'department_list' %}" class="btn btn-secondary">Cancel</a>
-                        </div>
-                    </form>
-                </div>
-
+<div class="hr-page">
+    <div class="hr-hero">
+        <div class="hr-title-wrap">
+            <span class="hr-icon green"><i class="fas fa-building"></i></span>
+            <div>
+                <p class="hr-kicker">Organization</p>
+                <h2>Create Department</h2>
+                <p class="hr-subtitle">Add a department with optional description.</p>
             </div>
+        </div>
+    </div>
 
+    <div class="hr-panel">
+        <div class="hr-panel-header">
+            <h4>Department Details</h4>
+        </div>
+        <div class="hr-panel-body">
+            <form method="post">
+                {% csrf_token %}
+
+                <div class="hr-form-grid">
+                    <div class="hr-field">
+                        <label class="form-label">Department Name</label>
+                        <input type="text" name="name" class="form-control" required>
+                    </div>
+
+                    <div class="hr-field">
+                        <label class="form-label">Description</label>
+                        <textarea name="description" class="form-control" rows="3"></textarea>
+                    </div>
+                </div>
+
+                <div class="hr-form-actions">
+                    <a href="{% url 'department_list' %}" class="btn btn-secondary">Cancel</a>
+                    <button class="btn btn-primary"><i class="fas fa-save"></i> Save</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
-
 {% endblock %}

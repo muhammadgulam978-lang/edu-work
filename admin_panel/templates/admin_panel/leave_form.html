@@ -1,81 +1,87 @@
 {% extends "admin_panel/bases.html" %}
+{% load static %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'admin_panel/css/hr_admin.css' %}?v=hr-admin-2">
+{% endblock %}
+
 {% block content %}
+<div class="hr-page">
+    <div class="hr-hero">
+        <div class="hr-title-wrap">
+            <span class="hr-icon purple"><i class="fas fa-paper-plane"></i></span>
+            <div>
+                <p class="hr-kicker">Leave Management</p>
+                <h2>Apply Leave</h2>
+                <p class="hr-subtitle">Submit a leave request for an employee.</p>
+            </div>
+        </div>
+    </div>
 
-<div class="container-fluid">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
+    <div class="hr-panel">
+        <div class="hr-panel-header">
+            <h4>Leave Request</h4>
+        </div>
 
-            <div class="card">
-                <div class="card-header">
-                    <h5>Apply Leave</h5>
-                </div>
+        <div class="hr-panel-body">
+            {% if perms.admin_panel.add_leaveapplication %}
 
-                <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
 
-                    {% if perms.admin_panel.add_leaveapplication %}
+                <div class="hr-form-grid">
+                    <div class="hr-field">
+                        <label class="form-label">Employee</label>
 
-                    <form method="post">
-                        {% csrf_token %}
-
-                        <div class="mb-3">
-                            <label class="form-label">Employee</label>
-
-                            {% if perms.admin_panel.view_all_employee %}
-                                <select name="employee" class="form-select" required>
-                                    {% for e in employees %}
-                                    <option value="{{ e.id }}">{{ e.name }}</option>
-                                    {% endfor %}
-                                </select>
-                            {% else %}
-                                <input type="hidden" name="employee" value="{{ employees.first.id }}">
-                                <input type="text" class="form-control" value="{{ employees.first.name }}" disabled>
-                            {% endif %}
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Leave Type</label>
-                            <select name="leave_type" class="form-select" required>
-                                {% for t in leave_types %}
-                                <option value="{{ t.id }}">{{ t.name }}</option>
+                        {% if perms.admin_panel.view_all_employee %}
+                            <select name="employee" class="form-select" required>
+                                {% for e in employees %}
+                                <option value="{{ e.id }}">{{ e.name }}</option>
                                 {% endfor %}
                             </select>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">From</label>
-                                <input type="date" name="start_date" class="form-control" required>
-                            </div>
-
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">To</label>
-                                <input type="date" name="end_date" class="form-control" required>
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Reason</label>
-                            <textarea name="reason" class="form-control" rows="3" required></textarea>
-                        </div>
-
-                        <div class="text-end">
-                            <button class="btn btn-primary">Submit Leave</button>
-                            <a href="{% url 'leave_list' %}" class="btn btn-secondary">Cancel</a>
-                        </div>
-
-                    </form>
-
-                    {% else %}
-                    <div class="alert alert-danger text-center">
-                        ❌ You are not allowed to apply leave.
+                        {% else %}
+                            <input type="hidden" name="employee" value="{{ employees.first.id }}">
+                            <input type="text" class="form-control" value="{{ employees.first.name }}" disabled>
+                        {% endif %}
                     </div>
-                    {% endif %}
 
+                    <div class="hr-field">
+                        <label class="form-label">Leave Type</label>
+                        <select name="leave_type" class="form-select" required>
+                            {% for t in leave_types %}
+                            <option value="{{ t.id }}">{{ t.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="hr-field">
+                        <label class="form-label">From</label>
+                        <input type="date" name="start_date" class="form-control" required>
+                    </div>
+
+                    <div class="hr-field">
+                        <label class="form-label">To</label>
+                        <input type="date" name="end_date" class="form-control" required>
+                    </div>
                 </div>
-            </div>
 
+                <div class="hr-field">
+                    <label class="form-label">Reason</label>
+                    <textarea name="reason" class="form-control" rows="3" required></textarea>
+                </div>
+
+                <div class="hr-form-actions">
+                    <a href="{% url 'leave_list' %}" class="btn btn-secondary">Cancel</a>
+                    <button class="btn btn-primary"><i class="fas fa-paper-plane"></i> Submit Leave</button>
+                </div>
+            </form>
+
+            {% else %}
+            <div class="alert alert-danger text-center">
+                You are not allowed to apply leave.
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>
-
 {% endblock %}

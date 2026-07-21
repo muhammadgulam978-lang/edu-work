@@ -1372,6 +1372,205 @@ class TransportRoute(models.Model):
     def __str__(self):
         return self.route_name
 
+class ProcurementCategory(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    description = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["name"]
+        verbose_name_plural = "Procurement categories"
+
+    def __str__(self):
+        return self.name
+
+class Vendor(models.Model):
+    STATUS_CHOICES = [
+        ("active", "Active"),
+        ("inactive", "Inactive"),
+    ]
+
+    name = models.CharField(max_length=120, unique=True)
+    contact_person = models.CharField(max_length=100, blank=True)
+    phone = models.CharField(max_length=30, blank=True)
+    email = models.EmailField(blank=True)
+    address = models.TextField(blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="active")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+class PurchaseRequest(models.Model):
+    STATUS_CHOICES = [
+        ("draft", "Draft"),
+        ("pending", "Pending Approval"),
+        ("approved", "Approved"),
+        ("ordered", "Ordered"),
+        ("received", "Received"),
+        ("rejected", "Rejected"),
+    ]
+    PRIORITY_CHOICES = [
+        ("low", "Low"),
+        ("normal", "Normal"),
+        ("high", "High"),
+        ("urgent", "Urgent"),
+    ]
+
+    title = models.CharField(max_length=160)
+    category = models.ForeignKey(ProcurementCategory, on_delete=models.SET_NULL, null=True, blank=True)
+    vendor = models.ForeignKey(Vendor, on_delete=models.SET_NULL, null=True, blank=True)
+    requested_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    needed_by = models.DateField(null=True, blank=True)
+    priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default="normal")
+    estimated_cost = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
+    description = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return self.title
+
+class InventoryItem(models.Model):
+    STATUS_CHOICES = [
+        ("active", "Active"),
+        ("inactive", "Inactive"),
+    ]
+
+    name = models.CharField(max_length=140)
+    sku = models.CharField(max_length=60, unique=True, null=True, blank=True)
+    category = models.ForeignKey(ProcurementCategory, on_delete=models.SET_NULL, null=True, blank=True)
+    vendor = models.ForeignKey(Vendor, on_delete=models.SET_NULL, null=True, blank=True)
+    quantity = models.PositiveIntegerField(default=0)
+    reorder_level = models.PositiveIntegerField(default=0)
+    unit = models.CharField(max_length=30, default="pcs")
+    unit_cost = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="active")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+class StockMovement(models.Model):
+    MOVEMENT_CHOICES = [
+        ("in", "Stock In"),
+        ("out", "Stock Out"),
+        ("adjustment", "Adjustment"),
+    ]
+
+    item = models.ForeignKey(InventoryItem, on_delete=models.CASCADE, related_name="stock_movements")
+    movement_type = models.CharField(max_length=20, choices=MOVEMENT_CHOICES)
+    quantity = models.PositiveIntegerField(default=1)
+    note = models.TextField(blank=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.item} - {self.get_movement_type_display()} ({self.quantity})"
+
+class Vehicle(models.Model):
+    TYPE_CHOICES = [
+        ("bus", "Bus"),
+        ("van", "Van"),
+        ("car", "Car"),
+        ("other", "Other"),
+    ]
+    STATUS_CHOICES = [
+        ("active", "Active"),
+        ("maintenance", "Under Maintenance"),
+        ("inactive", "Inactive"),
+    ]
+
+    vehicle_no = models.CharField(max_length=50, unique=True)
+    vehicle_type = models.CharField(max_length=20, choices=TYPE_CHOICES, default="bus")
+    capacity = models.PositiveIntegerField(default=0)
+    driver_name = models.CharField(max_length=100, blank=True)
+    driver_phone = models.CharField(max_length=30, blank=True)
+    registration_expiry = models.DateField(null=True, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="active")
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["vehicle_no"]
+
+    def __str__(self):
+        return self.vehicle_no
+
+class RouteVehicleAssignment(models.Model):
+    route = models.ForeignKey(TransportRoute, on_delete=models.CASCADE, related_name="vehicle_assignments")
+    vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE, related_name="route_assignments")
+    driver_name = models.CharField(max_length=100, blank=True)
+    start_date = models.DateField(default=date.today)
+    end_date = models.DateField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["-is_active", "route__route_name"]
+
+    def __str__(self):
+        return f"{self.route} - {self.vehicle}"
+
+
+class TransportTrip(models.Model):
+    STATUS_CHOICES = [
+        ("scheduled", "Scheduled"),
+        ("on_time", "On Time"),
+        ("delayed", "Delayed"),
+        ("completed", "Completed"),
+        ("cancelled", "Cancelled"),
+    ]
+
+    route = models.ForeignKey(TransportRoute, on_delete=models.CASCADE, related_name="trips")
+    vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE, related_name="trips")
+    service_date = models.DateField(default=date.today)
+    scheduled_departure = models.TimeField()
+    actual_departure = models.TimeField(null=True, blank=True)
+    students_transported = models.PositiveIntegerField(default=0)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="scheduled")
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-service_date", "scheduled_departure"]
+
+    def __str__(self):
+        return f"{self.route} - {self.vehicle} ({self.service_date})"
+
+class VehicleMaintenance(models.Model):
+    STATUS_CHOICES = [
+        ("scheduled", "Scheduled"),
+        ("completed", "Completed"),
+        ("cancelled", "Cancelled"),
+    ]
+
+    vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE, related_name="maintenance_records")
+    maintenance_type = models.CharField(max_length=100)
+    service_date = models.DateField()
+    cost = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="scheduled")
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-service_date"]
+
+    def __str__(self):
+        return f"{self.vehicle} - {self.maintenance_type}"
+
 class Scholarship(models.Model):
     DISCOUNT_TYPES = [('percentage', 'Percentage'), ('fixed', 'Fixed Amount')]
     name = models.CharField(max_length=100)

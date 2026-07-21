@@ -1,0 +1,22 @@
+{% extends "admin_panel/bases.html" %}
+{% load static %}
+
+{% block title %}Delete {{ singular }} | EduPilot{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{% static 'admin_panel/css/operations_admin.css' %}?v=operations-1">
+{% endblock %}
+
+{% block content %}
+<div class="ops-page ops-delete-page">
+    <section class="ops-panel ops-delete-panel">
+        <span class="ops-delete-icon"><i class="fas fa-trash-alt"></i></span>
+        <h2>Delete {{ singular }}?</h2>
+        <p>You are about to delete <strong>{{ object }}</strong>. This action cannot be undone.</p>
+        <form method="post" class="ops-form-actions">
+            {% csrf_token %}
+            <a href="{% url list_url %}" class="ops-btn ops-btn-secondary">Cancel</a>
+            <button type="submit" class="ops-btn ops-btn-danger"><i class="fas fa-trash-alt"></i> Delete</button>
+        </form>
+    </section>
+</div>
+{% endblock %}

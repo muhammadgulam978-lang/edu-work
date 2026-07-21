@@ -26,6 +26,30 @@
   --inner-radius: 14px;
 }
 
+.nav-header .brand-logo {
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: hidden !important;
+  padding: 8px 10px !important;
+}
+
+.nav-header .brand-logo img.logo-abbr[src*="edupilot-logo-2026-nav"] {
+  width: 190px !important;
+  max-width: calc(100% - 24px) !important;
+  height: auto !important;
+  max-height: 128px !important;
+  object-fit: contain !important;
+  display: block !important;
+  border-radius: 10px !important;
+}
+
+@media (max-width: 575.98px) {
+  .nav-header .brand-logo img.logo-abbr[src*="edupilot-logo-2026-nav"] {
+    width: 150px !important;
+    max-height: 96px !important;
+  }
+}
+
 body,
 .content-body,
 .main-content,

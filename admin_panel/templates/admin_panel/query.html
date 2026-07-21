@@ -1,35 +1,71 @@
 {% extends "admin_panel/bases.html" %}
 {% load static %}
 
-{% block title %}
-    Admission Query
-{% endblock %}
+{% block title %}Admission Query{% endblock %}
 
 {% block head %}
-    <link rel="stylesheet" href="{% static 'admin_panel/css/query.css' %}">
+  <link rel="stylesheet" href="{% static 'admin_panel/vendor/datatables/css/jquery.dataTables.min.css' %}">
+  <link rel="stylesheet" href="{% static 'admin_panel/css/student_gateway.css' %}?v=student-gateway-1">
 {% endblock %}
 
 {% block content %}
-<div class="col-12">
-  <div class="card" style="background: #f8f9fa; margin-left: 20px; margin-right: 20px;">
-    
-    <!-- Card Header -->
-    <div class="card-header d-flex justify-content-between align-items-center">
-      <h4 class="card-title mb-0">Admission Query</h4>
-
-      <!-- Optional Back to List Button -->
-     
+<div class="student-gateway">
+  <section class="sg-card">
+    <div class="sg-header">
+      <div>
+        <p class="sg-kicker">Student Gateway</p>
+        <h1 class="sg-title">Admission Query</h1>
+        <p class="sg-subtitle">Search admission records by student, class, parent, contact, year, or status.</p>
+      </div>
+      <div class="sg-actions">
+        <a href="{% url 'admission_list' %}" class="sg-btn sg-btn-secondary">
+          <i class="fa fa-list"></i>
+          <span>Admission List</span>
+        </a>
+      </div>
     </div>
 
-    <!-- Card Body -->
-    <div class="card-body">
-      
-      <!-- Search Form -->
-      
+    <div class="sg-body">
+      <form method="get" class="sg-panel">
+        <h2 class="sg-section-title">
+          <i class="fa fa-search"></i>
+          Search Filters
+        </h2>
+        <div class="sg-filter-grid">
+          <div class="sg-field">
+            <label for="q">Search</label>
+            <input type="search" id="q" name="q" value="{{ query }}" placeholder="Name, student ID, class, parent, phone, email...">
+          </div>
+          <div class="sg-field">
+            <label for="status">Status</label>
+            <select id="status" name="status">
+              <option value="">All Statuses</option>
+              <option value="pending" {% if status == "pending" %}selected{% endif %}>Pending</option>
+              <option value="approved" {% if status == "approved" %}selected{% endif %}>Approved</option>
+              <option value="rejected" {% if status == "rejected" %}selected{% endif %}>Rejected</option>
+            </select>
+          </div>
+          <div class="sg-field">
+            <label for="academic_year">Academic Year</label>
+            <select id="academic_year" name="academic_year">
+              <option value="">All Years</option>
+              {% for year in academic_years %}
+                <option value="{{ year.id }}" {% if academic_year|stringformat:"s" == year.id|stringformat:"s" %}selected{% endif %}>{{ year.year }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="sg-field sg-filter-actions">
+            <span class="sg-label">&nbsp;</span>
+            <button type="submit" class="sg-btn sg-btn-primary">
+              <i class="fa fa-filter"></i>
+              <span>Apply</span>
+            </button>
+          </div>
+        </div>
+      </form>
 
-      <!-- Table -->
-      <div class="table-responsive">
-        <table id="example3" class="display table-responsive-lg dataTable no-footer" style="width: 100%;">
+      <div class="sg-table-wrap">
+        <table id="example3" class="display dataTable no-footer sg-table" style="width:100%;">
           <thead>
             <tr>
               <th>Student ID</th>
@@ -80,22 +116,28 @@
                 <td>{{ admission.father_occupation }}</td>
                 <td>{{ admission.father_cnic }}</td>
                 <td>{{ admission.nationality }}</td>
-                <td>{{ admission.admission_status }}</td>
+                <td>
+                  {% if admission.admission_status == "approved" %}
+                    <span class="sg-badge sg-badge-approved">Approved</span>
+                  {% elif admission.admission_status == "rejected" %}
+                    <span class="sg-badge sg-badge-rejected">Rejected</span>
+                  {% else %}
+                    <span class="sg-badge sg-badge-pending">Pending</span>
+                  {% endif %}
+                </td>
               </tr>
             {% empty %}
               <tr>
-                <td colspan="20" class="text-center">No results found.</td>
+                <td colspan="22" class="sg-empty">No results found.</td>
               </tr>
             {% endfor %}
           </tbody>
         </table>
       </div>
-
     </div>
-  </div>
+  </section>
 </div>
 
-<!-- Required vendors -->
 <script src="{% static 'admin_panel/vendor/global/global.min.js' %}"></script>
 <script src="{% static 'admin_panel/vendor/bootstrap-select/dist/js/bootstrap-select.min.js' %}"></script>
 <script src="{% static 'admin_panel/vendor/datatables/js/jquery.dataTables.min.js' %}"></script>

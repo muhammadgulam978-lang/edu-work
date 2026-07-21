@@ -1,0 +1,94 @@
+{% extends "admin_panel/bases.html" %}
+{% load static %}
+
+{% block title %}{{ title }} | EduPilot{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{% static 'admin_panel/css/operations_admin.css' %}?v=operations-1">
+<script src="{% static 'admin_panel/vendor/chart.js/Chart.bundle.min.js' %}"></script>
+{% endblock %}
+
+{% block content %}
+<div class="ops-page">
+    <div class="ops-heading">
+        <div class="ops-title">
+            <span class="ops-title-icon"><i class="fas {% if module == 'procurement' %}fa-shopping-cart{% else %}fa-bus{% endif %}"></i></span>
+            <div><h2>{{ title }}</h2><p>Live operational overview and quick actions.</p></div>
+        </div>
+        <div class="ops-heading-actions">
+            {% if module == 'procurement' %}
+            <a href="{% url 'operation_purchase_request_create' %}" class="ops-btn ops-btn-primary"><i class="fas fa-plus"></i> New Purchase Request</a>
+            {% else %}
+            <a href="{% url 'operation_vehicle_create' %}" class="ops-btn ops-btn-primary"><i class="fas fa-plus"></i> Add Vehicle</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="ops-stats">
+        {% for label, value, stat_icon, color in stats %}
+        <article class="ops-stat {{ color }}">
+            <span class="ops-stat-icon"><i class="fas {{ stat_icon }}"></i></span>
+            <div><span>{{ label }}</span><strong>{{ value }}</strong></div>
+        </article>
+        {% endfor %}
+    </div>
+
+    <div class="ops-dashboard-grid">
+        <section class="ops-panel">
+            <div class="ops-panel-head"><div><h3>Operations Overview</h3><p>Current module activity</p></div></div>
+            <div class="ops-chart"><canvas id="operationsChart"></canvas></div>
+        </section>
+        <section class="ops-panel">
+            <div class="ops-panel-head"><div><h3>Quick Actions</h3><p>Open frequently used screens</p></div></div>
+            <div class="ops-quick-links">
+                {% if module == 'procurement' %}
+                <a href="{% url 'operation_purchase_request_list' %}"><i class="fas fa-clipboard-list"></i><span>Purchase Requests</span><b>View</b></a>
+                <a href="{% url 'operation_inventory_item_list' %}"><i class="fas fa-boxes"></i><span>Inventory Items</span><b>View</b></a>
+                <a href="{% url 'operation_vendor_list' %}"><i class="fas fa-handshake"></i><span>Vendors</span><b>View</b></a>
+                <a href="{% url 'operation_stock_movement_list' %}"><i class="fas fa-exchange-alt"></i><span>Stock Movements</span><b>View</b></a>
+                {% else %}
+                <a href="{% url 'operation_vehicle_list' %}"><i class="fas fa-bus"></i><span>Vehicles</span><b>View</b></a>
+                <a href="{% url 'operation_transport_route_list' %}"><i class="fas fa-route"></i><span>Transport Routes</span><b>View</b></a>
+                <a href="{% url 'operation_route_assignment_list' %}"><i class="fas fa-map-marked-alt"></i><span>Route Assignments</span><b>View</b></a>
+                <a href="{% url 'operation_transport_trip_list' %}"><i class="fas fa-road"></i><span>Transport Trips</span><b>View</b></a>
+                <a href="{% url 'operation_vehicle_maintenance_list' %}"><i class="fas fa-tools"></i><span>Maintenance</span><b>View</b></a>
+                {% endif %}
+            </div>
+        </section>
+    </div>
+
+    <section class="ops-panel ops-recent-panel">
+        <div class="ops-panel-head"><div><h3>{% if module == 'procurement' %}Recent Purchase Requests{% else %}Current Route Assignments{% endif %}</h3><p>Latest operational records</p></div></div>
+        <div class="ops-table-wrap"><table class="ops-table">
+            {% if module == 'procurement' %}
+            <thead><tr><th>Request</th><th>Category</th><th>Priority</th><th>Estimated Cost</th><th>Status</th></tr></thead>
+            <tbody>{% for item in recent_requests %}<tr><td>{{ item.title }}</td><td>{{ item.category|default:"-" }}</td><td>{{ item.get_priority_display }}</td><td>PKR {{ item.estimated_cost }}</td><td>{{ item.get_status_display }}</td></tr>{% empty %}<tr><td colspan="5" class="ops-empty">No purchase requests yet.</td></tr>{% endfor %}</tbody>
+            {% else %}
+            <thead><tr><th>Route</th><th>Vehicle</th><th>Driver</th><th>Start Date</th><th>Status</th></tr></thead>
+            <tbody>{% for item in active_assignments %}<tr><td>{{ item.route }}</td><td>{{ item.vehicle }}</td><td>{{ item.driver_name|default:item.vehicle.driver_name|default:"-" }}</td><td>{{ item.start_date }}</td><td>Active</td></tr>{% empty %}<tr><td colspan="5" class="ops-empty">No active route assignments yet.</td></tr>{% endfor %}</tbody>
+            {% endif %}
+        </table></div>
+    </section>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var canvas = document.getElementById('operationsChart');
+    if (!canvas || typeof Chart === 'undefined') return;
+    new Chart(canvas.getContext('2d'), {
+        type: 'line',
+        data: {
+            labels: [{% for label, value, stat_icon, color in stats %}'{{ label|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+            datasets: [{
+                label: 'Current totals',
+                data: [{% for label, value, stat_icon, color in stats %}{{ value }}{% if not forloop.last %},{% endif %}{% endfor %}],
+                borderColor: '{% if module == "procurement" %}#10b981{% else %}#3b82f6{% endif %}',
+                backgroundColor: '{% if module == "procurement" %}rgba(16,185,129,.12){% else %}rgba(59,130,246,.12){% endif %}',
+                pointBackgroundColor: '#ffffff', pointBorderWidth: 3, pointRadius: 5,
+                borderWidth: 3, fill: true, lineTension: .32
+            }]
+        },
+        options: {responsive: true, maintainAspectRatio: false, legend: {display: false}, scales: {yAxes: [{ticks: {beginAtZero: true, precision: 0}, gridLines: {color: '#edf2f1'}}], xAxes: [{gridLines: {display: false}}]}}
+    });
+});
+</script>
+{% endblock %}

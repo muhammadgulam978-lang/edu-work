@@ -101,6 +101,7 @@ from .views import AdminDashboardAPI
 
 urlpatterns = [
     path('', views.automation_dashboard, name='automation-dashboard'),
+    path('graph-data/', views.automation_graph_data, name='automation-graph-data'),
     path('fee/', views.fee_automation_view, name='fee-automation'),
     path('vouchers/', views.voucher_management_view, name='voucher-management'),
     path('notifications/', views.notification_queue_view, name='notification-queue'),

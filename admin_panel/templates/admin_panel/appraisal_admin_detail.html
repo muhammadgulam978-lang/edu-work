@@ -1,48 +1,228 @@
 {% extends 'admin_panel/bases.html' %}
 
 {% block content %}
-<div class="card" style="margin:20px;">
-  <div class="card-header"><h4>{{ submission.teacher.name }} - {{ submission.cycle.name }}</h4></div>
-  <div class="card-body">
+<style>
+  .appraisal-admin {
+    padding: 22px;
+  }
+  .appraisal-admin,
+  .appraisal-admin .btn,
+  .appraisal-admin .form-control {
+    font-weight: 400;
+  }
+  .appraisal-hero {
+    background: linear-gradient(90deg, #DDF7F2 0%, #F5F5FD 100%);
+    border: 1px solid #e9ecef;
+    border-radius: 14px;
+    padding: 26px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 18px;
+    box-shadow: 0 4px 16px rgba(0,0,0,.04);
+    margin-bottom: 22px;
+  }
+  .appraisal-hero h2 {
+    margin: 0;
+    color: #111;
+    font-size: 30px;
+    font-weight: 500;
+  }
+  .appraisal-hero p {
+    color: #6c757d;
+    margin: 8px 0 0;
+    font-size: 15px;
+  }
+  .appraisal-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+    margin-bottom: 22px;
+  }
+  .appraisal-panel {
+    background: #fff;
+    border: 1px solid #e9ecef;
+    border-radius: 14px;
+    box-shadow: 0 4px 16px rgba(0,0,0,.04);
+    padding: 22px;
+  }
+  .appraisal-panel.tone-teal { background: #DDF7F2; border-color: rgba(136,208,197,.55); }
+  .appraisal-panel.tone-green { background: #EEF9E5; border-color: rgba(139,199,64,.45); }
+  .appraisal-panel.tone-neutral { background: #F5F5FD; }
+  .appraisal-panel h4,
+  .appraisal-panel h5 {
+    margin: 0 0 14px;
+    font-weight: 500;
+    color: #111;
+  }
+  .appraisal-metric {
+    font-size: 36px;
+    line-height: 1;
+    color: #111;
+    font-weight: 500;
+  }
+  .appraisal-label {
+    color: #6c757d;
+    margin-top: 8px;
+    font-size: 14px;
+  }
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 7px 12px;
+    font-size: 13px;
+    color: #4f6f0d;
+    background: #EEF9E5;
+    border: 1px solid rgba(139,199,64,.35);
+  }
+  .appraisal-form-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 12px;
+    align-items: center;
+  }
+  .appraisal-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 14px;
+  }
+  .appraisal-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border-radius: 999px;
+    padding: 11px 18px;
+    border: 1px solid #88D0C5;
+    background: #88D0C5;
+    color: #111;
+    font-weight: 500;
+    text-decoration: none;
+    box-shadow: 0 8px 18px rgba(136,208,197,.18);
+  }
+  .appraisal-btn:hover {
+    color: #111;
+    filter: brightness(.98);
+    text-decoration: none;
+  }
+  .appraisal-btn.secondary {
+    background: #fff;
+    border-color: #e9ecef;
+  }
+  .appraisal-btn.warning {
+    background: #FFF4E5;
+    border-color: #ffd591;
+  }
+  .appraisal-btn.success {
+    background: #8BC740;
+    border-color: #8BC740;
+  }
+  .metrics-snapshot {
+    background: #111827;
+    color: #d7f8f1;
+    border-radius: 12px;
+    border: 1px solid rgba(136,208,197,.25);
+    padding: 18px;
+    white-space: pre-wrap;
+    max-height: 360px;
+    overflow: auto;
+    font-size: 13px;
+  }
+  .form-control {
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    min-height: 48px;
+  }
+  @media (max-width: 992px) {
+    .appraisal-grid { grid-template-columns: 1fr; }
+    .appraisal-form-row { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 768px) {
+    .appraisal-admin { padding: 14px; }
+    .appraisal-hero { align-items: flex-start; flex-direction: column; padding: 20px; }
+    .appraisal-hero h2 { font-size: 24px; }
+  }
+</style>
 
-    {% if messages %}
-      {% for message in messages %}
-        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-      {% endfor %}
-    {% endif %}
+<div class="appraisal-admin">
+  <section class="appraisal-hero">
+    <div>
+      <h2>{{ submission.teacher.name }}</h2>
+      <p>{{ submission.cycle.name }} appraisal review, score regeneration, final band, and ML training.</p>
+    </div>
+    <a class="appraisal-btn secondary" href="{% url 'admin_appraisal_list' %}">
+      <i class="fas fa-arrow-left"></i>
+      Back to Submissions
+    </a>
+  </section>
 
-    <h5>System Score</h5>
-    {% if submission.score %}
-      <p><strong>Total:</strong> {{ submission.score.total_score }} | <strong>Band:</strong> {{ submission.score.band }}</p>
-      {% if pred %}<p><strong>RF Predicted Band:</strong> {{ pred }}</p>{% endif %}
-    {% else %}
-      <p>No score generated yet.</p>
-    {% endif %}
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }}" style="border-radius:14px;">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
 
-    <hr>
-    <h5>Final Decision (Admin)</h5>
+  <section class="appraisal-grid">
+    <div class="appraisal-panel tone-teal">
+      <h5>System Score</h5>
+      {% if submission.score %}
+        <div class="appraisal-metric">{{ submission.score.total_score }}</div>
+        <div class="appraisal-label">Band: {{ submission.score.band }}</div>
+      {% else %}
+        <div class="appraisal-metric">-</div>
+        <div class="appraisal-label">No score generated yet.</div>
+      {% endif %}
+    </div>
+
+    <div class="appraisal-panel tone-green">
+      <h5>Final Band</h5>
+      <div class="appraisal-metric">{{ submission.final_band|default:"-" }}</div>
+      <div class="appraisal-label">Admin decision</div>
+    </div>
+
+    <div class="appraisal-panel tone-neutral">
+      <h5>RandomForest Prediction</h5>
+      <div class="appraisal-metric">{{ pred|default:"-" }}</div>
+      <div class="appraisal-label">Available after model training</div>
+    </div>
+  </section>
+
+  <section class="appraisal-panel">
+    <h4>Final Decision</h4>
     <form method="post">
       {% csrf_token %}
-      <select class="form-control" name="final_band">
-        <option value="">-- select --</option>
-        <option value="Outstanding" {% if submission.final_band == "Outstanding" %}selected{% endif %}>Outstanding</option>
-        <option value="Excellent" {% if submission.final_band == "Excellent" %}selected{% endif %}>Excellent</option>
-        <option value="Good" {% if submission.final_band == "Good" %}selected{% endif %}>Good</option>
-        <option value="Fair" {% if submission.final_band == "Fair" %}selected{% endif %}>Fair</option>
-        <option value="Average" {% if submission.final_band == "Average" %}selected{% endif %}>Average</option>
-        <option value="Below Average" {% if submission.final_band == "Below Average" %}selected{% endif %}>Below Average</option>
-      </select>
-      <div class="mt-2">
-        <button class="btn btn-success" name="save_final_band" value="1">Save Final Band</button>
-        <button class="btn btn-primary" name="regenerate" value="1">Regenerate KPI Score</button>
-        <button class="btn btn-warning" name="train_ml" value="1">Train RandomForest</button>
+      <div class="appraisal-form-row">
+        <select class="form-control" name="final_band">
+          <option value="">-- select --</option>
+          <option value="Outstanding" {% if submission.final_band == "Outstanding" %}selected{% endif %}>Outstanding</option>
+          <option value="Excellent" {% if submission.final_band == "Excellent" %}selected{% endif %}>Excellent</option>
+          <option value="Good" {% if submission.final_band == "Good" %}selected{% endif %}>Good</option>
+          <option value="Fair" {% if submission.final_band == "Fair" %}selected{% endif %}>Fair</option>
+          <option value="Average" {% if submission.final_band == "Average" %}selected{% endif %}>Average</option>
+          <option value="Below Average" {% if submission.final_band == "Below Average" %}selected{% endif %}>Below Average</option>
+        </select>
+        <button class="appraisal-btn success" name="save_final_band" value="1">
+          <i class="fas fa-check"></i>
+          Save Final Band
+        </button>
+      </div>
+      <div class="appraisal-actions">
+        <button class="appraisal-btn" name="regenerate" value="1">
+          <i class="fas fa-sync-alt"></i>
+          Regenerate KPI Score
+        </button>
+        <button class="appraisal-btn warning" name="train_ml" value="1">
+          <i class="fas fa-brain"></i>
+          Train RandomForest
+        </button>
       </div>
     </form>
+  </section>
 
-    <hr>
-    <h5>Auto Metrics Snapshot</h5>
-    <pre style="background:#f7f7f7;padding:10px;">{{ submission.auto_metrics|default:"{}" }}</pre>
-
-  </div>
+  <section class="appraisal-panel mt-4">
+    <h4>Auto Metrics Snapshot</h4>
+    <pre class="metrics-snapshot">{{ submission.auto_metrics|default:"{}" }}</pre>
+  </section>
 </div>
 {% endblock %}

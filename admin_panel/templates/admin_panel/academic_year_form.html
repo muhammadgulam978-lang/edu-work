@@ -1,27 +1,67 @@
 {% extends 'admin_panel/bases.html' %}
 {% load static %}
 
-{% block title %}
-    {{ form.instance.pk|yesno:"Edit,Add" }} Academic Year
-{% endblock %}
+{% block title %}{{ form.instance.pk|yesno:"Edit,Add" }} Academic Year{% endblock %}
 
 {% block head %}
-<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'admin_panel/css/student_gateway.css' %}?v=student-gateway-1">
 {% endblock %}
 
 {% block content %}
-<div class="card" style="margin-left:20px; margin-right:20px; background-color: #ffffff">
-  <div class="card-header d-flex justify-content-between align-items-center">
-    <h4 class="card-title">{{ form.instance.pk|yesno:"Edit,Add" }} Academic Year</h4>
-    <a href="{% url 'academic_year_list' %}" class="btn btn-primary">← Back to List</a>
-  </div>
+<div class="student-gateway">
+  <section class="sg-card">
+    <div class="sg-header">
+      <div>
+        <p class="sg-kicker">Student Gateway</p>
+        <h1 class="sg-title">{{ form.instance.pk|yesno:"Edit,Add" }} Academic Year</h1>
+        <p class="sg-subtitle">Manage the admission session label and active session status.</p>
+      </div>
+      <div class="sg-actions">
+        <a href="{% url 'academic_year_list' %}" class="sg-btn sg-btn-secondary">
+          <i class="fa fa-arrow-left"></i>
+          <span>Back to List</span>
+        </a>
+      </div>
+    </div>
 
-  <div class="card-body">
-    <form method="post" class="styled-form">
-      {% csrf_token %}
-      {{ form.as_p }}
-      <button type="submit" class="btn btn-primary mt-3">Save</button>
-    </form>
-  </div>
+    <div class="sg-body">
+      <form method="post">
+        {% csrf_token %}
+        <div class="sg-panel">
+          <h2 class="sg-section-title">
+            <i class="fa fa-calendar-alt"></i>
+            Academic Session
+          </h2>
+          <div class="sg-grid sg-grid-2">
+            <div class="sg-field">
+              <label for="{{ form.year.id_for_label }}">Academic Year</label>
+              {{ form.year }}
+              {% if form.year.errors %}
+                <div class="invalid-feedback d-block">{{ form.year.errors|striptags }}</div>
+              {% endif %}
+            </div>
+            <div class="sg-field">
+              <span class="sg-label">Status</span>
+              <label class="sg-checkline">
+                {{ form.is_active }}
+                <span>Set as active academic year</span>
+              </label>
+              {% if form.is_active.errors %}
+                <div class="invalid-feedback d-block">{{ form.is_active.errors|striptags }}</div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <div class="sg-actions">
+          <button type="submit" class="sg-btn sg-btn-primary">
+            <i class="fa fa-save"></i>
+            <span>Save Academic Year</span>
+          </button>
+          <a href="{% url 'academic_year_list' %}" class="sg-btn sg-btn-secondary">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </section>
 </div>
 {% endblock %}

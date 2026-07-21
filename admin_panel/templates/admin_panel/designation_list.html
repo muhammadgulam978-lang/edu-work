@@ -1,42 +1,59 @@
 {% extends "admin_panel/bases.html" %}
-{% block content %}
+{% load static %}
 
-<div class="container-fluid">
-    <div class="row mb-3">
-        <div class="col-md-6">
-            <h4>Designations</h4>
+{% block head %}
+<link rel="stylesheet" href="{% static 'admin_panel/css/hr_admin.css' %}?v=hr-admin-2">
+{% endblock %}
+
+{% block content %}
+<div class="hr-page">
+    <div class="hr-hero">
+        <div class="hr-title-wrap">
+            <span class="hr-icon blue"><i class="fas fa-id-card"></i></span>
+            <div>
+                <p class="hr-kicker">Organization</p>
+                <h2>Designations</h2>
+                <p class="hr-subtitle">Manage designations and department reporting structure.</p>
+            </div>
         </div>
-        <div class="col-md-6 text-end">
-            <a href="{% url 'designation_create' %}" class="btn btn-primary">
-                + Add Designation
-            </a>
+        <div class="hr-actions">
+            <a href="{% url 'designation_create' %}" class="btn btn-primary"><i class="fas fa-plus"></i> Add Designation</a>
         </div>
     </div>
 
-    <div class="card">
-        <div class="card-body">
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>Designation</th>
-                        <th>Department</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for d in designations %}
-                    <tr>
-                        <td>{{ d.title }}</td>
-                        <td>{{ d.department.name }}</td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="2" class="text-center">No Designations Found</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+    <div class="hr-stats">
+        <div class="hr-stat-card purple">
+            <i class="fas fa-id-card"></i>
+            <div><span>Total Designations</span><strong>{{ designations|length }}</strong></div>
+        </div>
+    </div>
+
+    <div class="hr-panel">
+        <div class="hr-panel-header">
+            <h4>Designation Directory</h4>
+        </div>
+        <div class="hr-panel-body">
+            <div class="hr-table-wrap">
+                <table class="table hr-table">
+                    <thead>
+                        <tr>
+                            <th>Designation</th>
+                            <th>Department</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for d in designations %}
+                        <tr>
+                            <td><strong>{{ d.title }}</strong></td>
+                            <td>{{ d.department.name }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="2" class="hr-empty">No Designations Found</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
-
 {% endblock %}

@@ -1,28 +1,209 @@
 {% extends 'admin_panel/bases.html' %}
 
 {% block content %}
-<div class="card" style="margin:20px;">
-  <div class="card-header"><h4>Appraisal Submissions{% if cycle %} - {{ cycle.name }}{% endif %}</h4></div>
-  <div class="card-body">
+<style>
+  .appraisal-admin {
+    padding: 22px;
+  }
+  .appraisal-admin,
+  .appraisal-admin .table,
+  .appraisal-admin .btn,
+  .appraisal-admin .form-control {
+    font-weight: 400;
+  }
+  .appraisal-hero {
+    background: linear-gradient(90deg, #DDF7F2 0%, #F5F5FD 100%);
+    border: 1px solid #e9ecef;
+    border-radius: 14px;
+    padding: 26px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 18px;
+    box-shadow: 0 4px 16px rgba(0,0,0,.04);
+    margin-bottom: 22px;
+  }
+  .appraisal-hero h2 {
+    margin: 0;
+    color: #111;
+    font-size: 30px;
+    font-weight: 500;
+  }
+  .appraisal-hero p {
+    color: #6c757d;
+    margin: 8px 0 0;
+    font-size: 15px;
+  }
+  .appraisal-hero-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .appraisal-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border-radius: 999px;
+    padding: 11px 18px;
+    border: 1px solid #88D0C5;
+    background: #88D0C5;
+    color: #111;
+    font-weight: 500;
+    text-decoration: none;
+    box-shadow: 0 8px 18px rgba(136,208,197,.18);
+  }
+  .appraisal-btn:hover {
+    color: #111;
+    text-decoration: none;
+    filter: brightness(.98);
+  }
+  .appraisal-btn.secondary {
+    background: #fff;
+    border-color: #e9ecef;
+  }
+  .appraisal-card {
+    background: #fff;
+    border: 1px solid #e9ecef;
+    border-radius: 14px;
+    box-shadow: 0 4px 16px rgba(0,0,0,.04);
+    overflow: hidden;
+  }
+  .appraisal-card-header {
+    background: linear-gradient(90deg, #DDF7F2 0%, #F5F5FD 100%);
+    border-bottom: 1px solid #e9ecef;
+    padding: 20px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+  }
+  .appraisal-card-header h4 {
+    margin: 0;
+    color: #111;
+    font-size: 22px;
+    font-weight: 500;
+  }
+  .appraisal-card-header span {
+    color: #6c757d;
+    font-size: 14px;
+  }
+  .appraisal-table {
+    margin: 0;
+  }
+  .appraisal-table thead th {
+    background: #F5F5FD;
+    border-bottom: 1px solid #e9ecef;
+    color: #111;
+    font-weight: 500;
+    padding: 15px 16px;
+    white-space: nowrap;
+  }
+  .appraisal-table tbody td {
+    border-top: 1px solid #e9ecef;
+    padding: 16px;
+    vertical-align: middle;
+    color: #111;
+  }
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 6px 11px;
+    font-size: 13px;
+    color: #4f6f0d;
+    background: #EEF9E5;
+    border: 1px solid rgba(139,199,64,.35);
+  }
+  .status-pill.muted {
+    color: #6c757d;
+    background: #F5F5FD;
+    border-color: #e9ecef;
+  }
+  .score-chip {
+    display: inline-flex;
+    align-items: center;
+    min-width: 52px;
+    justify-content: center;
+    border-radius: 10px;
+    padding: 7px 10px;
+    background: #DDF7F2;
+    border: 1px solid rgba(136,208,197,.55);
+    color: #111;
+  }
+  .empty-state {
+    padding: 34px 16px;
+    text-align: center;
+    color: #6c757d;
+  }
+  @media (max-width: 768px) {
+    .appraisal-admin { padding: 14px; }
+    .appraisal-hero { align-items: flex-start; flex-direction: column; padding: 20px; }
+    .appraisal-hero h2 { font-size: 24px; }
+  }
+</style>
+
+<div class="appraisal-admin">
+  <section class="appraisal-hero">
+    <div>
+      <h2>Appraisal Submissions</h2>
+      <p>{% if cycle %}Current cycle: {{ cycle.name }}{% else %}Review teacher KPI submissions and final decisions.{% endif %}</p>
+    </div>
+    <div class="appraisal-hero-actions">
+      <a class="appraisal-btn" href="{% url 'admin_kpi_builder' %}">
+        <i class="fas fa-chart-bar"></i>
+        KPI Builder
+      </a>
+    </div>
+  </section>
+
+  <section class="appraisal-card">
+    <div class="appraisal-card-header">
+      <div>
+        <h4>All Submissions</h4>
+        <span>Teacher score, system band, final band, and review action.</span>
+      </div>
+      <span class="status-pill muted">{{ submissions|length }} records</span>
+    </div>
+
     <div class="table-responsive">
-      <table class="table table-bordered">
-        <thead><tr><th>Teacher</th><th>Status</th><th>KPI Band</th><th>Score</th><th>Final Band</th><th>Action</th></tr></thead>
+      <table class="table appraisal-table">
+        <thead>
+          <tr>
+            <th>Teacher</th>
+            <th>Status</th>
+            <th>KPI Band</th>
+            <th>Score</th>
+            <th>Final Band</th>
+            <th>Action</th>
+          </tr>
+        </thead>
         <tbody>
           {% for s in submissions %}
             <tr>
               <td>{{ s.teacher.name }}</td>
-              <td>{{ s.status }}</td>
+              <td>
+                <span class="status-pill{% if s.status != 'submitted' %} muted{% endif %}">{{ s.status|title }}</span>
+              </td>
               <td>{% if s.score %}{{ s.score.band }}{% else %}-{% endif %}</td>
-              <td>{% if s.score %}{{ s.score.total_score }}{% else %}-{% endif %}</td>
+              <td>{% if s.score %}<span class="score-chip">{{ s.score.total_score }}</span>{% else %}-{% endif %}</td>
               <td>{{ s.final_band|default:"-" }}</td>
-              <td><a class="btn btn-sm btn-primary" href="{% url 'admin_appraisal_detail' s.id %}">View</a></td>
+              <td>
+                <a class="appraisal-btn secondary" href="{% url 'admin_appraisal_detail' s.id %}">
+                  <i class="fas fa-eye"></i>
+                  View
+                </a>
+              </td>
             </tr>
           {% empty %}
-            <tr><td colspan="6">No submissions.</td></tr>
+            <tr>
+              <td colspan="6">
+                <div class="empty-state">No submissions.</div>
+              </td>
+            </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
-  </div>
+  </section>
 </div>
 {% endblock %}

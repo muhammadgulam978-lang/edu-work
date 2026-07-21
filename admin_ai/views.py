@@ -62,6 +62,8 @@ def admin_ai_copilot(request):
 @require_POST
 def admin_ai_copilot_message(request):
     question = request.POST.get("message", "").strip()
+    if not question:
+        return JsonResponse({"error": "Enter a question for EduPilot AI Copilot."}, status=400)
     conversation_id = request.POST.get("conversation_id")
     conversation = AdminAIConversation.objects.filter(id=conversation_id, created_by=request.user).first()
     if not conversation:

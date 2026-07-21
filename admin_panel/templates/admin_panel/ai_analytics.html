@@ -5,886 +5,174 @@
 {% block page_title %}AI Analytics{% endblock %}
 
 {% block content %}
-<style>
-    .ai-analytics-page {
-        --ai-teal: #88D0C5;
-        --ai-green: #8BC740;
-        --ai-blue: #6EA8FE;
-        --ai-bg: #f5f5f5;
-        --ai-soft: #F5F5FD;
-        --ai-mint: #DDF7F2;
-        --ai-border: #e9ecef;
-        --ai-warning: #FFF4E5;
-        --ai-danger: #FFEDEA;
-        --ai-text: #111;
-        --ai-muted: #6c757d;
-        padding: 24px;
-        background: var(--ai-bg);
-        color: var(--ai-text);
-    }
+<link rel="stylesheet" href="{% static 'admin_panel/css/ai-graphs.css' %}?v=ai-graphs-2">
+<link rel="stylesheet" href="{% static 'admin_panel/css/ai-overview.css' %}?v=ai-overview-1">
 
-    .ai-page-hero,
-    .ai-card,
-    .ai-copilot,
-    .ai-alert-card {
-        background: #fff;
-        border: 1px solid var(--ai-border);
-        border-radius: 14px;
-        box-shadow: 0 3px 12px rgba(0, 0, 0, .05);
-    }
-
-    .ai-page-hero {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
-        gap: 18px;
-        align-items: center;
-        padding: 22px 24px;
-        margin-bottom: 22px;
-        background: linear-gradient(135deg, var(--ai-mint), #fff);
-    }
-
-    .ai-page-hero h2,
-    .ai-section-title,
-    .ai-card h4,
-    .ai-copilot h3 {
-        font-weight: 500;
-        letter-spacing: 0;
-        margin: 0;
-    }
-
-    .ai-page-hero p,
-    .ai-card p,
-    .ai-copilot p,
-    .ai-alert-card p {
-        color: var(--ai-muted);
-        font-weight: 400;
-        margin: 6px 0 0;
-    }
-
-    .ai-live-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 10px 14px;
-        border-radius: 999px;
-        background: rgba(136, 208, 197, .22);
-        border: 1px solid rgba(136, 208, 197, .45);
-        font-size: 14px;
-        font-weight: 500;
-        color: #111;
-    }
-
-    .ai-grid {
-        display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 18px;
-        margin-bottom: 22px;
-    }
-
-    .ai-card {
-        padding: 20px;
-        min-height: 166px;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .ai-card-tone-teal { background: linear-gradient(135deg, var(--ai-mint), #fff); border-color: rgba(136, 208, 197, .55); }
-    .ai-card-tone-green { background: linear-gradient(135deg, #EEF9E5, #fff); border-color: rgba(139, 199, 64, .48); }
-    .ai-card-tone-blue { background: linear-gradient(135deg, #eef5ff, #fff); border-color: rgba(110, 168, 254, .35); }
-    .ai-card-tone-warning { background: linear-gradient(135deg, var(--ai-warning), #fff); border-color: rgba(255, 186, 92, .45); }
-    .ai-card-tone-danger { background: linear-gradient(135deg, var(--ai-danger), #fff); border-color: rgba(255, 77, 61, .25); }
-
-    .ai-icon-circle {
-        width: 46px;
-        height: 46px;
-        border-radius: 999px;
-        background: rgba(255, 255, 255, .68);
-        border: 1px solid rgba(255, 255, 255, .8);
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 18px;
-        color: #111;
-        font-size: 18px;
-    }
-
-    .ai-kpi-value {
-        font-size: 36px;
-        line-height: 1;
-        font-weight: 500;
-        margin-top: 14px;
-    }
-
-    .ai-layout {
-        display: grid;
-        grid-template-columns: minmax(0, 1.4fr) minmax(320px, .8fr);
-        gap: 20px;
-        margin-bottom: 22px;
-    }
-
-    .ai-copilot {
-        padding: 22px;
-        background: linear-gradient(135deg, #fff, var(--ai-soft));
-    }
-
-    .ai-command-row {
-        display: flex;
-        gap: 12px;
-        margin-top: 18px;
-    }
-
-    .ai-command-row input {
-        flex: 1;
-        min-height: 48px;
-        border: 1px solid #dde3e8;
-        border-radius: 12px;
-        padding: 0 16px;
-        font: inherit;
-        outline: none;
-        background: #fff;
-    }
-
-    .ai-command-row input:focus {
-        border-color: var(--ai-teal);
-        box-shadow: 0 0 0 4px rgba(136, 208, 197, .18);
-    }
-
-    .ai-btn {
-        border: 0;
-        border-radius: 12px;
-        padding: 12px 18px;
-        background: var(--ai-teal);
-        color: #111;
-        font-weight: 500;
-        text-decoration: none;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        min-height: 44px;
-        cursor: pointer;
-    }
-
-    .ai-chip-row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        margin-top: 18px;
-    }
-
-    .ai-chip {
-        border: 1px solid var(--ai-border);
-        background: rgba(255, 255, 255, .72);
-        color: #111;
-        border-radius: 999px;
-        padding: 8px 12px;
-        font-size: 13px;
-        font-weight: 400;
-        cursor: pointer;
-    }
-
-    .ai-panel {
-        padding: 22px;
-        background: var(--ai-mint);
-        border: 1px solid rgba(136, 208, 197, .42);
-        border-radius: 14px;
-        min-height: 100%;
-    }
-
-    .ai-mini-grid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 12px;
-        margin-top: 18px;
-    }
-
-    .ai-mini-box {
-        padding: 14px;
-        background: rgba(255, 255, 255, .75);
-        border: 1px solid rgba(255, 255, 255, .88);
-        border-radius: 12px;
-    }
-
-    .ai-mini-value {
-        display: block;
-        font-size: 26px;
-        font-weight: 500;
-    }
-
-    .ai-module-grid {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 18px;
-        margin-bottom: 22px;
-    }
-
-    .ai-status-pill {
-        position: absolute;
-        top: 18px;
-        right: 18px;
-        padding: 6px 12px;
-        border-radius: 999px;
-        background: rgba(139, 199, 64, .16);
-        color: #4f7f14;
-        border: 1px solid rgba(139, 199, 64, .35);
-        font-size: 13px;
-        font-weight: 500;
-    }
-
-    .ai-status-review {
-        background: #fff0e5;
-        color: #b85521;
-        border-color: rgba(255, 143, 74, .45);
-    }
-
-    .ai-metric-pair {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 12px;
-        margin: 18px 0;
-    }
-
-    .ai-alerts-trends {
-        display: grid;
-        grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr);
-        gap: 20px;
-    }
-
-    .ai-alert-card,
-    .ai-trend-card {
-        padding: 18px;
-        margin-bottom: 12px;
-    }
-
-    .ai-priority {
-        display: inline-block;
-        padding: 5px 10px;
-        border-radius: 999px;
-        background: var(--ai-soft);
-        font-size: 12px;
-        margin-top: 10px;
-    }
-
-    .ai-trend-row {
-        margin: 16px 0;
-    }
-
-    .ai-trend-top {
-        display: flex;
-        justify-content: space-between;
-        gap: 12px;
-        font-size: 14px;
-    }
-
-    .ai-bar {
-        height: 10px;
-        border-radius: 999px;
-        background: #edf0f3;
-        overflow: hidden;
-        margin-top: 8px;
-    }
-
-    .ai-bar span {
-        display: block;
-        height: 100%;
-        border-radius: inherit;
-        background: var(--ai-teal);
-    }
-
-    .ai-bar-green span { background: var(--ai-green); }
-    .ai-bar-warning span { background: #f5b461; }
-    .ai-bar-danger span { background: #ff7a68; }
-
-    .ai-actions {
-        display: grid;
-        grid-template-columns: repeat(6, minmax(0, 1fr));
-        gap: 12px;
-        margin-top: 16px;
-    }
-
-    .ai-action-link {
-        min-height: 82px;
-        padding: 14px;
-        text-align: center;
-        background: #fff;
-        border: 1px solid var(--ai-border);
-        border-radius: 12px;
-        color: #111;
-        text-decoration: none;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        font-weight: 400;
-    }
-
-    .ai-chart-grid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 18px;
-        margin-bottom: 22px;
-    }
-
-    .ai-chart-card {
-        background: #fff;
-        border: 1px solid var(--ai-border);
-        border-radius: 14px;
-        box-shadow: 0 3px 12px rgba(0, 0, 0, .05);
-        padding: 20px;
-        min-width: 0;
-    }
-
-    .ai-chart-card-wide {
-        grid-column: span 2;
-    }
-
-    .ai-chart-head {
-        display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        gap: 14px;
-        margin-bottom: 16px;
-    }
-
-    .ai-chart-head h3 {
-        margin: 0;
-        font-size: 20px;
-        font-weight: 500;
-    }
-
-    .ai-chart-head p {
-        margin: 5px 0 0;
-        color: var(--ai-muted);
-        font-weight: 400;
-    }
-
-    .ai-chart-tools {
-        display: inline-flex;
-        gap: 6px;
-        padding: 5px;
-        background: var(--ai-soft);
-        border: 1px solid var(--ai-border);
-        border-radius: 999px;
-        white-space: nowrap;
-    }
-
-    .ai-chart-tools span {
-        padding: 5px 10px;
-        border-radius: 999px;
-        font-size: 12px;
-        color: var(--ai-muted);
-    }
-
-    .ai-chart-tools span.active {
-        background: var(--ai-teal);
-        color: #111;
-    }
-
-    .ai-chart-box {
-        position: relative;
-        min-height: 280px;
-    }
-
-    .ai-chart-box canvas {
-        width: 100% !important;
-        max-height: 300px;
-    }
-
-    .ai-chart-card-small .ai-chart-box {
-        min-height: 235px;
-    }
-
-    @media (max-width: 1200px) {
-        .ai-grid,
-        .ai-module-grid,
-        .ai-chart-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-        .ai-actions { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-    }
-
-    @media (max-width: 768px) {
-        .ai-page-hero,
-        .ai-layout,
-        .ai-alerts-trends { grid-template-columns: 1fr; }
-        .ai-grid,
-        .ai-module-grid,
-        .ai-chart-grid,
-        .ai-actions { grid-template-columns: 1fr; }
-        .ai-chart-card-wide { grid-column: span 1; }
-        .ai-command-row { flex-direction: column; }
-    }
-</style>
-
-<div class="ai-analytics-page" data-ai-analytics-page>
-    <section class="ai-page-hero">
+<main class="ai-overview-page" data-ai-overview
+      data-analytics-url="{% url 'ai_analytics_data' %}"
+      data-copilot-url="{% url 'admin_ai_copilot_message' %}">
+    <header class="ai-overview-heading">
         <div>
-            <h2>AI Analytics & School Intelligence</h2>
-            <p>Executive-level insights, live ERP signals, risk alerts, and AI-ready command workflows.</p>
+            <span class="ai-eyebrow">School Intelligence</span>
+            <h1>AI Analytics Overview</h1>
+            <p>Live ERP signals, operational risk, and evidence-based command workflows.</p>
         </div>
-        <span class="ai-live-pill">
-            <i class="fas fa-sync-alt"></i>
-            Live data · <span data-generated-at>{{ ai_analytics.generated_at }}</span>
-        </span>
-    </section>
+        <div class="ai-live-status"><span></span> Live data <strong data-generated-at>{{ ai_analytics.generated_at }}</strong></div>
+    </header>
 
-    <section class="ai-grid" data-kpi-grid>
+    <section class="ai-kpi-grid" data-kpi-grid aria-label="AI analytics key performance indicators">
         {% for kpi in ai_analytics.kpis %}
-        <article class="ai-card ai-card-tone-{{ kpi.tone }}" data-kpi-card="{{ kpi.key }}">
-            <span class="ai-icon-circle"><i class="{{ kpi.icon }}"></i></span>
-            <h4 data-kpi-title>{{ kpi.title }}</h4>
-            <div class="ai-kpi-value" data-kpi-value>{{ kpi.value }}</div>
-            <p data-kpi-label>{{ kpi.label }}</p>
+        <article class="ai-kpi ai-tone-{{ kpi.tone }}" data-kpi-card="{{ kpi.key }}">
+            <span class="ai-icon"><i class="{{ kpi.icon }}"></i></span>
+            <div><span class="ai-label">{{ kpi.title }}</span><strong data-kpi-value>{{ kpi.value }}</strong><small data-kpi-label>{{ kpi.label }}</small></div>
         </article>
         {% endfor %}
     </section>
 
-    <section class="ai-layout">
-        <div class="ai-copilot">
-            <h3>EduPilot AI Copilot</h3>
-            <p>Ask school-wide questions, search ERP records, or prepare reports. This MVP resolves real ERP context and is ready for LLM command execution.</p>
-            <form class="ai-command-row" method="get" action="{% url 'admin_search' %}">
-                <input type="text" name="q" placeholder="Ask: Show attendance today, find a student, compare fees..." aria-label="AI analytics command">
-                <button class="ai-btn" type="submit"><i class="fas fa-search"></i> Run</button>
+    <section class="ai-top-grid">
+        <article class="ai-surface ai-copilot-card">
+            <div class="ai-section-head">
+                <div><h2>EduPilot AI Copilot</h2><p>Ask school-wide questions, search ERP records, or prepare reports.</p></div>
+                <a href="{% url 'admin_ai_copilot' %}" title="Open full AI Copilot"><i class="fas fa-expand-alt"></i></a>
+            </div>
+            <form class="ai-copilot-form" method="post" action="{% url 'admin_ai_copilot_message' %}" data-copilot-form>
+                {% csrf_token %}
+                <input type="hidden" name="conversation_id" value="{{ ai_conversation.id }}">
+                <input type="text" name="message" placeholder="Ask: Show attendance today, find a student, compare fees..." autocomplete="off" aria-label="Ask EduPilot AI Copilot">
+                <button type="submit"><i class="fas fa-paper-plane"></i><span>Run</span></button>
             </form>
-            <div class="ai-chip-row">
+            <div class="ai-copilot-response" data-copilot-response hidden aria-live="polite">
+                <span class="ai-response-icon"><i class="fas fa-brain"></i></span>
+                <div><strong>EduPilot AI</strong><p data-copilot-reply></p><div class="ai-response-actions" data-copilot-actions></div></div>
+            </div>
+            <div class="ai-prompt-row">
                 {% for prompt in ai_analytics.copilot_examples %}
-                    <button class="ai-chip" type="button" data-command="{{ prompt }}">{{ prompt }}</button>
+                <button type="button" data-command="{{ prompt }}">{{ prompt }}</button>
                 {% endfor %}
             </div>
-        </div>
+        </article>
 
-        <aside class="ai-panel">
-            <h3 class="ai-section-title">School Snapshot</h3>
-            <p>Current core records available to the analytics layer.</p>
-            <div class="ai-mini-grid">
-                <div class="ai-mini-box"><span class="ai-mini-value" data-count="students">{{ ai_analytics.counts.students }}</span> Students</div>
-                <div class="ai-mini-box"><span class="ai-mini-value" data-count="teachers">{{ ai_analytics.counts.teachers }}</span> Teachers</div>
-                <div class="ai-mini-box"><span class="ai-mini-value" data-count="classes">{{ ai_analytics.counts.classes }}</span> Classes</div>
-                <div class="ai-mini-box"><span class="ai-mini-value" data-count="subjects">{{ ai_analytics.counts.subjects }}</span> Subjects</div>
+        <aside class="ai-surface ai-snapshot-card">
+            <div class="ai-section-head"><div><h2>School Snapshot</h2><p>Current core records available to the analytics layer.</p></div></div>
+            <div class="ai-snapshot-grid" data-snapshot-grid>
+                {% for item in ai_analytics.snapshot %}
+                <div data-snapshot="{{ item.key }}"><strong>{{ item.value }}</strong><span>{{ item.label }}</span>{% if item.sublabel %}<small>{{ item.sublabel }}</small>{% endif %}</div>
+                {% endfor %}
             </div>
         </aside>
     </section>
 
-    <h3 class="ai-section-title mb-3">Interactive Graphs</h3>
-    <section class="ai-chart-grid">
-        <article class="ai-chart-card ai-chart-card-wide">
-            <div class="ai-chart-head">
-                <div>
-                    <h3>Attendance Intelligence</h3>
-                    <p>Seven-day present, absent, and leave comparison.</p>
-                </div>
-                <div class="ai-chart-tools"><span>Week</span><span class="active">Live</span></div>
-            </div>
-            <div class="ai-chart-box">
-                <canvas id="aiAttendanceChart"></canvas>
-            </div>
-        </article>
+    <form class="ai-filter-bar" id="aiOverviewFilters">
+        <label><span>Date Range</span><select name="period" data-period-select>
+            {% for key,label in period_options %}<option value="{{ key }}" {% if key == "this_month" %}selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select></label>
+        <label><span>Class</span><select name="class_id">
+            <option value="">All Classes</option>
+            {% for class in classes %}<option value="{{ class.id }}">{{ class.class_name }}</option>{% endfor %}
+        </select></label>
+        <label><span>Section</span><select name="section_id">
+            <option value="">All Sections</option>
+            {% for section in sections %}<option value="{{ section.id }}">{{ section.section_name|default:section }}</option>{% endfor %}
+        </select></label>
+        <label><span>Start Date</span><input type="date" name="start_date" data-custom-date></label>
+        <label><span>End Date</span><input type="date" name="end_date" data-custom-date></label>
+        <div class="ai-filter-actions">
+            <button type="submit" class="primary"><i class="fas fa-check"></i> Apply</button>
+            <button type="button" data-filter-reset><i class="fas fa-undo"></i> Reset</button>
+        </div>
+    </form>
 
-        <article class="ai-chart-card">
-            <div class="ai-chart-head">
-                <div>
-                    <h3>Fee Collection Trend</h3>
-                    <p>Monthly billed vs paid amount.</p>
-                </div>
-                <div class="ai-chart-tools"><span>Month</span><span class="active">6M</span></div>
-            </div>
-            <div class="ai-chart-box">
-                <canvas id="aiFeeChart"></canvas>
-            </div>
+    <section class="ai-primary-charts" aria-label="Primary analytics graphs">
+        <article class="ai-chart-panel" id="attendance-intelligence">
+            <div class="ai-section-head"><div><h2>Attendance Intelligence</h2><p>Present, absent, and leave comparison.</p></div><span class="ai-chip-status"><i></i> Live</span></div>
+            <div class="ai-chart-box"><canvas id="aiAttendanceChart"></canvas></div>
         </article>
-
-        <article class="ai-chart-card">
-            <div class="ai-chart-head">
-                <div>
-                    <h3>Admissions Trend</h3>
-                    <p>Monthly admission intake signal.</p>
-                </div>
-                <div class="ai-chart-tools"><span class="active">Trend</span></div>
-            </div>
-            <div class="ai-chart-box">
-                <canvas id="aiAdmissionsChart"></canvas>
-            </div>
+        <article class="ai-chart-panel">
+            <div class="ai-section-head"><div><h2>Fee Collection Trend</h2><p>School-wide billed versus paid amount.</p></div><span class="ai-chart-scope" data-period-label>{{ ai_analytics.meta.period_label }}</span></div>
+            <div class="ai-chart-box"><canvas id="aiFeeChart"></canvas></div>
         </article>
-
-        <article class="ai-chart-card ai-chart-card-small">
-            <div class="ai-chart-head">
-                <div>
-                    <h3>Attendance Mix</h3>
-                    <p>Today’s attendance composition.</p>
-                </div>
-                <div class="ai-chart-tools"><span class="active">Today</span></div>
-            </div>
-            <div class="ai-chart-box">
-                <canvas id="aiAttendanceDonutChart"></canvas>
-            </div>
-        </article>
-
-        <article class="ai-chart-card ai-chart-card-small">
-            <div class="ai-chart-head">
-                <div>
-                    <h3>Teacher Workload</h3>
-                    <p>Top assigned timetable load.</p>
-                </div>
-                <div class="ai-chart-tools"><span class="active">Top 6</span></div>
-            </div>
-            <div class="ai-chart-box">
-                <canvas id="aiWorkloadChart"></canvas>
-            </div>
-        </article>
-
-        <article class="ai-chart-card ai-chart-card-wide">
-            <div class="ai-chart-head">
-                <div>
-                    <h3>Fixture Automation Mix</h3>
-                    <p>Manual vs automated fixture assignments by month.</p>
-                </div>
-                <div class="ai-chart-tools"><span>Manual</span><span class="active">Auto</span></div>
-            </div>
-            <div class="ai-chart-box">
-                <canvas id="aiFixtureMixChart"></canvas>
-            </div>
+        <article class="ai-chart-panel">
+            <div class="ai-section-head"><div><h2>Admissions Trend</h2><p>Admission intake for the selected range.</p></div><span class="ai-chart-scope">Trend</span></div>
+            <div class="ai-chart-box"><canvas id="aiAdmissionsChart"></canvas></div>
         </article>
     </section>
 
-    <h3 class="ai-section-title mb-3">Business Intelligence Modules</h3>
-    <section class="ai-module-grid" data-module-grid>
-        {% for module in ai_analytics.modules %}
-        <article class="ai-card ai-card-tone-{% if module.status == 'Needs Review' %}warning{% else %}teal{% endif %}">
-            <span class="ai-status-pill {% if module.status == 'Needs Review' %}ai-status-review{% endif %}">{{ module.status }}</span>
-            <span class="ai-icon-circle"><i class="{{ module.icon }}"></i></span>
-            <h4>{{ module.title }}</h4>
-            <div class="ai-metric-pair">
-                <div class="ai-mini-box"><span class="ai-mini-value">{{ module.primary_value }}</span>{{ module.primary_label }}</div>
-                <div class="ai-mini-box"><span class="ai-mini-value">{{ module.secondary_value }}</span>{{ module.secondary_label }}</div>
-            </div>
-            <a class="ai-btn" href="{{ module.url }}">Open</a>
-        </article>
-        {% endfor %}
-    </section>
-
-    <section class="ai-alerts-trends">
-        <div>
-            <h3 class="ai-section-title mb-3">AI Alerts</h3>
-            <div data-alert-list>
+    <section class="ai-insights-command-grid">
+        <article class="ai-surface ai-alert-section">
+            <div class="ai-section-head"><div><h2><i class="fas fa-magic"></i> AI Insights &amp; Alerts</h2></div><span data-alert-count>{{ ai_analytics.alerts|length }} live signals</span></div>
+            <div class="ai-alert-grid" data-alert-list>
                 {% for alert in ai_analytics.alerts %}
-                    <article class="ai-alert-card">
-                        <h4>{{ alert.title }}</h4>
-                        <p>{{ alert.detail }}</p>
-                        <span class="ai-priority">{{ alert.priority }}</span>
-                    </article>
+                <a class="ai-alert ai-alert-{{ alert.tone }}" href="{{ alert.url }}"><i class="{{ alert.icon }}"></i><span><strong>{{ alert.title }}</strong><small>{{ alert.detail }}</small><em>{{ alert.action }}</em></span></a>
                 {% endfor %}
             </div>
-        </div>
+        </article>
+        <article class="ai-surface ai-command-section">
+            <div class="ai-section-head"><div><h2>AI Command Center</h2></div></div>
+            <div class="ai-command-grid" data-command-grid>
+                {% for action in ai_analytics.quick_actions %}
+                <a href="{{ action.url }}"><i class="{{ action.icon }}"></i><span>{{ action.title }}</span></a>
+                {% endfor %}
+            </div>
+        </article>
+    </section>
 
-        <div class="ai-card">
-            <h3 class="ai-section-title">Live Trend Signals</h3>
-            <div data-trend-list>
-                {% for trend in ai_analytics.trends %}
-                    <div class="ai-trend-row">
-                        <div class="ai-trend-top">
-                            <span>{{ trend.label }}</span>
-                            <span>{{ trend.value }}</span>
-                        </div>
-                        <div class="ai-bar ai-bar-{{ trend.tone }}">
-                            <span style="width:{% widthratio trend.value trend.max 100 %}%"></span>
-                        </div>
-                    </div>
+    <section class="ai-risk-health-grid">
+        <article class="ai-surface ai-risk-section" id="ai-risk-index">
+            <div class="ai-section-head"><div><h2><i class="fas fa-brain"></i> AI Risk Index</h2><p>Explainable score derived from live operational signals.</p></div><strong class="ai-risk-score" data-risk-score>{{ ai_analytics.risk.score }}</strong></div>
+            <div class="ai-risk-list" data-risk-list>
+                {% for item in ai_analytics.risk.breakdown %}
+                <a href="{{ item.url }}"><i class="{{ item.icon }}"></i><span>{{ item.label }}<small>{{ item.value }} live records</small></span><strong>+{{ item.points }}</strong></a>
                 {% endfor %}
             </div>
+        </article>
+        <article class="ai-surface ai-health-section" id="system-health">
+            <div class="ai-section-head"><div><h2><i class="fas fa-heartbeat"></i> System Health</h2><p>Automation, delivery, and timetable exceptions.</p></div><span class="ai-health-status ai-health-{{ ai_analytics.system_health.tone }}" data-health-status>{{ ai_analytics.system_health.status }}</span></div>
+            <div class="ai-health-grid" data-health-grid>
+                {% for item in ai_analytics.system_health.items %}
+                <a href="{{ item.url }}"><i class="{{ item.icon }}"></i><strong>{{ item.value }}</strong><span>{{ item.label }}</span></a>
+                {% endfor %}
+            </div>
+        </article>
+    </section>
+
+    <section class="ai-secondary-section">
+        <div class="ai-block-heading"><div><span class="ai-eyebrow">More Intelligence</span><h2>Additional Live Graphs</h2></div><p>No existing graph has been removed.</p></div>
+        <div class="ai-secondary-charts">
+            <article class="ai-chart-panel"><div class="ai-section-head"><div><h2>Attendance Mix</h2><p>Today's attendance composition.</p></div></div><div class="ai-chart-box"><canvas id="aiAttendanceDonutChart"></canvas></div></article>
+            <article class="ai-chart-panel"><div class="ai-section-head"><div><h2>Teacher Workload</h2><p>Top six assigned timetable loads.</p></div></div><div class="ai-chart-box"><canvas id="aiWorkloadChart"></canvas></div></article>
+            <article class="ai-chart-panel"><div class="ai-section-head"><div><h2>Fixture Automation Mix</h2><p>Manual versus automated assignments.</p></div></div><div class="ai-chart-box"><canvas id="aiFixtureMixChart"></canvas></div></article>
         </div>
     </section>
 
-    <section class="ai-card mt-4">
-        <h3 class="ai-section-title">AI Command Center</h3>
-        <div class="ai-actions">
-            {% for action in ai_analytics.quick_actions %}
-                <a class="ai-action-link" href="{{ action.url }}">
-                    <i class="{{ action.icon }}"></i>
-                    <span>{{ action.title }}</span>
-                </a>
+    <section class="ai-module-section">
+        <div class="ai-block-heading"><div><span class="ai-eyebrow">Live Modules</span><h2>Business Intelligence Modules</h2></div></div>
+        <div class="ai-module-grid" data-module-grid>
+            {% for module in ai_analytics.modules %}
+            <article class="ai-module-card">
+                <div class="ai-module-title"><span><i class="{{ module.icon }}"></i></span><div><h3>{{ module.title }}</h3><small class="{% if module.status == 'Needs Review' %}review{% endif %}">{{ module.status }}</small></div></div>
+                <div class="ai-module-values"><div><strong>{{ module.primary_value }}</strong><span>{{ module.primary_label }}</span></div><div><strong>{{ module.secondary_value }}</strong><span>{{ module.secondary_label }}</span></div></div>
+                <a href="{{ module.url }}">Open module <i class="fas fa-arrow-right"></i></a>
+            </article>
             {% endfor %}
         </div>
     </section>
-</div>
 
-{{ ai_analytics.charts|json_script:"ai-analytics-chart-data" }}
+    <section class="ai-surface ai-trend-section">
+        <div class="ai-section-head"><div><h2>Live Trend Signals</h2><p>Current operational proportions from the same live records.</p></div></div>
+        <div class="ai-trend-grid" data-trend-list>
+            {% for trend in ai_analytics.trends %}
+            <div class="ai-trend"><div><span>{{ trend.label }}</span><strong>{{ trend.value }}</strong></div><div class="ai-progress ai-progress-{{ trend.tone }}"><span style="width:{% widthratio trend.value trend.max 100 %}%"></span></div></div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <div class="ai-page-state ai-page-loading" data-page-loading hidden><i class="fas fa-circle-notch fa-spin"></i> Refreshing live intelligence...</div>
+    <div class="ai-page-state ai-page-error" data-page-error hidden role="alert"></div>
+</main>
+
+{{ ai_analytics|json_script:"ai-overview-data" }}
 <script src="{% static 'admin_panel/vendor/chart.js/Chart.bundle.min.js' %}"></script>
-<script>
-    (function () {
-        const page = document.querySelector('[data-ai-analytics-page]');
-        if (!page) return;
-        const chartState = {};
-        const chartColors = {
-            teal: '#88D0C5',
-            green: '#8BC740',
-            blue: '#6EA8FE',
-            warning: '#f5b461',
-            danger: '#ff7a68',
-            soft: '#F5F5FD',
-            muted: '#6c757d',
-            text: '#111111'
-        };
-
-        page.querySelectorAll('[data-command]').forEach((button) => {
-            button.addEventListener('click', () => {
-                const input = page.querySelector('input[name="q"]');
-                const form = button.closest('.ai-copilot')?.querySelector('form');
-                if (input) {
-                    input.value = button.dataset.command || '';
-                    input.focus();
-                }
-                if (form && typeof form.requestSubmit === 'function') {
-                    form.requestSubmit();
-                } else if (form) {
-                    form.submit();
-                }
-            });
-        });
-
-        function readInitialCharts() {
-            const node = document.getElementById('ai-analytics-chart-data');
-            if (!node) return {};
-            try {
-                return JSON.parse(node.textContent || '{}');
-            } catch (error) {
-                return {};
-            }
-        }
-
-        function chartOptions(extra) {
-            const base = {
-                responsive: true,
-                maintainAspectRatio: false,
-                legend: {
-                    labels: {
-                        fontColor: chartColors.muted,
-                        fontStyle: 'normal',
-                        usePointStyle: true,
-                        boxWidth: 8
-                    }
-                },
-                tooltips: {
-                    backgroundColor: 'rgba(17,17,17,.86)',
-                    titleFontStyle: 'normal',
-                    bodyFontStyle: 'normal',
-                    cornerRadius: 8
-                },
-                scales: {
-                    xAxes: [{
-                        gridLines: { color: 'rgba(0,0,0,.05)', drawBorder: false },
-                        ticks: { fontColor: chartColors.muted }
-                    }],
-                    yAxes: [{
-                        gridLines: { color: 'rgba(0,0,0,.05)', drawBorder: false },
-                        ticks: { fontColor: chartColors.muted, beginAtZero: true }
-                    }]
-                }
-            };
-            return Object.assign({}, base, extra || {});
-        }
-
-        function makeChart(id, config) {
-            const canvas = document.getElementById(id);
-            if (!canvas || typeof Chart === 'undefined') return;
-            if (chartState[id]) {
-                chartState[id].destroy();
-            }
-            chartState[id] = new Chart(canvas.getContext('2d'), config);
-        }
-
-        function renderCharts(charts) {
-            if (!charts || typeof Chart === 'undefined') return;
-
-            makeChart('aiAttendanceChart', {
-                type: 'bar',
-                data: {
-                    labels: charts.attendance?.labels || [],
-                    datasets: [
-                        { label: 'Present', data: charts.attendance?.present || [], backgroundColor: chartColors.green, borderWidth: 0 },
-                        { label: 'Absent', data: charts.attendance?.absent || [], backgroundColor: chartColors.danger, borderWidth: 0 },
-                        { label: 'Leave', data: charts.attendance?.leave || [], backgroundColor: chartColors.warning, borderWidth: 0 }
-                    ]
-                },
-                options: chartOptions({
-                    scales: {
-                        xAxes: [{ stacked: true, gridLines: { color: 'rgba(0,0,0,.04)', drawBorder: false }, ticks: { fontColor: chartColors.muted } }],
-                        yAxes: [{ stacked: true, gridLines: { color: 'rgba(0,0,0,.05)', drawBorder: false }, ticks: { fontColor: chartColors.muted, beginAtZero: true } }]
-                    }
-                })
-            });
-
-            makeChart('aiFeeChart', {
-                type: 'line',
-                data: {
-                    labels: charts.fees?.labels || [],
-                    datasets: [
-                        {
-                            label: 'Billed',
-                            data: charts.fees?.total || [],
-                            borderColor: chartColors.blue,
-                            backgroundColor: 'rgba(110,168,254,.12)',
-                            pointBackgroundColor: chartColors.blue,
-                            borderWidth: 2,
-                            fill: true,
-                            lineTension: .32
-                        },
-                        {
-                            label: 'Paid',
-                            data: charts.fees?.paid || [],
-                            borderColor: chartColors.green,
-                            backgroundColor: 'rgba(139,199,64,.12)',
-                            pointBackgroundColor: chartColors.green,
-                            borderWidth: 2,
-                            fill: true,
-                            lineTension: .32
-                        }
-                    ]
-                },
-                options: chartOptions()
-            });
-
-            makeChart('aiAdmissionsChart', {
-                type: 'bar',
-                data: {
-                    labels: charts.admissions?.labels || [],
-                    datasets: [{
-                        label: 'Admissions',
-                        data: charts.admissions?.values || [],
-                        backgroundColor: chartColors.teal,
-                        borderColor: '#66bfb1',
-                        borderWidth: 1
-                    }]
-                },
-                options: chartOptions({ legend: { display: false } })
-            });
-
-            makeChart('aiAttendanceDonutChart', {
-                type: 'doughnut',
-                data: {
-                    labels: charts.attendance_donut?.labels || [],
-                    datasets: [{
-                        data: charts.attendance_donut?.values || [],
-                        backgroundColor: [chartColors.green, chartColors.danger, chartColors.warning],
-                        borderColor: '#fff',
-                        borderWidth: 3
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    legend: {
-                        labels: {
-                            fontColor: chartColors.muted,
-                            fontStyle: 'normal',
-                            usePointStyle: true,
-                            boxWidth: 8
-                        }
-                    },
-                    tooltips: {
-                        backgroundColor: 'rgba(17,17,17,.86)',
-                        titleFontStyle: 'normal',
-                        bodyFontStyle: 'normal',
-                        cornerRadius: 8
-                    },
-                    cutoutPercentage: 68,
-                }
-            });
-
-            makeChart('aiWorkloadChart', {
-                type: 'horizontalBar',
-                data: {
-                    labels: charts.teacher_workload?.labels || [],
-                    datasets: [{
-                        label: 'Assigned Periods',
-                        data: charts.teacher_workload?.values || [],
-                        backgroundColor: chartColors.blue,
-                        borderWidth: 0
-                    }]
-                },
-                options: chartOptions({ legend: { display: false } })
-            });
-
-            makeChart('aiFixtureMixChart', {
-                type: 'bar',
-                data: {
-                    labels: charts.fixture_mix?.labels || [],
-                    datasets: [
-                        { label: 'Manual', data: charts.fixture_mix?.manual || [], backgroundColor: chartColors.warning, borderWidth: 0 },
-                        { label: 'Automated', data: charts.fixture_mix?.auto || [], backgroundColor: chartColors.teal, borderWidth: 0 }
-                    ]
-                },
-                options: chartOptions({
-                    scales: {
-                        xAxes: [{ stacked: true, gridLines: { color: 'rgba(0,0,0,.04)', drawBorder: false }, ticks: { fontColor: chartColors.muted } }],
-                        yAxes: [{ stacked: true, gridLines: { color: 'rgba(0,0,0,.05)', drawBorder: false }, ticks: { fontColor: chartColors.muted, beginAtZero: true } }]
-                    }
-                })
-            });
-        }
-
-        function renderKpis(kpis) {
-            const grid = page.querySelector('[data-kpi-grid]');
-            if (!grid || !Array.isArray(kpis)) return;
-            grid.innerHTML = kpis.map((kpi) => `
-                <article class="ai-card ai-card-tone-${kpi.tone}" data-kpi-card="${kpi.key}">
-                    <span class="ai-icon-circle"><i class="${kpi.icon}"></i></span>
-                    <h4>${kpi.title}</h4>
-                    <div class="ai-kpi-value">${kpi.value}</div>
-                    <p>${kpi.label}</p>
-                </article>
-            `).join('');
-        }
-
-        function renderAlerts(alerts) {
-            const list = page.querySelector('[data-alert-list]');
-            if (!list || !Array.isArray(alerts)) return;
-            list.innerHTML = alerts.map((alert) => `
-                <article class="ai-alert-card">
-                    <h4>${alert.title}</h4>
-                    <p>${alert.detail}</p>
-                    <span class="ai-priority">${alert.priority}</span>
-                </article>
-            `).join('');
-        }
-
-        function renderTrends(trends) {
-            const list = page.querySelector('[data-trend-list]');
-            if (!list || !Array.isArray(trends)) return;
-            list.innerHTML = trends.map((trend) => {
-                const max = Number(trend.max) || 1;
-                const value = Number(trend.value) || 0;
-                const width = Math.max(0, Math.min(100, (value / max) * 100));
-                return `
-                    <div class="ai-trend-row">
-                        <div class="ai-trend-top"><span>${trend.label}</span><span>${trend.value}</span></div>
-                        <div class="ai-bar ai-bar-${trend.tone}"><span style="width:${width}%"></span></div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function refreshAnalytics() {
-            fetch("{% url 'ai_analytics_data' %}", {headers: {'X-Requested-With': 'XMLHttpRequest'}})
-                .then((response) => response.ok ? response.json() : Promise.reject())
-                .then((data) => {
-                    const generatedAt = page.querySelector('[data-generated-at]');
-                    if (generatedAt) generatedAt.textContent = data.generated_at || generatedAt.textContent;
-                    renderKpis(data.kpis);
-                    renderAlerts(data.alerts);
-                    renderTrends(data.trends);
-                    renderCharts(data.charts);
-                    if (data.counts) {
-                        Object.keys(data.counts).forEach((key) => {
-                            const node = page.querySelector(`[data-count="${key}"]`);
-                            if (node) node.textContent = data.counts[key];
-                        });
-                    }
-                })
-                .catch(() => {});
-        }
-
-        renderCharts(readInitialCharts());
-        window.setInterval(refreshAnalytics, 30000);
-    })();
-</script>
+<script src="{% static 'admin_panel/js/ai-graphs.js' %}?v=ai-graphs-2"></script>
+<script src="{% static 'admin_panel/js/ai-overview.js' %}?v=ai-overview-1"></script>
+{% include "admin_ai/includes/auto_report_modal.html" %}
 {% endblock %}

@@ -3,49 +3,51 @@
 
 {% block title %}Period List{% endblock %}
 
-{% block content %}
-<div class="card" style="margin-left:20px; margin-right:20px; background-color: #ffffff">
-  <div class="card-header d-flex justify-content-between align-items-center">
-    <h4 class="card-title">All Periods</h4>
-    <a href="{% url 'create_period' %}" class="btn btn-primary btn-sm">
-      <i class="fas fa-plus"></i> Add New
-    </a>
-  </div>
+{% block head %}
+<link rel="stylesheet" href="{% static 'admin_panel/css/academics_gateway.css' %}">
+{% endblock %}
 
-  <div class="card-body">
-    {% if periods %}
-      <div class="table-responsive">
+{% block content %}
+<div class="academics-gateway">
+  <div class="ag-card">
+    <div class="ag-header">
+      <div>
+        <p class="ag-kicker">Timetable Automation</p>
+        <h4 class="ag-title">All Periods</h4>
+        <p class="ag-subtitle">Manage the daily period slots used by timetable assignment.</p>
+      </div>
+      <a href="{% url 'create_period' %}" class="ag-btn ag-btn-primary"><i class="fas fa-plus"></i> Add New</a>
+    </div>
+
+    <div class="ag-body">
+      <div class="ag-table-wrap">
         <table class="table table-responsive-md">
           <thead>
             <tr>
-              <th><strong>#</strong></th>
-              <th><strong>Period</strong></th>
-              <th><strong>Actions</strong></th>
+              <th>#</th>
+              <th>Period</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {% for period in periods %}
-              <tr>
-                <td><strong>{{ forloop.counter|stringformat:"02d" }}</strong></td>
-                <td>{{ period }}</td>
-                <td>
-                  <div class="d-flex">
-                    <a href="{% url 'update_period' period.pk %}" class="btn btn-primary shadow btn-xs sharp me-1" title="Edit">
-                      <i class="fas fa-pencil-alt"></i>
-                    </a>
-                    <a href="{% url 'delete_period' period.pk %}" class="btn btn-danger shadow btn-xs sharp" title="Delete">
-                      <i class="fa fa-trash"></i>
-                    </a>
-                  </div>
-                </td>
-              </tr>
+            <tr>
+              <td>{{ forloop.counter|stringformat:"02d" }}</td>
+              <td>{{ period }}</td>
+              <td>
+                <div class="ag-inline-actions">
+                  <a href="{% url 'update_period' period.pk %}" class="ag-btn ag-icon-btn ag-btn-primary" title="Edit"><i class="fas fa-pencil-alt"></i></a>
+                  <a href="{% url 'delete_period' period.pk %}" class="ag-btn ag-icon-btn ag-btn-danger" title="Delete"><i class="fa fa-trash"></i></a>
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="3" class="ag-empty">No periods found.</td></tr>
             {% endfor %}
           </tbody>
         </table>
       </div>
-    {% else %}
-      <p class="text-center text-muted mt-3">No periods found.</p>
-    {% endif %}
+    </div>
   </div>
 </div>
 {% endblock %}
