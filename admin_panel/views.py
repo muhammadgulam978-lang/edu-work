@@ -1198,7 +1198,7 @@ def _reference_bucket_key(value, mode):
 def build_reference_dashboard_data(period="last_7_days", start_date=None, end_date=None):
     from collections import defaultdict
     from datetime import timedelta
-    from django.db.models import Count, Q, Sum
+    from django.db.models import Count, F, Q, Sum
     from django.db.models.functions import TruncDate
     from django.utils import timezone
     from student_profile.models import Student as PortalStudent
@@ -1320,8 +1320,13 @@ def build_reference_dashboard_data(period="last_7_days", start_date=None, end_da
     inventory_items = list(InventoryItem.objects.filter(status="active").only("quantity", "reorder_level"))
     low_stock = sum(1 for item in inventory_items if item.quantity <= item.reorder_level)
     procurement_value = sum_value(PurchaseRequest.objects.filter(created_at__date__range=(start, end), status__in=["approved", "ordered", "received"]), "estimated_cost")
-    received_requests = PurchaseRequest.objects.filter(created_at__date__range=(start, end), status="received").count()
+    received_in_range = PurchaseRequest.objects.filter(received_on__range=(start, end), status="received")
+    received_requests = received_in_range.count()
+    on_time_deliveries = received_in_range.filter(needed_by__isnull=False, received_on__lte=F("needed_by")).count()
+    late_deliveries = received_in_range.filter(needed_by__isnull=False, received_on__gt=F("needed_by")).count()
+    unclassified_deliveries = received_in_range.filter(needed_by__isnull=True).count()
     overdue_requests = PurchaseRequest.objects.filter(needed_by__lt=today).exclude(status__in=["received", "rejected"]).count()
+    delayed_deliveries = late_deliveries + overdue_requests
     procurement_rows = PurchaseRequest.objects.filter(created_at__date__range=(start, end), status__in=["approved", "ordered", "received"]).annotate(day=TruncDate("created_at")).values("day").annotate(total=Sum("estimated_cost"))
     procurement_series = values_for_buckets(procurement_rows, "day", "total")
 
@@ -1415,7 +1420,14 @@ def build_reference_dashboard_data(period="last_7_days", start_date=None, end_da
                 {"label": "Low Stock Items", "value": low_stock},
             ],
             "chart": {"labels": chart_labels, "spend": procurement_series},
-            "summary": {"value": _reference_money(procurement_value), "received": received_requests, "overdue": overdue_requests},
+            "summary": {
+                "value": _reference_money(procurement_value),
+                "received": received_requests,
+                "on_time": on_time_deliveries,
+                "delayed": delayed_deliveries,
+                "unclassified": unclassified_deliveries,
+                "overdue": overdue_requests,
+            },
             "primary_url": _safe_reverse("operation_procurement_dashboard"), "report_url": _safe_reverse("operation_purchase_request_list"),
         },
         "fleet": {
@@ -6397,8 +6409,8 @@ def _operation_configs():
             "subtitle": "Track requested purchases from approval to receipt.", "icon": "fa-clipboard-list",
             "list_url": "operation_purchase_request_list", "create_url": "operation_purchase_request_create",
             "edit_url": "operation_purchase_request_edit", "delete_url": "operation_purchase_request_delete",
-            "headers": ["Request", "Category", "Priority", "Estimated Cost", "Needed By", "Status"],
-            "cells": lambda obj: [obj.title, str(obj.category or "-"), obj.get_priority_display(), f"PKR {obj.estimated_cost:,.2f}", obj.needed_by.strftime("%d %b %Y") if obj.needed_by else "-", obj.get_status_display()],
+            "headers": ["Request", "Category", "Priority", "Estimated Cost", "Needed By", "Received On", "Status"],
+            "cells": lambda obj: [obj.title, str(obj.category or "-"), obj.get_priority_display(), f"PKR {obj.estimated_cost:,.2f}", obj.needed_by.strftime("%d %b %Y") if obj.needed_by else "-", obj.received_on.strftime("%d %b %Y") if obj.received_on else "-", obj.get_status_display()],
             "search": ["title", "description", "category__name", "vendor__name"],
             "select_related": ["category", "vendor", "requested_by"],
         },
@@ -6500,8 +6512,11 @@ def _operation_save(request, key, pk=None):
     form = config["form"](request.POST or None, instance=instance)
     if request.method == "POST" and form.is_valid():
         obj = form.save(commit=False)
-        if key == "purchase_request" and not obj.requested_by_id:
-            obj.requested_by = request.user
+        if key == "purchase_request":
+            if not obj.requested_by_id:
+                obj.requested_by = request.user
+            if obj.status == "received" and not obj.received_on:
+                obj.received_on = timezone.localdate()
         if key == "stock_movement" and not obj.created_by_id:
             obj.created_by = request.user
         obj.save()

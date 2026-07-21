@@ -1,4 +1,4 @@
-from datetime import date, time
+from datetime import date, time, timedelta
 from decimal import Decimal
 
 from django.contrib.auth.models import User
@@ -11,7 +11,7 @@ from edupilot_core.models import FeeVoucher, Student as FinanceStudent, StudentL
 from student_profile.models import Student as PortalStudent
 from teacher_dashboard.models import Attendance, Teacher as PortalTeacher
 
-from .models import TransportRoute, TransportTrip, Vehicle
+from .models import PurchaseRequest, TransportRoute, TransportTrip, Vehicle, VehicleMaintenance
 from .views import build_reference_dashboard_data
 
 
@@ -103,3 +103,40 @@ class LiveReferenceDashboardTests(TestCase):
         self.assertEqual(kpis["students"]["value"], 0)
         self.assertEqual(kpis["vehicles"]["value"], 0)
         self.assertEqual(payload["fleet"]["routes"], [])
+
+    def test_reference_graphs_use_live_finance_procurement_and_fleet_data(self):
+        today = timezone.localdate()
+        PurchaseRequest.objects.create(
+            title="On-time books", needed_by=today,
+            received_on=today, estimated_cost=Decimal("1200"), status="received",
+        )
+        PurchaseRequest.objects.create(
+            title="Late supplies", needed_by=today - timedelta(days=1),
+            received_on=today, estimated_cost=Decimal("800"), status="received",
+        )
+        route = TransportRoute.objects.create(route_name="Live Route", amount=Decimal("1500"))
+        vehicle = Vehicle.objects.create(vehicle_no="GRAPH-BUS-1", capacity=40, status="maintenance")
+        TransportTrip.objects.create(
+            route=route, vehicle=vehicle, service_date=today,
+            scheduled_departure=time(7, 30), actual_departure=time(7, 35),
+            students_transported=32, status="delayed",
+        )
+        VehicleMaintenance.objects.create(
+            vehicle=vehicle, maintenance_type="Service", service_date=today, status="scheduled",
+        )
+
+        payload = build_reference_dashboard_data(period="today")
+        self.assertEqual(payload["procurement"]["summary"]["on_time"], 1)
+        self.assertEqual(payload["procurement"]["summary"]["delayed"], 1)
+        self.assertEqual(payload["procurement"]["chart"]["spend"], [2000.0])
+        self.assertEqual(payload["fleet"]["metrics"][2]["value"], 32)
+        self.assertEqual(payload["fleet"]["metrics"][3]["value"], 1)
+        self.assertEqual(payload["fleet"]["routes"][0]["status"], "Delayed")
+
+    def test_dashboard_renders_all_reference_graph_surfaces(self):
+        response = self.client.get(reverse("admin_panel_dashboard"))
+        self.assertContains(response, 'id="academicsChart"')
+        self.assertContains(response, 'id="hrChart"')
+        self.assertContains(response, 'id="financeChart"')
+        self.assertContains(response, 'id="procurementChart"')
+        self.assertContains(response, "data-fleet-summary", html=False)

@@ -61,6 +61,34 @@
     }
   }
 
+  function compactNumber(value) {
+    var number = Number(value || 0);
+    if (Math.abs(number) >= 1000000) return (number / 1000000).toFixed(number % 1000000 ? 1 : 0) + "M";
+    if (Math.abs(number) >= 1000) return (number / 1000).toFixed(number % 1000 ? 1 : 0) + "K";
+    return String(Math.round(number * 10) / 10);
+  }
+
+  var valueLabelPlugin = {
+    afterDatasetsDraw: function (chart) {
+      var ctx = chart.ctx;
+      ctx.save();
+      ctx.font = "600 8px sans-serif";
+      ctx.textAlign = "center";
+      chart.data.datasets.forEach(function (dataset, datasetIndex) {
+        var meta = chart.getDatasetMeta(datasetIndex);
+        if (meta.hidden) return;
+        meta.data.forEach(function (element, index) {
+          var raw = Number(dataset.data[index] || 0);
+          if (!raw) return;
+          var position = element.tooltipPosition();
+          ctx.fillStyle = dataset.borderColor || dataset.backgroundColor || "#42514d";
+          ctx.fillText((dataset.valueSuffix ? compactNumber(raw) + dataset.valueSuffix : compactNumber(raw)), position.x, position.y - 7);
+        });
+      });
+      ctx.restore();
+    }
+  };
+
   function lineChart(key, canvasId, labels, datasets, yPercent) {
     var canvas = document.getElementById(canvasId);
     if (!canvas || typeof Chart === "undefined") return;
@@ -68,6 +96,7 @@
     charts[key] = new Chart(canvas.getContext("2d"), {
       type: "line",
       data: { labels: labels || [], datasets: datasets },
+      plugins: [valueLabelPlugin],
       options: {
         responsive: true,
         maintainAspectRatio: false,
@@ -75,9 +104,30 @@
         tooltips: { mode: "index", intersect: false },
         scales: {
           xAxes: [{ gridLines: { display: false }, ticks: { fontSize: 8, fontColor: "#7a8784", maxRotation: 0 } }],
-          yAxes: [{ gridLines: { color: "#edf1f0" }, ticks: { beginAtZero: true, max: yPercent ? 100 : undefined, fontSize: 8, fontColor: "#7a8784" } }]
+          yAxes: [{ gridLines: { color: "#edf1f0" }, ticks: { beginAtZero: true, max: yPercent ? 100 : undefined, padding: 8, fontSize: 8, fontColor: "#7a8784", callback: function (value) { return yPercent ? value + "%" : compactNumber(value); } } }]
         },
         elements: { line: { tension: .32 }, point: { radius: 2, hoverRadius: 4 } }
+      }
+    });
+  }
+
+  function groupedBarChart(key, canvasId, labels, datasets) {
+    var canvas = document.getElementById(canvasId);
+    if (!canvas || typeof Chart === "undefined") return;
+    destroyChart(key);
+    charts[key] = new Chart(canvas.getContext("2d"), {
+      type: "bar",
+      data: { labels: labels || [], datasets: datasets },
+      plugins: [valueLabelPlugin],
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        legend: { display: true, position: "top", align: "end", labels: { boxWidth: 8, fontSize: 9, fontColor: "#65736f" } },
+        tooltips: { mode: "index", intersect: false, callbacks: { label: function (item, data) { return data.datasets[item.datasetIndex].label + ": PKR " + Number(item.yLabel || 0).toLocaleString(); } } },
+        scales: {
+          xAxes: [{ gridLines: { display: false }, barPercentage: .72, categoryPercentage: .72, ticks: { fontSize: 8, fontColor: "#7a8784", maxRotation: 0 } }],
+          yAxes: [{ gridLines: { color: "#edf1f0" }, ticks: { beginAtZero: true, padding: 8, fontSize: 8, fontColor: "#7a8784", callback: compactNumber } }]
+        }
       }
     });
   }
@@ -85,7 +135,7 @@
   function renderCharts(data) {
     lineChart("academics", "academicsChart", data.academics.chart.labels, [{
       label: "Attendance %", data: data.academics.chart.attendance,
-      borderColor: "#1976d2", backgroundColor: "rgba(25,118,210,.08)", borderWidth: 2, fill: true
+      borderColor: "#1976d2", backgroundColor: "rgba(25,118,210,.06)", borderWidth: 2, fill: false, valueSuffix: "%"
     }], true);
 
     var hrCanvas = document.getElementById("hrChart");
@@ -100,15 +150,20 @@
     var legend = root.querySelector("[data-hr-legend]");
     if (legend) {
       var colors = ["#38b66a", "#f3a33b", "#e7555d"];
+      var workforceTotal = data.hr.chart.values.reduce(function (total, value) { return total + Number(value || 0); }, 0);
       legend.innerHTML = data.hr.chart.labels.map(function (label, index) {
-        return '<div><i style="background:' + colors[index] + '"></i><span>' + escapeHtml(label) + '</span><strong>' + escapeHtml(data.hr.chart.values[index]) + '</strong></div>';
+        var value = Number(data.hr.chart.values[index] || 0);
+        var percentage = workforceTotal ? Math.round((value / workforceTotal) * 100) : 0;
+        return '<div><i style="background:' + colors[index] + '"></i><span>' + escapeHtml(label) + '</span><strong>' + escapeHtml(value) + ' (' + percentage + '%)</strong></div>';
       }).join("");
+      var centerValue = root.querySelector("[data-hr-center-value]");
+      if (centerValue) centerValue.textContent = workforceTotal;
     }
 
-    lineChart("finance", "financeChart", data.finance.chart.labels, [
-      { label: "Income", data: data.finance.chart.income, borderColor: "#38a85d", backgroundColor: "rgba(56,168,93,.05)", borderWidth: 2, fill: false },
-      { label: "Expense", data: data.finance.chart.expense, borderColor: "#f0a01f", backgroundColor: "rgba(240,160,31,.05)", borderWidth: 2, fill: false }
-    ], false);
+    groupedBarChart("finance", "financeChart", data.finance.chart.labels, [
+      { label: "Income", data: data.finance.chart.income, borderColor: "#38a85d", backgroundColor: "#38a85d", borderWidth: 0 },
+      { label: "Expense", data: data.finance.chart.expense, borderColor: "#f0a01f", backgroundColor: "#f0a01f", borderWidth: 0 }
+    ]);
 
     lineChart("procurement", "procurementChart", data.procurement.chart.labels, [{
       label: "Approved value", data: data.procurement.chart.spend,
@@ -119,9 +174,11 @@
   function renderOperations(data) {
     var procurement = root.querySelector("[data-procurement-summary]");
     if (procurement) {
-      procurement.innerHTML = '<div class="live-status-card"><span>Approved Value</span><strong>' + escapeHtml(data.procurement.summary.value) + '</strong></div>' +
-        '<div class="live-status-card"><span>Received Requests</span><strong>' + escapeHtml(data.procurement.summary.received) + '</strong></div>' +
-        '<div class="live-status-card"><span>Overdue Requests</span><strong>' + escapeHtml(data.procurement.summary.overdue) + '</strong></div>';
+      procurement.innerHTML = '<h4>Delivery Status</h4>' +
+        '<div class="live-status-card total"><span>Total Spend</span><strong>' + escapeHtml(data.procurement.summary.value) + '</strong></div>' +
+        '<div class="live-status-card success"><i class="fas fa-truck"></i><span>On Time</span><strong>' + escapeHtml(data.procurement.summary.on_time) + '</strong></div>' +
+        '<div class="live-status-card danger"><i class="far fa-clock"></i><span>Delayed</span><strong>' + escapeHtml(data.procurement.summary.delayed) + '</strong></div>' +
+        (Number(data.procurement.summary.unclassified || 0) ? '<div class="live-status-note">' + escapeHtml(data.procurement.summary.unclassified) + ' received without a required date</div>' : '');
     }
 
     var routes = root.querySelector("[data-route-performance]");
@@ -133,16 +190,17 @@
           return '<div class="live-route-row ' + (route.status === "Delayed" ? "delayed" : "") + '">' +
             '<span title="' + escapeHtml(route.name) + '">' + escapeHtml(route.name) + '</span>' +
             '<span class="live-route-track"><i style="width:' + Math.max(0, Math.min(100, Number(route.rate))) + '%"></i></span>' +
-            '<strong>' + escapeHtml(route.rate) + '%</strong></div>';
+            '<strong>' + escapeHtml(route.rate) + '%</strong><em>' + escapeHtml(route.status) + '</em></div>';
         }).join("");
       }
     }
 
     var fleet = root.querySelector("[data-fleet-summary]");
     if (fleet) {
-      fleet.innerHTML = '<div class="live-status-card"><span>On-time Rate</span><strong>' + escapeHtml(data.fleet.summary.on_time_rate) + '%</strong></div>' +
-        '<div class="live-status-card"><span>On Time / Delayed</span><strong>' + escapeHtml(data.fleet.summary.on_time) + ' / ' + escapeHtml(data.fleet.summary.delayed) + '</strong></div>' +
-        '<div class="live-status-card"><span>Active Fleet Capacity</span><strong>' + escapeHtml(data.fleet.summary.capacity) + '</strong></div>';
+      fleet.innerHTML = '<h4>Route Status Summary</h4><div class="live-status-pair">' +
+        '<div class="live-status-card success"><i class="fas fa-check-circle"></i><span>On Time</span><strong>' + escapeHtml(data.fleet.summary.on_time) + '</strong></div>' +
+        '<div class="live-status-card danger"><i class="far fa-clock"></i><span>Delayed</span><strong>' + escapeHtml(data.fleet.summary.delayed) + '</strong></div></div>' +
+        '<h4>Maintenance Status</h4><div class="live-status-card maintenance"><i class="fas fa-tools"></i><span>Under Maintenance</span><strong>' + escapeHtml(data.fleet.metrics[3].value) + '</strong></div>';
     }
   }
 

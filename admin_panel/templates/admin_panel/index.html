@@ -50,7 +50,7 @@
                 <h2>Academics</h2>
             </div>
             <div class="live-module-metrics" data-metrics></div>
-            <div class="live-chart-heading"><h3>Student Attendance Trend</h3><span data-range-label>Last 7 Days</span></div>
+            <div class="live-chart-heading"><h3>Weekly Student Attendance Trend</h3><span data-range-label>Last 7 Days</span></div>
             <div class="live-chart"><canvas id="academicsChart"></canvas></div>
             <div class="live-module-actions">
                 <a href="#" data-primary-url>View Academics <i class="fas fa-arrow-right"></i></a>
@@ -64,9 +64,12 @@
                 <h2>HR &amp; Workforce</h2>
             </div>
             <div class="live-module-metrics" data-metrics></div>
-            <div class="live-chart-heading"><h3>Workforce Availability</h3><span>Today</span></div>
+            <div class="live-chart-heading"><h3>Staff Attendance Overview</h3><span>Today</span></div>
             <div class="live-donut-wrap">
-                <div class="live-chart live-donut-chart"><canvas id="hrChart"></canvas></div>
+                <div class="live-chart live-donut-chart">
+                    <canvas id="hrChart"></canvas>
+                    <div class="live-donut-center"><strong data-hr-center-value>0</strong><span>Employees</span></div>
+                </div>
                 <div class="live-chart-legend" data-hr-legend></div>
             </div>
             <div class="live-module-actions">
@@ -81,7 +84,7 @@
                 <h2>Accounts &amp; Finance</h2>
             </div>
             <div class="live-module-metrics" data-metrics></div>
-            <div class="live-chart-heading"><h3>Income vs Expense</h3><span data-range-label>Last 7 Days</span></div>
+            <div class="live-chart-heading"><h3>Income vs Expense (PKR)</h3><span data-range-label>Last 7 Days</span></div>
             <div class="live-chart"><canvas id="financeChart"></canvas></div>
             <div class="live-module-actions">
                 <a href="#" data-primary-url>View Accounts <i class="fas fa-arrow-right"></i></a>
@@ -99,7 +102,7 @@
             <div class="live-module-metrics" data-metrics></div>
             <div class="live-operation-body">
                 <div>
-                    <div class="live-chart-heading"><h3>Procurement Value</h3><span data-range-label>Last 7 Days</span></div>
+                    <div class="live-chart-heading"><h3>Monthly Procurement Spend (PKR)</h3><span data-range-label>Last 7 Days</span></div>
                     <div class="live-chart live-operation-chart"><canvas id="procurementChart"></canvas></div>
                 </div>
                 <div class="live-status-summary" data-procurement-summary></div>

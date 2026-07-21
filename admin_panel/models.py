@@ -1426,6 +1426,7 @@ class PurchaseRequest(models.Model):
     vendor = models.ForeignKey(Vendor, on_delete=models.SET_NULL, null=True, blank=True)
     requested_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     needed_by = models.DateField(null=True, blank=True)
+    received_on = models.DateField(null=True, blank=True)
     priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default="normal")
     estimated_cost = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")

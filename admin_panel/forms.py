@@ -694,11 +694,12 @@ class PurchaseRequestForm(OperationFormMixin, forms.ModelForm):
     class Meta:
         model = PurchaseRequest
         fields = [
-            "title", "category", "vendor", "needed_by", "priority",
+            "title", "category", "vendor", "needed_by", "received_on", "priority",
             "estimated_cost", "status", "description"
         ]
         widgets = {
             "needed_by": forms.DateInput(attrs={"type": "date"}),
+            "received_on": forms.DateInput(attrs={"type": "date"}),
         }
 
 
