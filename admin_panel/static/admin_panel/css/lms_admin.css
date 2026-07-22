@@ -435,3 +435,42 @@ body {
         align-items: flex-start;
     }
 }
+/* Shared layout for admin LMS review screens. Sidebar behavior is centralized elsewhere. */
+.lms-topbar {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    padding: 12px 20px;
+    background: #264c84;
+}
+
+.lms-topbar-title {
+    color: #fff;
+    font-size: 18px;
+    font-weight: 500;
+}
+
+.hamburger-btn {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 5px;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+}
+
+.hamburger-btn span {
+    display: block;
+    width: 25px;
+    height: 3px;
+    border-radius: 3px;
+    background: #fff;
+}
+
+.lms-page-content {
+    padding: 20px;
+}

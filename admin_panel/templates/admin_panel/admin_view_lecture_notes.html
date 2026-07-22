@@ -2,21 +2,11 @@
 
 {% block navbar %}{% endblock %}
 
-{% block head %}
-{% load static %}
-<link rel="stylesheet" href="{% static 'admin_panel/css/lms_sidebar.css' %}">
-{% endblock %}
-
-{% block sidebar %}
-<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
-{% include 'admin_panel/sidebar.html' %}
-{% endblock %}
-
 {% block content %}
 
 <!-- Top Bar with Hamburger -->
 <div class="lms-topbar">
-    <button class="hamburger-btn" onclick="toggleSidebar()">
+    <button class="hamburger-btn" type="button" data-edu-sidebar-toggle aria-controls="eduSidebar" aria-expanded="false" aria-label="Toggle navigation">
         <span></span>
         <span></span>
         <span></span>
@@ -95,14 +85,5 @@
         </div>
     </div>
 </div>
-
-<script>
-function toggleSidebar() {
-    const sidebar = document.querySelector('.deznav');
-    const overlay = document.getElementById('sidebarOverlay');
-    sidebar.classList.toggle('open');
-    overlay.classList.toggle('open');
-}
-</script>
 
 {% endblock %}

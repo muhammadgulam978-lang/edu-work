@@ -7,6 +7,7 @@
   var initialNode = document.getElementById("reference-dashboard-data");
   var endpoint = root.getAttribute("data-dashboard-endpoint");
   var charts = {};
+  var graphSystem = window.EduPilotCharts;
   var refreshTimer = null;
   var activeData = null;
 
@@ -55,10 +56,9 @@
   }
 
   function destroyChart(key) {
-    if (charts[key]) {
-      charts[key].destroy();
-      charts[key] = null;
-    }
+    var ids = {academics: "academicsChart", hr: "hrChart", finance: "financeChart", procurement: "procurementChart"};
+    if (graphSystem && ids[key]) graphSystem.destroy(ids[key]);
+    charts[key] = null;
   }
 
   function compactNumber(value) {
@@ -91,44 +91,23 @@
 
   function lineChart(key, canvasId, labels, datasets, yPercent) {
     var canvas = document.getElementById(canvasId);
-    if (!canvas || typeof Chart === "undefined") return;
+    if (!canvas || !graphSystem) return;
     destroyChart(key);
-    charts[key] = new Chart(canvas.getContext("2d"), {
-      type: "line",
-      data: { labels: labels || [], datasets: datasets },
-      plugins: [valueLabelPlugin],
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        legend: { display: datasets.length > 1, position: "top", labels: { boxWidth: 9, fontSize: 9, fontColor: "#65736f" } },
-        tooltips: { mode: "index", intersect: false },
-        scales: {
-          xAxes: [{ gridLines: { display: false }, ticks: { fontSize: 8, fontColor: "#7a8784", maxRotation: 0 } }],
-          yAxes: [{ gridLines: { color: "#edf1f0" }, ticks: { beginAtZero: true, max: yPercent ? 100 : undefined, padding: 8, fontSize: 8, fontColor: "#7a8784", callback: function (value) { return yPercent ? value + "%" : compactNumber(value); } } }]
-        },
-        elements: { line: { tension: .32 }, point: { radius: 2, hoverRadius: 4 } }
-      }
+    charts[key] = (datasets[0] && datasets[0].fill) ? graphSystem.areaChart(canvasId, labels, datasets, {
+      valueFormat: yPercent ? "percent" : "count", legend: datasets.length > 1,
+      summary: yPercent ? "Student attendance percentage trend for the selected period." : "Live values for the selected period."
+    }) : graphSystem.lineChart(canvasId, labels, datasets, {
+      valueFormat: yPercent ? "percent" : "count", legend: datasets.length > 1,
+      summary: yPercent ? "Student attendance percentage trend for the selected period." : "Live values for the selected period."
     });
   }
 
   function groupedBarChart(key, canvasId, labels, datasets) {
     var canvas = document.getElementById(canvasId);
-    if (!canvas || typeof Chart === "undefined") return;
+    if (!canvas || !graphSystem) return;
     destroyChart(key);
-    charts[key] = new Chart(canvas.getContext("2d"), {
-      type: "bar",
-      data: { labels: labels || [], datasets: datasets },
-      plugins: [valueLabelPlugin],
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        legend: { display: true, position: "top", align: "end", labels: { boxWidth: 8, fontSize: 9, fontColor: "#65736f" } },
-        tooltips: { mode: "index", intersect: false, callbacks: { label: function (item, data) { return data.datasets[item.datasetIndex].label + ": PKR " + Number(item.yLabel || 0).toLocaleString(); } } },
-        scales: {
-          xAxes: [{ gridLines: { display: false }, barPercentage: .72, categoryPercentage: .72, ticks: { fontSize: 8, fontColor: "#7a8784", maxRotation: 0 } }],
-          yAxes: [{ gridLines: { color: "#edf1f0" }, ticks: { beginAtZero: true, padding: 8, fontSize: 8, fontColor: "#7a8784", callback: compactNumber } }]
-        }
-      }
+    charts[key] = graphSystem.groupedBarChart(canvasId, labels, datasets, {
+      valueFormat: "currency", summary: "Income and expense amounts in PKR for the selected period."
     });
   }
 
@@ -139,13 +118,10 @@
     }], true);
 
     var hrCanvas = document.getElementById("hrChart");
-    if (hrCanvas && typeof Chart !== "undefined") {
+    if (hrCanvas && graphSystem) {
       destroyChart("hr");
-      charts.hr = new Chart(hrCanvas.getContext("2d"), {
-        type: "doughnut",
-        data: { labels: data.hr.chart.labels, datasets: [{ data: data.hr.chart.values, backgroundColor: ["#38b66a", "#f3a33b", "#e7555d"], borderWidth: 0 }] },
-        options: { responsive: true, maintainAspectRatio: false, cutoutPercentage: 68, legend: { display: false }, tooltips: { bodyFontSize: 10 } }
-      });
+      charts.hr = graphSystem.doughnutChart("hrChart", data.hr.chart.labels, data.hr.chart.values,
+        ["#38b66a", "#f3a33b", "#e7555d"], {legend: false, summary: "Available, on leave, and absent workforce today."});
     }
     var legend = root.querySelector("[data-hr-legend]");
     if (legend) {
@@ -182,18 +158,7 @@
     }
 
     var routes = root.querySelector("[data-route-performance]");
-    if (routes) {
-      if (!data.fleet.routes.length) {
-        routes.innerHTML = '<div class="live-empty-inline">No trips recorded for this range.</div>';
-      } else {
-        routes.innerHTML = data.fleet.routes.map(function (route) {
-          return '<div class="live-route-row ' + (route.status === "Delayed" ? "delayed" : "") + '">' +
-            '<span title="' + escapeHtml(route.name) + '">' + escapeHtml(route.name) + '</span>' +
-            '<span class="live-route-track"><i style="width:' + Math.max(0, Math.min(100, Number(route.rate))) + '%"></i></span>' +
-            '<strong>' + escapeHtml(route.rate) + '%</strong><em>' + escapeHtml(route.status) + '</em></div>';
-        }).join("");
-      }
-    }
+    if (routes && graphSystem) graphSystem.routePerformance(routes, data.fleet.routes, "No trips recorded for this range.");
 
     var fleet = root.querySelector("[data-fleet-summary]");
     if (fleet) {
@@ -290,7 +255,8 @@
   } catch (error) {
     refresh();
   }
-  refreshTimer = window.setInterval(refresh, 30000);
+  refreshTimer = window.setInterval(function () { if (!document.hidden) refresh(); }, 30000);
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) refresh(); });
   window.addEventListener("beforeunload", function () {
     if (refreshTimer) window.clearInterval(refreshTimer);
     Object.keys(charts).forEach(destroyChart);

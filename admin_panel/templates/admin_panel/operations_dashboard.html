@@ -4,11 +4,14 @@
 {% block title %}{{ title }} | EduPilot{% endblock %}
 {% block head %}
 <link rel="stylesheet" href="{% static 'admin_panel/css/operations_admin.css' %}?v=operations-1">
+<link rel="stylesheet" href="{% static 'admin_panel/css/edupilot-charts.css' %}?v=charts-1">
 <script src="{% static 'admin_panel/vendor/chart.js/Chart.bundle.min.js' %}"></script>
+<script src="{% static 'admin_panel/js/edupilot-charts.js' %}?v=charts-1"></script>
 {% endblock %}
 
 {% block content %}
-<div class="ops-page">
+{{ operations_live_data|json_script:"operations-live-data" }}
+<div class="ops-page" data-operations-dashboard data-module="{{ module }}" data-summary-url="{% url 'operation_summary_data' module=module %}">
     <div class="ops-heading">
         <div class="ops-title">
             <span class="ops-title-icon"><i class="fas {% if module == 'procurement' %}fa-shopping-cart{% else %}fa-bus{% endif %}"></i></span>
@@ -23,9 +26,23 @@
         </div>
     </div>
 
+    <div class="ops-live-toolbar ep-chart-toolbar">
+        <label><span>Date Range</span><select data-ops-period>
+            <option value="last_7_days">Last 7 Days</option>
+            <option value="today">Today</option>
+            <option value="week">This Week</option>
+            <option value="this_month">This Month</option>
+            <option value="custom">Custom Range</option>
+        </select></label>
+        <label data-ops-custom hidden><span>Start Date</span><input type="date" data-ops-start></label>
+        <label data-ops-custom hidden><span>End Date</span><input type="date" data-ops-end></label>
+        <button type="button" data-ops-refresh><i class="fas fa-sync-alt"></i> Refresh</button>
+        <span class="ops-live-updated">Updated <strong data-ops-generated>{{ operations_live_data.meta.generated_at }}</strong></span>
+    </div>
+
     <div class="ops-stats">
         {% for label, value, stat_icon, color in stats %}
-        <article class="ops-stat {{ color }}">
+        <article class="ops-stat {{ color }}" data-ops-metric="{{ forloop.counter0 }}">
             <span class="ops-stat-icon"><i class="fas {{ stat_icon }}"></i></span>
             <div><span>{{ label }}</span><strong>{{ value }}</strong></div>
         </article>
@@ -33,9 +50,13 @@
     </div>
 
     <div class="ops-dashboard-grid">
-        <section class="ops-panel">
-            <div class="ops-panel-head"><div><h3>Operations Overview</h3><p>Current module activity</p></div></div>
-            <div class="ops-chart"><canvas id="operationsChart"></canvas></div>
+        <section class="ops-panel ep-chart-card" data-chart-tone="{{ module }}">
+            <div class="ops-panel-head ep-chart-head"><div><h3>{% if module == 'procurement' %}Procurement Spend Trend{% else %}Route Performance{% endif %}</h3><p>{% if module == 'procurement' %}Approved, ordered, and received request value{% else %}On-time performance from recorded transport trips{% endif %}</p></div><span class="ep-chart-scope" data-ops-range>Last 7 Days</span></div>
+            {% if module == 'procurement' %}
+            <div class="ops-chart ep-chart-box"><canvas id="operationsChart"></canvas></div>
+            {% else %}
+            <div class="ops-chart ep-route-performance" data-ops-routes></div>
+            {% endif %}
         </section>
         <section class="ops-panel">
             <div class="ops-panel-head"><div><h3>Quick Actions</h3><p>Open frequently used screens</p></div></div>
@@ -70,25 +91,5 @@
     </section>
 </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    var canvas = document.getElementById('operationsChart');
-    if (!canvas || typeof Chart === 'undefined') return;
-    new Chart(canvas.getContext('2d'), {
-        type: 'line',
-        data: {
-            labels: [{% for label, value, stat_icon, color in stats %}'{{ label|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}],
-            datasets: [{
-                label: 'Current totals',
-                data: [{% for label, value, stat_icon, color in stats %}{{ value }}{% if not forloop.last %},{% endif %}{% endfor %}],
-                borderColor: '{% if module == "procurement" %}#10b981{% else %}#3b82f6{% endif %}',
-                backgroundColor: '{% if module == "procurement" %}rgba(16,185,129,.12){% else %}rgba(59,130,246,.12){% endif %}',
-                pointBackgroundColor: '#ffffff', pointBorderWidth: 3, pointRadius: 5,
-                borderWidth: 3, fill: true, lineTension: .32
-            }]
-        },
-        options: {responsive: true, maintainAspectRatio: false, legend: {display: false}, scales: {yAxes: [{ticks: {beginAtZero: true, precision: 0}, gridLines: {color: '#edf2f1'}}], xAxes: [{gridLines: {display: false}}]}}
-    });
-});
-</script>
+<script src="{% static 'admin_panel/js/operations-dashboard.js' %}?v=operations-live-1"></script>
 {% endblock %}

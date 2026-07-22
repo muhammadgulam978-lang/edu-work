@@ -16,11 +16,11 @@
   .ai-icon{height:46px;width:46px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:rgba(255,255,255,.62);border:1px solid #e9ecef;margin-bottom:12px}
   .tone-teal{background:#DDF7F2;border-color:#88D0C5}.tone-green{background:#EEF9E5;border-color:#8BC740}.tone-blue{background:#F5F5FD;border-color:#e9ecef}.tone-warning{background:#FFF4E5;border-color:#ffc980}
   .ai-value{font-size:34px;font-weight:500;margin:8px 0}.ai-muted{color:#6c757d}
-  .ai-chart-grid{grid-template-columns:repeat(2,1fr)}.ai-chart-box{height:320px}
+  .ai-chart-grid{grid-template-columns:repeat(2,1fr)}
   .ai-table{width:100%;border-collapse:collapse}.ai-table th,.ai-table td{padding:12px;border-bottom:1px solid #e9ecef;text-align:left;font-weight:400}.ai-table th{background:#F5F5FD;font-weight:500}
   @media(max-width:1100px){.ai-kpi-grid,.ai-chart-grid,.ai-filter-grid{grid-template-columns:1fr 1fr}}@media(max-width:700px){.ai-kpi-grid,.ai-chart-grid,.ai-filter-grid{grid-template-columns:1fr}}
 </style>
-<link rel="stylesheet" href="{% static 'admin_panel/css/ai-graphs.css' %}?v=ai-graphs-1">
+<link rel="stylesheet" href="{% static 'admin_panel/css/edupilot-charts.css' %}?v=advanced-dashboard-match-1">
 
 <div class="ai-advanced">
   <section class="ai-advanced-card ai-advanced-hero">
@@ -74,10 +74,22 @@
   </section>
 
   <section class="ai-chart-grid">
-    <article class="ai-advanced-card"><h3>Attendance Trend</h3><div class="ai-chart-box"><canvas id="attendanceChart"></canvas></div></article>
-    <article class="ai-advanced-card"><h3>Fee Collection Compare</h3><div class="ai-chart-box"><canvas id="feeChart"></canvas></div></article>
-    <article class="ai-advanced-card"><h3>Admissions Trend</h3><div class="ai-chart-box"><canvas id="admissionsChart"></canvas></div></article>
-    <article class="ai-advanced-card"><h3>Teacher Workload</h3><div class="ai-chart-box"><canvas id="workloadChart"></canvas></div></article>
+    <article class="ai-advanced-card ep-chart-card" data-chart-tone="academics">
+      <div class="ep-chart-head"><div><h3>Attendance Trend</h3><p>Present, absent, and leave movement.</p></div><span class="ep-chart-scope">{{ analytics.meta.period_label|default:"Selected range" }}</span></div>
+      <div class="ai-chart-box ep-chart-box"><canvas id="attendanceChart"></canvas></div>
+    </article>
+    <article class="ai-advanced-card ep-chart-card" data-chart-tone="finance">
+      <div class="ep-chart-head"><div><h3>Fee Collection Compare</h3><p>Billed versus paid comparison.</p></div><span class="ep-chart-scope">PKR</span></div>
+      <div class="ai-chart-box ep-chart-box"><canvas id="feeChart"></canvas></div>
+    </article>
+    <article class="ai-advanced-card ep-chart-card" data-chart-tone="ai">
+      <div class="ep-chart-head"><div><h3>Admissions Trend</h3><p>Admission intake over time.</p></div><span class="ep-chart-scope">Trend</span></div>
+      <div class="ai-chart-box ep-chart-box"><canvas id="admissionsChart"></canvas></div>
+    </article>
+    <article class="ai-advanced-card ep-chart-card" data-chart-tone="hr">
+      <div class="ep-chart-head"><div><h3>Teacher Workload</h3><p>Assigned period load by teacher.</p></div><span class="ep-chart-scope">Live</span></div>
+      <div class="ai-chart-box ep-chart-box"><canvas id="workloadChart"></canvas></div>
+    </article>
   </section>
 
   <section class="ai-advanced-card">
@@ -99,28 +111,28 @@
 
 {{ analytics.charts|json_script:"advanced-chart-data" }}
 <script src="{% static 'admin_panel/vendor/chart.js/Chart.bundle.min.js' %}"></script>
-<script src="{% static 'admin_panel/js/ai-graphs.js' %}?v=ai-graphs-1"></script>
+<script src="{% static 'admin_panel/js/edupilot-charts.js' %}?v=advanced-dashboard-match-1"></script>
 <script>
 (function(){
   const data=JSON.parse(document.getElementById('advanced-chart-data').textContent);
-  const graphs = window.EduPilotAIGraphs;
+  const graphs = window.EduPilotCharts;
   if (!graphs) return;
   const colors=graphs.palette;
   graphs.lineChart('attendanceChart', data.attendance.labels, [
     {label:'Present',data:data.attendance.present,color:colors.green},
     {label:'Absent',data:data.attendance.absent,color:colors.pink},
     {label:'Leave',data:data.attendance.leave,color:colors.yellow}
-  ]);
+  ], {emptyMessage:'No chart data for selected filters'});
   graphs.lineChart('feeChart', data.fees.labels, [
     {label:'Billed',data:data.fees.total,color:colors.blue},
     {label:'Paid',data:data.fees.paid,color:colors.green}
-  ]);
+  ], {valueFormat:'currency', emptyMessage:'No fee data for selected filters'});
   graphs.lineChart('admissionsChart', data.admissions.labels, [
     {label:'Admissions',data:data.admissions.values,color:colors.teal}
-  ], {legend:{display:false}});
+  ], {legend:false, emptyMessage:'No admissions data for selected filters'});
   graphs.lineChart('workloadChart', data.teacher_workload.labels, [
     {label:'Assigned Periods',data:data.teacher_workload.values,color:colors.lavender}
-  ], {legend:{display:false}});
+  ], {legend:false, emptyMessage:'No workload data for selected filters'});
 })();
 </script>
 {% endblock %}

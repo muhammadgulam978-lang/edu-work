@@ -1,58 +1,180 @@
-// =============================================================
-// DEZNAV SIDEBAR — collapse/expand behaviour + active link highlight
-// Add this file as: admin_panel/js/deznav-sidebar.js
-// =============================================================
-document.addEventListener('DOMContentLoaded', function () {
-  var menu = document.getElementById('menu');
-  if (!menu) return;
+(function () {
+  'use strict';
 
-  // 1) Toggle submenus on click
-  menu.querySelectorAll('li.has-menu > a.has-arrow').forEach(function (link) {
-    link.addEventListener('click', function (e) {
-      e.preventDefault();
-      var li = link.parentElement;
-      var wasOpen = li.classList.contains('mm-active');
+  function cleanPath(pathname) {
+    var value = pathname || '/';
+    return value.length > 1 ? value.replace(/\/+$/, '') : value;
+  }
 
-      // close sibling menus (accordion behaviour)
-      menu.querySelectorAll(':scope > li.has-menu.mm-active').forEach(function (openLi) {
-        if (openLi !== li) openLi.classList.remove('mm-active');
+  function initSidebar(sidebar) {
+    if (!sidebar || sidebar.dataset.eduSidebarReady === 'true') return;
+    sidebar.dataset.eduSidebarReady = 'true';
+
+    var menu = sidebar.querySelector('[data-edu-sidebar-menu]');
+    var overlay = document.querySelector('[data-edu-sidebar-overlay]');
+    if (!menu) return;
+
+    var parents = Array.prototype.slice.call(menu.querySelectorAll(':scope > li.has-menu'));
+    var toggles = Array.prototype.slice.call(document.querySelectorAll('[data-edu-sidebar-toggle], #mobileMenuToggle, .nav-control'))
+      .filter(function (item, index, list) { return list.indexOf(item) === index; });
+
+    function setParentOpen(parent, open) {
+      if (!parent) return;
+      var trigger = parent.querySelector(':scope > a.has-arrow');
+      var submenu = parent.querySelector(':scope > ul');
+      parent.classList.toggle('mm-active', open);
+      if (trigger) {
+        trigger.classList.toggle('mm-active', open);
+        trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+      }
+      if (submenu) submenu.setAttribute('aria-hidden', open ? 'false' : 'true');
+    }
+
+    function closeSiblingParents(current) {
+      parents.forEach(function (parent) {
+        if (parent !== current) setParentOpen(parent, false);
+      });
+    }
+
+    parents.forEach(function (parent) {
+      var trigger = parent.querySelector(':scope > a.has-arrow');
+      if (!trigger) return;
+
+      trigger.setAttribute('role', 'button');
+      trigger.setAttribute('aria-expanded', parent.classList.contains('mm-active') ? 'true' : 'false');
+
+      trigger.addEventListener('click', function (event) {
+        event.preventDefault();
+        var shouldOpen = !parent.classList.contains('mm-active');
+        closeSiblingParents(parent);
+        setParentOpen(parent, shouldOpen);
       });
 
-      li.classList.toggle('mm-active', !wasOpen);
+      trigger.addEventListener('keydown', function (event) {
+        if (event.key === ' ') {
+          event.preventDefault();
+          trigger.click();
+        }
+      });
     });
-  });
 
-  // 2) Highlight the current page link + auto-open its parent menu
-  var currentPath = window.location.pathname.replace(/\/+$/, '') || '/';
-  menu.querySelectorAll('a[href]').forEach(function (link) {
-    var href = link.getAttribute('href');
-    if (!href || href === '#' || href === 'javascript:void(0)') return;
+    var currentPath = cleanPath(window.location.pathname);
+    var currentSearch = window.location.search || '';
+    var currentHash = window.location.hash || '';
+    var candidates = [];
 
-    var linkPath;
-    try {
-      linkPath = new URL(href, window.location.origin).pathname.replace(/\/+$/, '') || '/';
-    } catch (error) {
-      return;
+    menu.querySelectorAll('a[href]').forEach(function (link) {
+      var href = link.getAttribute('href');
+      if (!href || href === '#' || href.indexOf('javascript:') === 0 || link.classList.contains('has-arrow')) return;
+
+      var url;
+      try {
+        url = new URL(href, window.location.origin);
+      } catch (error) {
+        return;
+      }
+      if (url.origin !== window.location.origin) return;
+
+      var linkPath = cleanPath(url.pathname);
+      var score = -1;
+      if (linkPath === currentPath) {
+        score = 10000 + linkPath.length;
+        if (url.search === currentSearch) score += 1000;
+        if (url.hash && url.hash === currentHash) score += 500;
+      } else if (linkPath !== '/' && currentPath.indexOf(linkPath + '/') === 0) {
+        score = linkPath.length;
+      }
+      if (score >= 0) candidates.push({ link: link, score: score });
+    });
+
+    candidates.sort(function (a, b) { return b.score - a.score; });
+    if (candidates.length) {
+      var activeLink = candidates[0].link;
+      activeLink.classList.add('active-link');
+      activeLink.setAttribute('aria-current', 'page');
+      var activeParent = activeLink.closest('li.has-menu');
+      if (activeParent) {
+        closeSiblingParents(activeParent);
+        setParentOpen(activeParent, true);
+      }
     }
 
-    var isDashboardLink = linkPath === '/admin_panel';
-    var isCurrent = currentPath === linkPath || (!isDashboardLink && currentPath.indexOf(linkPath + '/') === 0);
-
-    if (isCurrent) {
-      link.classList.add('active-link');
-      var parentLi = link.closest('ul')?.closest('li.has-menu');
-      if (parentLi) parentLi.classList.add('mm-active');
-      var topLi = link.closest('ul.metismenu') === menu ? link.closest('li') : null;
-      if (topLi) topLi.querySelector(':scope > a')?.classList.add('mm-active');
+    function isMobile() {
+      return window.matchMedia('(max-width: 991px)').matches;
     }
-  });
 
-  // 3) Mobile menu toggle button (id="mobileMenuToggle") — optional, add a button with this id anywhere in your navbar
-  var toggleBtn = document.getElementById('mobileMenuToggle');
-  var sidebar = document.querySelector('.deznav');
-  if (toggleBtn && sidebar) {
-    toggleBtn.addEventListener('click', function () {
-      sidebar.classList.toggle('deznav-open');
+    function setMobileOpen(open) {
+      sidebar.classList.toggle('deznav-open', open);
+      document.body.classList.toggle('edu-sidebar-open', open);
+      if (overlay) {
+        overlay.classList.toggle('is-active', open);
+        overlay.setAttribute('aria-hidden', open ? 'false' : 'true');
+      }
+      toggles.forEach(function (toggle) {
+        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
+    }
+
+    toggles.forEach(function (toggle) {
+      toggle.setAttribute('aria-controls', sidebar.id || 'eduSidebar');
+      if (!toggle.hasAttribute('aria-expanded')) toggle.setAttribute('aria-expanded', 'false');
+
+      toggle.addEventListener('click', function () {
+        if (isMobile()) {
+          setMobileOpen(!sidebar.classList.contains('deznav-open'));
+        } else if (toggle.hasAttribute('data-edu-sidebar-toggle')) {
+          sidebar.classList.toggle('collapsed');
+          toggle.setAttribute('aria-expanded', sidebar.classList.contains('collapsed') ? 'false' : 'true');
+        }
+      });
+    });
+
+    if (overlay) {
+      overlay.addEventListener('click', function () {
+        setMobileOpen(false);
+      });
+    }
+
+    document.addEventListener('click', function (event) {
+      if (!isMobile() || !sidebar.classList.contains('deznav-open')) return;
+      if (sidebar.contains(event.target)) return;
+      if (toggles.some(function (toggle) { return toggle.contains(event.target); })) return;
+      setMobileOpen(false);
+    });
+
+    menu.addEventListener('click', function (event) {
+      var link = event.target.closest('a[href]');
+      if (link && !link.classList.contains('has-arrow') && isMobile()) setMobileOpen(false);
+    });
+
+    document.addEventListener('keydown', function (event) {
+      if (event.key !== 'Escape') return;
+      if (sidebar.classList.contains('deznav-open')) {
+        setMobileOpen(false);
+        if (toggles[0]) toggles[0].focus();
+        return;
+      }
+
+      var openParent = menu.querySelector(':scope > li.has-menu.mm-active');
+      if (openParent) {
+        setParentOpen(openParent, false);
+        var trigger = openParent.querySelector(':scope > a.has-arrow');
+        if (trigger) trigger.focus();
+      }
+    });
+
+    window.addEventListener('resize', function () {
+      if (!isMobile()) setMobileOpen(false);
     });
   }
-});
+
+  function initAllSidebars() {
+    document.querySelectorAll('[data-edu-sidebar]').forEach(initSidebar);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initAllSidebars);
+  } else {
+    initAllSidebars();
+  }
+})();

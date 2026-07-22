@@ -1,0 +1,592 @@
+.edu-portal-header {
+    background: #f5f5f5;
+    padding: 18px 28px 0;
+    min-height: auto;
+    height: auto;
+    z-index: 120;
+}
+
+.edu-portal-header .edu-portal-header-card {
+    background: #ffffff;
+    border: 1px solid #e9ecef;
+    border-radius: 22px;
+    box-shadow: 0 8px 26px rgba(0, 0, 0, .05);
+    padding: 18px 20px 16px;
+}
+
+.edu-portal-header-main {
+    display: grid;
+    grid-template-columns: auto 210px minmax(280px, 1fr) auto auto auto auto;
+    align-items: center;
+    gap: 16px;
+}
+
+.edu-portal-menu,
+.edu-portal-icon-button,
+.edu-portal-search button {
+    border: 0;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.edu-portal-menu {
+    width: 46px;
+    height: 46px;
+    border-radius: 14px;
+    background: #DDF7F2;
+    color: #246b63;
+    font-size: 20px;
+}
+
+.edu-portal-brand {
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+    min-width: 0;
+}
+
+.edu-portal-brand img {
+    width: 172px;
+    max-height: 70px;
+    object-fit: contain;
+    display: block;
+}
+
+.edu-portal-search {
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-width: 280px;
+    height: 54px;
+    background: #ffffff;
+    border: 1px solid rgba(136, 208, 197, .75);
+    border-radius: 999px;
+    overflow: visible;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, .04);
+}
+
+.edu-portal-search input {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: #222222;
+    font-size: 15px;
+    font-weight: 400;
+    padding: 0 18px 0 24px;
+}
+
+.edu-portal-search button {
+    width: 62px;
+    height: 54px;
+    border-radius: 999px;
+    background: #88D0C5;
+    color: #111111;
+    font-size: 18px;
+    margin-right: -1px;
+    flex: 0 0 auto;
+}
+
+.edu-portal-chip {
+    min-height: 48px;
+    border: 1px solid #e9ecef;
+    border-radius: 14px;
+    background: #ffffff;
+    color: #222222;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 16px;
+    white-space: nowrap;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .035);
+    font-size: 14px;
+    font-weight: 400;
+}
+
+.edu-portal-chip i {
+    color: #246b63;
+}
+
+.edu-portal-language select {
+    border: 0;
+    background: transparent;
+    outline: 0;
+    color: #222222;
+    font: inherit;
+    cursor: pointer;
+}
+
+.edu-portal-menu-wrap {
+    position: relative;
+}
+
+.edu-portal-icon-button {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    background: #ffffff;
+    color: #2f3944;
+    border: 1px solid #e9ecef;
+    position: relative;
+    font-size: 18px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .035);
+}
+
+.edu-portal-icon-button span {
+    position: absolute;
+    right: -7px;
+    top: -8px;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 6px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #88D0C5;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 500;
+    box-shadow: 0 6px 16px rgba(136, 208, 197, .6);
+}
+
+.edu-portal-profile {
+    border: 0;
+    background: transparent;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    color: #111111;
+    cursor: pointer;
+    text-align: left;
+    padding: 0;
+}
+
+.edu-portal-profile img {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: #f1f1f1;
+}
+
+.edu-portal-profile strong,
+.edu-portal-profile small {
+    display: block;
+    line-height: 1.25;
+}
+
+.edu-portal-profile strong {
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.edu-portal-profile small {
+    color: #6c757d;
+    font-size: 12px;
+    font-weight: 400;
+}
+
+.edu-portal-profile > i {
+    color: #6c757d;
+    font-size: 12px;
+}
+
+.edu-portal-dropdown,
+.edu-portal-search-results {
+    position: absolute;
+    top: calc(100% + 12px);
+    right: 0;
+    background: #ffffff;
+    border: 1px solid #e9ecef;
+    border-radius: 16px;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, .12);
+    z-index: 10080;
+    display: none;
+    overflow: hidden;
+}
+
+.edu-portal-dropdown.is-open,
+.edu-portal-search-results.is-open,
+.admin-header-search-results.is-open {
+    display: block;
+}
+
+.edu-portal-notifications {
+    width: 360px;
+}
+
+.edu-portal-notifications ul {
+    margin: 0;
+    padding: 10px;
+    list-style: none;
+    max-height: 320px;
+    overflow: auto;
+}
+
+.edu-portal-notifications li a,
+.edu-portal-notifications .timeline-panel {
+    display: block;
+    color: #222222;
+    text-decoration: none;
+    padding: 10px 12px;
+    border-radius: 12px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.edu-portal-notifications li a:hover,
+.edu-portal-notifications .timeline-panel:hover {
+    background: #F5F5FD;
+}
+
+.edu-portal-notifications strong,
+.edu-portal-notifications small {
+    display: block;
+}
+
+.edu-portal-notifications strong {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.edu-portal-notifications small {
+    color: #6c757d;
+    font-size: 12px;
+    font-weight: 400;
+    margin-top: 3px;
+}
+
+.edu-portal-empty {
+    padding: 16px;
+    color: #6c757d;
+    font-size: 13px;
+    text-align: center;
+}
+
+.edu-portal-dropdown-link {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    padding: 12px;
+    color: #246b63;
+    border-top: 1px solid #e9ecef;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.edu-portal-profile-menu {
+    min-width: 190px;
+    padding: 8px;
+}
+
+.edu-portal-profile-menu a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    color: #222222;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 400;
+}
+
+.edu-portal-profile-menu a:hover {
+    background: #F5F5FD;
+}
+
+.edu-portal-search-results {
+    left: 0;
+    right: 0;
+    width: auto;
+}
+
+.edu-portal-search-results a,
+.admin-header-search-results a {
+    display: block;
+    padding: 10px 14px;
+    color: #222222;
+    text-decoration: none;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 14px;
+}
+
+.edu-portal-search-results a:hover,
+.admin-header-search-results a:hover {
+    background: #F5F5FD;
+}
+
+.edu-portal-nav {
+    border-top: 1px solid #e9ecef;
+    margin-top: 16px;
+    padding-top: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    overflow-x: auto;
+    scrollbar-width: thin;
+}
+
+.edu-portal-nav a,
+.edu-portal-nav button {
+    min-height: 48px;
+    padding: 0 18px;
+    border-radius: 14px;
+    color: #1f2937;
+    background: transparent;
+    border: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.edu-portal-nav a:hover,
+.edu-portal-nav button:hover,
+.edu-portal-nav a.is-active {
+    background: #DDF7F2;
+    color: #246b63;
+}
+
+.edu-portal-nav i {
+    color: currentColor;
+}
+
+.automation-admin-page .edu-portal-header,
+.parent-portal-page .edu-portal-header {
+    margin: 0;
+    padding: 18px 28px 0;
+}
+
+.automation-admin-page .edu-portal-header-card,
+.parent-portal-page .edu-portal-header-card {
+    border-radius: 22px;
+}
+
+@media (max-width: 1320px) {
+    .edu-portal-header-main {
+        grid-template-columns: auto 170px minmax(240px, 1fr) auto auto auto;
+    }
+    .edu-portal-clock {
+        display: none;
+    }
+}
+
+@media (max-width: 1060px) {
+    .edu-portal-header {
+        padding: 14px 16px 0;
+    }
+    .edu-portal-header-main {
+        grid-template-columns: auto 150px 1fr auto auto;
+    }
+    .edu-portal-language {
+        display: none;
+    }
+    .edu-portal-profile span,
+    .edu-portal-profile > i {
+        display: none;
+    }
+}
+
+@media (max-width: 760px) {
+    .edu-portal-header-main {
+        grid-template-columns: auto 1fr auto auto;
+    }
+    .edu-portal-brand img {
+        width: 130px;
+    }
+    .edu-portal-search {
+        grid-column: 1 / -1;
+        order: 5;
+        width: 100%;
+    }
+    .edu-portal-nav {
+        gap: 6px;
+    }
+    .edu-portal-nav a,
+    .edu-portal-nav button {
+        min-height: 42px;
+        padding: 0 12px;
+        font-size: 13px;
+    }
+    .edu-portal-notifications {
+        width: min(330px, calc(100vw - 34px));
+    }
+}
+
+/*
+ * Admin uses the sidebar as its primary navigation. Keep the header focused on
+ * global actions so the same destinations are not presented twice and the
+ * legacy fixed-header offset remains accurate.
+ */
+.edu-portal-header[data-portal-kind="admin"] {
+    position: sticky !important;
+    top: 0;
+    width: auto !important;
+    min-height: 76px !important;
+    height: 76px !important;
+    padding: 0 24px !important;
+    background: #ffffff !important;
+    border-bottom: 1px solid #e4ece9;
+    z-index: 1190;
+}
+
+.edu-portal-header[data-portal-kind="admin"] .edu-portal-header-card {
+    height: 100%;
+    padding: 12px 0 !important;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.edu-portal-header[data-portal-kind="admin"] .edu-portal-header-main {
+    height: 100%;
+    grid-template-columns: 42px minmax(280px, 1fr) auto auto auto auto;
+    gap: 12px;
+}
+
+.edu-portal-header[data-portal-kind="admin"] .edu-portal-brand,
+.edu-portal-header[data-portal-kind="admin"] .edu-portal-nav {
+    display: none;
+}
+
+.edu-portal-header[data-portal-kind="admin"] .edu-portal-menu {
+    width: 42px;
+    height: 42px;
+    border-radius: 8px;
+    color: #0f766e;
+    background: #e5f7f3;
+    font-size: 17px;
+}
+
+.edu-portal-header[data-portal-kind="admin"] .edu-portal-search {
+    justify-self: center;
+    width: min(100%, 640px);
+    min-width: 260px;
+    height: 44px;
+    border-color: #d5e7e3;
+    border-radius: 8px;
+    box-shadow: none;
+}
+
+.edu-portal-header[data-portal-kind="admin"] .edu-portal-search input {
+    padding: 0 15px;
+    font-size: 14px;
+}
+
+.edu-portal-header[data-portal-kind="admin"] .edu-portal-search button {
+    width: 46px;
+    height: 42px;
+    margin-right: 0;
+    border-radius: 0 7px 7px 0;
+    color: #075e55;
+    background: #dff4f0;
+    font-size: 15px;
+}
+
+.edu-portal-header[data-portal-kind="admin"] .edu-portal-chip,
+.edu-portal-header[data-portal-kind="admin"] .edu-portal-icon-button {
+    min-height: 42px;
+    height: 42px;
+    border-radius: 8px;
+    box-shadow: none;
+}
+
+.edu-portal-header[data-portal-kind="admin"] .edu-portal-chip {
+    padding: 0 12px;
+    font-size: 12px;
+}
+
+.edu-portal-header[data-portal-kind="admin"] .edu-portal-icon-button {
+    width: 42px;
+    font-size: 15px;
+}
+
+.edu-portal-header[data-portal-kind="admin"] .edu-portal-icon-button span {
+    top: -5px;
+    right: -5px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    font-size: 10px;
+    box-shadow: none;
+}
+
+.edu-portal-header[data-portal-kind="admin"] .edu-portal-profile {
+    gap: 9px;
+}
+
+.edu-portal-header[data-portal-kind="admin"] .edu-portal-profile img {
+    width: 42px;
+    height: 42px;
+}
+
+.edu-portal-header[data-portal-kind="admin"] .edu-portal-profile strong {
+    font-size: 13px;
+}
+
+.edu-portal-header[data-portal-kind="admin"] .edu-portal-profile small {
+    font-size: 11px;
+}
+
+@media (max-width: 1240px) {
+    .edu-portal-header[data-portal-kind="admin"] .edu-portal-header-main {
+        grid-template-columns: 42px minmax(240px, 1fr) auto auto auto;
+    }
+
+    .edu-portal-header[data-portal-kind="admin"] .edu-portal-clock {
+        display: none;
+    }
+}
+
+@media (max-width: 980px) {
+    .edu-portal-header[data-portal-kind="admin"] {
+        margin-left: 0 !important;
+        padding: 0 16px !important;
+    }
+
+    .edu-portal-header[data-portal-kind="admin"] .edu-portal-header-main {
+        grid-template-columns: 42px minmax(180px, 1fr) auto auto;
+    }
+
+    .edu-portal-header[data-portal-kind="admin"] .edu-portal-language,
+    .edu-portal-header[data-portal-kind="admin"] .edu-portal-profile span,
+    .edu-portal-header[data-portal-kind="admin"] .edu-portal-profile > i {
+        display: none;
+    }
+}
+
+@media (max-width: 640px) {
+    .edu-portal-header[data-portal-kind="admin"] {
+        min-height: 124px !important;
+        height: auto !important;
+        padding: 0 12px !important;
+    }
+
+    .edu-portal-header[data-portal-kind="admin"] .edu-portal-header-card {
+        padding: 10px 0 !important;
+    }
+
+    .edu-portal-header[data-portal-kind="admin"] .edu-portal-header-main {
+        grid-template-columns: 42px 1fr auto auto;
+        gap: 8px;
+    }
+
+    .edu-portal-header[data-portal-kind="admin"] .edu-portal-search {
+        grid-column: 1 / -1;
+        order: 5;
+        width: 100%;
+        min-width: 0;
+    }
+}

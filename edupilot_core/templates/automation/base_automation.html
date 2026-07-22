@@ -7,7 +7,7 @@
     <title>{% block title %}Account Automation{% endblock %}</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="{% static 'admin_panel/vendor/chart.js/Chart.bundle.min.js' %}"></script>
     <style>
         :root {
             --sidebar-width: 300px;
@@ -638,116 +638,18 @@
         }
     </style>
     <link rel="stylesheet" href="{% static 'admin_panel/css/admin-inner-theme.css' %}?v=admin-pill-buttons-3">
-    <link rel="stylesheet" href="{% static 'admin_panel/css/reference-sidebar.css' %}?v=reference-sidebar-7">
+    <link rel="stylesheet" href="{% static 'admin_panel/css/reference-sidebar.css' %}?v=unified-sidebar-1">
+    <link rel="stylesheet" href="{% static 'admin_panel/css/portal-header.css' %}?v=neutral-header-1">
     {% block extra_head %}{% endblock %}
+<link rel="stylesheet" href="{% static 'admin_panel/css/edupilot-buttons.css' %}?v=unified-buttons-4">
+<link rel="stylesheet" href="{% static 'admin_panel/css/edupilot-surfaces.css' %}?v=neutral-surfaces-4">
 </head>
-<body class="automation-admin-page">
+<body class="automation-admin-page edu-button-theme edu-neutral-surfaces">
 <div class="automation-shell">
-    <aside class="deznav edu-reference-sidebar" id="automationSidebar">
-        <div class="deznav-brand">
-            <a href="{% url 'admin_panel_dashboard' %}" class="brand-logo">
-                <img src="{% static 'admin_panel/images/edupilot-logo-2026-nav.png' %}?v=20260718-userfriendly" alt="EDUPILOT">
-                <strong>EDUPILOT</strong>
-                <small>TEACH, TRACK, TRANSFORM</small>
-            </a>
-        </div>
-
-        <div class="deznav-scroll">
-            <ul class="metismenu" id="automationMenu">
-                <li>
-                    <a href="{% url 'admin_panel_dashboard' %}" class="ai-icon">
-                        <i class="fas fa-th-large"></i>
-                        <span>Dashboard</span>
-                    </a>
-                </li>
-                <li class="has-menu mm-active">
-                    <a href="javascript:void(0)" class="has-arrow ai-icon mm-active">
-                        <i class="fas fa-sliders-h"></i>
-                        <span>Account Automation</span>
-                    </a>
-                    <ul>
-                        <li><a href="{% url 'automation-dashboard' %}" class="{% if request.resolver_match.url_name == 'automation-dashboard' %}active-link{% endif %}"><i class="fas fa-chart-pie"></i> <span>Dashboard</span></a></li>
-                        <li><a href="{% url 'fee-automation' %}" class="{% if request.resolver_match.url_name == 'fee-automation' %}active-link{% endif %}"><i class="fas fa-money-check-dollar"></i> <span>Fee Automation</span></a></li>
-                        <li><a href="{% url 'voucher-management' %}" class="{% if request.resolver_match.url_name == 'voucher-management' %}active-link{% endif %}"><i class="fas fa-file-invoice"></i> <span>Voucher Management</span></a></li>
-                        <li><a href="{% url 'notification-queue' %}" class="{% if request.resolver_match.url_name == 'notification-queue' %}active-link{% endif %}"><i class="fas fa-bell"></i> <span>Notification Queue</span></a></li>
-                        <li><a href="{% url 'salary-automation' %}" class="{% if request.resolver_match.url_name == 'salary-automation' %}active-link{% endif %}"><i class="fas fa-money-bill-wave"></i> <span>Salary Automation</span></a></li>
-                        <li><a href="{% url 'payslip-management' %}" class="{% if request.resolver_match.url_name == 'payslip-management' %}active-link{% endif %}"><i class="fas fa-file-signature"></i> <span>Payslip Management</span></a></li>
-                        <li><a href="{% url 'automation-logs' %}" class="{% if request.resolver_match.url_name == 'automation-logs' %}active-link{% endif %}"><i class="fas fa-clipboard-list"></i> <span>Automation Logs</span></a></li>
-                        <li><a href="{% url 'automation-settings' %}" class="{% if request.resolver_match.url_name == 'automation-settings' %}active-link{% endif %}"><i class="fas fa-cogs"></i> <span>Automation Settings</span></a></li>
-                    </ul>
-                </li>
-                <li class="has-menu">
-                    <a href="javascript:void(0)" class="has-arrow ai-icon">
-                        <i class="fas fa-database"></i>
-                        <span>Data Management</span>
-                    </a>
-                    <ul>
-                        <li><a href="{% url 'crud-list' model_name='feehead' %}"><i class="fas fa-tags"></i> <span>Fee Heads</span></a></li>
-                        <li><a href="{% url 'crud-list' model_name='feeplan' %}"><i class="fas fa-map"></i> <span>Fee Plans</span></a></li>
-                        <li><a href="{% url 'crud-list' model_name='feeplandetail' %}"><i class="fas fa-circle-info"></i> <span>Fee Plan Details</span></a></li>
-                        <li><a href="{% url 'crud-list' model_name='transportroute' %}"><i class="fas fa-bus"></i> <span>Transport Routes</span></a></li>
-                        <li><a href="{% url 'crud-list' model_name='scholarship' %}"><i class="fas fa-graduation-cap"></i> <span>Scholarships</span></a></li>
-                        <li><a href="{% url 'crud-list' model_name='feevoucher' %}"><i class="fas fa-receipt"></i> <span>Fee Vouchers</span></a></li>
-                        <li><a href="{% url 'crud-list' model_name='feevoucheritem' %}"><i class="fas fa-list"></i> <span>Fee Voucher Items</span></a></li>
-                        <li><a href="{% url 'crud-list' model_name='feegenerationsettings' %}"><i class="fas fa-sliders-h"></i> <span>Fee Generation Settings</span></a></li>
-                        <li><a href="{% url 'crud-list' model_name='feegenerationlog' %}"><i class="fas fa-clock-rotate-left"></i> <span>Fee Generation Logs</span></a></li>
-                        <li><a href="{% url 'crud-list' model_name='student' %}"><i class="fas fa-user-graduate"></i> <span>Students</span></a></li>
-                        <li><a href="{% url 'crud-list' model_name='studentfeeassignment' %}"><i class="fas fa-clipboard-check"></i> <span>Student Fee Assignments</span></a></li>
-                        <li><a href="{% url 'crud-list' model_name='studentledger' %}"><i class="fas fa-book"></i> <span>Student Ledgers</span></a></li>
-                        <li><a href="{% url 'crud-list' model_name='studentbalance' %}"><i class="fas fa-scale-balanced"></i> <span>Student Balances</span></a></li>
-                        <li><a href="{% url 'crud-list' model_name='studentperformance' %}"><i class="fas fa-chart-line"></i> <span>Student Performance</span></a></li>
-                        <li><a href="{% url 'crud-list' model_name='teacher' %}"><i class="fas fa-chalkboard-teacher"></i> <span>Teachers</span></a></li>
-                        <li><a href="{% url 'crud-list' model_name='salarystructure' %}"><i class="fas fa-sitemap"></i> <span>Salary Structures</span></a></li>
-                        <li><a href="{% url 'crud-list' model_name='salaryvoucher' %}"><i class="fas fa-envelope-open-text"></i> <span>Salary Vouchers</span></a></li>
-                        <li><a href="{% url 'crud-list' model_name='salaryautomationsettings' %}"><i class="fas fa-screwdriver-wrench"></i> <span>Salary Automation Settings</span></a></li>
-                        <li><a href="{% url 'crud-list' model_name='salaryautomationjob' %}"><i class="fas fa-briefcase"></i> <span>Salary Automation Jobs</span></a></li>
-                        <li><a href="{% url 'crud-list' model_name='salaryautomationjobdetail' %}"><i class="fas fa-circle-info"></i> <span>Salary Job Details</span></a></li>
-                        <li><a href="{% url 'crud-list' model_name='staff' %}"><i class="fas fa-users"></i> <span>Staff</span></a></li>
-                        <li><a href="{% url 'crud-list' model_name='transaction' %}"><i class="fas fa-exchange-alt"></i> <span>Transactions</span></a></li>
-                        <li><a href="{% url 'crud-list' model_name='automationjob' %}"><i class="fas fa-robot"></i> <span>Automation Jobs</span></a></li>
-                        <li><a href="{% url 'crud-list' model_name='automationjobdetail' %}"><i class="fas fa-magnifying-glass-chart"></i> <span>Automation Job Details</span></a></li>
-                        <li><a href="{% url 'crud-list' model_name='notificationqueue' %}"><i class="fas fa-flag"></i> <span>Notification Queue (Data)</span></a></li>
-                    </ul>
-                </li>
-            </ul>
-        </div>
-
-        <div class="copyright">EduPilot &copy; {% now "Y" %}</div>
-    </aside>
+    {% include 'shared/sidebar/shell.html' with sidebar_portal='automation' sidebar_menu_template='automation/sidebar.html' %}
 
     <main class="main-content">
-        <header class="topbar">
-            <div class="topbar-left">
-                <button type="button" class="menu-toggle" id="mobileMenuToggle" aria-label="Toggle sidebar">
-                    <i class="fas fa-bars"></i>
-                </button>
-                <h1>{% block page_title %}Dashboard{% endblock %}</h1>
-            </div>
-            <div class="topbar-right">
-                <form class="search-box" action="{% url 'admin_search' %}" method="get" data-admin-search-form>
-                    <input type="search" name="q" placeholder="Search something here..." aria-label="Search" autocomplete="off" data-admin-search>
-                    <i class="fas fa-search"></i>
-                    <div class="admin-header-search-results" data-admin-search-results></div>
-                </form>
-                <div class="bell-wrap" data-admin-notification-toggle>
-                    <i class="fas fa-bell"></i>
-                    <span class="bell-badge" data-admin-notification-count>{{ notifications_today|default:"0" }}</span>
-                    <div class="automation-notification-dropdown">
-                        <ul class="timeline" data-admin-notifications>
-                            <li class="admin-header-notification-empty">Loading notifications...</li>
-                        </ul>
-                        <a href="{% url 'notification-queue' %}">See all notifications</a>
-                    </div>
-                </div>
-                <a class="user-info" href="{% url 'admin_profile' %}">
-                    <div class="user-copy">
-                        <strong data-admin-user-name>{{ request.user.get_full_name|default:request.user.username|default:"Admin" }}</strong>
-                        <span data-admin-user-role>{% if request.user.is_superuser %}Super Admin{% else %}Admin{% endif %}</span>
-                    </div>
-                    <div class="avatar"><i class="fas fa-user"></i></div>
-                </a>
-            </div>
-        </header>
+        {% include 'shared/header/portal_header.html' with portal_kind='automation' %}
 
         <section class="content">
             {% if messages %}
@@ -762,48 +664,8 @@
     </main>
 </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    var menu = document.getElementById('automationMenu');
-    var sidebar = document.getElementById('automationSidebar');
-    var toggleBtn = document.getElementById('mobileMenuToggle');
-
-    if (menu) {
-        menu.querySelectorAll('li.has-menu > a.has-arrow').forEach(function (link) {
-            link.addEventListener('click', function (event) {
-                event.preventDefault();
-                var parent = link.parentElement;
-                var wasOpen = parent.classList.contains('mm-active');
-                menu.querySelectorAll(':scope > li.has-menu.mm-active').forEach(function (openItem) {
-                    if (openItem !== parent) openItem.classList.remove('mm-active');
-                });
-                parent.classList.toggle('mm-active', !wasOpen);
-                link.classList.toggle('mm-active', !wasOpen);
-            });
-        });
-
-        menu.querySelectorAll('a[href]').forEach(function (link) {
-            var href = link.getAttribute('href');
-            if (!href || href === '#' || href.indexOf('javascript:') === 0) return;
-            if (window.location.pathname.indexOf(href) === 0) {
-                link.classList.add('active-link');
-                var parentMenu = link.closest('ul') && link.closest('ul').closest('li.has-menu');
-                if (parentMenu) {
-                    parentMenu.classList.add('mm-active');
-                    var topLink = parentMenu.querySelector(':scope > a');
-                    if (topLink) topLink.classList.add('mm-active');
-                }
-            }
-        });
-    }
-
-    if (toggleBtn && sidebar) {
-        toggleBtn.addEventListener('click', function () {
-            sidebar.classList.toggle('deznav-open');
-        });
-    }
-});
-</script>
+<script src="{% static 'admin_panel/js/deznav-sidebar.js' %}?v=unified-sidebar-1"></script>
 <script src="{% static 'admin_panel/js/admin-header-live.js' %}?v=header-live-solid-1"></script>
+<script src="{% static 'admin_panel/js/portal-header.js' %}?v=global-header-1"></script>
 </body>
 </html>

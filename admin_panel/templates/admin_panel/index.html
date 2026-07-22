@@ -4,8 +4,10 @@
 {% block title %}Dashboard | EduPilot{% endblock %}
 
 {% block head %}
-<link rel="stylesheet" href="{% static 'admin_panel/css/live-dashboard.css' %}?v=live-dashboard-1">
+<link rel="stylesheet" href="{% static 'admin_panel/css/live-dashboard.css' %}?v=live-dashboard-3">
+<link rel="stylesheet" href="{% static 'admin_panel/css/edupilot-charts.css' %}?v=charts-1">
 <script src="{% static 'admin_panel/vendor/chart.js/Chart.bundle.min.js' %}"></script>
+<script src="{% static 'admin_panel/js/edupilot-charts.js' %}?v=charts-1"></script>
 {% endblock %}
 
 {% block content %}
@@ -51,7 +53,7 @@
             </div>
             <div class="live-module-metrics" data-metrics></div>
             <div class="live-chart-heading"><h3>Weekly Student Attendance Trend</h3><span data-range-label>Last 7 Days</span></div>
-            <div class="live-chart"><canvas id="academicsChart"></canvas></div>
+            <div class="live-chart ep-chart-box"><canvas id="academicsChart"></canvas></div>
             <div class="live-module-actions">
                 <a href="#" data-primary-url>View Academics <i class="fas fa-arrow-right"></i></a>
                 <a href="#" data-report-url>Academic Report <i class="fas fa-file-alt"></i></a>
@@ -66,7 +68,7 @@
             <div class="live-module-metrics" data-metrics></div>
             <div class="live-chart-heading"><h3>Staff Attendance Overview</h3><span>Today</span></div>
             <div class="live-donut-wrap">
-                <div class="live-chart live-donut-chart">
+                <div class="live-chart live-donut-chart ep-chart-box">
                     <canvas id="hrChart"></canvas>
                     <div class="live-donut-center"><strong data-hr-center-value>0</strong><span>Employees</span></div>
                 </div>
@@ -85,7 +87,7 @@
             </div>
             <div class="live-module-metrics" data-metrics></div>
             <div class="live-chart-heading"><h3>Income vs Expense (PKR)</h3><span data-range-label>Last 7 Days</span></div>
-            <div class="live-chart"><canvas id="financeChart"></canvas></div>
+            <div class="live-chart ep-chart-box"><canvas id="financeChart"></canvas></div>
             <div class="live-module-actions">
                 <a href="#" data-primary-url>View Accounts <i class="fas fa-arrow-right"></i></a>
                 <a href="#" data-report-url>Finance Report <i class="fas fa-file-alt"></i></a>
@@ -103,7 +105,7 @@
             <div class="live-operation-body">
                 <div>
                     <div class="live-chart-heading"><h3>Monthly Procurement Spend (PKR)</h3><span data-range-label>Last 7 Days</span></div>
-                    <div class="live-chart live-operation-chart"><canvas id="procurementChart"></canvas></div>
+                    <div class="live-chart live-operation-chart ep-chart-box"><canvas id="procurementChart"></canvas></div>
                 </div>
                 <div class="live-status-summary" data-procurement-summary></div>
             </div>
@@ -122,7 +124,7 @@
             <div class="live-operation-body">
                 <div>
                     <div class="live-chart-heading"><h3>Route Performance</h3><span data-range-label>Last 7 Days</span></div>
-                    <div class="live-route-list" data-route-performance></div>
+                    <div class="live-route-list ep-route-performance" data-route-performance></div>
                 </div>
                 <div class="live-status-summary" data-fleet-summary></div>
             </div>

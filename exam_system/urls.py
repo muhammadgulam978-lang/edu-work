@@ -127,4 +127,7 @@ urlpatterns = [
     path('analytics/',
          views.analytics_dashboard,
          name='analytics_dashboard'),
+    path('analytics/data/',
+         views.analytics_data,
+         name='analytics_data'),
 ]

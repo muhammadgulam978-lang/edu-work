@@ -4,7 +4,8 @@
 {% block extra_head %}
 {{ block.super }}
 <link rel="stylesheet" href="{% static 'admin_panel/css/ai-graphs.css' %}?v=ai-graphs-1">
-<script src="{% static 'admin_panel/js/ai-graphs.js' %}?v=ai-graphs-1"></script>
+<link rel="stylesheet" href="{% static 'admin_panel/css/edupilot-charts.css' %}?v=charts-1">
+<script src="{% static 'admin_panel/js/edupilot-charts.js' %}?v=charts-1"></script>
 {% endblock %}
 {% block content %}
 <style>
@@ -511,10 +512,10 @@
     </section>
 
     <section class="aa-main-grid">
-        <article class="aa-card">
+        <article class="aa-card ep-chart-card" data-chart-tone="finance">
             <h3>Fee Collection Overview</h3>
             <p>Collected and pending fee amount based on live voucher status.</p>
-            <form class="ai-graph-toolbar" id="automationFeeGraphFilters">
+            <form class="ai-graph-toolbar ep-chart-toolbar" id="automationFeeGraphFilters">
                 <div class="ai-graph-control">
                     <label for="aa-period">Date Range</label>
                     <select id="aa-period" name="period">
@@ -536,7 +537,7 @@
                     <button class="ai-graph-btn secondary" type="button" data-ai-graph-reset>Reset</button>
                 </div>
             </form>
-            <div class="ai-chart-box">
+            <div class="ai-chart-box ep-chart-box">
                 <canvas id="feeChart"></canvas>
             </div>
         </article>
@@ -644,7 +645,7 @@
 {{ fee_chart_pending|json_script:"automation-fee-pending" }}
 <script>
 (function () {
-    var graphs = window.EduPilotAIGraphs;
+    var graphs = window.EduPilotCharts;
     var form = document.getElementById('automationFeeGraphFilters');
     if (!graphs || typeof Chart === 'undefined') return;
 
@@ -660,31 +661,29 @@
             collected: readJson('automation-fee-collected'),
             pending: readJson('automation-fee-pending')
         };
-        graphs.lineChart('feeChart', fees.labels || [], [
+        graphs.groupedBarChart('feeChart', fees.labels || [], [
             { label: 'Collected', data: fees.collected || [], color: graphs.palette.green },
-            { label: 'Pending', data: fees.pending || [], color: graphs.palette.yellow }
-        ]);
+            { label: 'Pending', data: fees.pending || [], color: graphs.palette.finance }
+        ], {valueFormat: 'currency', summary: 'Collected and pending fee amounts for the selected date range.'});
     }
 
-    function refresh() {
+    function graphUrl() {
         var params = form ? graphs.queryFromForm(form).toString() : '';
-        var url = "{% url 'automation-graph-data' %}" + (params ? '?' + params : '');
-        fetch(url, {headers: {'X-Requested-With': 'XMLHttpRequest'}})
-            .then(function (response) { return response.ok ? response.json() : Promise.reject(); })
-            .then(render)
-            .catch(function () {});
+        return "{% url 'automation-graph-data' %}" + (params ? '?' + params : '');
     }
+
+    var live = graphs.liveController({url: graphUrl, render: render, target: document.getElementById('feeChart'), interval: 30000});
 
     if (form) {
         form.addEventListener('submit', function (event) {
             event.preventDefault();
-            refresh();
+            live.refresh();
         });
         var reset = form.querySelector('[data-ai-graph-reset]');
         if (reset) {
             reset.addEventListener('click', function () {
                 form.reset();
-                refresh();
+                live.refresh();
             });
         }
     }

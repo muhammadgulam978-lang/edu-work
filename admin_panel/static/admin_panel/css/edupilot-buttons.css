@@ -1,0 +1,511 @@
+/* Shared action-button system for authenticated EduPilot portals. */
+.edu-button-theme {
+  --edu-btn-mint: #88d0c5;
+  --edu-btn-teal: #0f9f94;
+  --edu-btn-green: #8bc740;
+  --edu-btn-blue: #49a8ee;
+  --edu-btn-purple: #7651c7;
+  --edu-btn-amber: #e9960c;
+  --edu-btn-red: #e24e55;
+  --edu-btn-ink: #17302c;
+  --edu-btn-surface: #ffffff;
+  --edu-btn-hover-surface: #eef9f6;
+  --edu-btn-border-start: var(--edu-btn-teal);
+  --edu-btn-border-mid: var(--edu-btn-blue);
+  --edu-btn-border-end: var(--edu-btn-green);
+  --edu-btn-shadow: rgba(26, 94, 84, .12);
+}
+
+.edu-button-theme :is(
+  .edu-btn,
+  .btn,
+  .btn-teal,
+  .btn-submit,
+  .submit-btn,
+  .btn-cancel,
+  .btn-upload,
+  .btn-custom,
+  .btn-green,
+  .admin-btn-primary,
+  .admin-btn-secondary,
+  .admin-btn-danger,
+  .ops-btn,
+  .ag-btn,
+  .sg-btn,
+  .qb-btn,
+  .qd-btn,
+  .qd-back-btn,
+  .ai-btn,
+  .ai-graph-btn,
+  .ai-report-popup-btn,
+  .admin-ai-btn,
+  .appraisal-btn,
+  .student-btn,
+  .role-btn,
+  .teacher-soft-btn,
+  .sp-btn,
+  .tp-btn,
+  .uz-btn,
+  .ta-btn,
+  .rm-btn,
+  .back-btn,
+  .btn-download,
+  .btn-pdf,
+  .btn-gen,
+  .btn-add-q,
+  .btn-row,
+  .edu-icon-btn,
+  .teacher-icon-btn,
+  .ops-icon-btn,
+  .ag-icon-btn,
+  .sg-icon-btn,
+  .ta-mini-btn,
+  .ac-mini-btn,
+  .btn-pdf-disabled,
+  .disabled-btn,
+  .action-btn:is(a, button, input),
+  .card-primary-action,
+  .aa-action-link,
+  .icon-btn,
+  .live-module-actions a,
+  button[type="submit"],
+  input[type="submit"],
+  input[type="button"],
+  input[type="reset"]
+):not(
+  .btn-link,
+  .btn-close,
+  .page-link,
+  .nav-link,
+  .dropdown-item,
+  .toggle-btn,
+  .hamburger-btn,
+  .live-refresh-btn,
+  .parent-sidebar-toggle,
+  .edu-portal-menu,
+  .edu-portal-icon-button,
+  .edu-portal-search *,
+  .edu-reference-sidebar *,
+  .pagination *,
+  .dataTables_paginate *,
+  .nav-tabs *,
+  .nav-pills *,
+  .bootstrap-select *
+) {
+  --edu-btn-current-surface: var(--edu-btn-surface);
+  min-height: 40px;
+  max-width: 100%;
+  padding: 8px 16px;
+  border: 1px solid transparent !important;
+  border-radius: 8px !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background:
+    linear-gradient(var(--edu-btn-current-surface), var(--edu-btn-current-surface)) padding-box,
+    linear-gradient(115deg, var(--edu-btn-border-start), var(--edu-btn-border-mid), var(--edu-btn-border-end)) border-box !important;
+  color: var(--edu-btn-ink) !important;
+  box-shadow: 0 4px 12px var(--edu-btn-shadow) !important;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500 !important;
+  line-height: 1.2;
+  letter-spacing: 0 !important;
+  text-align: center;
+  text-decoration: none !important;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  vertical-align: middle;
+  cursor: pointer;
+  transition: transform .16s ease, box-shadow .16s ease, color .16s ease, opacity .16s ease !important;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.edu-button-theme input:is([type="submit"], [type="button"], [type="reset"]) {
+  display: inline-block;
+}
+
+.edu-button-theme :is(
+  .edu-btn,
+  .btn,
+  .btn-teal,
+  .btn-submit,
+  .submit-btn,
+  .btn-cancel,
+  .btn-upload,
+  .btn-custom,
+  .btn-green,
+  .admin-btn-primary,
+  .admin-btn-secondary,
+  .admin-btn-danger,
+  .ops-btn,
+  .ag-btn,
+  .sg-btn,
+  .qb-btn,
+  .qd-btn,
+  .qd-back-btn,
+  .ai-btn,
+  .ai-graph-btn,
+  .ai-report-popup-btn,
+  .admin-ai-btn,
+  .appraisal-btn,
+  .student-btn,
+  .role-btn,
+  .teacher-soft-btn,
+  .sp-btn,
+  .tp-btn,
+  .uz-btn,
+  .ta-btn,
+  .rm-btn,
+  .back-btn,
+  .btn-download,
+  .btn-pdf,
+  .btn-gen,
+  .btn-add-q,
+  .btn-row,
+  .edu-icon-btn,
+  .teacher-icon-btn,
+  .ops-icon-btn,
+  .ag-icon-btn,
+  .sg-icon-btn,
+  .ta-mini-btn,
+  .ac-mini-btn,
+  .btn-pdf-disabled,
+  .disabled-btn,
+  .action-btn:is(a, button, input),
+  .card-primary-action,
+  .aa-action-link,
+  .icon-btn,
+  .live-module-actions a,
+  button[type="submit"],
+  input[type="submit"],
+  input[type="button"],
+  input[type="reset"]
+):not(
+  .btn-link,
+  .btn-close,
+  .page-link,
+  .nav-link,
+  .dropdown-item,
+  .toggle-btn,
+  .hamburger-btn,
+  .live-refresh-btn,
+  .parent-sidebar-toggle,
+  .edu-portal-menu,
+  .edu-portal-icon-button,
+  .edu-portal-search *,
+  .edu-reference-sidebar *,
+  .pagination *,
+  .dataTables_paginate *,
+  .nav-tabs *,
+  .nav-pills *,
+  .bootstrap-select *
+):hover {
+  --edu-btn-current-surface: var(--edu-btn-hover-surface);
+  color: var(--edu-btn-ink) !important;
+  box-shadow: 0 8px 18px var(--edu-btn-shadow) !important;
+  transform: translateY(-1px);
+}
+
+.edu-button-theme :is(
+  .edu-btn,
+  .btn,
+  .btn-teal,
+  .btn-submit,
+  .submit-btn,
+  .btn-cancel,
+  .btn-upload,
+  .btn-custom,
+  .btn-green,
+  .admin-btn-primary,
+  .admin-btn-secondary,
+  .admin-btn-danger,
+  .ops-btn,
+  .ag-btn,
+  .sg-btn,
+  .qb-btn,
+  .qd-btn,
+  .qd-back-btn,
+  .ai-btn,
+  .ai-graph-btn,
+  .ai-report-popup-btn,
+  .admin-ai-btn,
+  .appraisal-btn,
+  .student-btn,
+  .role-btn,
+  .teacher-soft-btn,
+  .sp-btn,
+  .tp-btn,
+  .uz-btn,
+  .ta-btn,
+  .rm-btn,
+  .back-btn,
+  .btn-download,
+  .btn-pdf,
+  .btn-gen,
+  .btn-add-q,
+  .btn-row,
+  .edu-icon-btn,
+  .teacher-icon-btn,
+  .ops-icon-btn,
+  .ag-icon-btn,
+  .sg-icon-btn,
+  .ta-mini-btn,
+  .ac-mini-btn,
+  .btn-pdf-disabled,
+  .disabled-btn,
+  .action-btn:is(a, button, input),
+  .card-primary-action,
+  .aa-action-link,
+  .icon-btn,
+  .live-module-actions a,
+  button[type="submit"],
+  input[type="submit"],
+  input[type="button"],
+  input[type="reset"]
+):not(
+  .btn-link,
+  .btn-close,
+  .page-link,
+  .nav-link,
+  .dropdown-item,
+  .toggle-btn,
+  .hamburger-btn,
+  .live-refresh-btn,
+  .parent-sidebar-toggle,
+  .edu-portal-menu,
+  .edu-portal-icon-button,
+  .edu-portal-search *,
+  .edu-reference-sidebar *,
+  .pagination *,
+  .dataTables_paginate *,
+  .nav-tabs *,
+  .nav-pills *,
+  .bootstrap-select *
+):focus-visible {
+  outline: 3px solid rgba(15, 159, 148, .25) !important;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 1px #ffffff, 0 0 0 5px rgba(15, 159, 148, .2) !important;
+}
+
+.edu-button-theme :is(.edu-btn, .btn, .btn-teal, .ops-btn, .ag-btn, .sg-btn, .qb-btn, .qd-btn, .ai-btn, .ai-graph-btn, .appraisal-btn, .student-btn, .role-btn, .teacher-soft-btn, .sp-btn, .tp-btn, .uz-btn, .ta-btn, .rm-btn, .edu-icon-btn, .teacher-icon-btn, .ops-icon-btn, .ag-icon-btn, .sg-icon-btn, .ta-mini-btn, .ac-mini-btn, .btn-pdf-disabled, .disabled-btn, .action-btn:is(a, button, input), .card-primary-action, .aa-action-link, .icon-btn, .live-module-actions a, button[type="submit"], input[type="submit"], input[type="button"], input[type="reset"]):active {
+  transform: translateY(0);
+  box-shadow: 0 2px 7px var(--edu-btn-shadow) !important;
+}
+
+.edu-button-theme :is(.edu-btn, .btn, .btn-teal, .ops-btn, .ag-btn, .sg-btn, .qb-btn, .qd-btn, .ai-btn, .ai-graph-btn, .appraisal-btn, .student-btn, .role-btn, .teacher-soft-btn, .sp-btn, .tp-btn, .uz-btn, .ta-btn, .rm-btn, .edu-icon-btn, .teacher-icon-btn, .ops-icon-btn, .ag-icon-btn, .sg-icon-btn, .ta-mini-btn, .ac-mini-btn, .btn-pdf-disabled, .disabled-btn, .action-btn:is(a, button, input), .card-primary-action, .aa-action-link, .icon-btn, .live-module-actions a, button[type="submit"], input[type="submit"], input[type="button"], input[type="reset"]):is(:disabled, .disabled, [aria-disabled="true"]) {
+  opacity: .48 !important;
+  cursor: not-allowed !important;
+  pointer-events: none;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Semantic adapters: existing classes keep their meaning while sharing one shape. */
+.edu-button-theme :is(
+  .edu-btn-primary,
+  .btn-primary,
+  .btn-info,
+  .btn-teal,
+  .btn-submit,
+  .submit-btn,
+  .btn-upload,
+  .btn-custom,
+  .admin-btn-primary,
+  .ops-btn-primary,
+  .ag-btn-primary,
+  .sg-btn-primary,
+  .qb-btn-primary,
+  .qd-btn-primary,
+  .sp-btn--primary,
+  .action-btn:is(a, button, input),
+  .card-primary-action,
+  .aa-action-link,
+  .live-module-actions a:first-child,
+  button[type="submit"],
+  input[type="submit"]
+) {
+  --edu-btn-border-start: var(--edu-btn-teal);
+  --edu-btn-border-mid: var(--edu-btn-blue);
+  --edu-btn-border-end: var(--edu-btn-green);
+  --edu-btn-ink: #0c5e56;
+  --edu-btn-hover-surface: #eaf8f5;
+}
+
+.edu-button-theme :is(
+  .edu-btn-secondary,
+  .btn-secondary,
+  .btn-light,
+  .btn-outline-secondary,
+  .btn-cancel,
+  .admin-btn-secondary,
+  .ops-btn-secondary,
+  .ag-btn-secondary,
+  .sg-btn-secondary,
+  .qb-btn-outline,
+  .qd-btn-secondary,
+  .qd-btn-outline,
+  .qd-back-btn,
+  .ai-btn.secondary,
+  .ai-graph-btn.secondary,
+  .appraisal-btn.secondary,
+  .student-btn.secondary,
+  .role-btn.secondary,
+  .teacher-soft-btn.secondary,
+  .tp-btn.secondary,
+  .back-btn,
+  input[type="reset"]
+) {
+  --edu-btn-border-start: var(--edu-btn-purple);
+  --edu-btn-border-mid: var(--edu-btn-mint);
+  --edu-btn-border-end: var(--edu-btn-teal);
+  --edu-btn-ink: #4b3e76;
+  --edu-btn-hover-surface: #f5f2fc;
+}
+
+.edu-button-theme :is(
+  .edu-btn-success,
+  .btn-success,
+  .btn-green,
+  .btn-outline-success,
+  .appraisal-btn.success
+) {
+  --edu-btn-border-start: var(--edu-btn-green);
+  --edu-btn-border-mid: var(--edu-btn-mint);
+  --edu-btn-border-end: var(--edu-btn-teal);
+  --edu-btn-ink: #397017;
+  --edu-btn-hover-surface: #f1f8e9;
+}
+
+.edu-button-theme :is(
+  .edu-btn-warning,
+  .btn-warning,
+  .btn-outline-warning,
+  .appraisal-btn.warning
+) {
+  --edu-btn-border-start: var(--edu-btn-amber);
+  --edu-btn-border-mid: #f0b649;
+  --edu-btn-border-end: var(--edu-btn-green);
+  --edu-btn-ink: #805000;
+  --edu-btn-hover-surface: #fff8e8;
+}
+
+.edu-button-theme :is(
+  .edu-btn-danger,
+  .btn-danger,
+  .btn-outline-danger,
+  .btn-delete,
+  .delete-btn,
+  .admin-btn-danger,
+  .ops-btn-danger,
+  .ag-btn-danger,
+  .sg-btn-danger,
+  .qb-btn-danger,
+  .teacher-danger,
+  .teacher-icon-btn.delete,
+  .ops-icon-btn.danger,
+  .btn-delete-row,
+  .delete-plan-btn,
+  .tp-btn.danger
+) {
+  --edu-btn-border-start: var(--edu-btn-red);
+  --edu-btn-border-mid: #ef6b62;
+  --edu-btn-border-end: var(--edu-btn-amber);
+  --edu-btn-ink: #a1373e;
+  --edu-btn-hover-surface: #fff1f2;
+}
+
+.edu-button-theme :is(
+  .admin-ai-btn,
+  .ai-btn:not(.secondary),
+  .ai-graph-btn:not(.secondary),
+  .ai-report-popup-btn,
+  .ai-summary
+) {
+  --edu-btn-border-start: var(--edu-btn-purple);
+  --edu-btn-border-mid: var(--edu-btn-blue);
+  --edu-btn-border-end: var(--edu-btn-teal);
+  --edu-btn-ink: #563e9a;
+  --edu-btn-hover-surface: #f3f0fb;
+}
+
+/* Existing size utilities remain authoritative. */
+.edu-button-theme :is(.btn-sm, .qb-btn-sm, .qd-btn-sm, .ta-mini-btn, .ac-mini-btn) {
+  min-height: 34px;
+  padding: 6px 11px;
+  font-size: 12px;
+}
+
+.edu-button-theme :is(.btn-xs) {
+  min-height: 30px;
+  padding: 5px 9px;
+  font-size: 11px;
+}
+
+.edu-button-theme :is(.btn-lg) {
+  min-height: 48px;
+  padding: 11px 20px;
+  font-size: 14px;
+}
+
+/* Icon actions use the same border language without becoming text pills. */
+.edu-button-theme :is(
+  .edu-icon-btn,
+  .btn.sharp,
+  .icon-btn,
+  .teacher-icon-btn,
+  .ops-icon-btn,
+  .ag-icon-btn,
+  .sg-icon-btn
+) {
+  flex: 0 0 34px;
+  width: 34px;
+  min-width: 34px;
+  min-height: 34px;
+  height: 34px;
+  padding: 0 !important;
+  border-radius: 8px !important;
+  white-space: nowrap;
+}
+
+.edu-button-theme :is(a, button).teacher-icon-btn,
+.edu-button-theme :is(a, button).ops-icon-btn,
+.edu-button-theme :is(a, button).ag-icon-btn,
+.edu-button-theme :is(a, button).sg-icon-btn,
+.edu-button-theme :is(a, button).icon-btn,
+.edu-button-theme #main-wrapper :is(a, button).teacher-icon-btn,
+.edu-button-theme #main-wrapper :is(a, button).ops-icon-btn,
+.edu-button-theme #main-wrapper :is(a, button).ag-icon-btn,
+.edu-button-theme #main-wrapper :is(a, button).sg-icon-btn,
+.edu-button-theme #main-wrapper :is(a, button).icon-btn {
+  width: 34px !important;
+  min-width: 34px !important;
+  min-height: 34px !important;
+  height: 34px !important;
+  padding: 0 !important;
+  border-radius: 8px !important;
+}
+
+.edu-button-theme :is(.edu-btn, .btn, .ops-btn, .ag-btn, .sg-btn, .qb-btn, .qd-btn, .ai-btn, .appraisal-btn, .student-btn, .role-btn, .teacher-soft-btn) i,
+.edu-button-theme :is(.edu-btn, .btn, .ops-btn, .ag-btn, .sg-btn, .qb-btn, .qd-btn, .ai-btn, .appraisal-btn, .student-btn, .role-btn, .teacher-soft-btn) svg {
+  flex: 0 0 auto;
+  color: currentColor;
+}
+
+@media (max-width: 575.98px) {
+  .edu-button-theme :is(.edu-btn, .btn, .btn-teal, .ops-btn, .ag-btn, .sg-btn, .qb-btn, .qd-btn, .ai-btn, .ai-graph-btn, .appraisal-btn, .student-btn, .role-btn, .teacher-soft-btn, .sp-btn, .tp-btn, .uz-btn, .ta-btn, .rm-btn, button[type="submit"], input[type="submit"], input[type="button"], input[type="reset"]) {
+    min-width: 0;
+  }
+
+  .edu-button-theme :is(.btn-lg) {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .edu-button-theme :is(.edu-btn, .btn, .btn-teal, .ops-btn, .ag-btn, .sg-btn, .qb-btn, .qd-btn, .ai-btn, .ai-graph-btn, .appraisal-btn, .student-btn, .role-btn, .teacher-soft-btn, .sp-btn, .tp-btn, .uz-btn, .ta-btn, .rm-btn, button[type="submit"], input[type="submit"], input[type="button"], input[type="reset"]) {
+    transition-duration: .01ms !important;
+  }
+}

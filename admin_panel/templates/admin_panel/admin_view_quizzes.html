@@ -2,19 +2,9 @@
 
 {% block navbar %}{% endblock %}
 
-{% block head %}
-{% load static %}
-<link rel="stylesheet" href="{% static 'admin_panel/css/lms_sidebar.css' %}">
-{% endblock %}
-
-{% block sidebar %}
-<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
-{% include 'admin_panel/sidebar.html' %}
-{% endblock %}
-
 {% block content %}
 <div class="lms-topbar">
-    <button class="hamburger-btn" onclick="toggleSidebar()">
+    <button class="hamburger-btn" type="button" data-edu-sidebar-toggle aria-controls="eduSidebar" aria-expanded="false" aria-label="Toggle navigation">
         <span></span><span></span><span></span>
     </button>
     <span class="lms-topbar-title">📝 Quizzes</span>
@@ -71,10 +61,4 @@
     </div>
 </div>
 
-<script>
-function toggleSidebar() {
-    document.querySelector('.deznav').classList.toggle('open');
-    document.getElementById('sidebarOverlay').classList.toggle('open');
-}
-</script>
 {% endblock %}

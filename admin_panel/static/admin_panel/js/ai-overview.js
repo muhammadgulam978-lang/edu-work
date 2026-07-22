@@ -4,7 +4,7 @@
     var page = document.querySelector("[data-ai-overview]");
     if (!page) return;
 
-    var graphs = window.EduPilotAIGraphs;
+    var graphs = window.EduPilotCharts;
     var filterForm = document.getElementById("aiOverviewFilters");
     var loading = page.querySelector("[data-page-loading]");
     var errorBox = page.querySelector("[data-page-error]");
@@ -182,25 +182,24 @@
             { label: "Present", data: charts.attendance && charts.attendance.present, color: colors.green, fill: false, borderWidth: 2 },
             { label: "Absent", data: charts.attendance && charts.attendance.absent, color: colors.pink, fill: false, borderWidth: 2 },
             { label: "Leave", data: charts.attendance && charts.attendance.leave, color: colors.yellow, fill: false, borderWidth: 2 }
-        ], lightLineOptions(false));
+        ], {summary: "Present, absent, and leave attendance totals for the selected period."});
 
         var feeLabels = charts.fees && charts.fees.labels || [];
         graphs.mixedChart("aiFeeChart", feeLabels, [
             { type: "bar", label: "Billed Amount (PKR)", data: charts.fees && charts.fees.total || [], backgroundColor: "rgba(50,127,229,.62)", borderColor: colors.blue, borderWidth: 1 },
             { type: "line", label: "Paid Amount (PKR)", data: charts.fees && charts.fees.paid || [], borderColor: colors.green, backgroundColor: "rgba(51,184,107,.10)", pointBackgroundColor: colors.green, borderWidth: 2, fill: false, lineTension: .32, tension: .32 }
-        ], lightLineOptions(false));
+        ], {valueFormat: "currency", summary: "Billed and paid fee amounts in PKR for the selected period."});
 
         graphs.lineChart("aiAdmissionsChart", charts.admissions && charts.admissions.labels, [
             { label: "Admissions", data: charts.admissions && charts.admissions.values, color: colors.lavender, fill: false, borderWidth: 2 }
-        ], lightLineOptions(true));
+        ], {summary: "Admission intake for the selected period."});
 
         var donutOptions = chartMajor() >= 3 ? { plugins: { legend: { position: "bottom", labels: { color: "#657873", usePointStyle: true, boxWidth: 7 } } } } : { legend: { position: "bottom", labels: { fontColor: "#657873", usePointStyle: true, boxWidth: 7 } } };
-        graphs.doughnutChart("aiAttendanceDonutChart", charts.attendance_donut && charts.attendance_donut.labels, charts.attendance_donut && charts.attendance_donut.values, [colors.green, colors.pink, colors.yellow], donutOptions);
-        graphs.lineChart("aiWorkloadChart", charts.teacher_workload && charts.teacher_workload.labels, [{ label: "Assigned Periods", data: charts.teacher_workload && charts.teacher_workload.values, color: colors.blue, fill: false }], lightLineOptions(true));
-        graphs.lineChart("aiFixtureMixChart", charts.fixture_mix && charts.fixture_mix.labels, [
-            { label: "Manual", data: charts.fixture_mix && charts.fixture_mix.manual, color: colors.orange, fill: false },
-            { label: "Automated", data: charts.fixture_mix && charts.fixture_mix.auto, color: colors.teal, fill: false }
-        ], lightLineOptions(false));
+        graphs.doughnutChart("aiAttendanceDonutChart", charts.attendance_donut && charts.attendance_donut.labels, charts.attendance_donut && charts.attendance_donut.values, [colors.green, colors.pink, colors.yellow], {summary: "Today's present, absent, and leave attendance distribution."});
+        graphs.horizontalBarChart("aiWorkloadChart", charts.teacher_workload && charts.teacher_workload.labels, [{ label: "Assigned Periods", data: charts.teacher_workload && charts.teacher_workload.values, color: colors.blue }], {summary: "Assigned timetable periods for the six busiest teachers."});
+        var manual = (charts.fixture_mix && charts.fixture_mix.manual || []).reduce(function (total, value) { return total + Number(value || 0); }, 0);
+        var automated = (charts.fixture_mix && charts.fixture_mix.auto || []).reduce(function (total, value) { return total + Number(value || 0); }, 0);
+        graphs.doughnutChart("aiFixtureMixChart", ["Manual", "Automated"], [manual, automated], [colors.orange, colors.teal], {summary: "Manual and automated fixture assignment totals."});
     }
 
     function renderAll(data) {
@@ -276,5 +275,6 @@
     });
 
     renderCharts(initialData().charts || {});
-    window.setInterval(refreshAnalytics, 30000);
+    window.setInterval(function () { if (!document.hidden) refreshAnalytics(); }, 30000);
+    document.addEventListener("visibilitychange", function () { if (!document.hidden) refreshAnalytics(); });
 })();

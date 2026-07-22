@@ -1194,7 +1194,18 @@ def exam_results_list(request, schedule_id):
 
 @login_required
 def analytics_dashboard(request):
-    from django.db.models import Count, Avg
+    data = build_exam_analytics_data()
+    return render(request, 'exam_system/analytics_dashboard.html', {
+        'academic_year': data['academic_year'],
+        'plans': data['plans'],
+        'subject_stats': data['subject_stats'],
+        'grade_dist': data['grade_dist'],
+        'exam_analytics_data': data['json'],
+    })
+
+
+def build_exam_analytics_data():
+    from django.db.models import Avg, Count
 
     academic_year = get_active_year()
     plans = ExamPlan.objects.filter(
@@ -1214,10 +1225,38 @@ def analytics_dashboard(request):
     grade_dist = CentralizedResult.objects.filter(
         answer_sheet__schedule__exam_plan__academic_year=academic_year
     ).values('grade').annotate(count=Count('id')).order_by('grade')
-
-    return render(request, 'exam_system/analytics_dashboard.html', {
+    subject_rows = list(subject_stats)
+    grade_rows = list(grade_dist)
+    total_results = sum(row['total'] for row in subject_rows)
+    json_data = {
+        'meta': {
+            'generated_at': timezone.localtime().strftime('%d %b %Y, %I:%M %p'),
+            'academic_year': str(academic_year) if academic_year else 'No active academic year',
+        },
+        'kpis': [
+            {'label': 'Published Exam Plans', 'value': plans.count()},
+            {'label': 'Subjects Examined', 'value': len(subject_rows)},
+            {'label': 'Compiled Results', 'value': total_results},
+        ],
+        'subject_performance': {
+            'labels': [row['answer_sheet__schedule__subject__name'] or 'Subject' for row in subject_rows],
+            'averages': [round(float(row['avg_pct'] or 0), 1) for row in subject_rows],
+            'students': [row['total'] for row in subject_rows],
+        },
+        'grade_distribution': {
+            'labels': [row['grade'] or 'Ungraded' for row in grade_rows],
+            'values': [row['count'] for row in grade_rows],
+        },
+    }
+    return {
         'academic_year': academic_year,
-        'plans':         plans,
-        'subject_stats': subject_stats,
-        'grade_dist':    grade_dist,
-    })
+        'plans': plans,
+        'subject_stats': subject_rows,
+        'grade_dist': grade_rows,
+        'json': json_data,
+    }
+
+
+@login_required
+def analytics_data(request):
+    return JsonResponse(build_exam_analytics_data()['json'])

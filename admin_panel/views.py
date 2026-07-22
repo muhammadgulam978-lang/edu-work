@@ -1150,6 +1150,23 @@ def _reference_date_range(period="last_7_days", start_date=None, end_date=None):
     return start, end, previous_start, previous_end, labels.get(period, "Last 7 Days"), period
 
 
+def _graph_range_error(period, start_date=None, end_date=None):
+    if period != "custom":
+        return None
+    if not start_date or not end_date:
+        return "Start date and end date are required for a custom range."
+    try:
+        start = datetime.strptime(str(start_date), "%Y-%m-%d").date()
+        end = datetime.strptime(str(end_date), "%Y-%m-%d").date()
+    except (TypeError, ValueError):
+        return "Dates must use YYYY-MM-DD format."
+    if start > end:
+        return "Start date cannot be after end date."
+    if (end - start).days > 366:
+        return "Date range cannot exceed 366 days."
+    return None
+
+
 def _reference_delta(current, previous):
     current = float(current or 0)
     previous = float(previous or 0)
@@ -1270,7 +1287,17 @@ def build_reference_dashboard_data(period="last_7_days", start_date=None, end_da
     kpis = [
         {"key": "students", "label": "Total Students", "value": total_students, "display": f"{total_students:,}", "delta": None, "trend_label": "current enrolment", "icon": "fa-user-graduate", "tone": "teal", "url": _safe_reverse("admission_list")},
         {"key": "teachers", "label": "Teaching Staff", "value": active_teachers, "display": f"{active_teachers:,}", "delta": _reference_delta(teacher_hires, previous_teacher_hires), "trend_label": "new hires vs prior period", "icon": "fa-chalkboard-teacher", "tone": "blue", "url": _safe_reverse("teacher_list")},
-        {"key": "attendance", "label": "Attendance Today", "value": attendance_rate, "display": f"{attendance_rate:.1f}%", "delta": round(attendance_rate - previous_attendance_rate, 1), "trend_label": "points vs yesterday", "icon": "fa-user-check", "tone": "green", "url": _safe_reverse("ai_analytics_dashboard")},
+        {
+            "key": "attendance",
+            "label": "Attendance Today",
+            "value": attendance_rate if marked_today else None,
+            "display": f"{attendance_rate:.1f}%" if marked_today else "Not marked",
+            "delta": round(attendance_rate - previous_attendance_rate, 1) if marked_today and previous_marked else None,
+            "trend_label": "points vs yesterday" if marked_today and previous_marked else (f"{absent_today} absent records" if marked_today else "no attendance records today"),
+            "icon": "fa-user-check",
+            "tone": "green",
+            "url": _safe_reverse("ai_analytics_dashboard"),
+        },
         {"key": "fees", "label": "Fee Collected", "value": fee_rate, "display": f"{fee_rate:.1f}%", "delta": round(fee_rate - previous_fee_rate, 1), "trend_label": "points vs prior period", "icon": "fa-wallet", "tone": "amber", "url": _safe_reverse("fee-automation")},
         {"key": "approvals", "label": "Pending Approvals", "value": pending_approvals, "display": f"{pending_approvals:,}", "delta": None, "trend_label": "requires action", "icon": "fa-user-clock", "tone": "rose", "url": _safe_reverse("leave_list")},
         {"key": "vehicles", "label": "Active Vehicles", "value": active_vehicles, "display": f"{active_vehicles:,}", "delta": _reference_delta(vehicle_additions, previous_vehicle_additions), "trend_label": "new vehicles vs prior period", "icon": "fa-bus", "tone": "purple", "url": _safe_reverse("operation_vehicle_list")},
@@ -1284,7 +1311,7 @@ def build_reference_dashboard_data(period="last_7_days", start_date=None, end_da
     for key in bucket_keys:
         values = attendance_map[key]
         total = values["present"] + values["absent"] + values["leave"]
-        attendance_percentages.append(round((values["present"] / total) * 100, 1) if total else 0)
+        attendance_percentages.append(round((values["present"] / total) * 100, 1) if total else None)
 
     weekday = today.strftime("%A")
     classes_today = AssignedPeriod.objects.filter(day__iexact=weekday).values("class_fk_id", "section_id").distinct().count()
@@ -1961,6 +1988,13 @@ def automation_overview_data(request):
 @login_required
 @permission_required('auth.view_group', raise_exception=True)
 def dashboard_summary_data(request):
+    range_error = _graph_range_error(
+        request.GET.get("period", "last_7_days"),
+        request.GET.get("start_date"),
+        request.GET.get("end_date"),
+    )
+    if range_error:
+        return JsonResponse({"error": range_error}, status=400)
     reference_data = build_reference_dashboard_data(
         period=request.GET.get("period", "last_7_days"),
         start_date=request.GET.get("start_date"),
@@ -6543,18 +6577,14 @@ def _operation_delete(request, key, pk):
 @login_required
 @user_passes_test(is_admin)
 def operation_procurement_dashboard(request):
-    items = list(InventoryItem.objects.all())
-    pending = PurchaseRequest.objects.filter(status="pending").count()
-    approved_value = PurchaseRequest.objects.filter(status__in=["approved", "ordered", "received"]).aggregate(total=Sum("estimated_cost"))["total"] or 0
+    reference = build_reference_dashboard_data()
+    module_data = reference["procurement"]
+    metric_icons = ["fa-clipboard-list", "fa-hourglass-half", "fa-handshake", "fa-exclamation-triangle"]
+    metric_colors = ["blue", "amber", "green", "red"]
     context = {
         "module": "procurement", "title": "Procurement & Inventory",
-        "stats": [
-            ("Purchase Requests", PurchaseRequest.objects.count(), "fa-clipboard-list", "blue"),
-            ("Pending Approvals", pending, "fa-hourglass-half", "amber"),
-            ("Inventory Items", len(items), "fa-boxes", "green"),
-            ("Low Stock Items", sum(1 for item in items if item.quantity <= item.reorder_level), "fa-exclamation-triangle", "red"),
-        ],
-        "approved_value": approved_value,
+        "stats": [(metric["label"], metric["value"], metric_icons[index], metric_colors[index]) for index, metric in enumerate(module_data["metrics"])],
+        "operations_live_data": {"meta": reference["meta"], **module_data},
         "recent_requests": PurchaseRequest.objects.select_related("category").all()[:6],
     }
     return render(request, "admin_panel/operations_dashboard.html", context)
@@ -6563,18 +6593,38 @@ def operation_procurement_dashboard(request):
 @login_required
 @user_passes_test(is_admin)
 def operation_transportation_dashboard(request):
+    reference = build_reference_dashboard_data()
+    module_data = reference["fleet"]
+    metric_icons = ["fa-bus", "fa-route", "fa-users", "fa-tools"]
+    metric_colors = ["blue", "green", "amber", "red"]
     context = {
         "module": "fleet", "title": "Transportation & Fleet",
-        "stats": [
-            ("Total Vehicles", Vehicle.objects.count(), "fa-bus", "blue"),
-            ("Active Vehicles", Vehicle.objects.filter(status="active").count(), "fa-check-circle", "green"),
-            ("Transport Routes", TransportRoute.objects.count(), "fa-route", "amber"),
-            ("Under Maintenance", Vehicle.objects.filter(status="maintenance").count(), "fa-tools", "red"),
-        ],
+        "stats": [(metric["label"], metric["value"], metric_icons[index], metric_colors[index]) for index, metric in enumerate(module_data["metrics"])],
+        "operations_live_data": {"meta": reference["meta"], **module_data},
         "active_assignments": RouteVehicleAssignment.objects.filter(is_active=True).select_related("route", "vehicle")[:6],
         "upcoming_maintenance": VehicleMaintenance.objects.exclude(status="completed").select_related("vehicle")[:6],
     }
     return render(request, "admin_panel/operations_dashboard.html", context)
+
+
+@login_required
+@user_passes_test(is_admin)
+def operation_summary_data(request, module):
+    if module not in {"procurement", "fleet"}:
+        return JsonResponse({"error": "Unknown operations module."}, status=404)
+    period = request.GET.get("period", "last_7_days")
+    start_date = request.GET.get("start_date")
+    end_date = request.GET.get("end_date")
+    range_error = _graph_range_error(period, start_date, end_date)
+    if range_error:
+        return JsonResponse({"error": range_error}, status=400)
+    reference = build_reference_dashboard_data(period, start_date, end_date)
+    payload = {"meta": reference["meta"], **reference[module]}
+    if module == "procurement":
+        payload["recent"] = list(PurchaseRequest.objects.values("id", "title", "status").order_by("-created_at")[:6])
+    else:
+        payload["recent"] = list(TransportTrip.objects.values("id", "route__route_name", "status", "service_date").order_by("-service_date", "scheduled_departure")[:6])
+    return JsonResponse(payload)
 
 
 def _operation_view_set(key):

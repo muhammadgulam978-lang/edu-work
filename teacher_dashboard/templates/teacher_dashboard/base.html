@@ -10,7 +10,8 @@
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{% static 'teacher_dashboard/css/base.css' %}">
-    <link rel="stylesheet" href="{% static 'admin_panel/css/reference-sidebar.css' %}?v=reference-sidebar-7">
+    <link rel="stylesheet" href="{% static 'admin_panel/css/reference-sidebar.css' %}?v=unified-sidebar-1">
+    <link rel="stylesheet" href="{% static 'admin_panel/css/portal-header.css' %}?v=neutral-header-1">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu&display=swap" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
@@ -19,59 +20,16 @@
     <style>
         {% block custom_style %}{% endblock %}
     </style>
+<link rel="stylesheet" href="{% static 'admin_panel/css/edupilot-buttons.css' %}?v=unified-buttons-4">
+<link rel="stylesheet" href="{% static 'admin_panel/css/edupilot-surfaces.css' %}?v=neutral-surfaces-4">
 </head>
-<body>
+<body class="edu-button-theme edu-neutral-surfaces">
 
     <div class="wrapper d-flex">
-        <nav id="sidebar" class="deznav edu-reference-sidebar">
-            <div class="deznav-brand">
-                <a href="{% url 'teacher_dashboard' %}" class="brand-logo">
-                    <img src="{% static 'admin_panel/images/edupilot-logo-2026-nav.png' %}?v=reference-sidebar-1" alt="EDUPILOT">
-                </a>
-            </div>
-
-            <div class="deznav-scroll">
-                <ul class="metismenu" id="menu">
-                    <li style="--sidebar-icon-color:#0ea5e9; --sidebar-icon-bg:#dff6ff;">
-                        <a href="{% url 'teacher_dashboard' %}" class="ai-icon"><i class="fas fa-home"></i><span class="nav-text">Dashboard</span></a>
-                    </li>
-
-                    <li class="sidebar-section">Teaching</li>
-
-                    <li style="--sidebar-icon-color:#0d9488; --sidebar-icon-bg:#dbf7f4;">
-                        <a href="{% url 'teacher_timetable' %}" class="ai-icon"><i class="fas fa-calendar-days"></i><span class="nav-text">Timetable</span></a>
-                    </li>
-                    <li style="--sidebar-icon-color:#0f766e; --sidebar-icon-bg:#dff8f3;">
-                        <a href="{% url 'lesson_plans_list' %}" class="ai-icon"><i class="fas fa-book-open"></i><span class="nav-text">Lesson Plans</span></a>
-                    </li>
-                    <li style="--sidebar-icon-color:#16a34a; --sidebar-icon-bg:#dcfce7;">
-                        <a href="{% url 'lms_dashboard' %}" class="ai-icon"><i class="fas fa-chalkboard"></i><span class="nav-text">LMS</span></a>
-                    </li>
-
-                    <li class="sidebar-section">Examination</li>
-
-                    <li style="--sidebar-icon-color:#2563eb; --sidebar-icon-bg:#e6efff;">
-                        <a href="{% url 'question_bank_list' %}" class="ai-icon"><i class="fas fa-question-circle"></i><span class="nav-text">Question Bank</span></a>
-                    </li>
-                    <li style="--sidebar-icon-color:#7c3aed; --sidebar-icon-bg:#ede9fe;">
-                        <a href="{% url 'exam_plan_list' %}" class="ai-icon"><i class="fas fa-clipboard-check"></i><span class="nav-text">Exam Plans</span></a>
-                    </li>
-                    <li style="--sidebar-icon-color:#f59e0b; --sidebar-icon-bg:#fff7d6;">
-                        <a href="{% url 'analytics_dashboard' %}" class="ai-icon"><i class="fas fa-chart-line"></i><span class="nav-text">Analytics</span></a>
-                    </li>
-
-                    <li class="sidebar-section">People &amp; HR</li>
-
-                    <li style="--sidebar-icon-color:#f59e0b; --sidebar-icon-bg:#fff7d6;">
-                        <a href="{% url 'teacher_appraisal_submit' %}" class="ai-icon"><i class="fas fa-star"></i><span class="nav-text">Appraisal KPI</span></a>
-                    </li>
-                </ul>
-                <div class="copyright">EduPilot &copy; {% now "Y" %}</div>
-            </div>
-        </nav>
+        {% include 'shared/sidebar/shell.html' with sidebar_portal='teacher' sidebar_menu_template='teacher_dashboard/sidebar.html' %}
 
         <div id="content" class="p-4 w-100">
-            <button class="toggle-btn mb-3" type="button" onclick="toggleSidebar()" aria-label="Toggle sidebar"><i class="fas fa-bars"></i></button>
+            {% include 'shared/header/portal_header.html' with portal_kind='teacher' %}
             {% block content %}
             <h2>Welcome, {{ user.username }}</h2>
             <p>This is your main content area.</p>
@@ -79,13 +37,8 @@
         </div>
     </div>
 
-    <script>
-        function toggleSidebar() {
-            var sidebar = document.getElementById('sidebar');
-            if (sidebar) sidebar.classList.toggle('collapsed');
-        }
-    </script>
-
+    <script src="{% static 'admin_panel/js/deznav-sidebar.js' %}?v=unified-sidebar-1"></script>
+    <script src="{% static 'admin_panel/js/portal-header.js' %}?v=global-header-1"></script>
     {% block extra_scripts %}{% endblock %}
     <div id="loadingSpinner" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(248, 237, 237, 0.85); z-index:9999; text-align:center;">
         <div style="position:relative; top:40%;">

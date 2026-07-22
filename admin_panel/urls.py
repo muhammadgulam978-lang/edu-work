@@ -183,6 +183,7 @@ urlpatterns = [
 
     # ================= OPERATIONS =================
     path('operations/procurement/', views.operation_procurement_dashboard, name='operation_procurement_dashboard'),
+    path('operations/<str:module>/summary-data/', views.operation_summary_data, name='operation_summary_data'),
     path('operations/procurement/categories/', views.operation_procurement_category_list, name='operation_procurement_category_list'),
     path('operations/procurement/categories/add/', views.operation_procurement_category_create, name='operation_procurement_category_create'),
     path('operations/procurement/categories/<int:pk>/edit/', views.operation_procurement_category_edit, name='operation_procurement_category_edit'),
