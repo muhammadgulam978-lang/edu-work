@@ -2,16 +2,15 @@
 {% block title %}Student Insight Profile{% endblock %}
 {% block page_title %}Student Insight Profile{% endblock %}
 {% block content %}
-<style>.ai-student{padding:24px 28px}.ai-card{background:#fff;border:1px solid #e9ecef;border-radius:14px;box-shadow:0 8px 22px rgba(0,0,0,.05);padding:22px;margin-bottom:22px}.ai-card h2,.ai-card h3{font-weight:500}.ai-search{display:flex;gap:12px}.ai-search input{flex:1;border:1px solid #e9ecef;border-radius:10px;padding:12px}.ai-btn{border:0;border-radius:999px;background:#88D0C5;color:#111;padding:12px 18px;font-weight:500;text-decoration:none}.ai-table{width:100%;border-collapse:collapse}.ai-table th,.ai-table td{padding:12px;border-bottom:1px solid #e9ecef;text-align:left}.ai-table th{background:#F5F5FD;font-weight:500}</style>
 <div class="ai-student">
-  <section class="ai-card" style="background:linear-gradient(90deg,#DDF7F2,#F5F5FD)">
+  <section class="ai-card">
     <h2>Student Insight Profile</h2>
     <p>Search a student by ID and open complete attendance, fee, marks, AI Tutor, and progress profile.</p>
   </section>
   <section class="ai-card">
     <form class="ai-search" method="get">
       <input type="text" name="q" value="{{ query }}" placeholder="Enter student ID">
-      <button class="ai-btn" type="submit">Search</button>
+      <button class="ai-btn" type="submit"><i class="fas fa-search"></i> Search</button>
     </form>
   </section>
   <section class="ai-card">

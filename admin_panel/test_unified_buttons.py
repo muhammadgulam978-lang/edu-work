@@ -70,3 +70,28 @@ class UnifiedButtonThemeTests(SimpleTestCase):
                 template = path.read_text(encoding="utf-8")
                 self.assertNotIn("edupilot-buttons.css", template)
                 self.assertNotIn("edu-button-theme", template)
+
+    def test_admin_dashboard_uses_the_approved_button_families(self):
+        template = self.read_project_file(
+            "admin_panel/templates/admin_panel/index.html"
+        )
+        css = self.read_project_file(
+            "admin_panel/static/admin_panel/css/live-dashboard.css"
+        )
+
+        self.assertIn("live-dashboard-buttons-4", template)
+        self.assertIn("live-range-apply-btn", template)
+        for selector in (
+            ".live-range-apply-btn",
+            ".live-refresh-btn",
+            ".live-module-actions a",
+            ".live-alert a",
+            ".live-quick-action",
+        ):
+            with self.subTest(selector=selector):
+                self.assertIn(selector, css)
+
+        self.assertNotIn(
+            ".live-module-actions a:first-child { color: #fff; background: var(--module); }",
+            css,
+        )

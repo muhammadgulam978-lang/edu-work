@@ -3,23 +3,6 @@
 {% block title %}Advanced AI Analytics{% endblock %}
 {% block page_title %}Advanced AI Analytics{% endblock %}
 {% block content %}
-<style>
-  .ai-advanced{padding:24px 28px;color:#111}
-  .ai-advanced-card{background:#fff;border:1px solid #e9ecef;border-radius:14px;box-shadow:0 8px 22px rgba(0,0,0,.05);padding:22px}
-  .ai-advanced-hero{background:linear-gradient(90deg,#DDF7F2,#F5F5FD);margin-bottom:22px}
-  .ai-advanced h2,.ai-advanced h3,.ai-advanced h4{font-weight:500}
-  .ai-filter-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:14px}
-  .ai-filter-grid select,.ai-filter-grid input{border:1px solid #e9ecef;border-radius:10px;padding:11px 12px}
-  .ai-filter-grid button,.ai-btn{border:0;border-radius:999px;background:#88D0C5;color:#111;padding:11px 18px;font-weight:500;text-decoration:none}
-  .ai-kpi-grid,.ai-chart-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin:22px 0}
-  .ai-kpi{min-height:155px}
-  .ai-icon{height:46px;width:46px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:rgba(255,255,255,.62);border:1px solid #e9ecef;margin-bottom:12px}
-  .tone-teal{background:#DDF7F2;border-color:#88D0C5}.tone-green{background:#EEF9E5;border-color:#8BC740}.tone-blue{background:#F5F5FD;border-color:#e9ecef}.tone-warning{background:#FFF4E5;border-color:#ffc980}
-  .ai-value{font-size:34px;font-weight:500;margin:8px 0}.ai-muted{color:#6c757d}
-  .ai-chart-grid{grid-template-columns:repeat(2,1fr)}
-  .ai-table{width:100%;border-collapse:collapse}.ai-table th,.ai-table td{padding:12px;border-bottom:1px solid #e9ecef;text-align:left;font-weight:400}.ai-table th{background:#F5F5FD;font-weight:500}
-  @media(max-width:1100px){.ai-kpi-grid,.ai-chart-grid,.ai-filter-grid{grid-template-columns:1fr 1fr}}@media(max-width:700px){.ai-kpi-grid,.ai-chart-grid,.ai-filter-grid{grid-template-columns:1fr}}
-</style>
 <link rel="stylesheet" href="{% static 'admin_panel/css/edupilot-charts.css' %}?v=advanced-dashboard-match-1">
 
 <div class="ai-advanced">
@@ -43,8 +26,8 @@
       <div class="ai-graph-control"><label>Start</label><input type="date" name="start_date" value="{{ analytics.filters.start_date }}"></div>
       <div class="ai-graph-control"><label>End</label><input type="date" name="end_date" value="{{ analytics.filters.end_date }}"></div>
       <div class="ai-graph-actions">
-      <button type="submit" class="ai-graph-btn">Apply</button>
-      <a href="{% url 'ai_analytics_advanced' %}" class="ai-graph-btn secondary">Reset</a>
+      <button type="submit" class="ai-graph-btn"><i class="fas fa-check"></i> Apply</button>
+      <a href="{% url 'ai_analytics_advanced' %}" class="ai-graph-btn secondary"><i class="fas fa-undo"></i> Reset</a>
       <button
         class="ai-graph-btn secondary"
         type="button"
@@ -57,7 +40,7 @@
         data-end-date="{{ analytics.filters.end_date|default:'' }}"
         data-report-title="Advanced AI Analytics Report"
         data-source="advanced_analytics"
-      >Generate Report</button>
+      ><i class="fas fa-file-alt"></i> Generate Report</button>
       </div>
     </form>
   </section>

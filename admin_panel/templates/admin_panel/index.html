@@ -4,7 +4,7 @@
 {% block title %}Dashboard | EduPilot{% endblock %}
 
 {% block head %}
-<link rel="stylesheet" href="{% static 'admin_panel/css/live-dashboard.css' %}?v=live-dashboard-3">
+<link rel="stylesheet" href="{% static 'admin_panel/css/live-dashboard.css' %}?v=live-dashboard-buttons-4">
 <link rel="stylesheet" href="{% static 'admin_panel/css/edupilot-charts.css' %}?v=charts-1">
 <script src="{% static 'admin_panel/vendor/chart.js/Chart.bundle.min.js' %}"></script>
 <script src="{% static 'admin_panel/js/edupilot-charts.js' %}?v=charts-1"></script>
@@ -35,9 +35,9 @@
                 <input type="date" data-start-date aria-label="Start date">
                 <span>to</span>
                 <input type="date" data-end-date aria-label="End date">
-                <button type="button" data-apply-range title="Apply date range"><i class="fas fa-check"></i></button>
+                <button type="button" class="live-range-apply-btn" data-apply-range title="Apply date range" aria-label="Apply date range"><i class="fas fa-check"></i></button>
             </div>
-            <button type="button" class="live-refresh-btn" data-refresh-dashboard title="Refresh dashboard">
+            <button type="button" class="live-refresh-btn" data-refresh-dashboard title="Refresh dashboard" aria-label="Refresh dashboard">
                 <span class="live-refresh-glyph" aria-hidden="true">&#8635;</span>
             </button>
         </div>
