@@ -1,35 +1,46 @@
-<!--**********************************
-            Sidebar start
-        ***********************************-->
-       <div class="deznav">
-            <div class="deznav-scroll">
-				<ul class="metismenu" id="menu">
-                    
-                    <li class="has-menu">
-    <a class="has-arrow ai-icon" href="javascript:void()" aria-expanded="false">
-        <i class="flaticon-381-notepad"></i>
-        <span class="nav-text">Courses</span>
-    </a>
-    <ul aria-expanded="false">
-        <li><a href="{% url 'parent_attendance' %}">Attendance</a></li> 
-        <li><a href="{% url 'parent_result' %}">Result</a></li>
-        <li><a href="{% url 'parent_assignments' %}">Assignments</a></li>
-        <li><a href="{% url 'parent_quizzes' %}">Quizzes</a></li>
-        <li><a href="{% url 'parent_diary' %}">Diary</a></li>
-        <li><a href="{% url 'parent_timetable' %}">Timetable</a></li>
-        <li><a href="{% url 'parent_fees_voucher' %}">Fees Voucher</a></li>
-    </ul>
-</li>
-          
-                    
-                </ul>
-				
-				<div class="copyright">
-					{% comment %} <p><strong>Forecaster Dashboard</strong> © 2025 All Rights Reserved</p> {% endcomment %}
-					<p>Forecaster Dashboard</p>
-				</div>
-			</div>
-        </div>
-        <!--**********************************
-            Sidebar end
-        ***********************************-->
+            {# Parent menu items. Wrapper and brand live in shared/sidebar/shell.html. #}
+            <li style="--sidebar-icon-color:#0ea5e9; --sidebar-icon-bg:#dff6ff;">
+                <a href="{% url 'parent_dashboard' %}" class="ai-icon">
+                    <i class="fas fa-home"></i><span class="nav-text">Dashboard</span>
+                </a>
+            </li>
+
+            <li class="sidebar-section">Student Progress</li>
+
+            <li style="--sidebar-icon-color:#0d9488; --sidebar-icon-bg:#dbf7f4;">
+                <a href="{% url 'parent_attendance' %}" class="ai-icon">
+                    <i class="fas fa-calendar-check"></i><span class="nav-text">Attendance</span>
+                </a>
+            </li>
+            <li style="--sidebar-icon-color:#2563eb; --sidebar-icon-bg:#e6efff;">
+                <a href="{% url 'parent_result' %}" class="ai-icon">
+                    <i class="fas fa-chart-bar"></i><span class="nav-text">Results</span>
+                </a>
+            </li>
+            <li style="--sidebar-icon-color:#7c3aed; --sidebar-icon-bg:#ede9fe;">
+                <a href="{% url 'parent_assignment' %}" class="ai-icon">
+                    <i class="fas fa-clipboard-list"></i><span class="nav-text">Assignments</span>
+                </a>
+            </li>
+            <li style="--sidebar-icon-color:#f59e0b; --sidebar-icon-bg:#fff7d6;">
+                <a href="{% url 'parent_quizzes' %}" class="ai-icon">
+                    <i class="fas fa-question-circle"></i><span class="nav-text">Quizzes</span>
+                </a>
+            </li>
+            <li style="--sidebar-icon-color:#16a34a; --sidebar-icon-bg:#dcfce7;">
+                <a href="{% url 'parent_diary' %}" class="ai-icon">
+                    <i class="fas fa-book-open"></i><span class="nav-text">Diary</span>
+                </a>
+            </li>
+            <li style="--sidebar-icon-color:#0f766e; --sidebar-icon-bg:#dff8f3;">
+                <a href="{% url 'parent_timetable' %}" class="ai-icon">
+                    <i class="fas fa-calendar-days"></i><span class="nav-text">Timetable</span>
+                </a>
+            </li>
+
+            <li class="sidebar-section">Account</li>
+            <li style="--sidebar-icon-color:#64748b; --sidebar-icon-bg:#eef2f7;">
+                <a href="{% url 'logout' %}" class="ai-icon">
+                    <i class="fas fa-sign-out-alt"></i><span class="nav-text">Logout</span>
+                </a>
+            </li>

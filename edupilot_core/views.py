@@ -24,6 +24,9 @@ from .crud_config import CRUD_REGISTRY
 def _build_fee_collection_chart(period='this_month', start_date=None, end_date=None):
     try:
         from admin_ai.services import resolve_date_range
+        if period == 'custom' and isinstance(start_date, str) and isinstance(end_date, str):
+            start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+            end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
         range_start, range_end, _ = resolve_date_range(period or 'this_month', start_date, end_date)
     except Exception:
         range_end = date.today()
@@ -534,11 +537,26 @@ def automation_dashboard(request):
 
 @login_required(login_url='login')
 def automation_graph_data(request):
+    period = request.GET.get('period') or 'this_month'
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    if period == 'custom':
+        if not start_date or not end_date:
+            return JsonResponse({'error': 'Start date and end date are required for a custom range.'}, status=400)
+        try:
+            parsed_start = datetime.strptime(start_date, '%Y-%m-%d').date()
+            parsed_end = datetime.strptime(end_date, '%Y-%m-%d').date()
+        except ValueError:
+            return JsonResponse({'error': 'Dates must use YYYY-MM-DD format.'}, status=400)
+        if parsed_start > parsed_end:
+            return JsonResponse({'error': 'Start date cannot be after end date.'}, status=400)
+        if (parsed_end - parsed_start).days > 366:
+            return JsonResponse({'error': 'Date range cannot exceed 366 days.'}, status=400)
     return JsonResponse({
         'fees': _build_fee_collection_chart(
-            request.GET.get('period') or 'this_month',
-            request.GET.get('start_date'),
-            request.GET.get('end_date'),
+            period,
+            start_date,
+            end_date,
         )
     })
 

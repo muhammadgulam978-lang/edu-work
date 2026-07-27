@@ -11,6 +11,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{% static 'teacher_dashboard/css/base.css' %}">
     <link rel="stylesheet" href="{% static 'admin_panel/css/reference-sidebar.css' %}?v=reference-sidebar-7">
+<link rel="stylesheet" href="{% static 'admin_panel/css/edupilot-buttons.css' %}?v=unified-buttons-4">
+<link rel="stylesheet" href="{% static 'admin_panel/css/edupilot-surfaces.css' %}?v=neutral-surfaces-4">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu&display=swap" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
@@ -20,7 +22,7 @@
         {% block custom_style %}{% endblock %}
     </style>
 </head>
-<body>
+<body class="edu-button-theme edu-neutral-surfaces">
 
     <div class="wrapper d-flex">
         <nav id="sidebar" class="deznav edu-reference-sidebar">

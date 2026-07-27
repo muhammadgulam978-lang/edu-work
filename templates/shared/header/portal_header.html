@@ -1,0 +1,178 @@
+{% load static %}
+{% with is_admin_header=False %}
+{% if portal_kind == "admin" or portal_kind == "automation" %}
+    {% with is_admin_header=True %}
+<header class="header edu-portal-header" data-edu-portal-header data-portal-kind="{{ portal_kind|default:'admin' }}">
+    <div class="edu-portal-header-card">
+        <div class="edu-portal-header-main">
+            <button class="edu-portal-menu" type="button" data-edu-sidebar-toggle aria-controls="eduSidebar" aria-expanded="false" aria-label="Toggle navigation">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <a class="edu-portal-brand" href="{% if portal_kind == 'automation' %}/automation/{% else %}/admin_panel/{% endif %}" aria-label="EduPilot dashboard">
+                <img src="{% static 'admin_panel/images/edupilot-logo-2026-nav.png' %}?v=portal-header-1" alt="EduPilot">
+            </a>
+
+            <form class="edu-portal-search" action="{% url 'admin_search' %}" method="get" data-admin-search-form>
+                <input type="search" name="q" placeholder="Search students, staff, classes, exams..." autocomplete="off" data-admin-search>
+                <button type="submit" aria-label="Search"><i class="fas fa-search"></i></button>
+                <div class="admin-header-search-results edu-portal-search-results" data-admin-search-results></div>
+            </form>
+
+            <div class="edu-portal-chip edu-portal-clock">
+                <i class="far fa-calendar-alt"></i>
+                <span data-edu-portal-clock>{% now "F j, Y, g:i A" %}</span>
+            </div>
+
+            <label class="edu-portal-chip edu-portal-language" aria-label="Language selector">
+                <i class="fas fa-globe"></i>
+                <select data-edu-portal-language>
+                    <option value="english">English</option>
+                    <option value="urdu">Urdu</option>
+                    <option value="arabic">Arabic</option>
+                    <option value="sindhi">Sindhi</option>
+                    <option value="punjabi">Punjabi</option>
+                </select>
+            </label>
+
+            <div class="edu-portal-menu-wrap">
+                <button class="edu-portal-icon-button" type="button" data-edu-menu-toggle="notifications" data-admin-notification-toggle aria-label="Notifications">
+                    <i class="fas fa-bell"></i>
+                    <span data-admin-notification-count>{{ admin_dashboard_stats.notifications_pending|default:0 }}</span>
+                </button>
+                <div class="edu-portal-dropdown edu-portal-notifications" data-edu-menu="notifications">
+                    <ul data-admin-notifications>
+                        <li class="edu-portal-empty">No notifications right now.</li>
+                    </ul>
+                    <a class="edu-portal-dropdown-link" href="{% url 'notification-queue' %}">See all notifications <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+
+            <div class="edu-portal-menu-wrap">
+                <button class="edu-portal-profile" type="button" data-edu-menu-toggle="profile" aria-label="Profile menu">
+                    <img src="{% static 'admin_panel/images/dummy-profile.png' %}" alt="Profile" data-admin-user-avatar>
+                    <span>
+                        <strong data-admin-user-name>{{ request.user.get_full_name|default:request.user.username }}</strong>
+                        <small data-admin-user-role>{% if request.user.is_superuser %}Super Admin{% else %}Admin{% endif %}</small>
+                    </span>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="edu-portal-dropdown edu-portal-profile-menu" data-edu-menu="profile">
+                    <a href="{% url 'admin_profile' %}"><i class="far fa-user"></i> Profile</a>
+                    <a href="{% url 'custom_logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                </div>
+            </div>
+        </div>
+
+        <nav class="edu-portal-nav" aria-label="Portal navigation">
+            <a href="/admin_panel/" data-edu-nav-link><i class="fas fa-home"></i>Dashboard</a>
+            <a href="/admin_panel/ai-analytics/" data-edu-nav-link><i class="fas fa-brain"></i>AI Analytics</a>
+            <a href="/admin_panel/classes/" data-edu-nav-link><i class="fas fa-graduation-cap"></i>Academics</a>
+            <a href="/admin_panel/admission_list/" data-edu-nav-link><i class="fas fa-user-graduate"></i>Students</a>
+            <a href="/admin_panel/teachers/" data-edu-nav-link><i class="fas fa-chalkboard-teacher"></i>Teachers</a>
+            <a href="/admin_panel/timetable-automation/" data-edu-nav-link><i class="far fa-calendar-alt"></i>Timetable</a>
+            <a href="/exam/plans/" data-edu-nav-link><i class="far fa-file-alt"></i>Examination</a>
+            <a href="/automation/" data-edu-nav-link><i class="fas fa-dollar-sign"></i>Finance</a>
+            <button type="button" data-edu-more-toggle><i class="fas fa-th-large"></i>More <i class="fas fa-chevron-down"></i></button>
+        </nav>
+    </div>
+</header>
+    {% endwith %}
+{% else %}
+<header class="header edu-portal-header" data-edu-portal-header data-portal-kind="{{ portal_kind|default:'portal' }}">
+    <div class="edu-portal-header-card">
+        <div class="edu-portal-header-main">
+            <button class="edu-portal-menu" type="button" data-edu-sidebar-toggle aria-controls="eduSidebar" aria-expanded="false" aria-label="Toggle navigation">
+                <i class="fas fa-grip-vertical"></i>
+            </button>
+
+            <a class="edu-portal-brand" href="{% if portal_kind == 'student' %}/student/dashboard/{% elif portal_kind == 'teacher' %}/teacher/teacher_dashboard/{% elif portal_kind == 'parent' %}/parent/{% else %}/{% endif %}" aria-label="EduPilot dashboard">
+                <img src="{% static 'admin_panel/images/edupilot-logo-2026-nav.png' %}?v=portal-header-1" alt="EduPilot">
+            </a>
+
+            <form class="edu-portal-search" action="#" method="get" data-edu-portal-search-form>
+                <input type="search" name="q" placeholder="Search portal pages..." autocomplete="off" data-edu-portal-search>
+                <button type="submit" aria-label="Search"><i class="fas fa-search"></i></button>
+                <div class="edu-portal-search-results" data-edu-portal-search-results></div>
+            </form>
+
+            <div class="edu-portal-chip edu-portal-clock">
+                <i class="far fa-calendar-alt"></i>
+                <span data-edu-portal-clock>{% now "F j, Y, g:i A" %}</span>
+            </div>
+
+            <label class="edu-portal-chip edu-portal-language" aria-label="Language selector">
+                <i class="fas fa-globe"></i>
+                <select data-edu-portal-language>
+                    <option value="english">English</option>
+                    <option value="urdu">Urdu</option>
+                    <option value="arabic">Arabic</option>
+                    <option value="sindhi">Sindhi</option>
+                    <option value="punjabi">Punjabi</option>
+                </select>
+            </label>
+
+            <div class="edu-portal-menu-wrap">
+                <button class="edu-portal-icon-button" type="button" data-edu-menu-toggle="notifications" aria-label="Notifications">
+                    <i class="fas fa-bell"></i>
+                    <span>{% if portal_kind == 'teacher' %}{{ teacher_fixture_unread_count|default:0 }}{% else %}0{% endif %}</span>
+                </button>
+                <div class="edu-portal-dropdown edu-portal-notifications" data-edu-menu="notifications">
+                    <ul>
+                        {% if portal_kind == 'teacher' and teacher_fixture_notifications %}
+                            {% for item in teacher_fixture_notifications %}
+                                <li><a href="/teacher/timetable/"><strong>{{ item.title }}</strong><small>{{ item.message }}</small></a></li>
+                            {% endfor %}
+                        {% else %}
+                            <li class="edu-portal-empty">No notifications right now.</li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+
+            <div class="edu-portal-menu-wrap">
+                <button class="edu-portal-profile" type="button" data-edu-menu-toggle="profile" aria-label="Profile menu">
+                    <img src="{% static 'admin_panel/images/dummy-profile.png' %}" alt="Profile">
+                    <span>
+                        <strong>{{ request.user.get_full_name|default:request.user.username }}</strong>
+                        <small>{% if portal_kind == 'student' %}Student{% elif portal_kind == 'teacher' %}Teacher{% elif portal_kind == 'parent' %}Parent{% else %}User{% endif %}</small>
+                    </span>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="edu-portal-dropdown edu-portal-profile-menu" data-edu-menu="profile">
+                    <a href="{% if portal_kind == 'student' %}/student/profile/{% elif portal_kind == 'teacher' %}/teacher/teacher_dashboard/{% elif portal_kind == 'parent' %}/parent/{% else %}/{% endif %}"><i class="far fa-user"></i> Profile</a>
+                    <a href="{% url 'custom_logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                </div>
+            </div>
+        </div>
+
+        <nav class="edu-portal-nav" aria-label="Portal navigation">
+            {% if portal_kind == "student" %}
+                <a href="/student/dashboard/" data-edu-nav-link><i class="fas fa-home"></i>Dashboard</a>
+                <a href="/student/ai-tutor/" data-edu-nav-link><i class="fas fa-robot"></i>AI Tutor</a>
+                <a href="/student/subjects/" data-edu-nav-link><i class="fas fa-book-open"></i>Subjects</a>
+                <a href="/student/timetable/" data-edu-nav-link><i class="far fa-calendar-alt"></i>Timetable</a>
+                <a href="/student/assignments/" data-edu-nav-link><i class="far fa-file-alt"></i>Assignments</a>
+                <a href="/student/results/" data-edu-nav-link><i class="fas fa-chart-line"></i>Results</a>
+                <a href="/student/attendance/" data-edu-nav-link><i class="far fa-clock"></i>Attendance</a>
+            {% elif portal_kind == "teacher" %}
+                <a href="/teacher/teacher_dashboard/" data-edu-nav-link><i class="fas fa-home"></i>Dashboard</a>
+                <a href="/teacher/timetable/" data-edu-nav-link><i class="far fa-calendar-alt"></i>Timetable</a>
+                <a href="/teacher/lms/" data-edu-nav-link><i class="fas fa-book-open"></i>LMS</a>
+                <a href="/teacher/lesson-plans/" data-edu-nav-link><i class="fas fa-clipboard-list"></i>Lesson Plans</a>
+                <a href="/teacher/exam/plans/" data-edu-nav-link><i class="far fa-file-alt"></i>Examination</a>
+                <a href="/teacher/appraisal/submit/" data-edu-nav-link><i class="fas fa-chart-line"></i>Appraisal</a>
+            {% elif portal_kind == "parent" %}
+                <a href="/parent/" data-edu-nav-link><i class="fas fa-home"></i>Dashboard</a>
+                <a href="/parent/attendance/" data-edu-nav-link><i class="far fa-clock"></i>Attendance</a>
+                <a href="/parent/results/" data-edu-nav-link><i class="fas fa-chart-line"></i>Results</a>
+                <a href="/parent/assignments/" data-edu-nav-link><i class="far fa-file-alt"></i>Assignments</a>
+                <a href="/parent/timetable/" data-edu-nav-link><i class="far fa-calendar-alt"></i>Timetable</a>
+                <a href="/parent/messages/" data-edu-nav-link><i class="far fa-envelope"></i>Messages</a>
+            {% endif %}
+            <button type="button" data-edu-more-toggle><i class="fas fa-th-large"></i>More <i class="fas fa-chevron-down"></i></button>
+        </nav>
+    </div>
+</header>
+{% endif %}
+{% endwith %}

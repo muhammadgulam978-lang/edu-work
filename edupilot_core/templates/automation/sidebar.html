@@ -1,0 +1,57 @@
+            {# Automation menu items. Wrapper and brand live in shared/sidebar/shell.html. #}
+            <li style="--sidebar-icon-color:#0ea5e9; --sidebar-icon-bg:#dff6ff;">
+                <a href="{% url 'admin_panel_dashboard' %}" class="ai-icon">
+                    <i class="fas fa-home"></i><span class="nav-text">Main Dashboard</span>
+                </a>
+            </li>
+
+            <li class="sidebar-section">Account Automation</li>
+            <li class="has-menu" style="--sidebar-icon-color:#0f766e; --sidebar-icon-bg:#dff8f3;">
+                <a href="javascript:void(0)" class="has-arrow ai-icon" aria-expanded="false">
+                    <i class="fas fa-sliders-h"></i><span class="nav-text">Automation</span>
+                </a>
+                <ul aria-expanded="false">
+                    <li><a href="{% url 'automation-dashboard' %}"><i class="fas fa-chart-pie"></i> Dashboard</a></li>
+                    <li><a href="{% url 'fee-automation' %}"><i class="fas fa-money-check-dollar"></i> Fee Automation</a></li>
+                    <li><a href="{% url 'voucher-management' %}"><i class="fas fa-file-invoice"></i> Voucher Management</a></li>
+                    <li><a href="{% url 'notification-queue' %}"><i class="fas fa-bell"></i> Notification Queue</a></li>
+                    <li><a href="{% url 'salary-automation' %}"><i class="fas fa-money-bill-wave"></i> Salary Automation</a></li>
+                    <li><a href="{% url 'payslip-management' %}"><i class="fas fa-file-signature"></i> Payslip Management</a></li>
+                    <li><a href="{% url 'automation-logs' %}"><i class="fas fa-clipboard-list"></i> Automation Logs</a></li>
+                    <li><a href="{% url 'automation-settings' %}"><i class="fas fa-cogs"></i> Automation Settings</a></li>
+                </ul>
+            </li>
+
+            <li class="sidebar-section">Data Management</li>
+            <li class="has-menu" style="--sidebar-icon-color:#2563eb; --sidebar-icon-bg:#e6efff;">
+                <a href="javascript:void(0)" class="has-arrow ai-icon" aria-expanded="false">
+                    <i class="fas fa-database"></i><span class="nav-text">Records</span>
+                </a>
+                <ul aria-expanded="false">
+                    <li><a href="{% url 'crud-list' model_name='feehead' %}"><i class="fas fa-tags"></i> Fee Heads</a></li>
+                    <li><a href="{% url 'crud-list' model_name='feeplan' %}"><i class="fas fa-map"></i> Fee Plans</a></li>
+                    <li><a href="{% url 'crud-list' model_name='feeplandetail' %}"><i class="fas fa-circle-info"></i> Fee Plan Details</a></li>
+                    <li><a href="{% url 'crud-list' model_name='transportroute' %}"><i class="fas fa-bus"></i> Transport Routes</a></li>
+                    <li><a href="{% url 'crud-list' model_name='scholarship' %}"><i class="fas fa-graduation-cap"></i> Scholarships</a></li>
+                    <li><a href="{% url 'crud-list' model_name='feevoucher' %}"><i class="fas fa-receipt"></i> Fee Vouchers</a></li>
+                    <li><a href="{% url 'crud-list' model_name='feevoucheritem' %}"><i class="fas fa-list"></i> Fee Voucher Items</a></li>
+                    <li><a href="{% url 'crud-list' model_name='feegenerationsettings' %}"><i class="fas fa-sliders-h"></i> Fee Generation Settings</a></li>
+                    <li><a href="{% url 'crud-list' model_name='feegenerationlog' %}"><i class="fas fa-clock-rotate-left"></i> Fee Generation Logs</a></li>
+                    <li><a href="{% url 'crud-list' model_name='student' %}"><i class="fas fa-user-graduate"></i> Students</a></li>
+                    <li><a href="{% url 'crud-list' model_name='studentfeeassignment' %}"><i class="fas fa-clipboard-check"></i> Student Fee Assignments</a></li>
+                    <li><a href="{% url 'crud-list' model_name='studentledger' %}"><i class="fas fa-book"></i> Student Ledgers</a></li>
+                    <li><a href="{% url 'crud-list' model_name='studentbalance' %}"><i class="fas fa-scale-balanced"></i> Student Balances</a></li>
+                    <li><a href="{% url 'crud-list' model_name='studentperformance' %}"><i class="fas fa-chart-line"></i> Student Performance</a></li>
+                    <li><a href="{% url 'crud-list' model_name='teacher' %}"><i class="fas fa-chalkboard-teacher"></i> Teachers</a></li>
+                    <li><a href="{% url 'crud-list' model_name='salarystructure' %}"><i class="fas fa-sitemap"></i> Salary Structures</a></li>
+                    <li><a href="{% url 'crud-list' model_name='salaryvoucher' %}"><i class="fas fa-envelope-open-text"></i> Salary Vouchers</a></li>
+                    <li><a href="{% url 'crud-list' model_name='salaryautomationsettings' %}"><i class="fas fa-screwdriver-wrench"></i> Salary Automation Settings</a></li>
+                    <li><a href="{% url 'crud-list' model_name='salaryautomationjob' %}"><i class="fas fa-briefcase"></i> Salary Automation Jobs</a></li>
+                    <li><a href="{% url 'crud-list' model_name='salaryautomationjobdetail' %}"><i class="fas fa-circle-info"></i> Salary Job Details</a></li>
+                    <li><a href="{% url 'crud-list' model_name='staff' %}"><i class="fas fa-users"></i> Staff</a></li>
+                    <li><a href="{% url 'crud-list' model_name='transaction' %}"><i class="fas fa-exchange-alt"></i> Transactions</a></li>
+                    <li><a href="{% url 'crud-list' model_name='automationjob' %}"><i class="fas fa-robot"></i> Automation Jobs</a></li>
+                    <li><a href="{% url 'crud-list' model_name='automationjobdetail' %}"><i class="fas fa-magnifying-glass-chart"></i> Automation Job Details</a></li>
+                    <li><a href="{% url 'crud-list' model_name='notificationqueue' %}"><i class="fas fa-flag"></i> Notification Queue Data</a></li>
+                </ul>
+            </li>

@@ -1,0 +1,30 @@
+{% load static %}
+
+<div class="edu-sidebar-overlay" data-edu-sidebar-overlay aria-hidden="true"></div>
+<aside class="deznav edu-reference-sidebar{% if sidebar_portal == 'admin' %} admin-sidebar-stable{% endif %}"
+       id="eduSidebar"
+       data-edu-sidebar
+       data-sidebar-portal="{{ sidebar_portal }}"
+       aria-label="{% if sidebar_portal == 'admin' %}Admin{% elif sidebar_portal == 'teacher' %}Teacher{% elif sidebar_portal == 'student' %}Student{% elif sidebar_portal == 'parent' %}Parent{% else %}Automation{% endif %} navigation">
+    <div class="deznav-brand">
+        {% if sidebar_portal == 'admin' %}
+            <a href="{% url 'admin_panel_dashboard' %}" class="brand-logo">
+        {% elif sidebar_portal == 'teacher' %}
+            <a href="{% url 'teacher_dashboard' %}" class="brand-logo">
+        {% elif sidebar_portal == 'student' %}
+            <a href="{% url 'student_dashboard' %}" class="brand-logo">
+        {% elif sidebar_portal == 'parent' %}
+            <a href="{% url 'parent_dashboard' %}" class="brand-logo">
+        {% else %}
+            <a href="{% url 'automation-dashboard' %}" class="brand-logo">
+        {% endif %}
+            <img src="{% static 'admin_panel/images/edupilot-logo-2026-nav.png' %}?v=unified-sidebar-1" alt="EduPilot">
+        </a>
+    </div>
+
+    <div class="deznav-scroll">
+        <ul class="metismenu" data-edu-sidebar-menu>
+            {% include sidebar_menu_template %}
+        </ul>
+    </div>
+</aside>

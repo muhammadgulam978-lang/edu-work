@@ -2,7 +2,9 @@
 <!DOCTYPE html>
 <html lang="en">
  <link rel="stylesheet" href="{% static 'admin_panel/css/admin_panel_dashboard.css' %}">
- <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+ <link rel="stylesheet" href="{% static 'admin_panel/css/edupilot-charts.css' %}?v=charts-1">
+ <script src="{% static 'admin_panel/vendor/chart.js/Chart.bundle.min.js' %}"></script>
+ <script src="{% static 'admin_panel/js/edupilot-charts.js' %}?v=charts-1"></script>
 <head>
     
 </head>
@@ -97,7 +99,7 @@
             </section>
         </header>
         <h1>Dashboard</h1>
-        <div class="charts-wrapper">
+        <div class="charts-wrapper" data-legacy-live-charts data-endpoint="{% url 'dashboard_summary_data' %}">
             <section role="credit-card">
                 <div class="top">
                     <img src="https://ozcanzaferayan.github.io/financial-crm/img/mastercard.svg" />
@@ -117,18 +119,18 @@
                     </div>
                 </div>
             </section>
-            <section role="chart" class="exchange-rates">
-                <h3 class="title">Exchange rates</h3>
-                <canvas id="exchangeRates"></canvas>
+            <section role="chart" class="exchange-rates ep-chart-card" data-chart-tone="academics">
+                <div class="ep-chart-head"><h3 class="title">Student Attendance Trend</h3><span class="ep-chart-scope">Live</span></div>
+                <div class="ep-chart-box"><canvas id="exchangeRates"></canvas></div>
             </section>
-            <section role="chart" class="last-costs">
-                <h3 class="title">Last Costs</h3>
-                <canvas id="last_costs"></canvas>
+            <section role="chart" class="last-costs ep-chart-card" data-chart-tone="finance">
+                <div class="ep-chart-head"><h3 class="title">Income vs Expense</h3><span class="ep-chart-scope">PKR</span></div>
+                <div class="ep-chart-box"><canvas id="last_costs"></canvas></div>
 
             </section>
-            <section role="chart" class="efficiency">
-                <h3 class="title">Efficiency</h3>
-                <canvas id="efficiency"></canvas>
+            <section role="chart" class="efficiency ep-chart-card" data-chart-tone="hr">
+                <div class="ep-chart-head"><h3 class="title">Workforce Availability</h3><span class="ep-chart-scope">Today</span></div>
+                <div class="ep-chart-box"><canvas id="efficiency"></canvas></div>
 
             </section>
         </div>
@@ -137,6 +139,6 @@
 
  
         
-   <script src="{% static 'admin_panel/js/admin_panel_dashboard.js' %}"></script>
+   <script src="{% static 'admin_panel/js/legacy-dashboard-charts.js' %}?v=charts-1"></script>
 </html>
 

@@ -1,34 +1,38 @@
 {% extends "admin_panel/base.html" %}
+{% load static %}
 {% comment %}SAVE AS: exam_system/analytics_dashboard.html{% endcomment %}
+{% block head %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'admin_panel/css/edupilot-charts.css' %}?v=charts-1">
+<link rel="stylesheet" href="{% static 'exam_system/css/exam-analytics.css' %}?v=exam-analytics-1">
+<script src="{% static 'admin_panel/js/edupilot-charts.js' %}?v=charts-1"></script>
+{% endblock %}
 {% block content %}
-<div class="container-fluid">
-    <div class="mb-4">
-        <h3 class="mb-1">Exam Analytics Dashboard</h3>
-        <p class="text-muted mb-0">Academic Year: <strong>{{ academic_year }}</strong></p>
-    </div>
+{{ exam_analytics_data|json_script:"exam-analytics-data" }}
+<div class="exam-analytics" data-exam-analytics data-endpoint="{% url 'analytics_data' %}">
+    <header class="exam-analytics-head">
+        <div><span>Examination Intelligence</span><h1>Exam Analytics</h1><p>Academic Year: <strong>{{ academic_year|default:"Not configured" }}</strong></p></div>
+        <div>Updated <strong data-exam-generated>{{ exam_analytics_data.meta.generated_at }}</strong></div>
+    </header>
 
     <!-- Summary Cards -->
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card bg-primary text-white">
-                <div class="card-body">
-                    <h4>{{ plans.count }}</h4>
-                    <p class="mb-0">Total Exam Plans</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card bg-success text-white">
-                <div class="card-body">
-                    <h4>{{ subject_stats.count }}</h4>
-                    <p class="mb-0">Subjects Examined</p>
-                </div>
-            </div>
-        </div>
+    <div class="exam-kpis" data-exam-kpis>
+        {% for item in exam_analytics_data.kpis %}<div><strong>{{ item.value }}</strong><span>{{ item.label }}</span></div>{% endfor %}
     </div>
 
+    <section class="exam-chart-grid">
+        <article class="ep-chart-card" data-chart-tone="academics">
+            <div class="ep-chart-head"><div><h2>Subject-wise Performance</h2><p>Average compiled result percentage by subject</p></div><span class="ep-chart-scope">Live</span></div>
+            <div class="ep-chart-box exam-chart-box"><canvas id="examSubjectChart"></canvas></div>
+        </article>
+        <article class="ep-chart-card" data-chart-tone="ai">
+            <div class="ep-chart-head"><div><h2>Grade Distribution</h2><p>Compiled student results grouped by grade</p></div><span class="ep-chart-scope">Current Year</span></div>
+            <div class="ep-chart-box exam-chart-box"><canvas id="examGradeChart"></canvas></div>
+        </article>
+    </section>
+
     <!-- Subject Stats -->
-    <div class="card mb-4">
+    <div class="card mb-4 exam-detail-card">
         <div class="card-header">
             <h5 class="mb-0"><i class="fa fa-bar-chart mr-2"></i>Subject-wise Performance</h5>
         </div>
@@ -69,7 +73,7 @@
     </div>
 
     <!-- Grade Distribution -->
-    <div class="card">
+    <div class="card exam-detail-card">
         <div class="card-header">
             <h5 class="mb-0"><i class="fa fa-pie-chart mr-2"></i>Grade Distribution</h5>
         </div>
@@ -96,4 +100,5 @@
         </div>
     </div>
 </div>
+<script src="{% static 'exam_system/js/exam-analytics.js' %}?v=exam-analytics-1"></script>
 {% endblock %}

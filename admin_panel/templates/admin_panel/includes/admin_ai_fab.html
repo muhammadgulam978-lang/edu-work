@@ -5,24 +5,20 @@
         .admin-ai-fab {
             position: fixed;
             left: auto;
-            right: 26px;
-            bottom: 28px;
+            right: 20px;
+            bottom: 20px;
             z-index: 2147483000;
-            width: 86px;
-            height: 86px;
+            width: 64px;
+            height: 64px;
             display: flex;
             align-items: center;
             justify-content: center;
             border-radius: 50%;
-            background:
-                radial-gradient(circle at 45% 38%, rgba(255, 255, 255, .95) 0 18%, rgba(136, 208, 197, .9) 30%, rgba(139, 199, 64, .72) 58%, rgba(136, 208, 197, .35) 72%, rgba(136, 208, 197, 0) 100%);
-            border: 1px solid rgba(255, 255, 255, .65);
-            color: #264c84;
+            background: #ffffff;
+            border: 3px solid #66cbbb;
+            color: #0f766e;
             text-decoration: none;
-            box-shadow:
-                0 0 16px rgba(136, 208, 197, .85),
-                0 0 34px rgba(139, 199, 64, .45),
-                0 8px 22px rgba(0, 0, 0, .16);
+            box-shadow: 0 8px 22px rgba(24, 96, 86, .18);
             line-height: 1;
             isolation: isolate;
             overflow: visible;
@@ -31,7 +27,7 @@
             -webkit-user-drag: none;
             -webkit-tap-highlight-color: transparent;
             cursor: grab;
-            animation: adminAiPulse 2.8s ease-in-out infinite;
+            animation: adminAiPulse 3.2s ease-in-out infinite;
         }
         .admin-ai-fab.is-dragging {
             cursor: grabbing;
@@ -41,20 +37,20 @@
         .admin-ai-fab::after {
             content: "";
             position: absolute;
-            inset: 8px;
+            inset: 4px;
             border-radius: 50%;
-            border: 2px solid rgba(255, 255, 255, .78);
-            box-shadow: 0 0 16px rgba(136, 208, 197, .72);
+            border: 1px solid rgba(15, 118, 110, .28);
+            box-shadow: none;
             pointer-events: none;
             z-index: 0;
         }
         .admin-ai-fab::before {
-            transform: rotate(18deg) scaleX(1.22) scaleY(.82);
+            transform: rotate(18deg) scaleX(1.1) scaleY(.9);
             animation: adminAiOrbitOne 3.4s linear infinite;
         }
         .admin-ai-fab::after {
-            border-color: rgba(139, 199, 64, .62);
-            transform: rotate(-42deg) scaleX(1.16) scaleY(.86);
+            border-color: rgba(139, 199, 64, .48);
+            transform: rotate(-42deg) scaleX(1.08) scaleY(.92);
             animation: adminAiOrbitTwo 4.2s linear infinite;
         }
         .admin-ai-fab:hover,
@@ -66,23 +62,23 @@
         .admin-ai-fab__mark {
             position: relative;
             z-index: 1;
-            width: 58px;
-            height: 58px;
+            width: 44px;
+            height: 44px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             border-radius: 50%;
-            background: rgba(255, 255, 255, .35);
-            color: #111;
-            border: 1px solid rgba(255, 255, 255, .58);
-            font-size: 17px;
+            background: #effaf7;
+            color: #0f6159;
+            border: 1px solid #cfeae4;
+            font-size: 15px;
             font-weight: 500;
             letter-spacing: 0;
         }
         .admin-ai-fab__tooltip {
             position: absolute;
             left: auto;
-            right: 96px;
+            right: 74px;
             top: 50%;
             transform: translateY(-50%);
             padding: 8px 10px;
@@ -109,37 +105,33 @@
         @keyframes adminAiPulse {
             0%, 100% {
                 box-shadow:
-                    0 0 16px rgba(136, 208, 197, .85),
-                    0 0 34px rgba(139, 199, 64, .45),
-                    0 8px 22px rgba(0, 0, 0, .16);
+                    0 8px 22px rgba(24, 96, 86, .18);
             }
             50% {
                 box-shadow:
-                    0 0 24px rgba(136, 208, 197, .95),
-                    0 0 48px rgba(139, 199, 64, .58),
-                    0 8px 22px rgba(0, 0, 0, .16);
+                    0 10px 26px rgba(24, 96, 86, .24);
             }
         }
         @keyframes adminAiOrbitOne {
-            from { transform: rotate(18deg) scaleX(1.22) scaleY(.82); }
-            to { transform: rotate(378deg) scaleX(1.22) scaleY(.82); }
+            from { transform: rotate(18deg) scaleX(1.1) scaleY(.9); }
+            to { transform: rotate(378deg) scaleX(1.1) scaleY(.9); }
         }
         @keyframes adminAiOrbitTwo {
-            from { transform: rotate(-42deg) scaleX(1.16) scaleY(.86); }
-            to { transform: rotate(-402deg) scaleX(1.16) scaleY(.86); }
+            from { transform: rotate(-42deg) scaleX(1.08) scaleY(.92); }
+            to { transform: rotate(-402deg) scaleX(1.08) scaleY(.92); }
         }
         @media (max-width: 768px) {
             .admin-ai-fab {
                 left: auto;
                 right: 16px;
                 bottom: 82px;
-                width: 70px;
-                height: 70px;
+                width: 56px;
+                height: 56px;
             }
             .admin-ai-fab__mark {
-                width: 48px;
-                height: 48px;
-                font-size: 15px;
+                width: 38px;
+                height: 38px;
+                font-size: 14px;
             }
             .admin-ai-fab__tooltip {
                 display: none;
@@ -157,7 +149,7 @@
             const fab = document.querySelector("[data-admin-ai-fab='true']");
             if (!fab) return;
 
-            const storageKey = "edupilot_admin_ai_fab_position_v2";
+            const storageKey = "edupilot_admin_ai_fab_position_v3";
             const dragThreshold = 6;
             let startX = 0;
             let startY = 0;

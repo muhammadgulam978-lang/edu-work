@@ -1,14 +1,4 @@
-{% load static %}
-
-<div class="deznav edu-reference-sidebar">
-    <div class="deznav-brand">
-        <a href="{% url 'student_dashboard' %}" class="brand-logo">
-            <img src="{% static 'admin_panel/images/edupilot-logo-2026-nav.png' %}?v=reference-sidebar-1" alt="EDUPILOT">
-        </a>
-    </div>
-
-    <div class="deznav-scroll">
-        <ul class="metismenu" id="menu">
+            {# Student menu items. Wrapper and brand live in shared/sidebar/shell.html. #}
             <li style="--sidebar-icon-color:#0ea5e9; --sidebar-icon-bg:#dff6ff;">
                 <a href="{% url 'student_dashboard' %}" class="ai-icon" aria-expanded="false">
                     <i class="fas fa-home"></i>
@@ -58,8 +48,3 @@
                     <li><a href=""><i class="fas fa-file-invoice-dollar"></i> Fees Voucher</a></li>
                 </ul>
             </li>
-        </ul>
-
-        <div class="copyright">EduPilot &copy; {% now "Y" %}</div>
-    </div>
-</div>

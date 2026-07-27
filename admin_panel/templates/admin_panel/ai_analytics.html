@@ -7,6 +7,7 @@
 {% block content %}
 <link rel="stylesheet" href="{% static 'admin_panel/css/ai-graphs.css' %}?v=ai-graphs-2">
 <link rel="stylesheet" href="{% static 'admin_panel/css/ai-overview.css' %}?v=ai-overview-1">
+<link rel="stylesheet" href="{% static 'admin_panel/css/edupilot-charts.css' %}?v=charts-1">
 
 <main class="ai-overview-page" data-ai-overview
       data-analytics-url="{% url 'ai_analytics_data' %}"
@@ -83,17 +84,17 @@
     </form>
 
     <section class="ai-primary-charts" aria-label="Primary analytics graphs">
-        <article class="ai-chart-panel" id="attendance-intelligence">
+        <article class="ai-chart-panel ep-chart-card" data-chart-tone="academics" id="attendance-intelligence">
             <div class="ai-section-head"><div><h2>Attendance Intelligence</h2><p>Present, absent, and leave comparison.</p></div><span class="ai-chip-status"><i></i> Live</span></div>
-            <div class="ai-chart-box"><canvas id="aiAttendanceChart"></canvas></div>
+            <div class="ai-chart-box ep-chart-box"><canvas id="aiAttendanceChart"></canvas></div>
         </article>
-        <article class="ai-chart-panel">
+        <article class="ai-chart-panel ep-chart-card" data-chart-tone="finance">
             <div class="ai-section-head"><div><h2>Fee Collection Trend</h2><p>School-wide billed versus paid amount.</p></div><span class="ai-chart-scope" data-period-label>{{ ai_analytics.meta.period_label }}</span></div>
-            <div class="ai-chart-box"><canvas id="aiFeeChart"></canvas></div>
+            <div class="ai-chart-box ep-chart-box"><canvas id="aiFeeChart"></canvas></div>
         </article>
-        <article class="ai-chart-panel">
+        <article class="ai-chart-panel ep-chart-card" data-chart-tone="ai">
             <div class="ai-section-head"><div><h2>Admissions Trend</h2><p>Admission intake for the selected range.</p></div><span class="ai-chart-scope">Trend</span></div>
-            <div class="ai-chart-box"><canvas id="aiAdmissionsChart"></canvas></div>
+            <div class="ai-chart-box ep-chart-box"><canvas id="aiAdmissionsChart"></canvas></div>
         </article>
     </section>
 
@@ -138,9 +139,9 @@
     <section class="ai-secondary-section">
         <div class="ai-block-heading"><div><span class="ai-eyebrow">More Intelligence</span><h2>Additional Live Graphs</h2></div><p>No existing graph has been removed.</p></div>
         <div class="ai-secondary-charts">
-            <article class="ai-chart-panel"><div class="ai-section-head"><div><h2>Attendance Mix</h2><p>Today's attendance composition.</p></div></div><div class="ai-chart-box"><canvas id="aiAttendanceDonutChart"></canvas></div></article>
-            <article class="ai-chart-panel"><div class="ai-section-head"><div><h2>Teacher Workload</h2><p>Top six assigned timetable loads.</p></div></div><div class="ai-chart-box"><canvas id="aiWorkloadChart"></canvas></div></article>
-            <article class="ai-chart-panel"><div class="ai-section-head"><div><h2>Fixture Automation Mix</h2><p>Manual versus automated assignments.</p></div></div><div class="ai-chart-box"><canvas id="aiFixtureMixChart"></canvas></div></article>
+            <article class="ai-chart-panel ep-chart-card" data-chart-tone="hr"><div class="ai-section-head"><div><h2>Attendance Mix</h2><p>Today's attendance composition.</p></div></div><div class="ai-chart-box ep-chart-box"><canvas id="aiAttendanceDonutChart"></canvas></div></article>
+            <article class="ai-chart-panel ep-chart-card" data-chart-tone="academics"><div class="ai-section-head"><div><h2>Teacher Workload</h2><p>Top six assigned timetable loads.</p></div></div><div class="ai-chart-box ep-chart-box"><canvas id="aiWorkloadChart"></canvas></div></article>
+            <article class="ai-chart-panel ep-chart-card" data-chart-tone="ai"><div class="ai-section-head"><div><h2>Fixture Automation Mix</h2><p>Manual versus automated assignments.</p></div></div><div class="ai-chart-box ep-chart-box"><canvas id="aiFixtureMixChart"></canvas></div></article>
         </div>
     </section>
 
@@ -172,7 +173,7 @@
 
 {{ ai_analytics|json_script:"ai-overview-data" }}
 <script src="{% static 'admin_panel/vendor/chart.js/Chart.bundle.min.js' %}"></script>
-<script src="{% static 'admin_panel/js/ai-graphs.js' %}?v=ai-graphs-2"></script>
+<script src="{% static 'admin_panel/js/edupilot-charts.js' %}?v=charts-1"></script>
 <script src="{% static 'admin_panel/js/ai-overview.js' %}?v=ai-overview-1"></script>
 {% include "admin_ai/includes/auto_report_modal.html" %}
 {% endblock %}
