@@ -1,0 +1,121 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block title %}{{ event.name }} - Duty Assignment{% endblock %}
+
+{% block content %}
+<style>
+  .ev-head{
+    display:flex;justify-content:space-between;align-items:flex-start;
+    background:#E6F5F0;padding:18px 22px;border-radius:14px;margin-bottom:22px;
+  }
+  .ev-head h1{margin:0 0 4px;font-size:22px;}
+  .ev-head p{margin:0;color:#6B7A77;font-size:14px;}
+  .ev-btn{
+    border:none;padding:11px 20px;border-radius:22px;font-size:14px;font-weight:600;
+    cursor:pointer;background:#4FB89D;color:#fff;text-decoration:none;display:inline-block;
+  }
+  .ev-btn:hover{background:#2E8A72;color:#fff;}
+  .ev-btn-outline{background:#fff;border:1px solid #4FB89D;color:#2E8A72;}
+  .ev-card{background:#fff;border-radius:14px;border:1px solid #DCEAE6;padding:22px 24px;margin-bottom:22px;}
+  .ev-card h3{margin:0 0 16px;font-size:17px;}
+  .ev-form-grid{display:grid;grid-template-columns:repeat(4,1fr) auto;gap:14px;align-items:end;}
+  .ev-field label{display:block;font-size:12.5px;color:#6B7A77;margin-bottom:6px;font-weight:600;}
+  .ev-field select, .ev-field input{
+    width:100%;padding:10px 12px;border:1px solid #DCEAE6;border-radius:8px;font-size:14px;background:#F9FBFA;
+  }
+  .ev-table{width:100%;border-collapse:collapse;}
+  .ev-table thead th{background:#EEF6F3;text-align:left;padding:12px 14px;font-size:13px;color:#6B7A77;border-bottom:1px solid #DCEAE6;}
+  .ev-table tbody td{padding:13px 14px;font-size:14px;border-bottom:1px solid #DCEAE6;}
+  .ev-pill{background:#E6F5F0;color:#2E8A72;padding:4px 12px;border-radius:14px;font-size:12.5px;font-weight:600;}
+  .ev-del{background:none;border:none;color:#C0392B;cursor:pointer;font-size:13px;font-weight:600;}
+  .ev-empty{text-align:center;color:#6B7A77;padding:30px;font-size:14px;}
+  .ev-note{font-size:12px;color:#B4740E;margin-top:6px;}
+</style>
+
+<div class="ev-head">
+  <div>
+    <h1>{{ event.name }}</h1>
+    <p>{{ event.date|date:"d M Y" }}{% if event.description %} — {{ event.description }}{% endif %}</p>
+  </div>
+  <div style="display:flex;gap:10px;">
+    <a class="ev-btn" href="{% url 'event_duty_report' event.pk %}">+ Generate PDF Report</a>
+    <a class="ev-btn ev-btn-outline" href="{% url 'event_list' %}">← Back to Events</a>
+  </div>
+</div>
+
+{% if messages %}
+  {% for message in messages %}
+    <div style="padding:10px 16px;border-radius:8px;margin-bottom:14px;
+                background:{% if message.tags == 'error' %}#FCEBEB{% else %}#EAF3DE{% endif %};
+                color:{% if message.tags == 'error' %}#791F1F{% else %}#27500A{% endif %};">
+      {{ message }}
+    </div>
+  {% endfor %}
+{% endif %}
+
+<div class="ev-card">
+  <h3>Assign Teacher Duty for this Event</h3>
+  <form method="post" action="{% url 'add_event_duty' event.pk %}">
+    {% csrf_token %}
+    <div class="ev-form-grid">
+      <div class="ev-field">
+        <label>Date</label>
+        <input type="date" name="date" value="{{ event.date|date:'Y-m-d' }}" required>
+      </div>
+      <div class="ev-field">
+        <label>Timing</label>
+        <input type="text" name="timing" placeholder="e.g. 09:00 - 09:30" required>
+      </div>
+      <div class="ev-field">
+        <label>Duty Area</label>
+        <input type="text" name="area" placeholder="e.g. Main Gate" required>
+      </div>
+      <div class="ev-field">
+        <label>Teacher</label>
+        <select name="teacher" required>
+          <option value="">Select teacher</option>
+          {% for teacher in teachers %}
+            <option value="{{ teacher.pk }}" {% if teacher.pk in recent_teacher_ids %}style="color:#B4740E;"{% endif %}>
+              {{ teacher.name }}{% if teacher.pk in recent_teacher_ids %} — on duty last week{% endif %}
+            </option>
+          {% endfor %}
+        </select>
+        {% if recent_teacher_ids %}
+          <div class="ev-note">⚠ Teachers marked "on duty last week" were assigned recently — picking them will be blocked to keep rotation fair.</div>
+        {% endif %}
+      </div>
+      <div class="ev-field">
+        <button type="submit" class="ev-btn" style="width:100%;">+ Add Duty</button>
+      </div>
+    </div>
+  </form>
+</div>
+
+<div class="ev-card" style="padding:0;overflow:hidden;">
+  <div style="padding:20px 24px 0;"><h3>Assigned Duties for this Event</h3></div>
+  <table class="ev-table">
+    <thead>
+      <tr><th>Teacher</th><th>Duty Area</th><th>Timing</th><th>Date</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for duty in duties %}
+        <tr>
+          <td><strong>{{ duty.teacher.name }}</strong></td>
+          <td><span class="ev-pill">{{ duty.area }}</span></td>
+          <td>{{ duty.timing }}</td>
+          <td>{{ duty.date|date:"d M Y" }}</td>
+          <td>
+            <form method="post" action="{% url 'delete_event_duty' duty.pk %}" style="display:inline;">
+              {% csrf_token %}
+              <button type="submit" class="ev-del">Remove</button>
+            </form>
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="5" class="ev-empty">No duties assigned for this event yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

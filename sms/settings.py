@@ -89,12 +89,13 @@ WSGI_APPLICATION = "sms.wsgi.application"
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'edu_pilot_new',
-        'USER': 'GM123',
-        'PASSWORD': 'GM123',
+        'NAME': 'sms_database', 
+        'USER': 'postgres',
+        'PASSWORD': 'admin',
         'HOST': 'localhost',
         'PORT': '5432',
     }
+    
 }
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [

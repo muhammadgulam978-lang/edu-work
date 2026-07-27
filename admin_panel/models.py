@@ -10,15 +10,12 @@ from django.contrib.auth.models import User
 import random
 import string
 
-
-
 from django.contrib.auth.models import AbstractUser
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.db.models import Sum
 from decimal import Decimal
 from datetime import date
-
 
 
 # admin_panel/models.py
@@ -1782,5 +1779,37 @@ def create_ledger_entry(sender, instance, created, **kwargs):
         balance_obj.outstanding_amount += Decimal(str(instance.net_amount))
         balance_obj.save()
         
-        
-        
+class TeacherDuty(models.Model):
+    teacher = models.ForeignKey(
+        'teacher_dashboard.Teacher',
+        on_delete=models.CASCADE,
+        related_name='duties'
+    )
+    area = models.CharField(max_length=150)
+    timing = models.CharField(max_length=50)
+    date = models.DateField()
+    event = models.ForeignKey(
+    'DutyEvent',
+    on_delete=models.CASCADE,
+    null=True, blank=True,
+    related_name='duties'
+)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['date', 'timing']
+
+    def __str__(self):
+        return f"{self.teacher} - {self.area} ({self.date})"
+    
+class DutyEvent(models.Model):
+    name = models.CharField(max_length=200)
+    date = models.DateField()
+    description = models.TextField(blank=True, default='')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-date']
+
+    def __str__(self):
+        return f"{self.name} ({self.date})"     

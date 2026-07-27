@@ -46,6 +46,8 @@
                     <li><a href="{% url 'class_group_list' %}"><i class="fas fa-object-group"></i> Classes Groups</a></li>
                     <li><a href="{% url 'manage_fixture' %}"><i class="fas fa-calendar-day"></i> Fixture Management</a></li>
                     <li><a href="{% url 'class_teacher_list' %}"><i class="fas fa-chalkboard-teacher"></i> Class Teachers</a></li>
+                    <li><a href="{% url 'teacher_duty_roster' %}"><i class="fas fa-clipboard-check"></i> Teacher Duty Roster</a></li>
+                    <li><a href="{% url 'event_list' %}"><i class="fas fa-star"></i> Special Event Duties</a></li>
                     <li><a href="{% url 'portfolio_timetable' %}"><i class="fas fa-file-pdf"></i> PDF Generate Classwise</a></li>
                     <li><a href="{% url 'academic_calendar_page' %}"><i class="fas fa-calendar-alt"></i> Academic Calendar</a></li>
                 </ul>
@@ -54,7 +56,7 @@
             <li class="has-menu sidebar-students" style="--sidebar-icon-color:#2563eb; --sidebar-icon-bg:#e6efff;">
                 <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
                     <i class="fas fa-users"></i>
-                    <span class="nav-text">Students</span>
+                    <span class="nav-text">Student Gateway</span>
                 </a>
                 <ul aria-expanded="false">
                     <li><a href="{% url 'academic_year_list' %}"><i class="fas fa-calendar-plus"></i> Academic Year Create</a></li>
@@ -69,7 +71,7 @@
             <li class="has-menu sidebar-teachers" style="--sidebar-icon-color:#0ea5e9; --sidebar-icon-bg:#e0f2fe;">
                 <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
                     <i class="fas fa-user-tie"></i>
-                    <span class="nav-text">Teachers</span>
+                    <span class="nav-text">Teacher Gateway</span>
                 </a>
                 <ul aria-expanded="false">
                     <li><a href="{% url 'teacher_list' %}"><i class="fas fa-list"></i> Teacher List</a></li>
@@ -94,7 +96,7 @@
             <li class="has-menu sidebar-exams" style="--sidebar-icon-color:#7c3aed; --sidebar-icon-bg:#ede9fe;">
                 <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
                     <i class="fas fa-desktop"></i>
-                    <span class="nav-text">Examination</span>
+                    <span class="nav-text">AI Centralized Examination</span>
                 </a>
                 <ul aria-expanded="false">
                     <li><a href="{% url 'question_bank_list' %}"><i class="fas fa-question-circle"></i> Question Banks</a></li>

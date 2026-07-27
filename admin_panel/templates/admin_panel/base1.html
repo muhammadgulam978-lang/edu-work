@@ -10,7 +10,14 @@
     <link rel="stylesheet" href="{% static 'admin_panel/css/base.css' %}">
     <link rel="stylesheet" href="{% static 'admin_panel/css/lms_admin.css' %}">
 
+    <!-- ▼▼▼ ADDED: deznav sidebar theme (matches Image 2 look) ▼▼▼ -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'admin_panel/css/deznav-sidebar.css' %}">
+    <!-- ▲▲▲ END ADDED ▲▲▲ -->
+
     {% block head %}{% endblock %}
+    <link rel="stylesheet" href="{% static 'admin_panel/css/admin-inner-theme.css' %}?v=admin-sidebar-color-icons-2">
+    <link rel="stylesheet" href="{% static 'admin_panel/css/reference-sidebar.css' %}?v=reference-sidebar-7">
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -69,5 +76,9 @@
     </div>
 
     <script src="{% static 'admin_panel/js/base.js' %}"></script>
+    <!-- ▼▼▼ ADDED: deznav sidebar collapse/expand behaviour ▼▼▼ -->
+    <script src="{% static 'admin_panel/js/deznav-sidebar.js' %}?v=admin-sidebar-stable-1"></script>
+    <!-- ▲▲▲ END ADDED ▲▲▲ -->
+    {% include 'admin_panel/includes/admin_ai_fab.html' %}
 </body>
 </html>

@@ -41,6 +41,8 @@ urlpatterns = [
     path('teachers/<int:pk>/profile/', views.teacher_profile, name='teacher_profile'),
     path('teachers/edit/<int:pk>/', views.teacher_update, name='teacher_edit'),
     path('teachers/delete/<int:pk>/', views.teacher_delete, name='teacher_delete'),
+    
+    
     path('periods/', views.period_list_view, name='period_list'),                
     path('periods/create/', views.create_period_view, name='create_period'),       
     path('periods/update/<int:pk>/', views.update_period_view, name='update_period'),  
@@ -80,10 +82,27 @@ urlpatterns = [
     path('portfolio_timetable/', views.portfolio_timetable, name='portfolio_timetable'), 
     path('id_cards/', views.student_id_card_list, name='student_id_card_list'),
 
+    
+    path('teachers/duty-roster/', views.teacher_duty_roster, name='teacher_duty_roster'),
+    path('teachers/duty-roster/add/', views.add_teacher_duty, name='add_teacher_duty'),
+    path('teachers/duty-roster/<int:pk>/delete/', views.delete_teacher_duty, name='delete_teacher_duty'),
+    path('teachers/duty-roster/report/', views.teacher_duty_roster_report, name='teacher_duty_roster_report'),
+
     path('id_card/<int:student_id>/', views.generate_student_id_card, name='generate_id_card'),
     path('upload-photo/<int:student_id>/', views.upload_student_photo, name='upload_student_photo'),
     path('dashboard/', views.admin_dashboard, name='admin_dashboard'),  
     path('hello/', views.my_view, name='hello'),
+    
+    
+    
+    path('events/', views.event_list, name='event_list'),
+    path('events/create/', views.create_event, name='create_event'),
+    path('events/<int:pk>/', views.event_detail, name='event_detail'),
+    path('events/<int:pk>/add-duty/', views.add_event_duty, name='add_event_duty'),
+    path('events/<int:pk>/delete/', views.delete_event, name='delete_event'),
+    path('events/duty/<int:pk>/delete/', views.delete_event_duty, name='delete_event_duty'),
+    path('events/<int:pk>/report/', views.event_duty_report, name='event_duty_report'),
+
 
 
     path("streams/", views.stream_list, name="stream_list"),

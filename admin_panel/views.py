@@ -27,9 +27,24 @@ from django.db.models import Q, Sum, Count
 from .forms import RoleForm, AssignRoleForm
 from .models import UserRole, RoleActivityLog
 
+################## Teacher Duty ########################
 
 
+from datetime import timedelta
+from django.shortcuts import render, redirect, get_object_or_404
+from django.http import HttpResponse
+from django.contrib import messages
+from teacher_dashboard.models import Teacher
+from .models import TeacherDuty, DutyEvent
 
+from reportlab.lib.pagesizes import A4
+from reportlab.lib import colors
+from reportlab.lib.units import cm
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.enums import TA_CENTER
+
+############################ #########################
 
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
@@ -6621,3 +6636,303 @@ def _operation_view_set(key):
  operation_transport_trip_edit, operation_transport_trip_delete) = _operation_view_set("transport_trip")
 (operation_vehicle_maintenance_list, operation_vehicle_maintenance_create,
  operation_vehicle_maintenance_edit, operation_vehicle_maintenance_delete) = _operation_view_set("vehicle_maintenance")
+
+
+# ---------- helper ----------
+def ordinal(n):
+    if 11 <= (n % 100) <= 13:
+        suffix = 'TH'
+    else:
+        suffix = {1: 'ST', 2: 'ND', 3: 'RD'}.get(n % 10, 'TH')
+    return f"{n}{suffix}"
+
+
+
+
+
+
+
+ROTATION_DAYS = 7   # how many days back counts as "last week"
+
+
+# =========================================================
+# ROTATION / FAIRNESS HELPER
+# =========================================================
+def get_recent_teacher_ids(reference_date, days=ROTATION_DAYS):
+    """
+    Returns a set of teacher IDs who already had ANY duty
+    (regular or event) within `days` days before reference_date.
+    Used both to grey out options in the dropdown and to block
+    assignment on the server side.
+    """
+    start = reference_date - timedelta(days=days)
+    return set(
+        TeacherDuty.objects.filter(date__gte=start, date__lt=reference_date)
+        .values_list('teacher_id', flat=True)
+    )
+
+
+# =========================================================
+# REGULAR WEEKLY BREAK-TIME DUTY ROSTER
+# =========================================================
+ROTATION_DAYS = 7   # how many days back counts as "last week"
+ 
+ 
+# =========================================================
+# ROTATION / FAIRNESS HELPER
+# =========================================================
+def get_recent_teacher_ids(reference_date, days=ROTATION_DAYS):
+    """
+    Returns a set of teacher IDs who already had ANY duty
+    (regular or event) within `days` days before reference_date.
+    Used both to grey out options in the dropdown and to block
+    assignment on the server side.
+    """
+    start = reference_date - timedelta(days=days)
+    return set(
+        TeacherDuty.objects.filter(date__gte=start, date__lt=reference_date)
+        .values_list('teacher_id', flat=True)
+    )
+ 
+ 
+# =========================================================
+# REGULAR WEEKLY BREAK-TIME DUTY ROSTER
+# =========================================================
+def teacher_duty_roster(request):
+    duties = TeacherDuty.objects.filter(event__isnull=True).select_related('teacher')
+    teachers = Teacher.objects.all()
+ 
+    # grey out teachers who had duty in the last 7 days (based on today)
+    from django.utils import timezone
+    recent_teacher_ids = get_recent_teacher_ids(timezone.localdate())
+ 
+    context = {
+        'duties': duties,
+        'teachers': teachers,
+        'recent_teacher_ids': recent_teacher_ids,
+    }
+    return render(request, 'admin_panel/teacher_duty_roster.html', context)
+ 
+ 
+def add_teacher_duty(request):
+    if request.method == 'POST':
+        teacher_id = request.POST.get('teacher')
+        area = request.POST.get('area', '').strip()
+        timing = request.POST.get('timing', '').strip()
+        date = request.POST.get('date')
+ 
+        if not (teacher_id and area and timing and date):
+            messages.error(request, 'Please fill in all fields.')
+            return redirect('teacher_duty_roster')
+ 
+        teacher = get_object_or_404(Teacher, pk=teacher_id)
+ 
+        # ---- ROTATION CHECK ----
+        from datetime import datetime
+        parsed_date = datetime.strptime(date, '%Y-%m-%d').date()
+        recent_ids = get_recent_teacher_ids(parsed_date)
+        if teacher.pk in recent_ids:
+            messages.error(
+                request,
+                f'{teacher.name} was already on duty in the last {ROTATION_DAYS} days. '
+                'Please choose a different teacher to keep rotation fair.'
+            )
+            return redirect('teacher_duty_roster')
+ 
+        TeacherDuty.objects.create(teacher=teacher, area=area, timing=timing, date=parsed_date)
+        messages.success(request, 'Duty assigned.')
+    return redirect('teacher_duty_roster')
+ 
+ 
+def delete_teacher_duty(request, pk):
+    duty = get_object_or_404(TeacherDuty, pk=pk)
+    duty.delete()
+    messages.success(request, 'Duty removed.')
+    return redirect('teacher_duty_roster')
+ 
+ 
+def teacher_duty_roster_report(request):
+    duties = list(TeacherDuty.objects.filter(event__isnull=True).select_related('teacher').order_by('date', 'timing'))
+ 
+    if not duties:
+        return HttpResponse('No duties assigned yet.', content_type='text/plain')
+ 
+    dates = sorted(d.date for d in duties)
+ 
+    def ordinal(n):
+        if 11 <= (n % 100) <= 13:
+            suffix = 'TH'
+        else:
+            suffix = {1: 'ST', 2: 'ND', 3: 'RD'}.get(n % 10, 'TH')
+        return f"{n}{suffix}"
+ 
+    date_range = f"{ordinal(dates[0].day)} {dates[0].strftime('%b').upper()} to " \
+                 f"{ordinal(dates[-1].day)} {dates[-1].strftime('%b').upper()}"
+ 
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="teacher_duty_roster.pdf"'
+ 
+    doc = SimpleDocTemplate(response, pagesize=A4, topMargin=1.5 * cm, bottomMargin=1.5 * cm)
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle('title', parent=styles['Heading1'], alignment=TA_CENTER, fontSize=14)
+    sub_style = ParagraphStyle('sub', parent=styles['Normal'], alignment=TA_CENTER, fontSize=10, spaceAfter=14)
+ 
+    elements = [
+        Paragraph('DUTY ROSTER FOR BREAK TIME (JUNIOR)', title_style),
+        Paragraph(f'DATE: {date_range}', sub_style),
+        Spacer(1, 6),
+    ]
+ 
+    table_data = [['Teacher Name', 'Duty Area', 'Timing', 'Date']]
+    for d in duties:
+        table_data.append([d.teacher.name, d.area, d.timing, d.date.strftime('%d %b %Y')])
+ 
+    table = Table(table_data, colWidths=[5 * cm, 6 * cm, 4 * cm, 3.5 * cm])
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#EEF6F3')),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('GRID', (0, 0), (-1, -1), 0.6, colors.black),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#FAFDFC')]),
+        ('TOPPADDING', (0, 0), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+    ]))
+    elements.append(table)
+ 
+    doc.build(elements)
+    return response
+ 
+ 
+# =========================================================
+# EVENT-BASED DUTY (e.g. 14th August, Eid Milad-un-Nabi)
+# =========================================================
+def event_list(request):
+    events = DutyEvent.objects.all()
+    return render(request, 'admin_panel/duty_event_list.html', {'events': events})
+ 
+ 
+def create_event(request):
+    if request.method == 'POST':
+        name = request.POST.get('name', '').strip()
+        date = request.POST.get('date')
+        description = request.POST.get('description', '').strip()
+ 
+        if not (name and date):
+            messages.error(request, 'Please enter an event name and date.')
+            return redirect('event_list')
+ 
+        event = DutyEvent.objects.create(name=name, date=date, description=description)
+        messages.success(request, f'Event "{event.name}" created.')
+        return redirect('event_detail', pk=event.pk)
+ 
+    return redirect('event_list')
+ 
+ 
+def event_detail(request, pk):
+    event = get_object_or_404(DutyEvent, pk=pk)
+    duties = event.duties.select_related('teacher').all()
+    teachers = Teacher.objects.all()
+ 
+    # grey out teachers who had duty in the 7 days before the EVENT date
+    recent_teacher_ids = get_recent_teacher_ids(event.date)
+ 
+    context = {
+        'event': event,
+        'duties': duties,
+        'teachers': teachers,
+        'recent_teacher_ids': recent_teacher_ids,
+    }
+    return render(request, 'admin_panel/duty_event_detail.html', context)
+ 
+ 
+def add_event_duty(request, pk):
+    event = get_object_or_404(DutyEvent, pk=pk)
+    if request.method == 'POST':
+        teacher_id = request.POST.get('teacher')
+        area = request.POST.get('area', '').strip()
+        timing = request.POST.get('timing', '').strip()
+        date_str = request.POST.get('date')
+ 
+        if not (teacher_id and area and timing):
+            messages.error(request, 'Please fill in all fields.')
+            return redirect('event_detail', pk=pk)
+ 
+        from datetime import datetime
+        duty_date = datetime.strptime(date_str, '%Y-%m-%d').date() if date_str else event.date
+ 
+        teacher = get_object_or_404(Teacher, pk=teacher_id)
+ 
+        # ---- ROTATION CHECK ----
+        recent_ids = get_recent_teacher_ids(duty_date)
+        if teacher.pk in recent_ids:
+            messages.error(
+                request,
+                f'{teacher.name} was already on duty in the last {ROTATION_DAYS} days. '
+                'Please choose a different teacher to keep rotation fair.'
+            )
+            return redirect('event_detail', pk=pk)
+ 
+        TeacherDuty.objects.create(
+            teacher=teacher, area=area, timing=timing, date=duty_date, event=event,
+        )
+        messages.success(request, 'Duty assigned.')
+    return redirect('event_detail', pk=pk)
+ 
+ 
+def delete_event_duty(request, pk):
+    duty = get_object_or_404(TeacherDuty, pk=pk)
+    event_pk = duty.event_id
+    duty.delete()
+    messages.success(request, 'Duty removed.')
+    return redirect('event_detail', pk=event_pk)
+ 
+ 
+def delete_event(request, pk):
+    event = get_object_or_404(DutyEvent, pk=pk)
+    event.delete()
+    messages.success(request, 'Event deleted.')
+    return redirect('event_list')
+ 
+ 
+def event_duty_report(request, pk):
+    event = get_object_or_404(DutyEvent, pk=pk)
+    duties = list(event.duties.select_related('teacher').order_by('date', 'timing'))
+ 
+    if not duties:
+        return HttpResponse('No duties assigned for this event yet.', content_type='text/plain')
+ 
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="{event.name}_duty_roster.pdf"'
+ 
+    doc = SimpleDocTemplate(response, pagesize=A4, topMargin=1.5 * cm, bottomMargin=1.5 * cm)
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle('title', parent=styles['Heading1'], alignment=TA_CENTER, fontSize=14)
+    sub_style = ParagraphStyle('sub', parent=styles['Normal'], alignment=TA_CENTER, fontSize=10, spaceAfter=14)
+ 
+    elements = [
+        Paragraph(f'DUTY ROSTER — {event.name.upper()}', title_style),
+        Paragraph(f'DATE: {event.date.strftime("%d %b %Y")}', sub_style),
+        Spacer(1, 6),
+    ]
+ 
+    table_data = [['Teacher Name', 'Duty Area', 'Timing', 'Date']]
+    for d in duties:
+        table_data.append([d.teacher.name, d.area, d.timing, d.date.strftime('%d %b %Y')])
+ 
+    table = Table(table_data, colWidths=[5 * cm, 6 * cm, 4 * cm, 3.5 * cm])
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#EEF6F3')),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('GRID', (0, 0), (-1, -1), 0.6, colors.black),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#FAFDFC')]),
+        ('TOPPADDING', (0, 0), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+    ]))
+    elements.append(table)
+ 
+    doc.build(elements)
+    return response
+ 
