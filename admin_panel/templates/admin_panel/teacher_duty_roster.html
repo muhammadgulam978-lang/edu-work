@@ -1,10 +1,14 @@
-{% extends 'admin_panel/base.html' %}
+{% extends 'admin_panel/bases.html' %}
 {% load static %}
 
 {% block title %}Teacher Duty Roster{% endblock %}
 
 {% block content %}
 <style>
+  .duty-page{
+    width:100%;max-width:1600px;margin:0 auto;padding:28px 30px 60px;
+    box-sizing:border-box;min-width:0;
+  }
   .duty-page-head{
     display:flex;justify-content:space-between;align-items:flex-start;
     background:#E6F5F0;padding:18px 22px;border-radius:14px;margin-bottom:22px;
@@ -34,8 +38,19 @@
   .duty-pill{background:#E6F5F0;color:#2E8A72;padding:4px 12px;border-radius:14px;font-size:12.5px;font-weight:600;}
   .duty-del{background:none;border:none;color:#C0392B;cursor:pointer;font-size:13px;font-weight:600;}
   .duty-empty{text-align:center;color:#6B7A77;padding:30px;font-size:14px;}
+  .duty-table-wrap{width:100%;overflow-x:auto;}
+  @media (max-width:1200px){
+    .duty-form-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+  }
+  @media (max-width:767px){
+    .duty-page{padding:20px 16px 48px;}
+    .duty-page-head{flex-direction:column;gap:16px;}
+    .duty-form-grid{grid-template-columns:1fr;}
+    .duty-table{min-width:680px;}
+  }
 </style>
 
+<div class="duty-page">
 <div class="duty-page-head">
   <div>
     <h1>Break Time Duty Roster</h1>
@@ -96,6 +111,7 @@
   <div style="padding:20px 24px 0;">
     <h3>Assigned Duties</h3>
   </div>
+  <div class="duty-table-wrap">
   <table class="duty-table">
     <thead>
       <tr>
@@ -125,5 +141,7 @@
       {% endfor %}
     </tbody>
   </table>
+  </div>
+</div>
 </div>
 {% endblock %}

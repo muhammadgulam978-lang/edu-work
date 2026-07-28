@@ -24,6 +24,7 @@ urlpatterns = [
 
     path('exam/', include('exam_system.urls')), 
     path('automation/', include('edupilot_core.urls')),   # ← YE NAYI LINE ADD KAREIN
+    path('communication/', include('communication.urls')),
     # path('accounts/', include('django.contrib.auth.urls')),
 ]
 

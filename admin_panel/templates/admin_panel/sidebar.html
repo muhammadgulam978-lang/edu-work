@@ -144,6 +144,13 @@
 
             <li class="sidebar-section">Communication</li>
 
+            <li class="sidebar-messages" style="--sidebar-icon-color:#0f766e; --sidebar-icon-bg:#dff8f3;">
+                <a href="{% url 'communication:inbox' %}" class="ai-icon" aria-expanded="false">
+                    <i class="fas fa-comments"></i>
+                    <span class="nav-text">Messages</span>
+                </a>
+            </li>
+
             <li class="sidebar-announcements" style="--sidebar-icon-color:#1677d2; --sidebar-icon-bg:#e4f2ff;">
                 <a href="{% url 'announcement_center' %}" class="ai-icon" aria-expanded="false">
                     <i class="fas fa-bullhorn"></i>

@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'edupilot_core',
     'ai_tutor',
     'admin_ai',
+    'communication',
     
 ]
 
