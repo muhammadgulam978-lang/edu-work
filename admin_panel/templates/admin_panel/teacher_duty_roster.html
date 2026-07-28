@@ -3,6 +3,7 @@
 
 {% block title %}Teacher Duty Roster{% endblock %}
 
+
 {% block content %}
 <style>
   .duty-page{
@@ -21,10 +22,10 @@
   }
   .duty-btn:hover{background:#2E8A72;color:#fff;}
   .duty-card{
-    background:#fff;border-radius:14px;border:1px solid #DCEAE6;padding:22px 24px;margin-bottom:22px;
+    width:100%;box-sizing:border-box;background:#fff;;border-radius:14px;border:1px solid #DCEAE6;padding:22px 24px;margin-bottom:22px;
   }
   .duty-card h3{margin:0 0 16px;font-size:17px;}
-  .duty-form-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;align-items:end;}
+  .duty-form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px; align-items:end;}
   .duty-field label{display:block;font-size:12.5px;color:#6B7A77;margin-bottom:6px;font-weight:600;}
   .duty-field select, .duty-field input{
     width:100%;padding:10px 12px;border:1px solid #DCEAE6;border-radius:8px;font-size:14px;background:#F9FBFA;

@@ -31,6 +31,15 @@ from .models import UserRole, RoleActivityLog
 from edupilot_core.models import Announcement, AnnouncementRead
 from edupilot_core.services import AnnouncementService
 
+############# Appraisal ##############################
+
+from django.contrib.auth.decorators import user_passes_test, login_required
+from django.contrib import messages
+from django.shortcuts import get_object_or_404, redirect, render
+from admin_panel.models import AppraisalCycle, TeacherAppraisalSubmission, KpiTemplate, KpiRule
+from .appraisal_services import generate_score, predict_band, train_random_forest
+
+
 ################## Teacher Duty ########################
 
 
@@ -5378,11 +5387,6 @@ def leave_type_create(request):
 
 
 # ==================== APPRAISAL ====================
-from django.contrib.auth.decorators import user_passes_test, login_required
-from django.contrib import messages
-from django.shortcuts import get_object_or_404, redirect, render
-from admin_panel.models import AppraisalCycle, TeacherAppraisalSubmission, KpiTemplate, KpiRule
-from .appraisal_services import generate_score, predict_band, train_random_forest
 
 
 def is_admin(user):
