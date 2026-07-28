@@ -18,10 +18,21 @@ from student_profile.email_utils    import (
     send_password_reset_email,
 )
 from datetime import date as date_today_cls
+from edupilot_core.announcement_views import announcement_feed
 
 
 from django.db.models import Count, Q
 from teacher_dashboard.models import Attendance
+
+
+def student_announcements(request):
+    return announcement_feed(
+        request,
+        template_name='student_profile/announcements.html',
+        redirect_name='student_announcements',
+        portal_label='Student',
+        required_relation='student',
+    )
 
 
 # =============================================================

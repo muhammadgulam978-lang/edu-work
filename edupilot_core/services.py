@@ -1,12 +1,17 @@
 
 from django.db import transaction
+from django.db.models import F, Q
 from django.utils import timezone
 from .models import (
     Student, StudentFeeAssignment, FeeVoucher, FeeVoucherItem, 
     FeePlanDetail, StudentBalance, NotificationQueue, FeeGenerationLog,
     AutomationJob, AutomationJobDetail, Teacher, SalaryVoucher, SalaryStructure,
-    SalaryAutomationJob, SalaryAutomationJobDetail, FeeGenerationSettings
+    SalaryAutomationJob, SalaryAutomationJobDetail, FeeGenerationSettings,
+    Announcement, AnnouncementNotification, AnnouncementRead
 )
+from student_profile.models import Student as PortalStudent
+from teacher_dashboard.models import Teacher as PortalTeacher
+from .canonical_sync import ensure_legacy_student, ensure_legacy_teacher
 from reportlab.pdfgen import canvas
 from django.conf import settings
 import os
@@ -17,6 +22,101 @@ def money(value):
     if value in (None, ''):
         return Decimal('0')
     return Decimal(str(value))
+
+
+class AnnouncementService:
+    @staticmethod
+    def get_target_recipients(audience, target_class=None):
+        from django.contrib.auth.models import User
+        if audience == 'ADMINS':
+            return User.objects.filter(is_active=True, is_staff=True)
+        if audience == 'STUDENTS':
+            return User.objects.filter(is_active=True, student__isnull=False)
+        if audience == 'TEACHERS':
+            return User.objects.filter(is_active=True, teacher__isnull=False)
+        if audience == 'PARENTS':
+            return User.objects.filter(is_active=True, parent__isnull=False)
+        if audience == 'CLASS' and target_class:
+            return User.objects.filter(is_active=True, student__class_fk=target_class)
+        return User.objects.filter(is_active=True)
+
+    @staticmethod
+    def create_announcement(*, created_by, cleaned_data):
+        now = timezone.now()
+        publish_date = cleaned_data.get('publish_date') or now
+        status = 'SCHEDULED' if publish_date > now else 'PUBLISHED'
+        announcement = Announcement.objects.create(created_by=created_by, status=status, **cleaned_data)
+        recipients = AnnouncementService.get_target_recipients(
+            announcement.audience, announcement.target_class
+        ).distinct()
+        announcement.total_intended_recipients = recipients.count()
+        announcement.save(update_fields=['total_intended_recipients', 'updated_at'])
+        if status == 'PUBLISHED':
+            AnnouncementNotification.objects.bulk_create([
+                AnnouncementNotification(announcement=announcement, user=user, status='SENT', sent_at=now)
+                for user in recipients
+            ], ignore_conflicts=True)
+        return announcement
+
+    @staticmethod
+    def publish_due_announcements():
+        now = timezone.now()
+        due = Announcement.objects.filter(status='SCHEDULED', publish_date__lte=now)
+        for announcement in due.select_related('target_class'):
+            recipients = AnnouncementService.get_target_recipients(
+                announcement.audience, announcement.target_class
+            ).distinct()
+            AnnouncementNotification.objects.bulk_create([
+                AnnouncementNotification(
+                    announcement=announcement,
+                    user=user,
+                    status='SENT',
+                    sent_at=now,
+                )
+                for user in recipients
+            ], ignore_conflicts=True)
+            announcement.status = 'PUBLISHED'
+            announcement.total_intended_recipients = recipients.count()
+            announcement.save(update_fields=['status', 'total_intended_recipients', 'updated_at'])
+
+    @staticmethod
+    def visible_for_user(user):
+        AnnouncementService.publish_due_announcements()
+        now = timezone.now()
+        audience_filter = Q(audience='ALL')
+
+        if user.is_staff:
+            audience_filter |= Q(audience='ADMINS')
+
+        student = getattr(user, 'student', None)
+        if student is not None:
+            audience_filter |= Q(audience='STUDENTS')
+            if student.class_fk_id:
+                audience_filter |= Q(audience='CLASS', target_class_id=student.class_fk_id)
+
+        if getattr(user, 'teacher', None) is not None:
+            audience_filter |= Q(audience='TEACHERS')
+
+        if getattr(user, 'parent', None) is not None:
+            audience_filter |= Q(audience='PARENTS')
+
+        return Announcement.objects.filter(
+            audience_filter,
+            status='PUBLISHED',
+            publish_date__lte=now,
+        ).filter(
+            Q(expiry_date__isnull=True) | Q(expiry_date__gt=now)
+        ).select_related('created_by', 'target_class')
+
+    @staticmethod
+    def mark_read(announcement, user):
+        _, created = AnnouncementRead.objects.get_or_create(
+            announcement=announcement,
+            user=user,
+        )
+        if created:
+            Announcement.objects.filter(pk=announcement.pk).update(view_count=F('view_count') + 1)
+        return created
 
 class PDFGeneratorService:
     @staticmethod
@@ -29,7 +129,8 @@ class PDFGeneratorService:
         c.drawString(100, 800, "SCHOOL FEE VOUCHER")
         c.setFont("Helvetica", 12)
         c.drawString(100, 770, f"Voucher No: {voucher.voucher_no}")
-        c.drawString(100, 750, f"Student: {voucher.student.full_name}")
+        student_name = voucher.canonical_student.name if voucher.canonical_student_id else voucher.student.full_name
+        c.drawString(100, 750, f"Student: {student_name}")
         c.drawString(100, 730, f"Month: {voucher.month}")
         c.drawString(100, 710, f"Issue Date: {voucher.issue_date}")
         c.drawString(100, 690, f"Due Date: {voucher.due_date}")
@@ -46,12 +147,14 @@ class SalaryPDFGeneratorService:
         try:
             folder_path = os.path.join(settings.MEDIA_ROOT, 'salary_vouchers')
             if not os.path.exists(folder_path): os.makedirs(folder_path)
-            file_path = os.path.join(folder_path, f"salary_{voucher.teacher.teacher_id}_{voucher.month}_{voucher.year}.pdf")
+            teacher_id = voucher.teacher.teacher_id
+            file_path = os.path.join(folder_path, f"salary_{teacher_id}_{voucher.month}_{voucher.year}.pdf")
             c = canvas.Canvas(file_path)
             c.setFont("Helvetica-Bold", 16)
             c.drawString(100, 800, "TEACHER SALARY VOUCHER")
             c.setFont("Helvetica", 12)
-            c.drawString(100, 770, f"Teacher: {voucher.teacher.name}")
+            teacher_name = voucher.canonical_teacher.name if voucher.canonical_teacher_id else voucher.teacher.name
+            c.drawString(100, 770, f"Teacher: {teacher_name}")
             c.drawString(100, 750, f"Month: {voucher.month} - {voucher.year}")
             c.drawString(100, 730, f"Net Salary: {voucher.net_salary}")
             c.save()
@@ -65,7 +168,8 @@ class NotificationService:
     def queue_notifications(voucher):
         content = f"Dear Parent, Fee Voucher {voucher.voucher_no} for {voucher.month} is generated. Amount: {voucher.net_amount}. Due by {voucher.due_date}."
         NotificationQueue.objects.create(
-            student=voucher.student, 
+            student=voucher.student,
+            canonical_student=voucher.canonical_student,
             notification_type='SMS', 
             content=content, 
             status='PENDING'
@@ -90,7 +194,7 @@ class FeeGenerationService:
         Generate monthly fee vouchers for all active students
         """
         print(f"\n{'='*60}")
-        print(f"📋 FEE GENERATION STARTED: {month_name}-{year}")
+        print(f"FEE GENERATION STARTED: {month_name}-{year}")
         print(f"{'='*60}\n")
         
         log = FeeGenerationLog.objects.create(month=month_name, year=year, status='Running')
@@ -104,24 +208,28 @@ class FeeGenerationService:
         failed_count = 0
         
         # Get all active students
-        students = Student.objects.filter(is_active=True)
+        students = PortalStudent.objects.select_related('user', 'class_fk').all()
         print(f"Total Active Students: {students.count()}\n")
 
-        for student in students:
+        for canonical_student in students:
+            student = ensure_legacy_student(canonical_student)
             try:
                 # ✅ CHECK 1: Prevent duplicate vouchers
                 existing = FeeVoucher.objects.filter(
-                    student=student, 
                     month=month_name,
-                    issue_date__year=year
+                    year=year,
+                ).filter(
+                    Q(canonical_student=canonical_student) | Q(student=student)
                 ).exists()
                 
                 if existing:
-                    print(f"⏭️  SKIP: {student.full_name} - Voucher already exists")
+                    print(f"SKIP: {student.full_name} - Voucher already exists")
                     continue
                 
                 # ✅ CHECK 2: Get fee assignment
-                assignment = StudentFeeAssignment.objects.filter(student=student).first()
+                assignment = StudentFeeAssignment.objects.filter(
+                    canonical_student=canonical_student
+                ).first() or StudentFeeAssignment.objects.filter(student=student).first()
                 if not assignment:
                     raise Exception(f"No fee assignment found")
                 
@@ -138,7 +246,13 @@ class FeeGenerationService:
                     gross += money(assignment.transport_route.amount)
 
                 # ✅ GET: Previous outstanding
-                balance_obj, _ = StudentBalance.objects.get_or_create(student=student)
+                balance_obj, _ = StudentBalance.objects.get_or_create(
+                    student=student,
+                    defaults={'canonical_student': canonical_student},
+                )
+                if not balance_obj.canonical_student_id:
+                    balance_obj.canonical_student = canonical_student
+                    balance_obj.save(update_fields=['canonical_student'])
                 prev_due = money(balance_obj.outstanding_amount)
                 
                 # ✅ CALCULATE: Discount (scholarship)
@@ -162,6 +276,7 @@ class FeeGenerationService:
                     voucher = FeeVoucher.objects.create(
                         voucher_no=f"V-{student.admission_number}-{month_name}-{year}",
                         student=student,
+                        canonical_student=canonical_student,
                         month=month_name,
                         year=year,
                         issue_date=issue_date,
@@ -208,21 +323,23 @@ class FeeGenerationService:
                         AutomationJobDetail.objects.create(
                             job=job,
                             student=student,
+                            canonical_student=canonical_student,
                             status='SUCCESS'
                         )
                     
                     success_count += 1
-                    print(f"✅ {student.full_name}: Rs.{net_amount} (Voucher: {voucher.voucher_no})")
+                    print(f"SUCCESS: {student.full_name}: Rs.{net_amount} (Voucher: {voucher.voucher_no})")
                     
             except Exception as e:
                 failed_count += 1
                 error_msg = str(e)
-                print(f"❌ {student.full_name}: {error_msg}")
+                print(f"FAILED: {student.full_name}: {error_msg}")
                 
                 if job:
                     AutomationJobDetail.objects.create(
                         job=job,
                         student=student,
+                        canonical_student=canonical_student,
                         status='FAILED',
                         error_message=error_msg
                     )
@@ -245,7 +362,7 @@ class FeeGenerationService:
             job.save()
         
         print(f"\n{'='*60}")
-        print(f"✅ COMPLETED: {success_count} Success | ❌ {failed_count} Failed")
+        print(f"COMPLETED: {success_count} Success | {failed_count} Failed")
         print(f"{'='*60}\n")
         
         return success_count
@@ -259,7 +376,14 @@ class FeeGenerationService:
         for detail in failed_details:
             try:
                 # Retry logic
-                assignment = StudentFeeAssignment.objects.filter(student=detail.student).first()
+                assignment = None
+                if detail.canonical_student_id:
+                    assignment = StudentFeeAssignment.objects.filter(
+                        canonical_student=detail.canonical_student
+                    ).first()
+                assignment = assignment or StudentFeeAssignment.objects.filter(
+                    student=detail.student
+                ).first()
                 if not assignment:
                     raise Exception("No fee assignment")
                                                          
@@ -294,6 +418,7 @@ class FeeGenerationService:
                 voucher = FeeVoucher.objects.create(
                     voucher_no=f"V-{detail.student.admission_number}-{month}-{year}",
                     student=detail.student,
+                    canonical_student=detail.canonical_student or detail.student.canonical_student,
                     month=month,
                     year=year,
                     issue_date=datetime.now().date(),
@@ -342,13 +467,14 @@ class SalaryAutomationService:
 
         # Duplicate Protection
         if SalaryVoucher.objects.filter(month=month, year=year).exists():
-            print("⏭️  Salary already generated for this month")
+            print("SKIP: Salary already generated for this month")
             return
 
         job = SalaryAutomationJob.objects.create(status='RUNNING')
-        teachers = Teacher.objects.filter(is_active=True)
+        teachers = PortalTeacher.objects.filter(status='active').select_related('user', 'employee')
         
-        for teacher in teachers:
+        for canonical_teacher in teachers:
+            teacher = ensure_legacy_teacher(canonical_teacher)
             try:
                 # Calculate total earnings
                 earnings = money(teacher.basic_salary) + \
@@ -360,12 +486,19 @@ class SalaryAutomationService:
                           money(teacher.overtime)
                 
                 # Get deductions
-                deductions = SalaryStructure.objects.filter(teacher=teacher).values_list('deductions', flat=True).first() or 0
+                deductions = SalaryStructure.objects.filter(
+                    canonical_teacher=canonical_teacher
+                ).values_list('deductions', flat=True).first()
+                if deductions is None:
+                    deductions = SalaryStructure.objects.filter(
+                        teacher=teacher
+                    ).values_list('deductions', flat=True).first() or 0
                 net_salary = earnings - money(deductions)
 
                 # Create voucher
                 voucher = SalaryVoucher.objects.create(
                     teacher=teacher,
+                    canonical_teacher=canonical_teacher,
                     month=month,
                     year=year,
                     net_salary=net_salary,
@@ -374,23 +507,24 @@ class SalaryAutomationService:
 
                 SalaryPDFGeneratorService.generate_salary_pdf(voucher)
                 job.success_count += 1
-                print(f"✅ {teacher.name}: Rs.{net_salary}")
+                print(f"SUCCESS: {teacher.name}: Rs.{net_salary}")
                 
             except Exception as e:
                 job.failed_count += 1
                 SalaryAutomationJobDetail.objects.create(
                     job=job, 
-                    teacher=teacher, 
+                    teacher=teacher,
+                    canonical_teacher=canonical_teacher,
                     status='FAILED', 
                     error_message=str(e)
                 )
-                print(f"❌ {teacher.name}: {str(e)}")
+                print(f"FAILED: {teacher.name}: {str(e)}")
         
         job.status = 'COMPLETED'
         job.completed_at = timezone.now()
         job.save()
         
-        print(f"✅ Salary generation: {job.success_count} success, {job.failed_count} failed")
+        print(f"Salary generation: {job.success_count} success, {job.failed_count} failed")
 from edupilot_core.models import Fixture, Absence, Period, Teacher, NotificationQueue
 
 class FixtureAutomationService:

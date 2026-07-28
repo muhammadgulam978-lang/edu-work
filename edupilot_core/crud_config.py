@@ -6,6 +6,8 @@ from .models import (
     SalaryAutomationJob, SalaryAutomationJobDetail,
     Staff, Transaction, AutomationJob, AutomationJobDetail, NotificationQueue
 )
+from student_profile.models import Student as PortalStudent
+from teacher_dashboard.models import Teacher as PortalTeacher
 
 # Har entry: url slug -> { model, label, list_fields, fields }
 # list_fields = list page ke table columns
@@ -43,9 +45,9 @@ CRUD_REGISTRY = {
         'fields': '__all__',
     },
     'student': {
-        'model': Student,
+        'model': PortalStudent,
         'label': 'Students',
-        'list_fields': ['full_name', 'admission_number', 'current_class', 'is_active'],
+        'list_fields': ['name', 'student_id', 'class_fk', 'section'],
         'fields': '__all__',
     },
     'studentfeeassignment': {
@@ -97,9 +99,9 @@ CRUD_REGISTRY = {
         'fields': '__all__',
     },
     'teacher': {
-        'model': Teacher,
+        'model': PortalTeacher,
         'label': 'Teachers',
-        'list_fields': ['name', 'teacher_id', 'designation', 'department', 'is_active'],
+        'list_fields': ['name', 'email', 'department', 'status'],
         'fields': '__all__',
     },
     'salarystructure': {

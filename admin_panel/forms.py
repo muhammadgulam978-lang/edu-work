@@ -8,6 +8,27 @@ from .models import (
 from teacher_dashboard.models import Teacher
 from phonenumber_field.formfields import PhoneNumberField as FormPhoneField
 from django.apps import apps
+from edupilot_core.models import Announcement
+
+
+class AnnouncementForm(forms.ModelForm):
+    class Meta:
+        model = Announcement
+        fields = [
+            'title', 'description', 'category', 'priority', 'audience', 'target_class',
+            'publish_date', 'expiry_date', 'attachment', 'is_pinned',
+        ]
+        widgets = {
+            'description': forms.Textarea(attrs={'rows': 4}),
+            'publish_date': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+            'expiry_date': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+        }
+
+    def clean(self):
+        cleaned = super().clean()
+        if cleaned.get('audience') == 'CLASS' and not cleaned.get('target_class'):
+            self.add_error('target_class', 'Choose a class for a class-targeted announcement.')
+        return cleaned
 
 # =============================================================
 # 🌟 Role-Based Access Control (Using Django Auth Groups)

@@ -1,4 +1,4 @@
-from django.db.models import Sum
+from django.db.models import Q, Sum
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.contrib.auth import authenticate, login, logout
@@ -19,6 +19,9 @@ from .models import (
 from .forms import StudentRegistrationForm
 from .services import FeeGenerationService, SalaryAutomationService, NotificationDispatcherService
 from .crud_config import CRUD_REGISTRY
+from .canonical_sync import ensure_legacy_student, ensure_legacy_teacher
+from student_profile.models import Student as PortalStudent
+from teacher_dashboard.models import Teacher as PortalTeacher
 
 
 def _build_fee_collection_chart(period='this_month', start_date=None, end_date=None):
@@ -232,12 +235,21 @@ def generate_fees_view(request):
 @login_required
 def student_dashboard(request):
     try:
-        student = Student.objects.get(admission_number=request.user.username)
-        vouchers = FeeVoucher.objects.filter(student=student).order_by('-id')
-        balance = StudentBalance.objects.get(student=student)
+        canonical_student = PortalStudent.objects.filter(user=request.user).first()
+        if canonical_student:
+            student = ensure_legacy_student(canonical_student)
+            student_filter = Q(canonical_student=canonical_student) | Q(student=student)
+            balance = StudentBalance.objects.filter(student_filter).first()
+        else:
+            student = Student.objects.get(admission_number=request.user.username)
+            student_filter = Q(student=student)
+            balance = StudentBalance.objects.filter(student=student).first()
+        vouchers = FeeVoucher.objects.filter(student_filter).order_by('-id')
         
         # ✅ GET NOTIFICATIONS
-        notifications = NotificationQueue.objects.filter(student=student).order_by('-created_at')[:10]
+        notifications = NotificationQueue.objects.filter(
+            student_filter
+        ).order_by('-created_at')[:10]
         
         context = {
             'student': student,
@@ -305,15 +317,19 @@ def teacher_dashboard(request):
     try:
         # Teacher model mein 'user' field nahi hai
         # Username ko teacher_id se match karo
-        teacher = Teacher.objects.get(teacher_id=request.user.username)
+        canonical_teacher = PortalTeacher.objects.filter(user=request.user).first()
+        if canonical_teacher:
+            teacher = ensure_legacy_teacher(canonical_teacher)
+            teacher_filter = Q(canonical_teacher=canonical_teacher) | Q(teacher=teacher)
+        else:
+            teacher = Teacher.objects.get(teacher_id=request.user.username)
+            teacher_filter = Q(teacher=teacher)
 
         # Get salary vouchers
-        salary_vouchers = SalaryVoucher.objects.filter(teacher=teacher).order_by('-id')
+        salary_vouchers = SalaryVoucher.objects.filter(teacher_filter).order_by('-id')
 
         # Teacher ki apni notifications
-        notifications = NotificationQueue.objects.filter(
-            teacher=teacher
-        ).order_by('-created_at')[:10]
+        notifications = NotificationQueue.objects.filter(teacher_filter).order_by('-created_at')[:10]
 
         # Nursery se 5th tak ke active students — flexible filter
         all_students = Student.objects.filter(is_active=True)
@@ -419,8 +435,8 @@ def automation_logs(request):
     }
     return render(request, 'automation/logs.html', context)
 def automation_dashboard(request):
-    total_students = Student.objects.filter(is_active=True).count()
-    total_teachers = Teacher.objects.filter(is_active=True).count()
+    total_students = PortalStudent.objects.count()
+    total_teachers = PortalTeacher.objects.filter(status='active').count()
 
     fee_settings = FeeGenerationSettings.objects.first() or FeeGenerationSettings.objects.create()
     salary_settings = SalaryAutomationSettings.objects.first() or SalaryAutomationSettings.objects.create()

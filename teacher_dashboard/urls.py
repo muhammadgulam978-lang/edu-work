@@ -2,6 +2,7 @@ from django.urls import path, include
 from . import views
 
 urlpatterns = [
+    path("announcements/", views.teacher_announcements, name="teacher_announcements"),
     # =========================
     # TEACHER DASHBOARD CORE
     # =========================

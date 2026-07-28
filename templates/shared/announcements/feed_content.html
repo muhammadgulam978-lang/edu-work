@@ -1,0 +1,97 @@
+<main class="announcement-feed-page">
+    <header class="announcement-feed-header">
+        <div>
+            <div class="announcement-breadcrumb">Communication / Announcements</div>
+            <h1>Announcements</h1>
+            <p>Updates, notices and alerts for the {{ portal_label|lower }} portal.</p>
+        </div>
+        {% if unread_count %}
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="mark_all_read">
+            <button class="edu-btn edu-btn-secondary" type="submit">
+                <i class="fas fa-check-double"></i> Mark all as read
+            </button>
+        </form>
+        {% endif %}
+    </header>
+
+    {% if messages %}
+    <div class="announcement-feed-messages">
+        {% for message in messages %}<div class="announcement-feed-message">{{ message }}</div>{% endfor %}
+    </div>
+    {% endif %}
+
+    <section class="announcement-feed-summary" aria-label="Announcement summary">
+        <div><span class="announcement-stat-icon academic"><i class="fas fa-bullhorn"></i></span><strong>{{ announcement_count }}</strong><small>Visible announcements</small></div>
+        <div><span class="announcement-stat-icon ai"><i class="fas fa-envelope"></i></span><strong>{{ unread_count }}</strong><small>Unread announcements</small></div>
+    </section>
+
+    <section class="edu-panel announcement-feed-panel">
+        <form class="announcement-feed-filters" method="get">
+            <div class="announcement-feed-search">
+                <i class="fas fa-search"></i>
+                <input name="q" value="{{ query }}" placeholder="Search announcements..." aria-label="Search announcements">
+            </div>
+            <select name="category" aria-label="Filter by category">
+                <option value="">All categories</option>
+                {% for value,label in categories %}
+                <option value="{{ value }}" {% if selected_category == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+            <select name="state" aria-label="Filter by read status">
+                <option value="all" {% if active_state == 'all' %}selected{% endif %}>All messages</option>
+                <option value="unread" {% if active_state == 'unread' %}selected{% endif %}>Unread</option>
+                <option value="read" {% if active_state == 'read' %}selected{% endif %}>Read</option>
+            </select>
+            <button class="edu-btn edu-btn-primary" type="submit"><i class="fas fa-filter"></i> Apply</button>
+        </form>
+
+        <div class="announcement-feed-list">
+            {% for announcement in announcements %}
+            <article class="announcement-feed-item{% if not announcement.is_read_by_user %} is-unread{% endif %}">
+                <div class="announcement-category {{ announcement.category|lower }}">
+                    <i class="fas {% if announcement.category == 'ACADEMIC' %}fa-graduation-cap{% elif announcement.category == 'EVENT' %}fa-star{% elif announcement.category == 'ALERT' %}fa-triangle-exclamation{% elif announcement.category == 'HOLIDAY' %}fa-umbrella-beach{% elif announcement.category == 'MAINTENANCE' %}fa-screwdriver-wrench{% else %}fa-bullhorn{% endif %}"></i>
+                </div>
+                <div class="announcement-copy">
+                    <div class="announcement-feed-title">
+                        <h2>{{ announcement.title }}</h2>
+                        {% if announcement.is_pinned %}<span class="announcement-pin"><i class="fas fa-thumbtack"></i> Pinned</span>{% endif %}
+                        {% if not announcement.is_read_by_user %}<span class="announcement-unread">New</span>{% endif %}
+                    </div>
+                    <p>{{ announcement.description|linebreaksbr }}</p>
+                    <div class="announcement-meta">
+                        <span class="announcement-tag {{ announcement.category|lower }}">{{ announcement.get_category_display }}</span>
+                        {{ announcement.publish_date|date:"M d, Y, g:i A" }}
+                        {% if announcement.target_class %}&middot; {{ announcement.target_class }}{% endif %}
+                        &middot; {{ announcement.get_priority_display }}
+                    </div>
+                    <div class="announcement-feed-actions">
+                        {% if announcement.attachment %}
+                        <a class="edu-btn edu-btn-secondary" href="{{ announcement.attachment.url }}" target="_blank" rel="noopener">
+                            <i class="fas fa-paperclip"></i> Open attachment
+                        </a>
+                        {% endif %}
+                        {% if not announcement.is_read_by_user %}
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="mark_read">
+                            <input type="hidden" name="announcement_id" value="{{ announcement.id }}">
+                            <button class="edu-btn edu-btn-primary" type="submit">
+                                <i class="fas fa-check"></i> Mark as read
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </article>
+            {% empty %}
+            <div class="announcement-empty">
+                <i class="fas fa-bullhorn"></i>
+                <h3>No announcements found</h3>
+                <p>There are no matching updates for your portal.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+</main>

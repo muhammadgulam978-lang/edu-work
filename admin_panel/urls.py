@@ -5,6 +5,7 @@ from admin_panel.views import bulk_upload_students, bulk_upload_teachers, bulk_d
 urlpatterns = [
     path('', include('admin_ai.urls')),
     path('', views.admin_panel_dashboard, name='admin_panel_dashboard'),
+    path('announcements/', views.announcement_center, name='announcement_center'),
     path('user_list/', views.user_list, name='user_list'),
     path('register/', views.register_admission, name='registration'),
     path('admission_list/', views.admission_list, name='admission_list'),

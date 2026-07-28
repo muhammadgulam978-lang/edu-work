@@ -20,6 +20,7 @@
       </div>
       <div class="title-actions">
         <a href="{% url 'class_list' %}" class="btn btn-light"><i class="fa fa-arrow-left"></i>Back to Classes</a>
+        <a href="{% url 'registration' %}?class_fk={{ class_obj.id }}" class="btn btn-primary"><i class="fa fa-user-plus"></i>Add Student</a>
         <a href="{% url 'bulk_upload_students' %}" class="btn btn-primary"><i class="fa fa-upload"></i>Import Students</a>
       </div>
     </div>

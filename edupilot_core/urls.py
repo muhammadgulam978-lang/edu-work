@@ -98,8 +98,10 @@ from django.urls import path
 from . import views
 from . import crud_views
 from .views import AdminDashboardAPI
+from . import announcement_views
 
 urlpatterns = [
+    path('announcements/', announcement_views.automation_announcements, name='automation-announcements'),
     path('', views.automation_dashboard, name='automation-dashboard'),
     path('graph-data/', views.automation_graph_data, name='automation-graph-data'),
     path('fee/', views.fee_automation_view, name='fee-automation'),

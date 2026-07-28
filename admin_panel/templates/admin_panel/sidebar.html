@@ -7,7 +7,7 @@
             </li>
 
             <li class="has-menu sidebar-ai" style="--sidebar-icon-color:#7c3aed; --sidebar-icon-bg:#f0e7ff;">
-                <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
+                <a class="has-arrow ai-icon" href="{% url 'class_list' %}" data-edu-direct-parent="true" aria-expanded="false">
                     <i class="fas fa-brain"></i>
                     <span class="nav-text">AI Analytics</span>
                 </a>
@@ -140,6 +140,15 @@
                     <li><a href="{% url 'admin_kpi_builder' %}"><i class="fas fa-chart-bar"></i> KPI Builder</a></li>
                     <li><a href="{% url 'admin_appraisal_list' %}"><i class="fas fa-tasks"></i> All Submissions</a></li>
                 </ul>
+            </li>
+
+            <li class="sidebar-section">Communication</li>
+
+            <li class="sidebar-announcements" style="--sidebar-icon-color:#1677d2; --sidebar-icon-bg:#e4f2ff;">
+                <a href="{% url 'announcement_center' %}" class="ai-icon" aria-expanded="false">
+                    <i class="fas fa-bullhorn"></i>
+                    <span class="nav-text">Announcements</span>
+                </a>
             </li>
 
             <li class="sidebar-section">Finance</li>

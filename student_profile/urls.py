@@ -5,6 +5,7 @@ from django.urls import include, path
 from student_profile import views
 
 urlpatterns = [
+    path('announcements/', views.student_announcements, name='student_announcements'),
 
     # ── Dashboard ──
     path('dashboard/',

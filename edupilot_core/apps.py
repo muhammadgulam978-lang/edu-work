@@ -19,6 +19,8 @@ class EdupilotCoreConfig(AppConfig):
 
     def ready(self):
         import os
+        from . import canonical_sync  # noqa: F401
+
         if os.environ.get('RUN_MAIN') == 'true':
             try:
                 from . import updater

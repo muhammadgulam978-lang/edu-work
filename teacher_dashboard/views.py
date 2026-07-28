@@ -20,6 +20,7 @@ import re
 # import google.generativeai as genai
 from groq import Groq
 from django.contrib.auth.decorators import permission_required
+from edupilot_core.announcement_views import announcement_feed
 
 
 
@@ -50,6 +51,16 @@ def get_selected_teacher(request):
         return Teacher.objects.get(user=request.user)
     except Teacher.DoesNotExist:
         return None
+
+
+def teacher_announcements(request):
+    return announcement_feed(
+        request,
+        template_name='teacher_dashboard/announcements.html',
+        redirect_name='teacher_announcements',
+        portal_label='Teacher',
+        required_relation='teacher',
+    )
 
 # ===================================================
 

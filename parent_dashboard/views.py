@@ -62,6 +62,17 @@ from teacher_dashboard.models import (
     Quiz,
     
 )
+from edupilot_core.announcement_views import announcement_feed
+
+
+def parent_announcements(request):
+    return announcement_feed(
+        request,
+        template_name='parent_dashboard/announcements.html',
+        redirect_name='parent_announcements',
+        portal_label='Parent',
+        required_relation='parent',
+    )
 
 
 @login_required

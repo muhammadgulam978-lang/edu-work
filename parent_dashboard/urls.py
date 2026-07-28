@@ -17,6 +17,7 @@ from django.urls import path
 from parent_dashboard import views
 
 urlpatterns = [
+    path("announcements/", views.parent_announcements, name="parent_announcements"),
     
     path(
         "home/",

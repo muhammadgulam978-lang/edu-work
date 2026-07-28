@@ -44,6 +44,10 @@
       trigger.setAttribute('aria-expanded', parent.classList.contains('mm-active') ? 'true' : 'false');
 
       trigger.addEventListener('click', function (event) {
+        var directHref = trigger.getAttribute('href') || '';
+        if (trigger.dataset.eduDirectParent === 'true' && directHref && directHref !== '#' && directHref.indexOf('javascript:') !== 0) {
+          return;
+        }
         event.preventDefault();
         var shouldOpen = !parent.classList.contains('mm-active');
         closeSiblingParents(parent);

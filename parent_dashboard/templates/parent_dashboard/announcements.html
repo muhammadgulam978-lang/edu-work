@@ -1,0 +1,5 @@
+{% extends "parent_dashboard/base.html" %}
+{% load static %}
+{% block title %}Announcements | Parent Portal{% endblock %}
+{% block head %}<link rel="stylesheet" href="{% static 'admin_panel/css/announcement-center.css' %}?v=announcement-center-2">{% endblock %}
+{% block content %}{% include "shared/announcements/feed_content.html" %}{% endblock %}

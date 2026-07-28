@@ -15,6 +15,8 @@ from django.utils.crypto import get_random_string
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login
+from django.utils import timezone
+from datetime import timedelta
 
 # =================================================================
 # ===================== IMPORTS =====================
@@ -24,8 +26,10 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.models import User, Group, Permission
 from django.http import HttpResponseForbidden
 from django.db.models import Q, Sum, Count
-from .forms import RoleForm, AssignRoleForm
+from .forms import RoleForm, AssignRoleForm, AnnouncementForm
 from .models import UserRole, RoleActivityLog
+from edupilot_core.models import Announcement, AnnouncementRead
+from edupilot_core.services import AnnouncementService
 
 ################## Teacher Duty ########################
 
@@ -2395,7 +2399,11 @@ def register_admission(request):
         else:
             print("Form Errors:", form.errors)
     else:
-        form = AdmissionForm()
+        initial = {}
+        class_fk = request.GET.get('class_fk')
+        if class_fk and Class.objects.filter(pk=class_fk).exists():
+            initial['class_fk'] = class_fk
+        form = AdmissionForm(initial=initial)
         form.fields['academic_year'].queryset = active_years
 
     context = {
@@ -6986,3 +6994,61 @@ def event_duty_report(request, pk):
     doc.build(elements)
     return response
  
+@login_required
+@user_passes_test(is_admin)
+def announcement_center(request):
+    AnnouncementService.publish_due_announcements()
+    query = request.GET.get('q', '').strip()
+    category = request.GET.get('category', '').strip()
+    tab = request.GET.get('tab', 'all')
+    announcements = Announcement.objects.select_related('created_by', 'target_class').annotate(read_total=Count('reads', distinct=True))
+    if tab in {'published', 'scheduled', 'archived'}:
+        announcements = announcements.filter(status=tab.upper())
+    if category:
+        announcements = announcements.filter(category=category)
+    if query:
+        announcements = announcements.filter(Q(title__icontains=query) | Q(description__icontains=query))
+
+    now = timezone.now()
+    total_sent = Announcement.objects.filter(status='PUBLISHED').count()
+    total_read = AnnouncementRead.objects.count()
+    read_rate = round((total_read / Announcement.objects.filter(status='PUBLISHED').count()) * 100, 1) \
+        if Announcement.objects.filter(status='PUBLISHED').exists() else 0
+    context = {
+        'announcements': announcements[:50],
+        'announcement_count': announcements.count(),
+        'categories': Announcement.CATEGORY_CHOICES,
+        'active_tab': tab,
+        'query': query,
+        'selected_category': category,
+        'total_sent': total_sent,
+        'total_read': total_read,
+        'read_rate': read_rate,
+        'unread_rate': round(max(0, 100 - read_rate), 1),
+        'scheduled_count': Announcement.objects.filter(status='SCHEDULED').count(),
+        'category_counts': [
+            {'label': label, 'count': Announcement.objects.filter(category=value, created_at__gte=now - timedelta(days=30)).count(),
+             'bar_height': min(100, Announcement.objects.filter(category=value, created_at__gte=now - timedelta(days=30)).count() * 20 + 8)}
+            for value, label in Announcement.CATEGORY_CHOICES
+        ],
+        'form': AnnouncementForm(initial={'publish_date': now.strftime('%Y-%m-%dT%H:%M')}),
+    }
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        announcement = get_object_or_404(Announcement, pk=request.POST.get('announcement_id')) if request.POST.get('announcement_id') else None
+        if action == 'archive' and announcement:
+            announcement.status = 'ARCHIVED'
+            announcement.save(update_fields=['status', 'updated_at'])
+            messages.success(request, 'Announcement archived.')
+            return redirect('announcement_center')
+        if action == 'toggle_pin' and announcement:
+            announcement.is_pinned = not announcement.is_pinned
+            announcement.save(update_fields=['is_pinned', 'updated_at'])
+            return redirect('announcement_center')
+        form = AnnouncementForm(request.POST, request.FILES)
+        if form.is_valid():
+            AnnouncementService.create_announcement(created_by=request.user, cleaned_data=form.cleaned_data)
+            messages.success(request, 'Announcement published or scheduled successfully.')
+            return redirect('announcement_center')
+        context['form'] = form
+    return render(request, 'admin_panel/announcement_center.html', context)

@@ -38,7 +38,8 @@ from rest_framework import serializers, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.renderers import JSONRenderer
-from ..models import Student, FeeVoucher, FeePlanDetail
+from student_profile.models import Student as PortalStudent
+from ..models import FeeVoucher, FeePlanDetail
 
 # 1. Serializers
 class FeeVoucherSerializer(serializers.ModelSerializer):
@@ -47,14 +48,16 @@ class FeeVoucherSerializer(serializers.ModelSerializer):
         fields = ['voucher_no', 'month', 'due_date', 'net_amount', 'status']
 
 class StudentDashboardSerializer(serializers.ModelSerializer):
+    full_name = serializers.CharField(source='name')
+    admission_number = serializers.CharField(source='student_id')
     current_fee = serializers.SerializerMethodField()
     
     class Meta:
-        model = Student
+        model = PortalStudent
         fields = ['full_name', 'admission_number', 'current_fee']
 
     def get_current_fee(self, obj):
-        voucher = FeeVoucher.objects.filter(student=obj).order_by('-id').first()
+        voucher = FeeVoucher.objects.filter(canonical_student=obj).order_by('-id').first()
         return FeeVoucherSerializer(voucher).data if voucher else None
 
 # 2. Student API Logic
@@ -62,7 +65,7 @@ class StudentDashboardAPI(APIView):
     renderer_classes = [JSONRenderer]
     
     def get(self, request):
-        student = Student.objects.first() 
+        student = PortalStudent.objects.first()
         if not student:
             return Response({"error": "No student found"}, status=status.HTTP_404_NOT_FOUND)
         serializer = StudentDashboardSerializer(student)
@@ -73,15 +76,15 @@ class ParentDashboardAPI(APIView):
     renderer_classes = [JSONRenderer]
     
     def get(self, request):
-        students = Student.objects.all()
+        students = PortalStudent.objects.all()
         serializer = StudentDashboardSerializer(students, many=True)
         
         # FIX: FeePlanDetail se amount nikalna (FeePlan model mein amount nahi hota)
         total_outstanding = 0
         for s in students:
             # Check karte hain ke student ka assignment exist karta hai ya nahi
-            if hasattr(s, 'fee_assignment'):
-                plan = s.fee_assignment.fee_plan
+            if hasattr(s, 'automation_fee_assignment'):
+                plan = s.automation_fee_assignment.fee_plan
                 # FeePlanDetail se us plan ka total amount nikal rahe hain
                 details = FeePlanDetail.objects.filter(fee_plan=plan)
                 total_outstanding += sum([d.amount for d in details])

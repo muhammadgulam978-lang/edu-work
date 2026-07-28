@@ -1,0 +1,66 @@
+{% extends "admin_panel/bases.html" %}
+{% load static %}
+
+{% block title %}Announcements | EduPilot{% endblock %}
+{% block head %}<link rel="stylesheet" href="{% static 'admin_panel/css/announcement-center.css' %}?v=announcement-center-2">{% endblock %}
+
+{% block content %}
+<main class="announcement-page">
+    <div class="announcement-breadcrumb">Communication / Announcements</div>
+    <div class="announcement-heading">
+        <div><h1>Announcement Center</h1><p>Create, manage and track school-wide communication.</p></div>
+        <button class="edu-btn edu-btn-primary announcement-create" type="button" data-open-announcement>
+            <i class="fas fa-plus"></i> Create Announcement
+        </button>
+    </div>
+
+    <section class="announcement-stats" aria-label="Announcement statistics">
+        <div class="announcement-stat"><span class="announcement-stat-icon academic"><i class="fas fa-paper-plane"></i></span><div><strong>{{ total_sent }}</strong><small>Published announcements</small></div></div>
+        <div class="announcement-stat"><span class="announcement-stat-icon success"><i class="fas fa-check-double"></i></span><div><strong>{{ total_read }}</strong><small>Total reads</small></div></div>
+        <div class="announcement-stat"><span class="announcement-stat-icon warning"><i class="fas fa-chart-pie"></i></span><div><strong>{{ read_rate }}%</strong><small>Read activity</small></div></div>
+        <div class="announcement-stat"><span class="announcement-stat-icon ai"><i class="fas fa-clock"></i></span><div><strong>{{ scheduled_count }}</strong><small>Scheduled</small></div></div>
+    </section>
+
+    <div class="announcement-grid">
+        <section class="edu-panel announcement-list-panel">
+            <div class="edu-panel-head"><h2>All Announcements <span>({{ announcement_count }})</span></h2></div>
+            <nav class="announcement-tabs" aria-label="Announcement status">
+                <a class="{% if active_tab == 'all' %}active{% endif %}" href="?tab=all{% if query %}&q={{ query|urlencode }}{% endif %}">All</a>
+                <a class="{% if active_tab == 'published' %}active{% endif %}" href="?tab=published">Published</a>
+                <a class="{% if active_tab == 'scheduled' %}active{% endif %}" href="?tab=scheduled">Scheduled</a>
+                <a class="{% if active_tab == 'archived' %}active{% endif %}" href="?tab=archived">Archived</a>
+            </nav>
+            <form class="announcement-filters" method="get">
+                <input type="hidden" name="tab" value="{{ active_tab }}">
+                <label class="sr-only" for="announcement-search">Search announcements</label>
+                <input id="announcement-search" name="q" value="{{ query }}" placeholder="Search announcements...">
+                <select name="category" aria-label="Announcement category">
+                    <option value="">All categories</option>
+                    {% for value,label in categories %}<option value="{{ value }}" {% if selected_category == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+                </select>
+                <button class="edu-btn edu-btn-secondary" type="submit"><i class="fas fa-filter"></i> Filter</button>
+            </form>
+            <div class="announcement-items">
+                {% for announcement in announcements %}
+                <article class="announcement-item">
+                    <div class="announcement-category {{ announcement.category|lower }}"><i class="fas {% if announcement.category == 'ACADEMIC' %}fa-graduation-cap{% elif announcement.category == 'EVENT' %}fa-star{% elif announcement.category == 'ALERT' %}fa-triangle-exclamation{% elif announcement.category == 'HOLIDAY' %}fa-umbrella-beach{% else %}fa-bullhorn{% endif %}"></i></div>
+                    <div class="announcement-copy"><h3>{{ announcement.title }}</h3><p>{{ announcement.description|truncatechars:190 }}</p><div class="announcement-meta"><span class="announcement-tag {{ announcement.category|lower }}">{{ announcement.get_category_display }}</span>{{ announcement.get_status_display }} · {{ announcement.publish_date|date:"M d, Y, g:i A" }} · {{ announcement.get_audience_display }} · {{ announcement.read_total }} read</div></div>
+                    <div class="announcement-actions">
+                        <form method="post">{% csrf_token %}<input type="hidden" name="action" value="toggle_pin"><input type="hidden" name="announcement_id" value="{{ announcement.id }}"><button class="edu-icon-btn" title="{% if announcement.is_pinned %}Unpin{% else %}Pin{% endif %}" aria-label="Toggle pin"><i class="fas fa-thumbtack"></i></button></form>
+                        {% if announcement.status != 'ARCHIVED' %}<form method="post">{% csrf_token %}<input type="hidden" name="action" value="archive"><input type="hidden" name="announcement_id" value="{{ announcement.id }}"><button class="edu-icon-btn" title="Archive" aria-label="Archive announcement"><i class="fas fa-box-archive"></i></button></form>{% endif %}
+                    </div>
+                </article>
+                {% empty %}<div class="announcement-empty"><i class="fas fa-bullhorn"></i><h3>No announcements found</h3><p>Create an announcement or adjust your filters.</p></div>{% endfor %}
+            </div>
+        </section>
+
+        <aside class="announcement-side">
+            <section class="edu-panel announcement-analytics"><div class="edu-panel-head"><h2>Announcement Analytics</h2></div><div class="announcement-donut" style="--read: {{ read_rate }}%"><span>{{ read_rate }}%<small>Read rate</small></span></div><div class="announcement-legend"><span><i class="dot success"></i>Read {{ read_rate }}%</span><span><i class="dot warning"></i>Unread {{ unread_rate }}%</span></div></section>
+            <section class="edu-panel category-performance"><div class="edu-panel-head"><h2>Category Performance</h2><small>Last 30 days</small></div><div class="category-bars">{% for item in category_counts %}<div class="category-bar"><span style="height:{{ item.bar_height }}%"></span><small>{{ item.label }}</small></div>{% endfor %}</div></section>
+        </aside>
+    </div>
+</main>
+
+<div class="announcement-modal" data-announcement-modal aria-hidden="true"><div class="announcement-modal-card" role="dialog" aria-modal="true" aria-labelledby="announcement-modal-title"><div class="announcement-modal-head"><h2 id="announcement-modal-title">Create Announcement</h2><button class="edu-icon-btn" type="button" data-close-announcement aria-label="Close"><i class="fas fa-xmark"></i></button></div><form method="post" enctype="multipart/form-data">{% csrf_token %}<div class="announcement-form-grid"><div class="announcement-field full"><label for="id_title">Title</label>{{ form.title }}</div><div class="announcement-field full"><label for="id_description">Description</label>{{ form.description }}</div><div class="announcement-field"><label for="id_category">Category</label>{{ form.category }}</div><div class="announcement-field"><label for="id_priority">Priority</label>{{ form.priority }}</div><div class="announcement-field"><label for="id_audience">Audience</label>{{ form.audience }}</div><div class="announcement-field"><label for="id_target_class">Specific class</label>{{ form.target_class }}</div><div class="announcement-field"><label for="id_publish_date">Publish date &amp; time</label>{{ form.publish_date }}</div><div class="announcement-field"><label for="id_expiry_date">Expiry date</label>{{ form.expiry_date }}</div><div class="announcement-field full"><label for="id_attachment">Attachment</label>{{ form.attachment }}</div><label class="announcement-check">{{ form.is_pinned }} Pin this announcement</label></div><input type="hidden" name="action" value="create"><div class="announcement-modal-foot"><button class="edu-btn edu-btn-secondary" type="button" data-close-announcement>Cancel</button><button class="edu-btn edu-btn-primary" type="submit"><i class="fas fa-paper-plane"></i> Publish Announcement</button></div></form></div></div>
+<script src="{% static 'admin_panel/js/announcement-center.js' %}?v=announcement-center-1"></script>
+{% endblock %}
