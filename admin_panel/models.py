@@ -1054,18 +1054,63 @@ class KpiTemplate(models.Model):
     def __str__(self):
         return f"{self.name} ({self.cycle.name})"
 
+
+
 from django.db import models
 from django.utils.text import slugify
 from django.utils.timezone import now
 
 
+class AppraisalCycle(models.Model):
+    name = models.CharField(max_length=120)  # "2026 Annual"
+    start_date = models.DateField()
+    end_date = models.DateField()
+    is_open = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.name
+
+
+class GradePolicy(models.Model):
+    """
+    Convert ExamResult % -> A/B/C/D/E/F
+    """
+    name = models.CharField(max_length=120, default="Default Grade Policy")
+    a_min = models.FloatField(default=80)
+    b_min = models.FloatField(default=70)
+    c_min = models.FloatField(default=60)
+    d_min = models.FloatField(default=50)
+    e_min = models.FloatField(default=40)
+
+    def __str__(self):
+        return self.name
+
+
 class KpiTemplate(models.Model):
     name = models.CharField(max_length=120)
-    cycle = models.ForeignKey("AppraisalCycle", on_delete=models.CASCADE, related_name="kpi_templates")
-    grade_policy = models.ForeignKey("GradePolicy", on_delete=models.SET_NULL, null=True, blank=True)
+    cycle = models.ForeignKey(AppraisalCycle, on_delete=models.CASCADE, related_name="kpi_templates")
+    grade_policy = models.ForeignKey(GradePolicy, on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self):
         return f"{self.name} ({self.cycle.name})"
+
+
+# ✅ NEW (Phase 1) — Sections to group KPIs
+class AppraisalSection(models.Model):
+    template = models.ForeignKey(
+        KpiTemplate,
+        on_delete=models.CASCADE,
+        related_name="sections"
+    )
+    name = models.CharField(max_length=150)          # e.g. "Teaching & Learning"
+    description = models.TextField(blank=True)
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["order", "id"]
+
+    def __str__(self):
+        return f"{self.name} ({self.template.name})"
 
 
 class KpiRule(models.Model):
@@ -1095,6 +1140,15 @@ class KpiRule(models.Model):
     ]
 
     template = models.ForeignKey(KpiTemplate, on_delete=models.CASCADE, related_name="rules")
+
+    # ✅ NEW (Phase 1) — optional section link (nullable so old rows don't break)
+    section = models.ForeignKey(
+        AppraisalSection,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="rules"
+    )
 
     # show name
     title = models.CharField(max_length=255)
@@ -1165,7 +1219,6 @@ class KpiRule(models.Model):
         return f"{self.title} ({self.kpi_key})"
 
 
-
 class TeacherAppraisalSubmission(models.Model):
     STATUS = [("draft", "Draft"), ("submitted", "Submitted")]
 
@@ -1186,7 +1239,6 @@ class TeacherAppraisalSubmission(models.Model):
     improvement_plan = models.TextField(blank=True)
     evidence_links = models.JSONField(default=list, blank=True)
     manual_ratings = models.JSONField(default=dict, blank=True)
-
 
     # admin final label (THIS is what we train RF on)
     final_band = models.CharField(
@@ -1212,10 +1264,6 @@ class TeacherAppraisalSubmission(models.Model):
         return f"{self.teacher.name} - {self.cycle.name}"
 
 
-# admin_panel/models.py  (TeacherActivity model update)
-
-from django.db import models
-
 class TeacherActivity(models.Model):
     ACT_TYPE = [
         ("EXTRA", "Extra Curricular"),
@@ -1239,7 +1287,7 @@ class TeacherActivity(models.Model):
     # normal activities (old)
     activity_type = models.CharField(max_length=30, choices=ACT_TYPE, blank=True, default="")
 
-    # manual KPI mapping (NEW)
+    # manual KPI mapping
     manual_rule = models.ForeignKey(
         "admin_panel.KpiRule",
         null=True, blank=True,
@@ -1252,7 +1300,7 @@ class TeacherActivity(models.Model):
     hours = models.FloatField(default=0, blank=True)
     notes = models.TextField(blank=True)
 
-    # optional: persist computed score per row (NEW)
+    # optional: persist computed score per row
     system_score = models.IntegerField(null=True, blank=True)
 
     def __str__(self):
@@ -1282,7 +1330,7 @@ class MLModelArtifact(models.Model):
     trained_at = models.DateTimeField(default=now)
     is_active = models.BooleanField(default=True)
 
-    # ✅ NEW: model kis feature list pe train hua tha
+    # model kis feature list pe train hua tha
     feature_keys = models.JSONField(default=list, blank=True)
 
     def __str__(self):

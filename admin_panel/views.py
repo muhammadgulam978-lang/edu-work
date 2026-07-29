@@ -37,7 +37,8 @@ from django.contrib.auth.decorators import user_passes_test, login_required
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect, render
 from admin_panel.models import AppraisalCycle, TeacherAppraisalSubmission, KpiTemplate, KpiRule
-from .appraisal_services import generate_score, predict_band, train_random_forest
+from .appraisal_services import generate_score, predict_band, train_random_forest, ensure_default_sections
+
 
 
 ################## Teacher Duty ########################
@@ -5405,6 +5406,9 @@ def admin_kpi_builder(request):
     if not template:
         template = KpiTemplate.objects.create(name=f"KPI Template - {cycle.name}", cycle=cycle)
 
+    # ✅ NEW — default sections ensure karo (Teaching & Learning, etc.)
+    ensure_default_sections(template)
+
     auto_keys = [k for k, _ in KpiRule.AUTO_KPI_KEYS]
     for k, label in KpiRule.AUTO_KPI_KEYS:
         KpiRule.objects.get_or_create(
@@ -5419,6 +5423,31 @@ def admin_kpi_builder(request):
                 "is_manual": False,
             },
         )
+
+    # ✅ NEW — Section management (add / rename / reorder / delete)
+    if request.method == "POST" and request.POST.get("save_sections") == "1":
+        for section in template.sections.all():
+            if request.POST.get(f"section_delete_{section.id}") == "on":
+                section.delete()
+                continue
+            new_name = (request.POST.get(f"section_name_{section.id}") or section.name).strip()
+            new_order = request.POST.get(f"section_order_{section.id}") or section.order
+            section.name = new_name
+            try:
+                section.order = int(new_order)
+            except Exception:
+                pass
+            section.save()
+
+        new_section_name = (request.POST.get("new_section_name") or "").strip()
+        if new_section_name:
+            last_order = template.sections.count() + 1
+            AppraisalSection.objects.create(
+                template=template, name=new_section_name, order=last_order
+            )
+
+        messages.success(request, "Sections updated successfully.")
+        return redirect("admin_kpi_builder")
 
     if request.method == "POST" and request.POST.get("save_kpis") == "1":
         for k in auto_keys:
@@ -5446,10 +5475,19 @@ def admin_kpi_builder(request):
                 r.weight = float(w)
             except Exception:
                 pass
+
+            # ✅ NEW — section update for existing manual KPI
+            section_id = request.POST.get(f"manual_section_{r.id}")
+            if section_id:
+                r.section = template.sections.filter(id=section_id).first()
+            else:
+                r.section = None
+
             r.save()
 
         new_titles = request.POST.getlist("manual_title[]")
         new_weights = request.POST.getlist("manual_weight[]")
+        new_sections = request.POST.getlist("manual_section[]")   # ✅ NEW
         for idx, t in enumerate(new_titles):
             t = (t or "").strip()
             if not t:
@@ -5460,6 +5498,12 @@ def admin_kpi_builder(request):
                     w = float(new_weights[idx] or 0)
                 except Exception:
                     w = 0.0
+
+            # ✅ NEW — section assign for new manual KPI row
+            section_obj = None
+            if idx < len(new_sections) and new_sections[idx]:
+                section_obj = template.sections.filter(id=new_sections[idx]).first()
+
             KpiRule.objects.create(
                 template=template,
                 title=t,
@@ -5468,6 +5512,7 @@ def admin_kpi_builder(request):
                 is_manual=True,
                 scoring_method="linear",
                 target_value=10,
+                section=section_obj,   # ✅ NEW
             )
 
         messages.success(request, "KPI rules saved successfully.")
@@ -5475,12 +5520,14 @@ def admin_kpi_builder(request):
 
     auto_kpis = template.rules.filter(is_manual=False, kpi_key__in=auto_keys).order_by("id")
     manual_rules = template.rules.filter(is_manual=True).order_by("id")
+    sections = template.sections.all()   # ✅ NEW
 
     return render(request, "admin_panel/appraisal_admin_kpis.html", {
         "cycle": cycle,
         "template": template,
         "auto_kpis": auto_kpis,
         "manual_rules": manual_rules,
+        "sections": sections,   # ✅ NEW
     })
 
 
@@ -5494,7 +5541,6 @@ def admin_appraisal_list(request):
     return render(request, "admin_panel/appraisal_admin_list.html", {
         "cycle": cycle, "submissions": qs
     })
-
 
 @login_required
 @user_passes_test(is_admin)
@@ -5549,7 +5595,6 @@ def admin_appraisal_detail(request, pk):
         "submission": submission,
         "pred": pred,
     })
-
 
 # ==================== ACADEMIC CALENDAR ====================
 import json

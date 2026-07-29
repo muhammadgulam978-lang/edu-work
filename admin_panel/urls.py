@@ -95,7 +95,6 @@ urlpatterns = [
     path('hello/', views.my_view, name='hello'),
     
     
-    
     path('events/', views.event_list, name='event_list'),
     path('events/create/', views.create_event, name='create_event'),
     path('events/<int:pk>/', views.event_detail, name='event_detail'),
@@ -103,7 +102,6 @@ urlpatterns = [
     path('events/<int:pk>/delete/', views.delete_event, name='delete_event'),
     path('events/duty/<int:pk>/delete/', views.delete_event_duty, name='delete_event_duty'),
     path('events/<int:pk>/report/', views.event_duty_report, name='event_duty_report'),
-
 
 
     path("streams/", views.stream_list, name="stream_list"),
