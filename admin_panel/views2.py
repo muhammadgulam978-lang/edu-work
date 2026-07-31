@@ -5720,431 +5720,429 @@ def hr_dashboard(request):
     return render(request, 'admin_panel/hr_dashboard.html', context)
 
 
-
 # ==========================================================
-# LEAVE MANAGEMENT MODULE (Dashboard / Types / Requests / Calendar / Reports)
-# Single-page module rendered via admin_panel/leave_list.html with tabs.
+# Leave List
 # ==========================================================
 
-from django.core.paginator import Paginator
-from django.http import HttpResponse as _LeaveHttpResponse
+@permission_required(
+    "admin_panel.view_leaveapplication",
+    raise_exception=True
+)
+def leave_list(request):
+
+    leaves = LeaveApplication.objects.select_related(
+        "employee",
+        "leave_type",
+        "employee__department",
+    ).order_by("-applied_at")
 
 
-def _is_ajax(request):
-    return request.headers.get('x-requested-with') == 'XMLHttpRequest'
+    # -------------------------
+    # Search
+    # -------------------------
 
+    q = request.GET.get("q")
 
-def _leave_days(leave):
-    try:
-        return (leave.end_date - leave.start_date).days + 1
-    except Exception:
-        return 0
-
-
-def _leave_management_context(request, active_tab='dashboard'):
-    """Builds the full context needed for every tab of the Leave Management page."""
-    today = timezone.localdate()
-    year_start = today.replace(month=1, day=1)
-
-    base_qs = LeaveApplication.objects.select_related(
-        'employee', 'leave_type', 'employee__department'
-    )
-
-    # ---------------- Top cards ----------------
-    pending_count = LeaveApplication.objects.filter(status='pending').count()
-    approved_count = LeaveApplication.objects.filter(status='approved').count()
-    rejected_count = LeaveApplication.objects.filter(status='rejected').count()
-    total_count = LeaveApplication.objects.count()
-    leave_types_count = LeaveType.objects.count()
-    on_leave_today = base_qs.filter(
-        status='approved', start_date__lte=today, end_date__gte=today
-    ).values('employee_id').distinct().count()
-
-    # ---------------- Charts ----------------
-    month_labels, month_values = [], []
-    for m in range(1, 13):
-        m_start = year_start.replace(month=m)
-        m_end = (m_start.replace(year=m_start.year + 1, month=1, day=1)
-                 if m == 12 else m_start.replace(month=m + 1, day=1))
-        month_labels.append(m_start.strftime('%b'))
-        month_values.append(
-            LeaveApplication.objects.filter(
-                applied_at__date__gte=m_start, applied_at__date__lt=m_end
-            ).count()
-        )
-
-    type_rows = list(
-        base_qs.values('leave_type__name').annotate(total=Count('id')).order_by('-total')
-    )
-    type_labels = [r['leave_type__name'] or 'Unspecified' for r in type_rows]
-    type_values = [r['total'] for r in type_rows]
-
-    dept_rows = list(
-        base_qs.values('employee__department__name').annotate(total=Count('id')).order_by('-total')
-    )
-    dept_labels = [r['employee__department__name'] or 'Unassigned' for r in dept_rows]
-    dept_values = [r['total'] for r in dept_rows]
-
-    # ---------------- Recent requests (dashboard preview) ----------------
-    recent_leaves = list(base_qs.order_by('-applied_at')[:6])
-    for lv in recent_leaves:
-        lv.days_count = _leave_days(lv)
-
-    # ---------------- Leave Types tab ----------------
-    leave_types = LeaveType.objects.annotate(
-        employees_using=Count('leaveapplication__employee', distinct=True)
-    ).order_by('name')
-
-    # ---------------- Leave Requests tab (search + filter + pagination) ----------------
-    requests_qs = base_qs.order_by('-applied_at')
-
-    q = request.GET.get('q', '').strip()
     if q:
-        requests_qs = requests_qs.filter(
+
+        leaves = leaves.filter(
+
             Q(employee__name__icontains=q)
-            | Q(employee__department__name__icontains=q)
-            | Q(leave_type__name__icontains=q)
+            |
+            Q(employee__department__name__icontains=q)
+            |
+            Q(leave_type__name__icontains=q)
+            |
+            Q(status__icontains=q)
+
         )
 
-    f_department = request.GET.get('department', '')
-    if f_department:
-        requests_qs = requests_qs.filter(employee__department_id=f_department)
 
-    f_leave_type = request.GET.get('leave_type', '')
-    if f_leave_type:
-        requests_qs = requests_qs.filter(leave_type_id=f_leave_type)
+    # -------------------------
+    # Status Filter
+    # -------------------------
 
-    f_status = request.GET.get('status', '')
-    if f_status:
-        requests_qs = requests_qs.filter(status=f_status)
+    status = request.GET.get("status")
 
-    f_from = request.GET.get('date_from', '')
-    if f_from:
-        requests_qs = requests_qs.filter(start_date__gte=f_from)
+    if status:
 
-    f_to = request.GET.get('date_to', '')
-    if f_to:
-        requests_qs = requests_qs.filter(end_date__lte=f_to)
+        leaves = leaves.filter(status=status)
 
-    page_size = request.GET.get('page_size', '10')
-    if page_size not in ('10', '25', '50', '100'):
-        page_size = '10'
-
-    paginator = Paginator(requests_qs, int(page_size))
-    page_obj = paginator.get_page(request.GET.get('page', 1))
-    for lv in page_obj.object_list:
-        lv.days_count = _leave_days(lv)
-
-    # ---------------- Leave Calendar tab ----------------
-    cal_month = int(request.GET.get('month', today.month))
-    cal_year = int(request.GET.get('year', today.year))
-    cal_start = date(cal_year, cal_month, 1)
-    cal_end = (date(cal_year + 1, 1, 1) if cal_month == 12 else date(cal_year, cal_month + 1, 1))
-
-    calendar_leaves = base_qs.filter(
-        start_date__lt=cal_end, end_date__gte=cal_start
-    ).exclude(status='rejected')
-
-    calendar_events = [{
-        'id': lv.id,
-        'title': lv.employee.name,
-        'leave_type': lv.leave_type.name if lv.leave_type else 'Leave',
-        'department': lv.employee.department.name if lv.employee.department else '-',
-        'start': lv.start_date.isoformat(),
-        'end': lv.end_date.isoformat(),
-        'status': lv.status,
-    } for lv in calendar_leaves]
-
-    # ---------------- Leave Reports tab ----------------
-    reports_department_rows = list(
-        base_qs.values('employee__department__name')
-        .annotate(total=Count('id'))
-        .order_by('-total')
-    )
 
     context = {
-        'active_tab': active_tab,
 
-        # cards
-        'pending_count': pending_count,
-        'approved_count': approved_count,
-        'rejected_count': rejected_count,
-        'total_count': total_count,
-        'leave_types_count': leave_types_count,
-        'on_leave_today': on_leave_today,
+        "leaves": leaves,
 
-        # charts
-        'monthly_trend_chart': {'labels': month_labels, 'values': month_values},
-        'type_distribution_chart': {'labels': type_labels, 'values': type_values},
-        'department_usage_chart': {'labels': dept_labels, 'values': dept_values},
+        "pending_count":
+            LeaveApplication.objects.filter(
+                status="pending"
+            ).count(),
 
-        # dashboard
-        'recent_leaves': recent_leaves,
+        "approved_count":
+            LeaveApplication.objects.filter(
+                status="approved"
+            ).count(),
 
-        # leave types tab
-        'leave_types': leave_types,
+        "rejected_count":
+            LeaveApplication.objects.filter(
+                status="rejected"
+            ).count(),
 
-        # requests tab
-        'leaves': page_obj,
-        'page_obj': page_obj,
-        'page_size': page_size,
-        'filters': {
-            'q': q, 'department': f_department, 'leave_type': f_leave_type,
-            'status': f_status, 'date_from': f_from, 'date_to': f_to,
-        },
+        "total_count":
+            LeaveApplication.objects.count(),
 
-        # calendar tab
-        'calendar_events': calendar_events,
-        'calendar_month': cal_month,
-        'calendar_year': cal_year,
-        'calendar_month_name': cal_start.strftime('%B'),
-
-        # reports tab
-        'reports_department_rows': reports_department_rows,
-
-        # shared dropdown data
-        'employees': Employee.objects.filter(is_active=True).order_by('name'),
-        'all_leave_types': LeaveType.objects.filter(is_active=True).order_by('name'),
-        'departments': Department.objects.all().order_by('name'),
     }
-    return context
 
+    return render(
 
-@login_required
-@permission_required("admin_panel.view_leaveapplication", raise_exception=True)
-def leave_list(request):
-    """Main Leave Management page — Requests tab is the default landing tab."""
-    context = _leave_management_context(request, active_tab=request.GET.get('tab', 'requests'))
-    return render(request, "admin_panel/leave_list.html", context)
+        request,
 
+        "admin_panel/leave_list.html",
 
-@login_required
-@permission_required('admin_panel.view_leavetype', raise_exception=True)
-def leave_type_list(request):
-    """Kept for URL/back-compat — opens the same module on the Leave Types tab."""
-    context = _leave_management_context(request, active_tab='types')
-    return render(request, "admin_panel/leave_list.html", context)
+        context,
+
+    )
 
 
 # ==========================================================
-# Apply Leave (AJAX modal, falls back to redirect for non-JS)
+# Apply Leave
 # ==========================================================
 
-@login_required
-@permission_required("admin_panel.add_leaveapplication", raise_exception=True)
+@permission_required(
+    "admin_panel.add_leaveapplication",
+    raise_exception=True
+)
 def leave_create(request):
+
     if request.method == "POST":
+
         form = LeaveApplicationForm(request.POST)
+
         if form.is_valid():
+
             leave = form.save(commit=False)
+
             leave.status = "pending"
+
             leave.save()
 
-            if _is_ajax(request):
-                return JsonResponse({
-                    "success": True,
-                    "message": "Leave application submitted successfully.",
-                })
-            messages.success(request, "Leave Application submitted successfully.")
+            messages.success(
+
+                request,
+
+                "Leave Application submitted successfully."
+
+            )
+
             return redirect("leave_list")
 
-        if _is_ajax(request):
-            return JsonResponse({"success": False, "errors": form.errors}, status=400)
-        messages.error(request, "Please correct the errors below.")
+        else:
+
+            messages.error(
+
+                request,
+
+                "Please correct the errors below."
+
+            )
+
     else:
+
         form = LeaveApplicationForm()
 
+
     context = {
+
         "form": form,
-        "employees": Employee.objects.filter(is_active=True).order_by("name"),
-        "leave_types": LeaveType.objects.filter(is_active=True).order_by("name"),
+
+        "employees":
+            Employee.objects.filter(
+                is_active=True
+            ).order_by("name"),
+
+        "leave_types":
+            LeaveType.objects.filter(
+                is_active=True
+            ).order_by("name"),
+
     }
-    return render(request, "admin_panel/leave_form.html", context)
+
+    return render(
+
+        request,
+
+        "admin_panel/leave_form.html",
+
+        context,
+
+    )
 
 
-@login_required
-@permission_required("admin_panel.change_leaveapplication", raise_exception=True)
+
+
+
+# ==========================================================
+# Edit Leave
+# ==========================================================
+
+@permission_required(
+    "admin_panel.change_leaveapplication",
+    raise_exception=True
+)
 def leave_update(request, pk):
-    leave = get_object_or_404(LeaveApplication, pk=pk)
+
+    leave = get_object_or_404(
+        LeaveApplication,
+        pk=pk
+    )
 
     if request.method == "POST":
-        form = LeaveApplicationForm(request.POST, instance=leave)
+
+        form = LeaveApplicationForm(
+            request.POST,
+            instance=leave
+        )
+
         if form.is_valid():
+
             form.save()
-            if _is_ajax(request):
-                return JsonResponse({"success": True, "message": "Leave updated successfully."})
-            messages.success(request, "Leave updated successfully.")
+
+            messages.success(
+                request,
+                "Leave updated successfully."
+            )
+
             return redirect("leave_list")
 
-        if _is_ajax(request):
-            return JsonResponse({"success": False, "errors": form.errors}, status=400)
-        messages.error(request, "Please correct the errors.")
+        else:
+
+            messages.error(
+                request,
+                "Please correct the errors."
+            )
+
     else:
-        form = LeaveApplicationForm(instance=leave)
 
-    return render(request, "admin_panel/leave_form.html", {
-        "form": form,
-        "edit_mode": True,
-        "leave": leave,
-        "employees": Employee.objects.filter(is_active=True),
-        "leave_types": LeaveType.objects.filter(is_active=True),
-    })
+        form = LeaveApplicationForm(
+            instance=leave
+        )
+
+    return render(
+
+        request,
+
+        "admin_panel/leave_form.html",
+
+        {
+
+            "form": form,
+
+            "edit_mode": True,
+
+            "employees":
+                Employee.objects.filter(
+                    is_active=True
+                ),
+
+            "leave_types":
+                LeaveType.objects.filter(
+                    is_active=True
+                ),
+
+        }
+
+    )
 
 
-@login_required
-@permission_required("admin_panel.delete_leaveapplication", raise_exception=True)
+# ==========================================================
+# Delete Leave
+# ==========================================================
+
+@permission_required(
+    "admin_panel.delete_leaveapplication",
+    raise_exception=True
+)
 def leave_delete(request, pk):
-    leave = get_object_or_404(LeaveApplication, pk=pk)
+
+    leave = get_object_or_404(
+        LeaveApplication,
+        pk=pk
+    )
 
     if request.method == "POST":
+
         leave.delete()
-        if _is_ajax(request):
-            return JsonResponse({"success": True, "message": "Leave deleted successfully."})
-        messages.success(request, "Leave deleted successfully.")
+
+        messages.success(
+
+            request,
+
+            "Leave deleted successfully."
+
+        )
+
         return redirect("leave_list")
 
-    return render(request, "admin_panel/leave_delete.html", {"leave": leave})
+    return render(
 
+        request,
 
-# ==========================================================
-# Leave Detail (drawer / modal — AJAX only)
-# ==========================================================
+        "admin_panel/leave_delete.html",
 
-@login_required
-@permission_required("admin_panel.view_leaveapplication", raise_exception=True)
-def leave_detail_ajax(request, pk):
-    leave = get_object_or_404(
-        LeaveApplication.objects.select_related("employee", "employee__department", "leave_type"),
-        pk=pk,
+        {
+
+            "leave": leave
+
+        }
+
     )
-
-    used_days = 0
-    if leave.leave_type:
-        year_start = date(timezone.localdate().year, 1, 1)
-        approved_this_year = LeaveApplication.objects.filter(
-            employee=leave.employee,
-            leave_type=leave.leave_type,
-            status="approved",
-            start_date__gte=year_start,
-        ).exclude(pk=leave.pk)
-        used_days = sum(_leave_days(lv) for lv in approved_this_year)
-
-    quota = leave.leave_type.yearly_quota if leave.leave_type else 0
-    remaining = max(quota - used_days, 0)
-
-    return JsonResponse({
-        "success": True,
-        "leave": {
-            "id": leave.id,
-            "employee": leave.employee.name,
-            "employee_id": leave.employee_id,
-            "department": leave.employee.department.name if leave.employee.department else "-",
-            "leave_type": leave.leave_type.name if leave.leave_type else "-",
-            "leave_type_id": leave.leave_type_id,
-            "start_date": leave.start_date.strftime("%d %b %Y"),
-            "end_date": leave.end_date.strftime("%d %b %Y"),
-            "start_date_iso": leave.start_date.isoformat(),
-            "end_date_iso": leave.end_date.isoformat(),
-            "days": _leave_days(leave),
-            "reason": leave.reason,
-            "status": leave.status,
-            "applied_at": leave.applied_at.strftime("%d %b %Y, %I:%M %p"),
-            "action_date": leave.action_date.strftime("%d %b %Y, %I:%M %p") if leave.action_date else None,
-            "quota": quota,
-            "used_days": used_days,
-            "remaining_days": remaining,
-        },
-    })
-
-
-# ==========================================================
-# Employee leave balance (AJAX — live calculation on Apply Leave form)
-# ==========================================================
-
-@login_required
-@permission_required("admin_panel.add_leaveapplication", raise_exception=True)
-def leave_employee_balance(request):
-    employee_id = request.GET.get("employee")
-    leave_type_id = request.GET.get("leave_type")
-
-    if not employee_id or not leave_type_id:
-        return JsonResponse({"success": False, "error": "employee and leave_type are required."}, status=400)
-
-    employee = get_object_or_404(Employee, pk=employee_id)
-    leave_type = get_object_or_404(LeaveType, pk=leave_type_id)
-
-    year_start = date(timezone.localdate().year, 1, 1)
-    used_days = sum(
-        _leave_days(lv) for lv in LeaveApplication.objects.filter(
-            employee=employee, leave_type=leave_type, status="approved", start_date__gte=year_start,
-        )
-    )
-    remaining = max(leave_type.yearly_quota - used_days, 0)
-
-    return JsonResponse({
-        "success": True,
-        "quota": leave_type.yearly_quota,
-        "used_days": used_days,
-        "remaining_days": remaining,
-        "is_eligible": employee.can_apply_leave(),
-    })
 
 
 # ==========================================================
 # Approve / Reject Leave
 # ==========================================================
 
-@login_required
-@permission_required("admin_panel.change_leaveapplication", raise_exception=True)
+@permission_required(
+    "admin_panel.change_leaveapplication",
+    raise_exception=True
+)
 def leave_action(request, pk, action):
-    leave = get_object_or_404(LeaveApplication, pk=pk)
+
+    leave = get_object_or_404(
+        LeaveApplication,
+        pk=pk
+    )
 
     if leave.status != "pending":
-        msg = "This leave request has already been processed."
-        if _is_ajax(request):
-            return JsonResponse({"success": False, "message": msg}, status=400)
-        messages.warning(request, msg)
+
+        messages.warning(
+
+            request,
+
+            "This leave request has already been processed."
+
+        )
+
         return redirect("leave_list")
 
+
     if action == "approved":
+
         leave.status = "approved"
+
     elif action == "rejected":
+
         leave.status = "rejected"
+
     else:
-        msg = "Invalid action."
-        if _is_ajax(request):
-            return JsonResponse({"success": False, "message": msg}, status=400)
-        messages.error(request, msg)
+
+        messages.error(
+
+            request,
+
+            "Invalid action."
+
+        )
+
         return redirect("leave_list")
+
 
     leave.action_date = timezone.now()
-    leave.save()
 
-    final_message = ""
-    message_level = "success"
+    leave.save()
+    
+    
+
+
+
+    
+
+
+    # =====================================================
+    # Auto Fixture Assignment
+    # =====================================================
 
     if action == "approved":
+
         try:
-            automation_results = FixtureAutomationService.run_for_leave(leave, triggered_by=request.user)
-            assigned = sum(len(r.get("assigned", [])) for r in automation_results)
-            unassigned = sum(len(r.get("unassigned", [])) for r in automation_results)
-            skipped = sum(len(r.get("skipped", [])) for r in automation_results)
-            final_message = (
-                f"Leave Approved Successfully. "
-                f"Fixtures Assigned: {assigned}, Unassigned: {unassigned}, Skipped: {skipped}"
+
+            automation_results = (
+
+                FixtureAutomationService.run_for_leave(
+
+                    leave,
+
+                    triggered_by=request.user
+
+                )
+
             )
+
+            assigned = sum(
+
+                len(r.get("assigned", []))
+
+                for r in automation_results
+
+            )
+
+            unassigned = sum(
+
+                len(r.get("unassigned", []))
+
+                for r in automation_results
+
+            )
+
+            skipped = sum(
+
+                len(r.get("skipped", []))
+
+                for r in automation_results
+
+            )
+
+            messages.success(
+
+                request,
+
+                f"""
+Leave Approved Successfully.
+
+Fixtures Assigned : {assigned}
+
+Unassigned : {unassigned}
+
+Skipped : {skipped}
+"""
+
+            )
+
         except Exception as e:
-            message_level = "warning"
-            final_message = f"Leave approved but Fixture Automation failed. {str(e)}"
+
+            messages.warning(
+
+                request,
+
+                f"""
+Leave approved but Fixture Automation failed.
+
+{str(e)}
+"""
+
+            )
+
     else:
-        final_message = "Leave Rejected Successfully."
 
-    if _is_ajax(request):
-        return JsonResponse({"success": True, "message": final_message, "status": leave.status})
+        messages.success(
 
-    getattr(messages, message_level)(request, final_message)
+            request,
+
+            "Leave Rejected Successfully."
+
+        )
+
     return redirect("leave_list")
-
 
 # ==================== STAFF CATEGORY & JOB TYPE ====================
 from .forms import StaffCategoryForm, JobTypeForm
@@ -6186,201 +6184,26 @@ def job_type_create(request):
     return render(request, 'admin_panel/job_type_form.html', {'form': form})
 
 
-# ==================== LEAVE TYPE (AJAX CRUD) ====================
+# ==================== LEAVE TYPE ====================
 from .forms import LeaveTypeForm
 
 
-@login_required
+@permission_required('admin_panel.view_leavetype', raise_exception=True)
+def leave_type_list(request):
+    leave_types = LeaveType.objects.all()
+    return render(request, 'admin_panel/leave_type_list.html', {'leave_types': leave_types})
+
+
 @permission_required('admin_panel.add_leavetype', raise_exception=True)
 def leave_type_create(request):
     if request.method == 'POST':
         form = LeaveTypeForm(request.POST)
         if form.is_valid():
-            leave_type = form.save()
-            if _is_ajax(request):
-                return JsonResponse({
-                    "success": True,
-                    "message": "Leave type created successfully.",
-                    "id": leave_type.id,
-                    "name": leave_type.name,
-                })
-            messages.success(request, "Leave type created successfully.")
+            form.save()
             return redirect('leave_type_list')
-
-        if _is_ajax(request):
-            return JsonResponse({"success": False, "errors": form.errors}, status=400)
     else:
         form = LeaveTypeForm()
     return render(request, 'admin_panel/leave_type_form.html', {'form': form})
-
-
-@login_required
-@permission_required('admin_panel.change_leavetype', raise_exception=True)
-def leave_type_update(request, pk):
-    leave_type = get_object_or_404(LeaveType, pk=pk)
-
-    if request.method == 'POST':
-        form = LeaveTypeForm(request.POST, instance=leave_type)
-        if form.is_valid():
-            form.save()
-            if _is_ajax(request):
-                return JsonResponse({"success": True, "message": "Leave type updated successfully."})
-            messages.success(request, "Leave type updated successfully.")
-            return redirect('leave_type_list')
-
-        if _is_ajax(request):
-            return JsonResponse({"success": False, "errors": form.errors}, status=400)
-    else:
-        form = LeaveTypeForm(instance=leave_type)
-
-    if _is_ajax(request) and request.method == 'GET':
-        return JsonResponse({
-            "success": True,
-            "leave_type": {
-                "id": leave_type.id,
-                "name": leave_type.name,
-                "yearly_quota": leave_type.yearly_quota,
-                "is_paid": leave_type.is_paid,
-                "is_active": leave_type.is_active,
-            },
-        })
-
-    return render(request, 'admin_panel/leave_type_form.html', {'form': form, 'edit_mode': True, 'leave_type': leave_type})
-
-
-@login_required
-@permission_required('admin_panel.delete_leavetype', raise_exception=True)
-@require_POST
-def leave_type_delete(request, pk):
-    leave_type = get_object_or_404(LeaveType, pk=pk)
-    in_use = LeaveApplication.objects.filter(leave_type=leave_type).exists()
-    if in_use:
-        msg = "This leave type is used by existing leave applications and cannot be deleted. Disable it instead."
-        if _is_ajax(request):
-            return JsonResponse({"success": False, "message": msg}, status=400)
-        messages.error(request, msg)
-        return redirect('leave_type_list')
-
-    leave_type.delete()
-    if _is_ajax(request):
-        return JsonResponse({"success": True, "message": "Leave type deleted successfully."})
-    messages.success(request, "Leave type deleted successfully.")
-    return redirect('leave_type_list')
-
-
-@login_required
-@permission_required('admin_panel.change_leavetype', raise_exception=True)
-@require_POST
-def leave_type_toggle(request, pk):
-    leave_type = get_object_or_404(LeaveType, pk=pk)
-    leave_type.is_active = not leave_type.is_active
-    leave_type.save(update_fields=['is_active'])
-    msg = f"{leave_type.name} marked as {'Active' if leave_type.is_active else 'Inactive'}."
-    if _is_ajax(request):
-        return JsonResponse({"success": True, "message": msg, "is_active": leave_type.is_active})
-    messages.success(request, msg)
-    return redirect('leave_type_list')
-
-
-# ==========================================================
-# Leave Calendar (AJAX month events)
-# ==========================================================
-
-@login_required
-@permission_required("admin_panel.view_leaveapplication", raise_exception=True)
-def leave_calendar_events(request):
-    today = timezone.localdate()
-    cal_month = int(request.GET.get('month', today.month))
-    cal_year = int(request.GET.get('year', today.year))
-    cal_start = date(cal_year, cal_month, 1)
-    cal_end = (date(cal_year + 1, 1, 1) if cal_month == 12 else date(cal_year, cal_month + 1, 1))
-
-    leaves = LeaveApplication.objects.select_related(
-        "employee", "employee__department", "leave_type"
-    ).filter(start_date__lt=cal_end, end_date__gte=cal_start).exclude(status='rejected')
-
-    events = [{
-        "id": lv.id,
-        "title": lv.employee.name,
-        "leave_type": lv.leave_type.name if lv.leave_type else "Leave",
-        "department": lv.employee.department.name if lv.employee.department else "-",
-        "start": lv.start_date.isoformat(),
-        "end": lv.end_date.isoformat(),
-        "status": lv.status,
-    } for lv in leaves]
-
-    return JsonResponse({
-        "success": True,
-        "events": events,
-        "month": cal_month,
-        "year": cal_year,
-        "month_name": cal_start.strftime('%B'),
-    })
-
-
-# ==========================================================
-# Leave Reports — Export PDF
-# ==========================================================
-
-@login_required
-@permission_required("admin_panel.view_leaveapplication", raise_exception=True)
-def leave_reports_export_pdf(request):
-    from reportlab.lib.pagesizes import A4
-    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
-    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-    from reportlab.lib.units import cm
-    from reportlab.lib import colors
-    from reportlab.lib.enums import TA_CENTER
-
-    leaves = LeaveApplication.objects.select_related(
-        "employee", "employee__department", "leave_type"
-    ).order_by("-applied_at")
-
-    response = _LeaveHttpResponse(content_type="application/pdf")
-    response["Content-Disposition"] = 'attachment; filename="Leave_Report.pdf"'
-
-    doc = SimpleDocTemplate(response, pagesize=A4, topMargin=1.5 * cm, bottomMargin=1.5 * cm)
-    styles = getSampleStyleSheet()
-    title_style = ParagraphStyle('title', parent=styles['Heading1'], alignment=TA_CENTER, fontSize=16)
-
-    elements = [
-        Paragraph("LEAVE MANAGEMENT REPORT", title_style),
-        Spacer(1, 10),
-        Paragraph(
-            f"Total: {leaves.count()} | Pending: {leaves.filter(status='pending').count()} | "
-            f"Approved: {leaves.filter(status='approved').count()} | "
-            f"Rejected: {leaves.filter(status='rejected').count()}",
-            styles['Normal'],
-        ),
-        Spacer(1, 12),
-    ]
-
-    rows = [["Employee", "Department", "Leave Type", "From", "To", "Days", "Status"]]
-    for lv in leaves[:500]:
-        rows.append([
-            lv.employee.name,
-            lv.employee.department.name if lv.employee.department else "-",
-            lv.leave_type.name if lv.leave_type else "-",
-            lv.start_date.strftime("%d %b %Y"),
-            lv.end_date.strftime("%d %b %Y"),
-            str(_leave_days(lv)),
-            lv.get_status_display(),
-        ])
-
-    table = Table(rows, colWidths=[3.2 * cm, 2.8 * cm, 2.6 * cm, 2.4 * cm, 2.4 * cm, 1.4 * cm, 2.2 * cm])
-    table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#EEF6F3')),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#DCEAE6')),
-        ('FONTSIZE', (0, 0), (-1, -1), 8),
-        ('TOPPADDING', (0, 0), (-1, -1), 5),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
-    ]))
-    elements.append(table)
-    doc.build(elements)
-    return response
-
-
 
 
 # ==================== APPRAISAL ====================

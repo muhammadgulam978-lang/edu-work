@@ -1,87 +1,322 @@
 {% extends "admin_panel/bases.html" %}
 {% load static %}
 
+{% block title %}Apply Leave{% endblock %}
+
 {% block head %}
-<link rel="stylesheet" href="{% static 'admin_panel/css/hr_admin.css' %}?v=hr-admin-2">
+<link rel="stylesheet" href="{% static 'admin_panel/css/hr_admin.css' %}">
+
+<style>
+
+.leave-card{
+    background:#fff;
+    border-radius:15px;
+    box-shadow:0 10px 25px rgba(0,0,0,.08);
+    padding:30px;
+}
+
+.section-title{
+    font-size:20px;
+    font-weight:700;
+    color:#87d3c8;
+    margin-bottom:20px;
+}
+
+.leave-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:25px;
+}
+
+.info-box{
+    background:#f8f9fc;
+    border-radius:10px;
+    padding:15px;
+}
+
+.form-label{
+    font-weight:600;
+}
+
+textarea{
+    resize:none;
+}
+
+.summary-card{
+
+    background:#87d3c8;
+
+    color:#fff;
+
+    border-radius:12px;
+
+    padding:20px;
+
+}
+
+.summary-card h4{
+
+    margin-bottom:20px;
+
+}
+
+.summary-item{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    margin-bottom:10px;
+
+}
+
+</style>
+
 {% endblock %}
 
 {% block content %}
-<div class="hr-page">
-    <div class="hr-hero">
-        <div class="hr-title-wrap">
-            <span class="hr-icon purple"><i class="fas fa-paper-plane"></i></span>
-            <div>
-                <p class="hr-kicker">Leave Management</p>
-                <h2>Apply Leave</h2>
-                <p class="hr-subtitle">Submit a leave request for an employee.</p>
-            </div>
-        </div>
-    </div>
 
-    <div class="hr-panel">
-        <div class="hr-panel-header">
-            <h4>Leave Request</h4>
-        </div>
+<div class="container-fluid">
 
-        <div class="hr-panel-body">
-            {% if perms.admin_panel.add_leaveapplication %}
+<div class="leave-header">
 
-            <form method="post">
-                {% csrf_token %}
+<div>
 
-                <div class="hr-form-grid">
-                    <div class="hr-field">
-                        <label class="form-label">Employee</label>
+<h2>
 
-                        {% if perms.admin_panel.view_all_employee %}
-                            <select name="employee" class="form-select" required>
-                                {% for e in employees %}
-                                <option value="{{ e.id }}">{{ e.name }}</option>
-                                {% endfor %}
-                            </select>
-                        {% else %}
-                            <input type="hidden" name="employee" value="{{ employees.first.id }}">
-                            <input type="text" class="form-control" value="{{ employees.first.name }}" disabled>
-                        {% endif %}
-                    </div>
+<i class="fas fa-calendar-check text-primary"></i>
 
-                    <div class="hr-field">
-                        <label class="form-label">Leave Type</label>
-                        <select name="leave_type" class="form-select" required>
-                            {% for t in leave_types %}
-                            <option value="{{ t.id }}">{{ t.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
+Apply Leave
 
-                    <div class="hr-field">
-                        <label class="form-label">From</label>
-                        <input type="date" name="start_date" class="form-control" required>
-                    </div>
+</h2>
 
-                    <div class="hr-field">
-                        <label class="form-label">To</label>
-                        <input type="date" name="end_date" class="form-control" required>
-                    </div>
-                </div>
+<p class="text-muted">
 
-                <div class="hr-field">
-                    <label class="form-label">Reason</label>
-                    <textarea name="reason" class="form-control" rows="3" required></textarea>
-                </div>
+Submit Employee Leave Request
 
-                <div class="hr-form-actions">
-                    <a href="{% url 'leave_list' %}" class="btn btn-secondary">Cancel</a>
-                    <button class="btn btn-primary"><i class="fas fa-paper-plane"></i> Submit Leave</button>
-                </div>
-            </form>
+</p>
 
-            {% else %}
-            <div class="alert alert-danger text-center">
-                You are not allowed to apply leave.
-            </div>
-            {% endif %}
-        </div>
-    </div>
 </div>
+
+<a href="{% url 'leave_list' %}"
+
+class="btn btn-outline-primary">
+
+Back
+
+</a>
+
+</div>
+
+
+<form method="POST">
+
+{% csrf_token %}
+
+<div class="row">
+
+<div class="col-lg-8">
+
+<div class="leave-card">
+
+<h5 class="section-title">
+
+Employee Information
+
+</h5>
+
+<div class="row">
+
+<div class="col-md-6 mb-3">
+
+<label class="form-label">
+
+Employee
+
+</label>
+
+{{ form.employee }}
+
+</div>
+
+<div class="col-md-6 mb-3">
+
+<label class="form-label">
+
+Leave Type
+
+</label>
+
+{{ form.leave_type }}
+
+</div>
+
+<div class="col-md-6 mb-3">
+
+<label class="form-label">
+
+Start Date
+
+</label>
+
+{{ form.start_date }}
+
+</div>
+
+<div class="col-md-6 mb-3">
+
+<label class="form-label">
+
+End Date
+
+</label>
+
+{{ form.end_date }}
+
+</div>
+
+<div class="col-12">
+
+<label class="form-label">
+
+Reason
+
+</label>
+
+{{ form.reason }}
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+
+<div class="col-lg-4">
+
+<div class="summary-card">
+
+<h4>
+
+Leave Summary
+
+</h4>
+
+<div class="summary-item">
+
+<span>
+
+Status
+
+</span>
+
+<span>
+
+Pending
+
+</span>
+
+</div>
+
+<div class="summary-item">
+
+<span>
+
+Total Days
+
+</span>
+
+<span id="totalDays">
+
+0
+
+</span>
+
+</div>
+
+<div class="summary-item">
+
+<span>
+
+Applied Date
+
+</span>
+
+<span>
+
+{% now "d M Y" %}
+
+</span>
+
+</div>
+
+<hr>
+
+<button
+
+class="btn btn-light w-100"
+
+type="submit">
+
+<i class="fas fa-paper-plane"></i>
+
+Submit Leave
+
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+</form>
+
+</div>
+
+<script>
+
+const start=document.getElementById("id_start_date");
+
+const end=document.getElementById("id_end_date");
+
+const total=document.getElementById("totalDays");
+
+function calculateDays(){
+
+if(start.value=="" || end.value==""){
+
+total.innerHTML=0;
+
+return;
+
+}
+
+let s=new Date(start.value);
+
+let e=new Date(end.value);
+
+let diff=e-s;
+
+let days=(diff/(1000*60*60*24))+1;
+
+if(days<0){
+
+days=0;
+
+}
+
+total.innerHTML=days;
+
+}
+
+start.addEventListener("change",calculateDays);
+
+end.addEventListener("change",calculateDays);
+
+</script>
+
 {% endblock %}

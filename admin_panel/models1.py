@@ -1027,6 +1027,47 @@ class TeacherFixtureHandover(models.Model):
 #===================================================================
 
 from django.db import models
+from django.utils.timezone import now
+from django.contrib.auth.models import User
+
+
+
+class AppraisalCycle(models.Model):
+    name = models.CharField(max_length=120)  # "2026 Annual"
+    start_date = models.DateField()
+    end_date = models.DateField()
+    is_open = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.name
+
+
+class GradePolicy(models.Model):
+    """
+    Convert ExamResult % -> A/B/C/D/E/F
+    """
+    name = models.CharField(max_length=120, default="Default Grade Policy")
+    a_min = models.FloatField(default=80)
+    b_min = models.FloatField(default=70)
+    c_min = models.FloatField(default=60)
+    d_min = models.FloatField(default=50)
+    e_min = models.FloatField(default=40)
+
+    def __str__(self):
+        return self.name
+
+
+class KpiTemplate(models.Model):
+    name = models.CharField(max_length=120)
+    cycle = models.ForeignKey(AppraisalCycle, on_delete=models.CASCADE, related_name="kpi_templates")
+    grade_policy = models.ForeignKey(GradePolicy, on_delete=models.SET_NULL, null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.name} ({self.cycle.name})"
+
+
+
+from django.db import models
 from django.utils.text import slugify
 from django.utils.timezone import now
 

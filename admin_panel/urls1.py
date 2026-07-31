@@ -184,14 +184,6 @@ urlpatterns = [
     
     path('leave-types/', views.leave_type_list, name='leave_type_list'),
     path('leave-types/create/', views.leave_type_create, name='leave_type_create'),
-    path('leave-types/<int:pk>/edit/', views.leave_type_update, name='leave_type_update'),
-    path('leave-types/<int:pk>/delete/', views.leave_type_delete, name='leave_type_delete'),
-    path('leave-types/<int:pk>/toggle/', views.leave_type_toggle, name='leave_type_toggle'),
-
-    path('leaves/detail/<int:pk>/', views.leave_detail_ajax, name='leave_detail_ajax'),
-    path('leaves/balance/', views.leave_employee_balance, name='leave_employee_balance'),
-    path('leaves/calendar/events/', views.leave_calendar_events, name='leave_calendar_events'),
-    path('leaves/reports/export-pdf/', views.leave_reports_export_pdf, name='leave_reports_export_pdf'),
 
     # Admin Appraisal URLs
     path("appraisal/admin/kpis/", views.admin_kpi_builder, name="admin_kpi_builder"),

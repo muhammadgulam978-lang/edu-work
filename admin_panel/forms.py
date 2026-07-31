@@ -370,29 +370,11 @@ from teacher_dashboard.models import Teacher
 from admin_panel.models import Subject  # agar Subject yahin hai; warna apni correct app path set kar lena
 
 # -------------------- Staff Category Form --------------------
-class StaffCategoryForm(forms.ModelForm):
-    class Meta:
-        model = StaffCategory
-        fields = ['name', 'description']
-        widgets = {
-            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Category Name'}),
-            'description': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Description', 'rows': 3}),
-        }
-        
-        
-
 # admin_panel/forms.py
 
 from django import forms
-from .models import Employee, Subject
-from teacher_dashboard.models import Teacher
-from phonenumber_field.formfields import PhoneNumberField as FormPhoneField
-
-# admin_panel/forms.py
-# admin_panel/forms.py
-
-from django import forms
-from .models import Employee, Subject
+from django.contrib.auth.models import User, Group
+from .models import Employee, Subject, StaffCategory
 from teacher_dashboard.models import Teacher
 from phonenumber_field.formfields import PhoneNumberField as FormPhoneField
 
@@ -460,6 +442,25 @@ class EmployeeForm(forms.ModelForm):
 
     teacher_image = forms.ImageField(required=False)
 
+    # ---------- Account section ----------
+    username = forms.CharField(
+        max_length=150,
+        required=False,
+        label="Username",
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
+    password = forms.CharField(
+        required=False,
+        label="Password",
+        widget=forms.PasswordInput(attrs={'class': 'form-control'}, render_value=False)
+    )
+    role = forms.ModelChoiceField(
+        queryset=Group.objects.all(),
+        required=False,
+        label="Role",
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+
     class Meta:
         model = Employee
         fields = [
@@ -467,6 +468,8 @@ class EmployeeForm(forms.ModelForm):
             'staff_category', 'job_type',
             'department', 'designation',
             'joining_date', 'is_active',
+            'employee_type', 'reporting_manager',
+            'photo', 'cnic_document', 'resume', 'appointment_letter',
         ]
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
@@ -478,7 +481,9 @@ class EmployeeForm(forms.ModelForm):
             'designation': forms.Select(attrs={'class': 'form-control'}),
             'joining_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-        }
+            'employee_type': forms.Select(attrs={'class': 'form-control'}),
+            'reporting_manager': forms.Select(attrs={'class': 'form-control'}),
+        }    
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -489,83 +494,55 @@ class EmployeeForm(forms.ModelForm):
             if getattr(obj, "stream", None) else f"{obj.name} [{obj.short_code}]"
         )
 
-     
-# admin_panel/forms.py
-from django import forms
-from .models import JobType, LeaveType
+        # employee_type/reporting_manager are optional in the form even though
+        # employee_type has a model default — Django forms don't infer that,
+        # so without this the form always rejects a blank submission.
+        self.fields['employee_type'].required = False
+        self.fields['reporting_manager'].required = False
+
+        if self.instance and self.instance.pk:
+            self.fields['reporting_manager'].queryset = Employee.objects.exclude(pk=self.instance.pk)
+            # Editing an existing employee — username/password become optional,
+            # prefill username from the linked user account if present.
+            self.fields['password'].required = False
+            if self.instance.user_id:
+                self.fields['username'].initial = self.instance.user.username
+                if self.instance.user.groups.exists():
+                    self.fields['role'].initial = self.instance.user.groups.first()
+
+    def clean_username(self):
+        username = (self.cleaned_data.get('username') or '').strip()
+        if not username:
+            return username
+        qs = User.objects.filter(username__iexact=username)
+        if self.instance and self.instance.user_id:
+            qs = qs.exclude(pk=self.instance.user_id)
+        if qs.exists():
+            raise forms.ValidationError("This username already exists.")
+        return username
+
+    def clean(self):
+        cleaned_data = super().clean()
+        # New employee + a username was provided => password becomes required.
+        is_new = not (self.instance and self.instance.pk)
+        username = cleaned_data.get('username')
+        password = cleaned_data.get('password')
+        if is_new and username and not password:
+            self.add_error('password', 'Password is required when creating a login.')
+        return cleaned_data
 
 
-class JobTypeForm(forms.ModelForm):
-    allowed_leave_types = forms.ModelMultipleChoiceField(
-        queryset=LeaveType.objects.filter(is_active=True),
-        required=False,
-        widget=forms.CheckboxSelectMultiple
-    )
+from .models import EmployeeCertificate
 
+class CertificateUploadForm(forms.ModelForm):
     class Meta:
-        model = JobType
-        fields = [
-            'name',
-            'probation_months',
-            'is_leave_eligible',
-            'allowed_leave_types',
-            'has_benefits',
-        ]
-
+        model = EmployeeCertificate
+        fields = ["title", "file"]
         widgets = {
-            'name': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Job Type Name'
-            }),
-            'probation_months': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Probation Months'
-            }),
-            'is_leave_eligible': forms.CheckboxInput(attrs={
-                'class': 'form-check-input',
-                'id': 'id_is_leave_eligible'
-            }),
-            'has_benefits': forms.CheckboxInput(attrs={
-                'class': 'form-check-input'
-            }),
+            "title": forms.TextInput(attrs={"class": "form-control", "placeholder": "Certificate title"}),
         }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        # ✅ UI default unchecked
-        self.fields['is_leave_eligible'].initial = False
-        self.fields['has_benefits'].initial = False
-
-
         
-from django import forms
-from .models import LeaveType
-
-class LeaveTypeForm(forms.ModelForm):
-    class Meta:
-        model = LeaveType
-        fields = ['name', 'yearly_quota', 'is_paid', 'is_active']
-
-        widgets = {
-            'name': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Leave Name'
-            }),
-            'yearly_quota': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Yearly Quota'
-            }),
-            'is_paid': forms.CheckboxInput(attrs={
-                'class': 'form-check-input'
-            }),
-            'is_active': forms.CheckboxInput(attrs={
-                'class': 'form-check-input'
-            }),
-        }
-
-
-# -------------------- Teacher Form (Only teacher-extra fields) --------------------
+# # -------------------- Teacher Form (Only teacher-extra fields) --------------------
 class TeacherFromEmployeeForm(forms.ModelForm):
     """
     Ye form Employee wale page ke liye hai.
@@ -787,4 +764,299 @@ class VehicleMaintenanceForm(OperationFormMixin, forms.ModelForm):
         fields = ["vehicle", "maintenance_type", "service_date", "cost", "status", "notes"]
         widgets = {
             "service_date": forms.DateInput(attrs={"type": "date"}),
+        }
+
+
+
+
+
+
+
+
+
+from django import forms
+from django.core.exceptions import ValidationError
+from datetime import date
+
+from .models import (
+    LeaveApplication,
+    LeaveType,
+    StaffCategory,
+    JobType,
+)
+
+
+# ==========================================
+# Leave Type Form
+# ==========================================
+
+class LeaveTypeForm(forms.ModelForm):
+
+    class Meta:
+        model = LeaveType
+        fields = [
+            "name",
+            "yearly_quota",
+            "is_paid",
+            "is_active",
+        ]
+
+        widgets = {
+            "name": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "Enter Leave Type"
+            }),
+
+            "yearly_quota": forms.NumberInput(attrs={
+                "class": "form-control",
+                "min": 0
+            }),
+
+            "is_paid": forms.CheckboxInput(attrs={
+                "class": "form-check-input"
+            }),
+
+            "is_active": forms.CheckboxInput(attrs={
+                "class": "form-check-input"
+            }),
+        }
+
+    def clean_name(self):
+        name = self.cleaned_data["name"].strip()
+
+        if LeaveType.objects.exclude(pk=self.instance.pk).filter(
+            name__iexact=name
+        ).exists():
+            raise ValidationError("This leave type already exists.")
+
+        return name
+
+
+# ==========================================
+# Leave Application Form
+# ==========================================
+
+class LeaveApplicationForm(forms.ModelForm):
+
+    class Meta:
+        model = LeaveApplication
+
+        fields = [
+            "employee",
+            "leave_type",
+            "start_date",
+            "end_date",
+            "reason",
+        ]
+
+        widgets = {
+
+            "employee": forms.Select(attrs={
+                "class": "form-select"
+            }),
+
+            "leave_type": forms.Select(attrs={
+                "class": "form-select"
+            }),
+
+            "start_date": forms.DateInput(
+                attrs={
+                    "type": "date",
+                    "class": "form-control"
+                }
+            ),
+
+            "end_date": forms.DateInput(
+                attrs={
+                    "type": "date",
+                    "class": "form-control"
+                }
+            ),
+
+            "reason": forms.Textarea(
+                attrs={
+                    "class": "form-control",
+                    "rows": 4,
+                    "placeholder": "Reason for leave..."
+                }
+            ),
+        }
+
+    # -------------------------
+    # Validation
+    # -------------------------
+
+    def clean(self):
+
+        cleaned_data = super().clean()
+
+        employee = cleaned_data.get("employee")
+        leave_type = cleaned_data.get("leave_type")
+        start_date = cleaned_data.get("start_date")
+        end_date = cleaned_data.get("end_date")
+
+        if not employee:
+            return cleaned_data
+
+        if not leave_type:
+            return cleaned_data
+
+        if not start_date:
+            return cleaned_data
+
+        if not end_date:
+            return cleaned_data
+
+        # End date validation
+        if end_date < start_date:
+            raise ValidationError(
+                "End date cannot be earlier than Start date."
+            )
+
+        # Past leave validation
+        if start_date < date.today():
+            raise ValidationError(
+                "Leave cannot start in the past."
+            )
+
+        # Leave eligibility
+        if not employee.can_apply_leave():
+            raise ValidationError(
+                "Employee is not eligible for leave."
+            )
+
+        # Job type allowed leave
+        if employee.job_type:
+
+            if leave_type not in employee.job_type.allowed_leave_types.all():
+
+                raise ValidationError(
+                    "This leave type is not allowed for this employee."
+                )
+
+        # Overlapping leave
+
+        overlap = LeaveApplication.objects.filter(
+
+            employee=employee,
+
+            start_date__lte=end_date,
+
+            end_date__gte=start_date,
+
+            status__in=[
+                "pending",
+                "approved"
+            ]
+
+        )
+
+        if self.instance.pk:
+            overlap = overlap.exclude(pk=self.instance.pk)
+
+        if overlap.exists():
+
+            raise ValidationError(
+
+                "Employee already has leave during these dates."
+
+            )
+
+        # Leave Quota
+
+        current_year = start_date.year
+
+        approved = LeaveApplication.objects.filter(
+
+            employee=employee,
+
+            leave_type=leave_type,
+
+            status="approved",
+
+            start_date__year=current_year
+
+        )
+
+        if self.instance.pk:
+            approved = approved.exclude(pk=self.instance.pk)
+
+        used_days = 0
+
+        for leave in approved:
+            used_days += (
+                leave.end_date - leave.start_date
+            ).days + 1
+
+        requested_days = (
+            end_date - start_date
+        ).days + 1
+
+        remaining = leave_type.yearly_quota - used_days
+
+        if requested_days > remaining:
+
+            raise ValidationError(
+
+                f"Only {remaining} leave days remaining."
+
+            )
+
+        return cleaned_data
+
+
+# ==========================================
+# Staff Category Form
+# ==========================================
+
+class StaffCategoryForm(forms.ModelForm):
+
+    class Meta:
+
+        model = StaffCategory
+
+        fields = "__all__"
+
+        widgets = {
+
+            "name": forms.TextInput(attrs={
+                "class": "form-control"
+            }),
+
+            "description": forms.Textarea(attrs={
+                "class": "form-control",
+                "rows": 3
+            }),
+        }
+
+
+# ==========================================
+# Job Type Form
+# ==========================================
+
+class JobTypeForm(forms.ModelForm):
+
+    class Meta:
+
+        model = JobType
+
+        fields = "__all__"
+
+        widgets = {
+
+            "name": forms.TextInput(attrs={
+                "class": "form-control"
+            }),
+
+            "probation_months": forms.NumberInput(attrs={
+                "class": "form-control"
+            }),
+
+            "is_leave_eligible": forms.CheckboxInput(attrs={
+                "class": "form-check-input"
+            }),
+
+            "allowed_leave_types": forms.SelectMultiple(attrs={
+                "class": "form-select"
+            }),
         }

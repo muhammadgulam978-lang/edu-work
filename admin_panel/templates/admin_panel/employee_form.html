@@ -64,27 +64,107 @@
 
           <div class="hr-field">
             <label class="form-label">Staff Category</label>
-            {{ form.staff_category|add_class:"form-control" }}
+            <div class="d-flex gap-2">
+              {{ form.staff_category|add_class:"form-control" }}
+              <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#staffCategoryModal">+ Add New</button>
+            </div>
           </div>
 
           <div class="hr-field">
             <label class="form-label">Job Type</label>
-            {{ form.job_type|add_class:"form-control" }}
+            <div class="d-flex gap-2">
+              {{ form.job_type|add_class:"form-control" }}
+              <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#jobTypeModal">+ Add New</button>
+            </div>
           </div>
 
           <div class="hr-field">
             <label class="form-label">Department</label>
-            {{ form.department|add_class:"form-control" }}
+            <div class="d-flex gap-2">
+              {{ form.department|add_class:"form-control" }}
+              <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#departmentModal">+ Add New</button>
+            </div>
           </div>
 
           <div class="hr-field">
             <label class="form-label">Designation</label>
-            {{ form.designation|add_class:"form-control" }}
+            <div class="d-flex gap-2">
+              {{ form.designation|add_class:"form-control" }}
+              <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#designationModal">+ Add New</button>
+            </div>
           </div>
 
           <div class="hr-field">
             <label class="form-label">Joining Date</label>
             {{ form.joining_date|add_class:"form-control" }}
+          </div>
+
+          <div class="hr-field">
+            <label class="form-label">Employee Type</label>
+            {{ form.employee_type|add_class:"form-control" }}
+          </div>
+
+          <div class="hr-field">
+            <label class="form-label">Reporting Manager</label>
+            {{ form.reporting_manager|add_class:"form-control" }}
+          </div>
+        </div>
+
+        <div class="hr-panel-header" style="margin-top:24px;">
+          <h4>Documents</h4>
+        </div>
+        <div class="hr-form-grid">
+          <div class="hr-field">
+            <label class="form-label">CNIC</label>
+            {{ form.cnic_document }}
+            {% if form.instance.cnic_document %}
+              <small><a href="{{ form.instance.cnic_document.url }}" target="_blank">View current file</a></small>
+            {% endif %}
+          </div>
+
+          <div class="hr-field">
+            <label class="form-label">Resume</label>
+            {{ form.resume }}
+            {% if form.instance.resume %}
+              <small><a href="{{ form.instance.resume.url }}" target="_blank">View current file</a></small>
+            {% endif %}
+          </div>
+
+          <div class="hr-field">
+            <label class="form-label">Appointment Letter</label>
+            {{ form.appointment_letter }}
+            {% if form.instance.appointment_letter %}
+              <small><a href="{{ form.instance.appointment_letter.url }}" target="_blank">View current file</a></small>
+            {% endif %}
+          </div>
+
+          <div class="hr-field">
+            <label class="form-label">Certificates</label>
+            <input type="file" name="certificates" multiple class="form-control">
+            <small class="text-muted">You can select multiple files. Upload after saving the employee.</small>
+          </div>
+        </div>
+
+        <div class="hr-panel-header" style="margin-top:24px;">
+          <h4>Account</h4>
+        </div>
+        <div class="hr-form-grid">
+          <div class="hr-field">
+            <label class="form-label">Username</label>
+            {{ form.username|add_class:"form-control" }}
+          </div>
+
+          <div class="hr-field">
+            <label class="form-label">Password</label>
+            {{ form.password|add_class:"form-control" }}
+            {% if form.instance.pk %}
+              <small class="text-muted">Leave blank to keep the current password.</small>
+            {% endif %}
+          </div>
+
+          <div class="hr-field">
+            <label class="form-label">Role</label>
+            {{ form.role|add_class:"form-control" }}
           </div>
         </div>
 
@@ -192,10 +272,133 @@
           </div>
         </div>
 
-        <div class="hr-form-actions">
-          <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save</button>
+        <div class="hr-form-actions d-flex gap-2">
+          <button type="submit" name="save_action" value="save" class="btn btn-primary">
+            <i class="fas fa-save"></i> Save Employee
+          </button>
+          <button type="submit" name="save_action" value="save_new" class="btn btn-outline-primary">
+            <i class="fas fa-plus"></i> Save &amp; New
+          </button>
+          <a href="{% url 'employee_list' %}" class="btn btn-outline-secondary">Cancel</a>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- ===================== Quick Add Modals ===================== -->
+  <div class="modal fade" id="departmentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">New Department</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-2">
+            <label class="form-label">Name</label>
+            <input type="text" id="deptName" class="form-control" placeholder="Department name">
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Description</label>
+            <textarea id="deptDesc" class="form-control" rows="2"></textarea>
+          </div>
+          <div id="deptError" class="text-danger small"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" onclick="quickAddDepartment()">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="designationModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">New Designation</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-2">
+            <label class="form-label">Department</label>
+            <select id="desigDept" class="form-control">
+              {% for dept in form.fields.department.queryset %}
+                <option value="{{ dept.id }}">{{ dept.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Title</label>
+            <input type="text" id="desigTitle" class="form-control" placeholder="Designation title">
+          </div>
+          <div id="desigError" class="text-danger small"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" onclick="quickAddDesignation()">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="jobTypeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">New Job Type</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-2">
+            <label class="form-label">Name</label>
+            <input type="text" id="jobTypeName" class="form-control" placeholder="Job type name">
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Probation (months)</label>
+            <input type="number" id="jobTypeProbation" class="form-control" value="0" min="0">
+          </div>
+          <div class="form-check mb-1">
+            <input type="checkbox" id="jobTypeLeaveEligible" class="form-check-input">
+            <label class="form-check-label" for="jobTypeLeaveEligible">Leave Eligible</label>
+          </div>
+          <div class="form-check mb-2">
+            <input type="checkbox" id="jobTypeBenefits" class="form-check-input">
+            <label class="form-check-label" for="jobTypeBenefits">Has Benefits</label>
+          </div>
+          <div id="jobTypeError" class="text-danger small"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" onclick="quickAddJobType()">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="staffCategoryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">New Staff Category</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-2">
+            <label class="form-label">Name</label>
+            <input type="text" id="staffCatName" class="form-control" placeholder="Category name">
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Description</label>
+            <textarea id="staffCatDesc" class="form-control" rows="2"></textarea>
+          </div>
+          <div id="staffCatError" class="text-danger small"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" onclick="quickAddStaffCategory()">Save</button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -214,5 +417,101 @@
       toggleTeacherSection();
     }
   });
+
+  function csrfToken() {
+    return document.querySelector('input[name=csrfmiddlewaretoken]').value;
+  }
+
+  function postForm(url, params) {
+    return fetch(url, {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": csrfToken(),
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams(params).toString(),
+    }).then(r => r.json());
+  }
+
+  function addOptionAndSelect(selectId, id, label) {
+    var select = document.getElementById(selectId);
+    if (!select) return;
+    var opt = document.createElement("option");
+    opt.value = id;
+    opt.text = label;
+    opt.selected = true;
+    select.appendChild(opt);
+  }
+
+  function quickAddDepartment() {
+    var name = document.getElementById("deptName").value.trim();
+    var description = document.getElementById("deptDesc").value.trim();
+    var errBox = document.getElementById("deptError");
+    errBox.innerText = "";
+    if (!name) { errBox.innerText = "Name is required."; return; }
+    postForm("{% url 'ajax_quick_add_department' %}", {name: name, description: description})
+      .then(function(data) {
+        if (!data.success) { errBox.innerText = data.error; return; }
+        addOptionAndSelect("id_department", data.id, data.name);
+        bootstrap.Modal.getInstance(document.getElementById("departmentModal")).hide();
+        document.getElementById("deptName").value = "";
+        document.getElementById("deptDesc").value = "";
+      })
+      .catch(function() { errBox.innerText = "Something went wrong. Try again."; });
+  }
+
+  function quickAddDesignation() {
+    var department = document.getElementById("desigDept").value;
+    var title = document.getElementById("desigTitle").value.trim();
+    var errBox = document.getElementById("desigError");
+    errBox.innerText = "";
+    if (!department || !title) { errBox.innerText = "Department and title are required."; return; }
+    postForm("{% url 'ajax_quick_add_designation' %}", {department: department, title: title})
+      .then(function(data) {
+        if (!data.success) { errBox.innerText = data.error; return; }
+        addOptionAndSelect("id_designation", data.id, data.name);
+        bootstrap.Modal.getInstance(document.getElementById("designationModal")).hide();
+        document.getElementById("desigTitle").value = "";
+      })
+      .catch(function() { errBox.innerText = "Something went wrong. Try again."; });
+  }
+
+  function quickAddJobType() {
+    var name = document.getElementById("jobTypeName").value.trim();
+    var probation_months = document.getElementById("jobTypeProbation").value;
+    var is_leave_eligible = document.getElementById("jobTypeLeaveEligible").checked ? "on" : "";
+    var has_benefits = document.getElementById("jobTypeBenefits").checked ? "on" : "";
+    var errBox = document.getElementById("jobTypeError");
+    errBox.innerText = "";
+    if (!name) { errBox.innerText = "Name is required."; return; }
+    postForm("{% url 'ajax_quick_add_job_type' %}", {
+      name: name, probation_months: probation_months,
+      is_leave_eligible: is_leave_eligible, has_benefits: has_benefits
+    })
+      .then(function(data) {
+        if (!data.success) { errBox.innerText = data.error; return; }
+        addOptionAndSelect("id_job_type", data.id, data.name);
+        bootstrap.Modal.getInstance(document.getElementById("jobTypeModal")).hide();
+        document.getElementById("jobTypeName").value = "";
+      })
+      .catch(function() { errBox.innerText = "Something went wrong. Try again."; });
+  }
+
+  function quickAddStaffCategory() {
+    var name = document.getElementById("staffCatName").value.trim();
+    var description = document.getElementById("staffCatDesc").value.trim();
+    var errBox = document.getElementById("staffCatError");
+    errBox.innerText = "";
+    if (!name) { errBox.innerText = "Name is required."; return; }
+    postForm("{% url 'ajax_quick_add_staff_category' %}", {name: name, description: description})
+      .then(function(data) {
+        if (!data.success) { errBox.innerText = data.error; return; }
+        addOptionAndSelect("id_staff_category", data.id, data.name);
+        bootstrap.Modal.getInstance(document.getElementById("staffCategoryModal")).hide();
+        document.getElementById("staffCatName").value = "";
+        document.getElementById("staffCatDesc").value = "";
+      })
+      .catch(function() { errBox.innerText = "Something went wrong. Try again."; });
+  }
 </script>
 {% endblock %}
