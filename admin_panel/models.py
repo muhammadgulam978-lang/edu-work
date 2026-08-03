@@ -208,6 +208,125 @@ class Admission(models.Model):
         # ❗ NO STUDENT CREATION HERE ANYMORE (This comment is part of the original logic)
         super().save(*args, **kwargs)
 
+
+class StudentAdmissionWorkflow(models.Model):
+    STATUS_DRAFT = 'DRAFT'
+    STATUS_PENDING = 'PENDING'
+    STATUS_APPROVED = 'APPROVED'
+    STATUS_REJECTED = 'REJECTED'
+    STATUS_CHOICES = [
+        (STATUS_DRAFT, 'Draft'),
+        (STATUS_PENDING, 'Pending Review'),
+        (STATUS_APPROVED, 'Approved'),
+        (STATUS_REJECTED, 'Rejected'),
+    ]
+
+    status = models.CharField(max_length=12, choices=STATUS_CHOICES, default=STATUS_DRAFT)
+    current_step = models.PositiveSmallIntegerField(default=1)
+    payload = models.JSONField(default=dict, blank=True)
+    student_username = models.CharField(max_length=150, blank=True)
+    student_password_hash = models.CharField(max_length=128, blank=True)
+    completeness = models.PositiveSmallIntegerField(default=0)
+    rejection_reason = models.TextField(blank=True)
+    last_error = models.TextField(blank=True)
+    admission = models.OneToOneField(
+        Admission, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='enrollment_workflow',
+    )
+    canonical_student = models.OneToOneField(
+        'student_profile.Student', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='admission_workflow',
+    )
+    initial_voucher_pk = models.PositiveBigIntegerField(null=True, blank=True)
+    created_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='created_admission_workflows',
+    )
+    updated_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='updated_admission_workflows',
+    )
+    approved_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='approved_admission_workflows',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    submitted_at = models.DateTimeField(null=True, blank=True)
+    approved_at = models.DateTimeField(null=True, blank=True)
+    enrolled_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-updated_at']
+
+    @property
+    def display_name(self):
+        return self.payload.get('name') or 'Unnamed applicant'
+
+    @property
+    def reference_number(self):
+        return self.payload.get('ref_no') or f'DRAFT-{self.pk or "NEW"}'
+
+    def __str__(self):
+        return f"{self.reference_number} - {self.display_name}"
+
+
+class AdmissionGuardian(models.Model):
+    workflow = models.ForeignKey(
+        StudentAdmissionWorkflow, on_delete=models.CASCADE, related_name='guardians'
+    )
+    existing_parent = models.ForeignKey(
+        'parent_dashboard.Parent', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='admission_guardian_drafts',
+    )
+    full_name = models.CharField(max_length=100)
+    relationship = models.CharField(max_length=40)
+    cnic = models.CharField(max_length=20, blank=True)
+    email = models.EmailField(blank=True)
+    phone = models.CharField(max_length=20, blank=True)
+    occupation = models.CharField(max_length=100, blank=True)
+    address = models.TextField(blank=True)
+    is_primary = models.BooleanField(default=False)
+    portal_access = models.BooleanField(default=True)
+    notifications_enabled = models.BooleanField(default=True)
+    username = models.CharField(max_length=150, blank=True)
+    password_hash = models.CharField(max_length=128, blank=True)
+
+    def __str__(self):
+        return f"{self.full_name} ({self.relationship})"
+
+
+class AdmissionDocument(models.Model):
+    DOCUMENT_CHOICES = [
+        ('B_FORM', 'B-Form'),
+        ('BIRTH_CERTIFICATE', 'Birth Certificate'),
+        ('GUARDIAN_CNIC', 'Guardian CNIC'),
+        ('PREVIOUS_REPORT', 'Previous School Report'),
+        ('TRANSFER_CERTIFICATE', 'Transfer Certificate'),
+        ('OTHER', 'Other'),
+    ]
+    workflow = models.ForeignKey(
+        StudentAdmissionWorkflow, on_delete=models.CASCADE, related_name='documents'
+    )
+    canonical_student = models.ForeignKey(
+        'student_profile.Student', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='admission_documents',
+    )
+    document_type = models.CharField(max_length=30, choices=DOCUMENT_CHOICES)
+    file = models.FileField(upload_to='admission_documents/%Y/%m/')
+    document_number = models.CharField(max_length=60, blank=True)
+    is_required = models.BooleanField(default=False)
+    verified = models.BooleanField(default=False)
+    uploaded_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['workflow', 'document_type'], name='unique_workflow_document_type'
+            )
+        ]
+
        
 class Subject(models.Model):
     GRADING_CHOICES = [
@@ -1812,4 +1931,4 @@ class DutyEvent(models.Model):
         ordering = ['-date']
 
     def __str__(self):
-        return f"{self.name} ({self.date})"     
+        return f"{self.name} ({self.date})"

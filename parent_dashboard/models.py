@@ -52,3 +52,28 @@ class Parent(models.Model):
         if self.user:
             self.user.delete()
         super().delete(*args, **kwargs)
+
+
+class StudentGuardian(models.Model):
+    parent = models.ForeignKey(Parent, on_delete=models.CASCADE, related_name='guardian_links')
+    student = models.ForeignKey(
+        'student_profile.Student', on_delete=models.CASCADE, related_name='guardian_links'
+    )
+    relationship = models.CharField(max_length=40)
+    is_primary = models.BooleanField(default=False)
+    portal_access = models.BooleanField(default=True)
+    notifications_enabled = models.BooleanField(default=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['parent', 'student'], name='unique_parent_student_guardian'
+            ),
+            models.UniqueConstraint(
+                fields=['student'], condition=models.Q(is_primary=True),
+                name='one_primary_guardian_per_student',
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.parent.full_name} - {self.student.name} ({self.relationship})"

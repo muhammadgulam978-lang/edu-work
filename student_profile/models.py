@@ -46,6 +46,14 @@ class Student(models.Model):
     date_of_birth = models.DateField()
     email         = models.EmailField(unique=True)
     photo         = models.ImageField(upload_to='student_photos/', blank=True, null=True)
+    nationality   = models.CharField(max_length=100, blank=True)
+    address       = models.TextField(blank=True)
+    blood_group   = models.CharField(max_length=5, blank=True)
+    medical_notes = models.TextField(blank=True)
+    emergency_contact_name = models.CharField(max_length=100, blank=True)
+    emergency_contact_phone = models.CharField(max_length=20, blank=True)
+    admission_date = models.DateField(null=True, blank=True)
+    previous_school = models.CharField(max_length=150, blank=True)
 
     def __str__(self):
         # ✅ FIX: class_name ki jagah class_fk use karo

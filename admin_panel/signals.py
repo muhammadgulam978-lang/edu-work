@@ -110,23 +110,23 @@ def assign_group_on_creation(sender, instance, created, **kwargs):
     if instance.is_superuser:
         group, _ = Group.objects.get_or_create(name="Admin")
         instance.groups.add(group)
-        print(f"✅ Superuser '{instance.username}' added to Admin group")
+        print(f"Superuser '{instance.username}' added to Admin group")
 
     # 🔹 Normal users → assign based on name
     elif "teacher" in username:
         group, _ = Group.objects.get_or_create(name="Teacher")
         instance.groups.add(group)
-        print(f"👨‍🏫 {instance.username} added to Teacher group")
+        print(f"{instance.username} added to Teacher group")
 
     elif "student" in username:
         group, _ = Group.objects.get_or_create(name="Student")
         instance.groups.add(group)
-        print(f"🎓 {instance.username} added to Student group")
+        print(f"{instance.username} added to Student group")
 
     elif "parent" in username:
         group, _ = Group.objects.get_or_create(name="Parent")
         instance.groups.add(group)
-        print(f"👨‍👩‍👧 {instance.username} added to Parent group")
+        print(f"{instance.username} added to Parent group")
 
 
 # from django.db.models.signals import post_save
