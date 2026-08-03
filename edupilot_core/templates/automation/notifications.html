@@ -8,11 +8,13 @@
     <div class="stat-card"><div class="ic" style="background:#ef4444;"><i class="fa fa-xmark"></i></div><div><div class="num">{{ failed }}</div><div class="lbl">Failed</div></div></div>
 </div>
 
-<form method="post" style="margin-bottom:22px;">
+<form method="post" class="js-start-automation" style="margin-bottom:22px;">
     {% csrf_token %}
     <input type="hidden" name="action" value="send_notifications">
     <button type="submit" class="btn-teal">Send Pending Notifications</button>
 </form>
+
+{% include 'automation/_progress_tracker.html' %}
 
 <div class="card">
     <h3>Recent Notification Queue</h3>
@@ -31,7 +33,7 @@
     </table>
 </div>
 
-<form method="post" style="margin-bottom:22px;">
+<form method="post" class="js-start-automation" style="margin-bottom:22px;">
     {% csrf_token %}
     <input type="hidden" name="action" value="send_notifications">
     <button type="submit" class="btn-teal">Send Pending Notifications</button>

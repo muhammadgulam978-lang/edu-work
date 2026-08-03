@@ -104,6 +104,7 @@ urlpatterns = [
     path('announcements/', announcement_views.automation_announcements, name='automation-announcements'),
     path('', views.automation_dashboard, name='automation-dashboard'),
     path('graph-data/', views.automation_graph_data, name='automation-graph-data'),
+    path('progress/<int:run_id>/', views.automation_progress_status, name='automation-progress-status'),
     path('fee/', views.fee_automation_view, name='fee-automation'),
     path('vouchers/', views.voucher_management_view, name='voucher-management'),
     path('notifications/', views.notification_queue_view, name='notification-queue'),

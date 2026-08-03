@@ -12,6 +12,7 @@ from .models import (
 from student_profile.models import Student as PortalStudent
 from teacher_dashboard.models import Teacher as PortalTeacher
 from .canonical_sync import ensure_legacy_student, ensure_legacy_teacher
+from .progress import AutomationProgressService
 from reportlab.pdfgen import canvas
 from django.conf import settings
 import os
@@ -177,19 +178,47 @@ class NotificationService:
 
 class NotificationDispatcherService:
     @staticmethod
-    def send_pending_notifications():
-        for notif in NotificationQueue.objects.filter(status='PENDING'):
+    def send_pending_notifications(progress_run_id=None):
+        notifications = NotificationQueue.objects.filter(status='PENDING').select_related(
+            'student', 'teacher', 'canonical_student', 'canonical_teacher'
+        )
+        for notif in notifications:
+            recipient = notif.canonical_student or notif.student or notif.canonical_teacher or notif.teacher
+            recipient_name = getattr(recipient, 'name', None) or getattr(recipient, 'full_name', None) or 'Unassigned recipient'
+            recipient_identifier = (
+                getattr(recipient, 'student_id', None) or getattr(recipient, 'admission_number', None) or
+                getattr(recipient, 'teacher_id', None) or ''
+            )
+            if progress_run_id:
+                AutomationProgressService.set_current(
+                    progress_run_id, recipient_name, recipient_identifier,
+                    status='PROCESSING', channel=notif.notification_type,
+                )
             try:
                 print(f"--- Sending SMS to {notif.student}: {notif.content} ---")
                 notif.status = 'SENT'
-                notif.save()
+                notif.save(update_fields=['status'])
+                if progress_run_id:
+                    AutomationProgressService.record(
+                        progress_run_id, recipient_name, recipient_identifier,
+                        status='SENT', channel=notif.notification_type,
+                        message='Notification sent.',
+                    )
             except Exception as e:
                 notif.status = 'FAILED'
-                notif.save()
+                notif.save(update_fields=['status'])
+                if progress_run_id:
+                    AutomationProgressService.record(
+                        progress_run_id, recipient_name, recipient_identifier,
+                        status='FAILED', channel=notif.notification_type,
+                        message=str(e),
+                    )
+        if progress_run_id:
+            AutomationProgressService.complete(progress_run_id)
 
 class FeeGenerationService:
     @staticmethod
-    def generate_monthly_fees(month_name, year, job_id=None):
+    def generate_monthly_fees(month_name, year, job_id=None, progress_run_id=None):
         """
         Generate monthly fee vouchers for all active students
         """
@@ -212,8 +241,14 @@ class FeeGenerationService:
         print(f"Total Active Students: {students.count()}\n")
 
         for canonical_student in students:
-            student = ensure_legacy_student(canonical_student)
+            student_name = canonical_student.name
+            student_identifier = canonical_student.student_id
+            if progress_run_id:
+                AutomationProgressService.set_current(
+                    progress_run_id, student_name, student_identifier, status='PROCESSING'
+                )
             try:
+                student = ensure_legacy_student(canonical_student)
                 # ✅ CHECK 1: Prevent duplicate vouchers
                 existing = FeeVoucher.objects.filter(
                     month=month_name,
@@ -224,6 +259,11 @@ class FeeGenerationService:
                 
                 if existing:
                     print(f"SKIP: {student.full_name} - Voucher already exists")
+                    if progress_run_id:
+                        AutomationProgressService.record(
+                            progress_run_id, student_name, student_identifier,
+                            status='SKIPPED', message='Voucher already exists for this period.',
+                        )
                     continue
                 
                 # ✅ CHECK 2: Get fee assignment
@@ -329,6 +369,11 @@ class FeeGenerationService:
                     
                     success_count += 1
                     print(f"SUCCESS: {student.full_name}: Rs.{net_amount} (Voucher: {voucher.voucher_no})")
+                    if progress_run_id:
+                        AutomationProgressService.record(
+                            progress_run_id, student_name, student_identifier,
+                            status='COMPLETED', message=f'Voucher {voucher.voucher_no} generated.',
+                        )
                     
             except Exception as e:
                 failed_count += 1
@@ -342,6 +387,11 @@ class FeeGenerationService:
                         canonical_student=canonical_student,
                         status='FAILED',
                         error_message=error_msg
+                    )
+                if progress_run_id:
+                    AutomationProgressService.record(
+                        progress_run_id, student_name, student_identifier,
+                        status='FAILED', message=error_msg,
                     )
         
         # ✅ FINALIZE LOG
@@ -360,6 +410,9 @@ class FeeGenerationService:
             job.failed_count = failed_count
             job.completed_at = timezone.now()
             job.save()
+
+        if progress_run_id:
+            AutomationProgressService.complete(progress_run_id)
         
         print(f"\n{'='*60}")
         print(f"COMPLETED: {success_count} Success | {failed_count} Failed")
@@ -461,21 +514,34 @@ class FeeGenerationService:
 
 class SalaryAutomationService:
     @staticmethod
-    def generate_salaries(month=None, year=None):
+    def generate_salaries(month=None, year=None, progress_run_id=None):
         month = month or datetime.now().strftime("%B")
         year = year or datetime.now().year
 
         # Duplicate Protection
         if SalaryVoucher.objects.filter(month=month, year=year).exists():
             print("SKIP: Salary already generated for this month")
+            if progress_run_id:
+                AutomationProgressService.record(
+                    progress_run_id, 'Salary generation', f'{month} {year}', status='SKIPPED',
+                    message='Salary vouchers already exist for this period.',
+                )
+                AutomationProgressService.complete(progress_run_id)
             return
 
         job = SalaryAutomationJob.objects.create(status='RUNNING')
         teachers = PortalTeacher.objects.filter(status='active').select_related('user', 'employee')
         
         for canonical_teacher in teachers:
-            teacher = ensure_legacy_teacher(canonical_teacher)
+            teacher_name = canonical_teacher.name
+            teacher_identifier = canonical_teacher.email or ''
+            if progress_run_id:
+                AutomationProgressService.set_current(
+                    progress_run_id, teacher_name, teacher_identifier, status='PROCESSING'
+                )
+            teacher = None
             try:
+                teacher = ensure_legacy_teacher(canonical_teacher)
                 # Calculate total earnings
                 earnings = money(teacher.basic_salary) + \
                           money(teacher.house_allowance) + \
@@ -508,21 +574,35 @@ class SalaryAutomationService:
                 SalaryPDFGeneratorService.generate_salary_pdf(voucher)
                 job.success_count += 1
                 print(f"SUCCESS: {teacher.name}: Rs.{net_salary}")
+                if progress_run_id:
+                    AutomationProgressService.record(
+                        progress_run_id, teacher_name, teacher_identifier,
+                        status='COMPLETED', message=f'Salary voucher generated for {month} {year}.',
+                    )
                 
             except Exception as e:
                 job.failed_count += 1
-                SalaryAutomationJobDetail.objects.create(
-                    job=job, 
-                    teacher=teacher,
-                    canonical_teacher=canonical_teacher,
-                    status='FAILED', 
-                    error_message=str(e)
-                )
-                print(f"FAILED: {teacher.name}: {str(e)}")
+                if teacher:
+                    SalaryAutomationJobDetail.objects.create(
+                        job=job,
+                        teacher=teacher,
+                        canonical_teacher=canonical_teacher,
+                        status='FAILED',
+                        error_message=str(e)
+                    )
+                print(f"FAILED: {teacher_name}: {str(e)}")
+                if progress_run_id:
+                    AutomationProgressService.record(
+                        progress_run_id, teacher_name, teacher_identifier,
+                        status='FAILED', message=str(e),
+                    )
         
         job.status = 'COMPLETED'
         job.completed_at = timezone.now()
         job.save()
+
+        if progress_run_id:
+            AutomationProgressService.complete(progress_run_id)
         
         print(f"Salary generation: {job.success_count} success, {job.failed_count} failed")
 from edupilot_core.models import Fixture, Absence, Period, Teacher, NotificationQueue

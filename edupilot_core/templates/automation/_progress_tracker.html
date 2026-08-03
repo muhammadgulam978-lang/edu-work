@@ -1,0 +1,56 @@
+<section
+    class="automation-progress"
+    data-automation-progress
+    data-progress-run="{{ progress_run_id|default:'' }}"
+    data-progress-url-template="{% url 'automation-progress-status' 0 %}"
+    aria-live="polite"
+    hidden
+>
+    <div class="automation-progress__header">
+        <div>
+            <p class="automation-progress__eyebrow">Live automation tracking</p>
+            <h3 data-progress-label>Automation job</h3>
+        </div>
+        <span class="automation-progress__status" data-progress-status>Pending</span>
+    </div>
+
+    <div class="automation-progress__bar-row">
+        <div class="automation-progress__bar" aria-label="Automation progress">
+            <span data-progress-bar></span>
+        </div>
+        <strong data-progress-percent>0%</strong>
+        <span class="automation-progress__eta" data-progress-eta>Preparing job</span>
+    </div>
+
+    <div class="automation-progress__metrics">
+        <div><span>Total</span><strong data-progress-total>0</strong></div>
+        <div><span>Processed</span><strong data-progress-processed>0</strong></div>
+        <div><span>Remaining</span><strong data-progress-remaining>0</strong></div>
+        <div class="is-success"><span>Successful</span><strong data-progress-success>0</strong></div>
+        <div class="is-danger"><span>Failed</span><strong data-progress-failed>0</strong></div>
+        <div class="is-muted"><span>Skipped</span><strong data-progress-skipped>0</strong></div>
+    </div>
+
+    <div class="automation-progress__content">
+        <article class="automation-progress__current">
+            <span class="automation-progress__icon"><i class="fa-solid fa-user-gear"></i></span>
+            <div>
+                <p>Current processing item</p>
+                <h4 data-progress-current-name>Waiting for the next record</h4>
+                <small data-progress-current-meta>—</small>
+            </div>
+            <span class="automation-progress__current-status" data-progress-current-status>Pending</span>
+        </article>
+
+        <article class="automation-progress__feed-wrap">
+            <div class="automation-progress__feed-title">
+                <span>Live activity</span>
+                <small>Newest first</small>
+            </div>
+            <ol class="automation-progress__feed" data-progress-feed>
+                <li class="automation-progress__empty">Waiting for activity…</li>
+            </ol>
+        </article>
+    </div>
+    <p class="automation-progress__error" data-progress-error hidden></p>
+</section>

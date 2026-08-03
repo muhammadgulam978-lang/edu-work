@@ -8,11 +8,13 @@
     <div class="stat-card"><div class="ic" style="background:#16a34a;"><i class="fa fa-percent"></i></div><div><div class="num">{{ download_rate }}%</div><div class="lbl">Paid Rate</div></div></div>
 </div>
 
-<form method="post" style="margin-bottom:22px;">
+<form method="post" class="js-start-automation" style="margin-bottom:22px;">
     {% csrf_token %}
     <input type="hidden" name="action" value="generate_fees">
     <button type="submit" class="btn-teal">Generate This Month's Vouchers</button>
 </form>
+
+{% include 'automation/_progress_tracker.html' %}
 
 <div class="card">
     <h3>Recent Vouchers</h3>

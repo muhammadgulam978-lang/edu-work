@@ -11,7 +11,7 @@
 <div class="grid-2">
     <div class="card">
         <h3>Generate Salaries Manually</h3>
-        <form method="post">
+        <form method="post" class="js-start-automation">
             {% csrf_token %}
             <input type="hidden" name="action" value="generate_salaries">
             <label>Month</label><br>
@@ -36,6 +36,8 @@
         </form>
     </div>
 </div>
+
+{% include 'automation/_progress_tracker.html' %}
 
 <div class="card">
     <h3>Recent Salary Vouchers</h3>

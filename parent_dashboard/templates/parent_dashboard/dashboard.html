@@ -9,6 +9,7 @@
 {% endblock %}
 
 {% block content %}
+{% include 'voucher_portal/_dashboard_popup.html' with vouchers_url_name='parent_vouchers' voucher_summary_url_name='parent_voucher_summary' %}
 
 <div class="col-12">
   <div class="card" style="background: #f8f9fa; margin-left: 20px; margin-right: 20px;">

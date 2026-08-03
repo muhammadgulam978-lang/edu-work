@@ -3,8 +3,15 @@
 
 from django.urls import include, path
 from student_profile import views
+from edupilot_core import voucher_portal
 
 urlpatterns = [
+    path('vouchers/', voucher_portal.portal_vouchers, {'portal_role': 'STUDENT'}, name='student_vouchers'),
+    path('vouchers/summary/', voucher_portal.voucher_summary, {'portal_role': 'STUDENT'}, name='student_voucher_summary'),
+    path('vouchers/<int:delivery_id>/view/', voucher_portal.voucher_view, {'portal_role': 'STUDENT'}, name='student_voucher_view'),
+    path('vouchers/<int:delivery_id>/download/', voucher_portal.voucher_download, {'portal_role': 'STUDENT'}, name='student_voucher_download'),
+    path('vouchers/<int:delivery_id>/dismiss/', voucher_portal.voucher_dismiss, {'portal_role': 'STUDENT'}, name='student_voucher_dismiss'),
+    path('notifications/<int:notification_id>/read/', voucher_portal.notification_read, {'portal_role': 'STUDENT'}, name='student_notification_read'),
     path('announcements/', views.student_announcements, name='student_announcements'),
 
     # ── Dashboard ──

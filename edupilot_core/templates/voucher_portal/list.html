@@ -1,0 +1,85 @@
+{% extends base_template %}
+{% load static %}
+
+{% block title %}Fee Vouchers{% endblock %}
+
+{% block head %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'admin_panel/css/portal-vouchers.css' %}?v=portal-vouchers-1">
+{% endblock %}
+
+{% block content %}
+<main class="voucher-page">
+    <header class="voucher-page__header">
+        <div>
+            <p class="voucher-page__eyebrow">Finance / Fee Vouchers</p>
+            <h1>Fee Vouchers</h1>
+            <p>View and download current and previously generated fee vouchers.</p>
+        </div>
+        <div class="voucher-page__unread">
+            <i class="fas fa-bell"></i>
+            <span><strong>{{ unread_count }}</strong> unread</span>
+        </div>
+    </header>
+
+    <section class="voucher-page__notifications" aria-labelledby="voucher-notifications-title">
+        <div class="voucher-section-heading">
+            <div>
+                <h2 id="voucher-notifications-title">Notifications</h2>
+                <p>Voucher updates for your portal account.</p>
+            </div>
+        </div>
+        <div class="voucher-notification-list">
+            {% for notification in notifications %}
+            <article class="voucher-notification {% if not notification.is_read %}is-unread{% endif %}">
+                <span class="voucher-notification__icon"><i class="fas fa-file-invoice-dollar"></i></span>
+                <div>
+                    <h3>{{ notification.title }}</h3>
+                    <p>{{ notification.message }}</p>
+                    <small>{{ notification.created_at|date:"d M Y, h:i A" }}{% if notification.related_student %} · {{ notification.related_student.name }}{% endif %}</small>
+                </div>
+            </article>
+            {% empty %}
+            <div class="voucher-empty">No voucher notifications yet.</div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="voucher-page__records" aria-labelledby="voucher-records-title">
+        <div class="voucher-section-heading">
+            <div>
+                <h2 id="voucher-records-title">Voucher History</h2>
+                <p>Every voucher delivered to this account is retained here.</p>
+            </div>
+            <span>{{ deliveries|length }} voucher{{ deliveries|length|pluralize }}</span>
+        </div>
+        <div class="voucher-table-wrap">
+            <table class="voucher-table">
+                <thead><tr><th>Student</th><th>Voucher</th><th>Due date</th><th>Amount</th><th>Status</th><th>Tracking</th><th>Actions</th></tr></thead>
+                <tbody>
+                {% for delivery in deliveries %}
+                    <tr>
+                        <td><strong>{{ delivery.related_student.name }}</strong><small>{{ delivery.related_student.student_id }}</small></td>
+                        <td>{{ delivery.voucher.month }} {{ delivery.voucher.year }}<small>{{ delivery.voucher.voucher_no }}</small></td>
+                        <td>{{ delivery.voucher.due_date|date:"d M Y" }}</td>
+                        <td>PKR {{ delivery.voucher.net_amount|floatformat:2 }}</td>
+                        <td><span class="voucher-status voucher-status--{{ delivery.voucher.status|lower }}">{{ delivery.voucher.get_status_display }}</span></td>
+                        <td class="voucher-tracking">
+                            <span class="{% if delivery.viewed_at %}is-complete{% endif %}"><i class="fas fa-eye"></i> Viewed</span>
+                            <span class="{% if delivery.downloaded_at %}is-complete{% endif %}"><i class="fas fa-download"></i> Downloaded</span>
+                            <small>Delivered {{ delivery.delivered_at|date:"d M Y, h:i A" }}</small>
+                        </td>
+                        <td class="voucher-actions">
+                            <a class="edu-icon-btn" href="{% url route_names.view delivery.pk %}" target="_blank" title="View PDF"><i class="fas fa-eye"></i></a>
+                            <a class="edu-icon-btn" href="{% url route_names.download delivery.pk %}" title="Download PDF"><i class="fas fa-download"></i></a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="7"><div class="voucher-empty">No fee vouchers have been delivered to this account.</div></td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>
+{% endblock %}

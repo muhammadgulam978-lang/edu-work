@@ -5,6 +5,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Sum
+from django.urls import reverse
 from django.views.decorators.csrf import csrf_protect
 from django.utils import timezone
 from datetime import date, datetime, timedelta
@@ -14,14 +15,29 @@ from .models import (
     Student, Transaction, Teacher, Staff, StudentPerformance, FeeVoucher,
     AutomationJob, AutomationJobDetail, get_dashboard_stats, StudentBalance,
     NotificationQueue, SalaryVoucher, FeeGenerationSettings, FeeGenerationLog,
-    SalaryAutomationSettings, SalaryAutomationJob, SalaryAutomationJobDetail
+    SalaryAutomationSettings, SalaryAutomationJob, SalaryAutomationJobDetail,
+    AutomationProgressRun,
 )
 from .forms import StudentRegistrationForm
 from .services import FeeGenerationService, SalaryAutomationService, NotificationDispatcherService
+from .automation_runner import start_fee_generation, start_notification_dispatch, start_salary_generation
+from .progress import AutomationProgressService
 from .crud_config import CRUD_REGISTRY
 from .canonical_sync import ensure_legacy_student, ensure_legacy_teacher
 from student_profile.models import Student as PortalStudent
 from teacher_dashboard.models import Teacher as PortalTeacher
+
+
+def _automation_run_response(request, run, redirect_name):
+    payload = {
+        'run_id': run.id,
+        'status': run.status,
+        'status_url': reverse('automation-progress-status', args=[run.id]),
+    }
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return JsonResponse(payload, status=202)
+    messages.info(request, f'{run.label} started. Live progress is shown below.')
+    return redirect(f"{reverse(redirect_name)}?run={run.id}")
 
 
 def _build_fee_collection_chart(period='this_month', start_date=None, end_date=None):
@@ -443,6 +459,9 @@ def automation_dashboard(request):
     last_fee_job = AutomationJob.objects.order_by('-started_at').first()
     last_salary_job = SalaryAutomationJob.objects.order_by('-started_at').first()
     last_notif = NotificationQueue.objects.order_by('-created_at').first()
+    active_progress_run = AutomationProgressRun.objects.filter(
+        status__in=['PENDING', 'RUNNING']
+    ).order_by('-started_at').first()
 
     total_collected_value = FeeVoucher.objects.filter(status='PAID').aggregate(Sum('net_amount'))['net_amount__sum'] or 0
     total_pending_value = FeeVoucher.objects.exclude(status='PAID').aggregate(Sum('net_amount'))['net_amount__sum'] or 0
@@ -547,6 +566,7 @@ def automation_dashboard(request):
         'recent_notifications': recent_notifications,
         'action_cards': action_cards,
         'crud_module_cards': crud_module_cards,
+        'progress_run_id': request.GET.get('run') or (active_progress_run.id if active_progress_run else ''),
     }
     return render(request, 'automation/dashboard.html', context)
 
@@ -577,6 +597,14 @@ def automation_graph_data(request):
     })
 
 
+@login_required
+def automation_progress_status(request, run_id):
+    try:
+        return JsonResponse(AutomationProgressService.snapshot(run_id))
+    except AutomationProgressRun.DoesNotExist:
+        return JsonResponse({'detail': 'Automation progress run was not found.'}, status=404)
+
+
 def fee_automation_view(request):
     fee_settings = FeeGenerationSettings.objects.first() or FeeGenerationSettings.objects.create()
 
@@ -595,9 +623,8 @@ def fee_automation_view(request):
                 today = date.today()
                 month_name = request.POST.get('fee_month') or today.strftime('%B')
                 year = int(request.POST.get('fee_year') or today.year)
-                job = AutomationJob.objects.create(job_type='MANUAL_GENERATION', status='PENDING')
-                count = FeeGenerationService.generate_monthly_fees(month_name, year, job_id=job.id)
-                messages.success(request, f'{count} fee voucher(s) generated.')
+                run = start_fee_generation(month_name, year)
+                return _automation_run_response(request, run, 'fee-automation')
         except Exception as e:
             messages.error(request, f'Action failed: {str(e)}')
         return redirect('fee-automation')
@@ -626,6 +653,7 @@ def fee_automation_view(request):
         'months': ['January','February','March','April','May','June','July','August','September','October','November','December'],
         'current_month': date.today().strftime('%B'),
         'current_year': date.today().year,
+        'progress_run_id': request.GET.get('run', ''),
     }
     return render(request, 'automation/fee.html', context)
 
@@ -633,10 +661,8 @@ def fee_automation_view(request):
 def voucher_management_view(request):
     if request.method == 'POST' and request.POST.get('action') == 'generate_fees':
         today = date.today()
-        job = AutomationJob.objects.create(job_type='MANUAL_GENERATION', status='PENDING')
-        count = FeeGenerationService.generate_monthly_fees(today.strftime('%B'), today.year, job_id=job.id)
-        messages.success(request, f'{count} voucher(s) generated.')
-        return redirect('voucher-management')
+        run = start_fee_generation(today.strftime('%B'), today.year, job_type='MANUAL_VOUCHER_GENERATION')
+        return _automation_run_response(request, run, 'voucher-management')
 
     total_vouchers = FeeVoucher.objects.count()
     paid = FeeVoucher.objects.filter(status='PAID').count()
@@ -646,16 +672,15 @@ def voucher_management_view(request):
     context = {
         'total_vouchers': total_vouchers, 'downloaded': paid, 'pending': pending, 'download_rate': download_rate,
         'recent_vouchers': FeeVoucher.objects.select_related('student').order_by('-id')[:15],
+        'progress_run_id': request.GET.get('run', ''),
     }
     return render(request, 'automation/vouchers.html', context)
 
 
 def notification_queue_view(request):
     if request.method == 'POST' and request.POST.get('action') == 'send_notifications':
-        pending_count = NotificationQueue.objects.filter(status='PENDING').count()
-        NotificationDispatcherService.send_pending_notifications()
-        messages.success(request, f'{pending_count} pending notification(s) processed.')
-        return redirect('notification-queue')
+        run = start_notification_dispatch()
+        return _automation_run_response(request, run, 'notification-queue')
 
     context = {
         'total_queued': NotificationQueue.objects.count(),
@@ -664,6 +689,7 @@ def notification_queue_view(request):
         'push_queued': 0,
         'failed': NotificationQueue.objects.filter(status='FAILED').count(),
         'recent_queue': NotificationQueue.objects.order_by('-created_at')[:15],
+        'progress_run_id': request.GET.get('run', ''),
     }
     return render(request, 'automation/notifications.html', context)
 
@@ -686,8 +712,8 @@ def salary_automation_view(request):
                 today = date.today()
                 month_name = request.POST.get('salary_month') or today.strftime('%B')
                 year = int(request.POST.get('salary_year') or today.year)
-                SalaryAutomationService.generate_salaries(month_name, year)
-                messages.success(request, 'Salary generation completed.')
+                run = start_salary_generation(month_name, year)
+                return _automation_run_response(request, run, 'salary-automation')
         except Exception as e:
             messages.error(request, f'Action failed: {str(e)}')
         return redirect('salary-automation')
@@ -703,6 +729,7 @@ def salary_automation_view(request):
         'months': ['January','February','March','April','May','June','July','August','September','October','November','December'],
         'current_month': this_month,
         'current_year': date.today().year,
+        'progress_run_id': request.GET.get('run', ''),
     }
     return render(request, 'automation/salary.html', context)
 

@@ -2,6 +2,8 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login
 from django.contrib import messages
 from django.contrib.auth.models import User
+from django.conf import settings
+from django.urls import reverse
 from django.views.decorators.cache import never_cache
 
 
@@ -49,6 +51,43 @@ ROLE_LOGIN_CONFIG = {
 }
 
 
+def _split_host(request):
+    host = request.get_host()
+    if host.count(":") == 1:
+        return host.rsplit(":", 1)
+    return host, ""
+
+
+def _portal_login_url(request, role):
+    hostname, port = _split_host(request)
+    hostname = hostname.lower()
+    local_host = (
+        hostname in {"127.0.0.1", "localhost"}
+        or hostname.endswith(".localhost")
+    )
+
+    if local_host:
+        portal_host = f"{role}.localhost"
+    elif settings.PORTAL_BASE_DOMAIN:
+        portal_host = f"{role}.{settings.PORTAL_BASE_DOMAIN}"
+    else:
+        return reverse(f"login_{role}")
+
+    scheme = settings.PORTAL_SCHEME or request.scheme
+    port_suffix = f":{port}" if port else ""
+    return f"{scheme}://{portal_host}{port_suffix}{reverse(f'login_{role}')}"
+
+
+def _portal_selector_url(request):
+    hostname, port = _split_host(request)
+    hostname = hostname.lower()
+    if hostname in {"127.0.0.1", "localhost"} or hostname.endswith(".localhost"):
+        scheme = settings.PORTAL_SCHEME or request.scheme
+        port_suffix = f":{port}" if port else ""
+        return f"{scheme}://localhost{port_suffix}{reverse('login')}"
+    return reverse("login")
+
+
 def _user_has_role(user, role):
     config = ROLE_LOGIN_CONFIG[role]
     if role == "admin" and user.is_superuser:
@@ -81,6 +120,10 @@ def role_select_view(request):
                 return redirect(ROLE_LOGIN_CONFIG[role]["dashboard"])
     return render(request, "registration/role_select.html", {
         "roles": ROLE_LOGIN_CONFIG,
+        "admin_login_url": _portal_login_url(request, "admin"),
+        "teacher_login_url": _portal_login_url(request, "teacher"),
+        "student_login_url": _portal_login_url(request, "student"),
+        "parent_login_url": _portal_login_url(request, "parent"),
     })
 
 
@@ -88,6 +131,12 @@ def role_select_view(request):
 def role_login_view(request, role):
     if role not in ROLE_LOGIN_CONFIG:
         return redirect("login")
+
+    portal_url = _portal_login_url(request, role)
+    if portal_url.startswith(("http://", "https://")):
+        expected_host = portal_url.split("/", 3)[2].lower()
+        if request.get_host().lower() != expected_host:
+            return redirect(portal_url)
 
     config = ROLE_LOGIN_CONFIG[role]
 
@@ -115,6 +164,7 @@ def role_login_view(request, role):
     return render(request, "registration/role_login.html", {
         "role": role,
         "config": config,
+        "portal_selector_url": _portal_selector_url(request),
     })
 
 

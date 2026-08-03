@@ -3,7 +3,7 @@
 
 {% block title %}{{ page_title }} | EduPilot{% endblock %}
 {% block head %}
-<link rel="stylesheet" href="{% static 'communication/communication.css' %}?v=communication-7">
+<link rel="stylesheet" href="{% static 'communication/communication.css' %}?v=communication-8">
 {% endblock %}
 
 {% block content %}
@@ -13,6 +13,7 @@
       data-poll-url="{% if active_conversation %}{% url 'communication:poll' active_conversation.id %}{% endif %}"
       data-updates-url="{% url 'communication:updates' %}"
       data-heartbeat-url="{% url 'communication:heartbeat' %}"
+      data-websocket-url="{% if active_conversation %}/ws/communication/{{ active_conversation.id }}/{% endif %}"
       data-action-template="/communication/messages/0/action/">
   <header class="communication-heading">
     <div>
@@ -59,10 +60,17 @@
         <i class="fas fa-search"></i>
         <input id="conversation-search" type="search" placeholder="Search conversations" autocomplete="off">
       </label>
+      <nav class="communication-inbox-filters" aria-label="Conversation filters">
+        <a href="{% url 'communication:inbox' %}" {% if view_filter == 'inbox' %}class="is-active"{% endif %}>Inbox</a>
+        <a href="{% url 'communication:inbox' %}?view=unread" {% if view_filter == 'unread' %}class="is-active"{% endif %}>Unread</a>
+        <a href="{% url 'communication:inbox' %}?view=sent" {% if view_filter == 'sent' %}class="is-active"{% endif %}>Sent</a>
+        <a href="{% url 'communication:inbox' %}?view=archived" {% if view_filter == 'archived' %}class="is-active"{% endif %}>Archived</a>
+      </nav>
       <div class="communication-conversations" id="conversation-list">
         {% for conversation in conversations %}
         <a href="{% url 'communication:inbox' %}?conversation={{ conversation.id }}"
            class="communication-conversation {% if active_conversation.id == conversation.id %}is-active{% endif %}"
+           data-conversation-id="{{ conversation.id }}"
            data-conversation-name="{{ conversation.name|lower }}">
           <span class="communication-avatar {% if conversation.is_group %}is-group{% endif %}">
             {% if conversation.is_group %}<i class="fas fa-users"></i>{% else %}{{ conversation.name|slice:":1"|upper }}{% endif %}
@@ -94,6 +102,9 @@
           <span id="presence-label">{% if active_conversation.is_group %}{{ active_conversation.memberships.count }} members{% else %}Secure conversation{% endif %}</span>
         </div>
         <div class="communication-chat-tools">
+          {% if view_filter == 'archived' %}
+          <button type="button" title="Restore conversation" aria-label="Restore conversation" data-conversation-action="restore"><i class="fas fa-undo" aria-hidden="true"></i></button>
+          {% endif %}
           <button type="button" title="Mute conversation" aria-label="Mute conversation" data-conversation-action="mute"><i class="fas fa-bell-slash" aria-hidden="true"></i></button>
           <button type="button" title="Archive conversation" aria-label="Archive conversation" data-conversation-action="archive"><i class="fas fa-archive" aria-hidden="true"></i></button>
           {% if not active_conversation.is_group %}
@@ -107,6 +118,13 @@
         <article class="communication-message {% if message.mine %}is-mine{% endif %}" data-message-id="{{ message.id }}">
           <div class="communication-bubble {% if message.deleted %}is-deleted{% endif %}">
             {% if not message.mine %}<strong>{{ message.sender }}</strong>{% endif %}
+            {% if message.reply_to %}
+            <aside class="communication-reply-context">
+              <strong>{{ message.reply_to.sender }}</strong>
+              <span>{{ message.reply_to.content }}</span>
+            </aside>
+            {% endif %}
+            {% if message.forwarded_from %}<small class="communication-forwarded"><i class="fas fa-share"></i> Forwarded</small>{% endif %}
             <p>{{ message.content }}</p>
             {% if message.attachment_url %}
             <a class="communication-attachment" href="{{ message.attachment_url }}" target="_blank" rel="noopener">
@@ -117,12 +135,18 @@
           <footer>
             <time>{{ message.created_at }}</time>
             {% if message.edited %}<span>Edited</span>{% endif %}
-            {% if message.mine %}<span>{{ message.status|title }}</span>{% endif %}
+            {% if message.mine %}<span data-message-status title="{% if message.read_at %}Read {{ message.read_at }}{% elif message.delivered_at %}Delivered {{ message.delivered_at }}{% endif %}">{{ message.status|title }}</span>{% endif %}
             {% if message.pinned %}<i class="fas fa-star" title="Pinned"></i>{% endif %}
             {% if not message.deleted %}
             <button type="button" data-message-action="react" data-emoji="👍" title="React">👍</button>
+            <button type="button" data-message-action="reply" title="Reply" aria-label="Reply"><i class="fas fa-reply" aria-hidden="true"></i></button>
+            <button type="button" data-message-action="copy" title="Copy message" aria-label="Copy message"><i class="fas fa-copy" aria-hidden="true"></i></button>
+            <button type="button" data-message-action="forward-open" title="Forward message" aria-label="Forward message"><i class="fas fa-share" aria-hidden="true"></i></button>
             <button type="button" data-message-action="pin" title="Pin message" aria-label="Pin message"><i class="fas fa-thumbtack" aria-hidden="true"></i></button>
-            {% if message.mine %}<button type="button" data-message-action="delete" title="Delete message" aria-label="Delete message"><i class="fas fa-trash-alt" aria-hidden="true"></i></button>{% endif %}
+            {% if message.mine %}
+            <button type="button" data-message-action="edit" title="Edit message" aria-label="Edit message"><i class="fas fa-edit" aria-hidden="true"></i></button>
+            <button type="button" data-message-action="delete" title="Delete message" aria-label="Delete message"><i class="fas fa-trash-alt" aria-hidden="true"></i></button>
+            {% endif %}
             {% endif %}
           </footer>
         </article>
@@ -135,15 +159,29 @@
         {% endfor %}
       </div>
       <div class="communication-typing" id="typing-label" hidden>Typing...</div>
+      <div class="communication-compose-context" id="reply-context" hidden>
+        <span><strong>Replying to <b id="reply-name"></b></strong><small id="reply-copy"></small></span>
+        <button type="button" id="cancel-reply" title="Cancel reply" aria-label="Cancel reply"><i class="fas fa-times"></i></button>
+      </div>
       <form class="communication-compose" id="message-form" enctype="multipart/form-data">
         {% csrf_token %}
+        <input type="hidden" name="reply_to_id" id="reply-to-id">
         <label class="communication-attach" title="Attach a file">
           <i class="fas fa-paperclip"></i>
           <input type="file" name="attachment" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.png,.jpg,.jpeg,.gif,.txt,.zip">
         </label>
+        <button type="button" class="communication-emoji-toggle" id="emoji-toggle" title="Add emoji" aria-label="Add emoji"><i class="far fa-smile"></i></button>
         <textarea name="content" rows="1" maxlength="5000" placeholder="Write a message..."></textarea>
         <button type="submit" class="communication-send" title="Send message"><i class="fas fa-paper-plane"></i></button>
       </form>
+      <div class="communication-compose-meta">
+        <div class="communication-emoji-picker" id="emoji-picker" hidden>
+          <button type="button">👍</button><button type="button">😊</button>
+          <button type="button">👏</button><button type="button">❤️</button>
+          <button type="button">🎉</button><button type="button">✅</button>
+        </div>
+        <span id="message-character-count">0 / 5000</span>
+      </div>
       <div class="communication-form-error" id="message-error" hidden></div>
       {% else %}
       <div class="communication-empty large">
@@ -222,9 +260,10 @@
     </label>
     <label>Description<textarea name="description" rows="2"></textarea></label>
     <fieldset><legend>Members</legend>
+      <label class="communication-member-search"><i class="fas fa-search"></i><input id="group-member-search" type="search" placeholder="Search members"></label>
       <div class="communication-member-list">
         {% for contact in contacts %}
-        <label><input type="checkbox" name="members" value="{{ contact.id }}"><span>{{ contact.name }} <small>{{ contact.role|title }}</small></span></label>
+        <label data-member-search="{{ contact.search }}"><input type="checkbox" name="members" value="{{ contact.id }}"><span>{{ contact.name }} <small>{{ contact.role|title }}</small></span></label>
         {% endfor %}
       </div>
     </fieldset>
@@ -233,5 +272,22 @@
 </dialog>
 {% endif %}
 
-<script src="{% static 'communication/communication.js' %}?v=communication-4"></script>
+<dialog class="communication-dialog" id="forward-message-dialog">
+  <form id="forward-message-form">
+    {% csrf_token %}
+    <header><h2>Forward message</h2><button type="button" data-close-dialog title="Close" aria-label="Close forward dialog"><i class="fas fa-times" aria-hidden="true"></i></button></header>
+    <input type="hidden" id="forward-message-id">
+    <label>Conversation
+      <select id="forward-conversation-id" required>
+        <option value="">Select conversation</option>
+        {% for conversation in conversations %}
+        <option value="{{ conversation.id }}">{{ conversation.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <footer><button type="button" class="communication-btn communication-btn-secondary" data-close-dialog>Cancel</button><button class="communication-btn communication-btn-primary" type="submit"><i class="fas fa-share"></i> Forward</button></footer>
+  </form>
+</dialog>
+
+<script src="{% static 'communication/communication.js' %}?v=communication-8"></script>
 {% endblock %}
