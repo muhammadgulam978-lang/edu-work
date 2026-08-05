@@ -5913,8 +5913,8 @@ def _leave_management_context(request, active_tab='dashboard'):
 @login_required
 @permission_required("admin_panel.view_leaveapplication", raise_exception=True)
 def leave_list(request):
-    """Main Leave Management page — Requests tab is the default landing tab."""
-    context = _leave_management_context(request, active_tab=request.GET.get('tab', 'requests'))
+    """Main Leave Management page — Dashboard tab is the default landing tab."""
+    context = _leave_management_context(request, active_tab=request.GET.get('tab', 'dashboard'))
     return render(request, "admin_panel/leave_list.html", context)
 
 
@@ -6180,10 +6180,26 @@ def job_type_create(request):
         form = JobTypeForm(request.POST)
         if form.is_valid():
             form.save()
+            messages.success(request, "Job type created successfully.")
             return redirect('job_type_list')
     else:
         form = JobTypeForm()
     return render(request, 'admin_panel/job_type_form.html', {'form': form})
+
+
+@login_required
+@permission_required('admin_panel.change_jobtype', raise_exception=True)
+def job_type_update(request, pk):
+    job_type = get_object_or_404(JobType, pk=pk)
+    if request.method == 'POST':
+        form = JobTypeForm(request.POST, instance=job_type)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Job type '{job_type.name}' updated successfully.")
+            return redirect('job_type_list')
+    else:
+        form = JobTypeForm(instance=job_type)
+    return render(request, 'admin_panel/job_type_form.html', {'form': form, 'edit_mode': True, 'job_type': job_type})
 
 
 # ==================== LEAVE TYPE (AJAX CRUD) ====================

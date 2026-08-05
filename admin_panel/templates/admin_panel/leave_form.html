@@ -71,6 +71,27 @@ textarea{
 
 }
 
+.leave-error-box{
+    background:#FCEBEB;
+    color:#791F1F;
+    border:1px solid #f3b7b7;
+    border-radius:10px;
+    padding:12px 16px;
+    margin-bottom:18px;
+    font-size:14px;
+}
+
+.leave-error-box ul{
+    margin:0;
+    padding-left:18px;
+}
+
+.field-error{
+    color:#dc2626;
+    font-size:12.5px;
+    margin-top:5px;
+}
+
 </style>
 
 {% endblock %}
@@ -87,7 +108,7 @@ textarea{
 
 <i class="fas fa-calendar-check text-primary"></i>
 
-Apply Leave
+{% if edit_mode %}Edit Leave{% else %}Apply Leave{% endif %}
 
 </h2>
 
@@ -109,6 +130,31 @@ Back
 
 </div>
 
+{% if messages %}
+  {% for message in messages %}
+    <div style="padding:10px 16px;border-radius:8px;margin-bottom:14px;
+                background:{% if message.tags == 'error' %}#FCEBEB{% else %}#EAF3DE{% endif %};
+                color:{% if message.tags == 'error' %}#791F1F{% else %}#27500A{% endif %};">
+      {{ message }}
+    </div>
+  {% endfor %}
+{% endif %}
+
+{% if form.non_field_errors or form.errors %}
+<div class="leave-error-box">
+  <strong>Please fix the following before submitting:</strong>
+  <ul>
+    {% for error in form.non_field_errors %}
+      <li>{{ error }}</li>
+    {% endfor %}
+    {% for field in form %}
+      {% for error in field.errors %}
+        <li>{{ field.label }}: {{ error }}</li>
+      {% endfor %}
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
 
 <form method="POST">
 
@@ -137,6 +183,7 @@ Employee
 </label>
 
 {{ form.employee }}
+{% if form.employee.errors %}<div class="field-error">{{ form.employee.errors|join:", " }}</div>{% endif %}
 
 </div>
 
@@ -149,6 +196,7 @@ Leave Type
 </label>
 
 {{ form.leave_type }}
+{% if form.leave_type.errors %}<div class="field-error">{{ form.leave_type.errors|join:", " }}</div>{% endif %}
 
 </div>
 
@@ -161,6 +209,7 @@ Start Date
 </label>
 
 {{ form.start_date }}
+{% if form.start_date.errors %}<div class="field-error">{{ form.start_date.errors|join:", " }}</div>{% endif %}
 
 </div>
 
@@ -173,6 +222,7 @@ End Date
 </label>
 
 {{ form.end_date }}
+{% if form.end_date.errors %}<div class="field-error">{{ form.end_date.errors|join:", " }}</div>{% endif %}
 
 </div>
 
@@ -185,6 +235,7 @@ Reason
 </label>
 
 {{ form.reason }}
+{% if form.reason.errors %}<div class="field-error">{{ form.reason.errors|join:", " }}</div>{% endif %}
 
 </div>
 
@@ -215,7 +266,7 @@ Status
 
 <span>
 
-Pending
+{% if edit_mode %}{{ leave.get_status_display }}{% else %}Pending{% endif %}
 
 </span>
 
@@ -263,7 +314,7 @@ type="submit">
 
 <i class="fas fa-paper-plane"></i>
 
-Submit Leave
+{% if edit_mode %}Update Leave{% else %}Submit Leave{% endif %}
 
 </button>
 
@@ -286,6 +337,12 @@ const end=document.getElementById("id_end_date");
 const total=document.getElementById("totalDays");
 
 function calculateDays(){
+
+if(!start || !end || !total){
+
+return;
+
+}
 
 if(start.value=="" || end.value==""){
 
@@ -313,9 +370,15 @@ total.innerHTML=days;
 
 }
 
+if(start && end){
+
 start.addEventListener("change",calculateDays);
 
 end.addEventListener("change",calculateDays);
+
+calculateDays();
+
+}
 
 </script>
 

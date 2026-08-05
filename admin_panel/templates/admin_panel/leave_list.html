@@ -1,663 +1,964 @@
-{% extends "admin_panel/bases.html" %}
+{% extends 'admin_panel/bases.html' %}
 {% load static %}
 
-{% block title %}Leave Applications{% endblock %}
+{% block title %}Leave Management{% endblock %}
 
 {% block head %}
-<link rel="stylesheet" href="{% static 'admin_panel/css/hr_admin.css' %}">
-
+<link rel="stylesheet" href="{% static 'admin_panel/css/hr_admin.css' %}?v=hr-admin-2">
 <style>
+  .lv-page{ min-width:0; }
+  .lv-tabs{
+    background:#fff;border:1px solid #DCEAE6;border-radius:14px;padding:8px;
+    margin-bottom:20px;display:flex;gap:6px;flex-wrap:wrap;
+  }
+  .lv-tabs .nav-link{
+    border:none;border-radius:10px;padding:10px 18px;font-size:14px;font-weight:600;
+    color:#6B7A77;background:transparent;
+  }
+  .lv-tabs .nav-link i{ margin-right:6px; }
+  .lv-tabs .nav-link.active{ background:#4FB89D;color:#fff; }
 
-.leave-card{
-    background:#fff;
-    border-radius:15px;
-    box-shadow:0 8px 20px rgba(0,0,0,.08);
-    padding:20px;
-    margin-bottom:20px;
-}
+  .lv-card{ background:#fff;border-radius:14px;border:1px solid #DCEAE6;padding:22px 24px;margin-bottom:22px; }
+  .lv-card h3{ margin:0 0 16px;font-size:17px; }
+  .lv-card-head{ display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px; }
 
-.stats-card{
-    border-radius:15px;
-    color:#fff;
-    padding:20px;
-}
+  .lv-stats{ display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:22px; }
+  .lv-stat{
+    border-radius:14px;padding:18px 20px;color:#fff;position:relative;overflow:hidden;
+    box-shadow:0 8px 20px rgba(0,0,0,.06);
+  }
+  .lv-stat i{ font-size:22px;opacity:.85;margin-bottom:10px;display:block; }
+  .lv-stat span{ display:block;font-size:12.5px;opacity:.9; }
+  .lv-stat strong{ display:block;font-size:26px;margin-top:2px; }
 
-.bg-blue{
-    background:#87d3c8;
-}
+  .lv-charts{ display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px;margin-bottom:22px; }
+  .lv-chart-box{ background:#fff;border:1px solid #DCEAE6;border-radius:14px;padding:18px 20px; }
+  .lv-chart-box h4{ margin:0 0 14px;font-size:14.5px;color:#1E2A28; }
+  .lv-chart-box canvas{ max-height:240px; }
 
-.bg-green{
-    background:#87d3c8;
-}
+  .lv-btn{
+    border:none;padding:10px 18px;border-radius:22px;font-size:13.5px;font-weight:600;
+    cursor:pointer;background:#4FB89D;color:#fff;text-decoration:none;display:inline-flex;
+    align-items:center;gap:6px;
+  }
+  .lv-btn:hover{ background:#2E8A72;color:#fff; }
+  .lv-btn.outline{ background:#fff;color:#2E8A72;border:1px solid #4FB89D; }
+  .lv-btn.outline:hover{ background:#E6F5F0; }
 
-.bg-red{
-    background:#dc2626;
-}
+  .lv-filter-bar{ background:#fff;border-radius:14px;border:1px solid #DCEAE6;padding:16px 18px;margin-bottom:18px; }
+  .lv-filter-bar .row>div{ margin-bottom:10px; }
 
-.bg-orange{
-    background:#87d3c8;
-}
+  .lv-badge-pending{ background:#FEF3C7;color:#92400E; }
+  .lv-badge-approved{ background:#DCFCE7;color:#166534; }
+  .lv-badge-rejected{ background:#FEE2E2;color:#991B1B; }
 
-.stats-card h2{
-    margin:0;
-    font-weight:700;
-}
+  .lv-actions .btn{ margin-right:4px; }
 
-.stats-card p{
-    margin:0;
-    opacity:.9;
-}
+  .lv-cal-head{ display:flex;justify-content:space-between;align-items:center;margin-bottom:16px; }
+  .lv-cal-grid{ display:grid;grid-template-columns:repeat(7,1fr);gap:6px; }
+  .lv-cal-dow{ text-align:center;font-size:12px;font-weight:700;color:#6B7A77;padding:6px 0; }
+  .lv-cal-cell{
+    min-height:88px;border:1px solid #DCEAE6;border-radius:10px;padding:6px;background:#F9FBFA;
+    font-size:11.5px;
+  }
+  .lv-cal-cell.empty{ background:transparent;border:none; }
+  .lv-cal-daynum{ font-weight:700;color:#1E2A28;font-size:12.5px;margin-bottom:4px; }
+  .lv-cal-event{
+    border-radius:6px;padding:2px 6px;margin-bottom:3px;color:#fff;font-size:10.5px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;
+  }
+  .lv-cal-legend{ display:flex;gap:14px;flex-wrap:wrap;margin-top:14px; }
+  .lv-cal-legend-item{ display:flex;align-items:center;gap:6px;font-size:12.5px;color:#6B7A77; }
+  .lv-cal-legend-dot{ width:10px;height:10px;border-radius:50%;display:inline-block; }
 
-.search-box{
-    display:flex;
-    gap:10px;
-    flex-wrap:wrap;
-}
+  .lv-summary-card{ background:#F9FBFA;border:1px solid #DCEAE6;border-radius:14px;padding:18px; }
+  .lv-summary-row{ display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #EDF3F1;font-size:13.5px; }
+  .lv-summary-row:last-child{ border-bottom:none; }
+  .lv-summary-row span:first-child{ color:#6B7A77; }
+  .lv-summary-row span:last-child{ font-weight:700;color:#1E2A28; }
 
-.table td{
-    vertical-align:middle;
-}
+  .lv-empty{ text-align:center;color:#6B7A77;padding:30px;font-size:14px; }
 
-.badge{
-    font-size:13px;
-    padding:8px 12px;
-}
-
-.action-btn{
-    margin:2px;
-}
-
+  @media (max-width:767px){
+    .lv-tabs{ overflow-x:auto;flex-wrap:nowrap; }
+  }
 </style>
-
 {% endblock %}
 
 {% block content %}
+<div class="hr-page lv-page">
 
-<div class="container-fluid">
+  <div class="hr-hero">
+    <div class="hr-title-wrap">
+      <span class="hr-icon green"><i class="fas fa-calendar-check"></i></span>
+      <div>
+        <p class="hr-kicker">Leave Management</p>
+        <h2>Leave Management</h2>
+        <p class="hr-subtitle">Dashboard, leave types, requests, calendar and reports — all in one place.</p>
+      </div>
+    </div>
+    <div class="hr-actions">
+      <button type="button" class="lv-btn" onclick="LeaveModule.openApplyModal()">
+        <i class="fas fa-plus"></i> Apply Leave
+      </button>
+    </div>
+  </div>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
+  {% if messages %}
+    {% for message in messages %}
+      <div style="padding:10px 16px;border-radius:8px;margin-bottom:14px;
+                  background:{% if message.tags == 'error' %}#FCEBEB{% else %}#EAF3DE{% endif %};
+                  color:{% if message.tags == 'error' %}#791F1F{% else %}#27500A{% endif %};">
+        {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
 
-<div>
+  <ul class="nav lv-tabs" id="lvTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link {% if active_tab == 'dashboard' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#lv-dashboard" type="button"><i class="fas fa-gauge-high"></i>Leave Dashboard</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link {% if active_tab == 'types' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#lv-types" type="button"><i class="fas fa-tags"></i>Leave Types</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link {% if active_tab == 'requests' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#lv-requests" type="button"><i class="fas fa-list-check"></i>Leave Requests</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link {% if active_tab == 'calendar' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#lv-calendar" type="button"><i class="fas fa-calendar-days"></i>Leave Calendar</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link {% if active_tab == 'reports' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#lv-reports" type="button"><i class="fas fa-chart-column"></i>Leave Reports</button>
+    </li>
+  </ul>
 
-<h2>
+  <div class="tab-content">
 
-<i class="fas fa-calendar-check text-primary"></i>
+    {# ================= LEAVE DASHBOARD ================= #}
+    <div class="tab-pane fade {% if active_tab == 'dashboard' %}show active{% endif %}" id="lv-dashboard">
 
-Leave Applications
+      <div class="lv-stats">
+        <div class="lv-stat" style="background:linear-gradient(135deg,#fbbf24,#d97706);">
+          <i class="fas fa-hourglass-half"></i><span>Pending Requests</span><strong>{{ pending_count }}</strong>
+        </div>
+        <div class="lv-stat" style="background:linear-gradient(135deg,#34d399,#059669);">
+          <i class="fas fa-circle-check"></i><span>Approved</span><strong>{{ approved_count }}</strong>
+        </div>
+        <div class="lv-stat" style="background:linear-gradient(135deg,#f87171,#dc2626);">
+          <i class="fas fa-circle-xmark"></i><span>Rejected</span><strong>{{ rejected_count }}</strong>
+        </div>
+        <div class="lv-stat" style="background:linear-gradient(135deg,#4f8ff7,#3568d6);">
+          <i class="fas fa-user-clock"></i><span>Employees on Leave Today</span><strong>{{ on_leave_today }}</strong>
+        </div>
+        <div class="lv-stat" style="background:linear-gradient(135deg,#a78bfa,#7c3aed);">
+          <i class="fas fa-tags"></i><span>Leave Types</span><strong>{{ leave_types_count }}</strong>
+        </div>
+        <div class="lv-stat" style="background:linear-gradient(135deg,#4FB89D,#2E8A72);">
+          <i class="fas fa-file-lines"></i><span>Total Leave Applications</span><strong>{{ total_count }}</strong>
+        </div>
+      </div>
 
-</h2>
+      <div class="lv-charts">
+        <div class="lv-chart-box"><h4>Monthly Leave Trend</h4><canvas id="chartMonthlyTrend"></canvas></div>
+        <div class="lv-chart-box"><h4>Leave Type Distribution</h4><canvas id="chartTypeDistribution"></canvas></div>
+        <div class="lv-chart-box"><h4>Department Leave Usage</h4><canvas id="chartDeptUsage"></canvas></div>
+      </div>
 
-<p class="text-muted">
+      <div class="lv-card">
+        <div class="lv-card-head">
+          <h3 style="margin:0;">Recent Requests</h3>
+          <a href="#" class="lv-btn outline" onclick="LeaveModule.goToTab('lv-requests');return false;">View All</a>
+        </div>
+        <div class="hr-table-wrap">
+          <table class="table hr-table align-middle">
+            <thead>
+              <tr>
+                <th>Employee</th><th>Leave Type</th><th>From</th><th>To</th><th>Days</th><th>Status</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for lv in recent_leaves %}
+              <tr>
+                <td>{{ lv.employee.name }}</td>
+                <td>{{ lv.leave_type.name|default:"-" }}</td>
+                <td>{{ lv.start_date|date:"d M Y" }}</td>
+                <td>{{ lv.end_date|date:"d M Y" }}</td>
+                <td>{{ lv.days_count }}</td>
+                <td>
+                  <span class="badge {% if lv.status == 'pending' %}lv-badge-pending{% elif lv.status == 'approved' %}lv-badge-approved{% else %}lv-badge-rejected{% endif %}">{{ lv.get_status_display }}</span>
+                </td>
+                <td>
+                  <button class="btn btn-sm btn-outline-info" title="View" onclick="LeaveModule.viewLeave({{ lv.id }})"><i class="fas fa-eye"></i></button>
+                </td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="7" class="hr-empty">No leave applications yet</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
 
-Manage all employee leave requests
+    {# ================= LEAVE TYPES ================= #}
+    <div class="tab-pane fade {% if active_tab == 'types' %}show active{% endif %}" id="lv-types">
+      <div class="lv-card">
+        <div class="lv-card-head">
+          <h3 style="margin:0;">Leave Types</h3>
+          <button type="button" class="lv-btn" onclick="LeaveModule.openLeaveTypeModal()"><i class="fas fa-plus"></i> Add Leave Type</button>
+        </div>
+        <div class="hr-table-wrap">
+          <table class="table hr-table align-middle">
+            <thead>
+              <tr>
+                <th>Leave Name</th><th>Quota</th><th>Paid</th><th>Status</th><th>Employees Using</th><th style="width:170px;">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for lt in leave_types %}
+              <tr>
+                <td><strong>{{ lt.name }}</strong></td>
+                <td>{{ lt.yearly_quota }} days/year</td>
+                <td>{% if lt.is_paid %}<span class="badge bg-success">Paid</span>{% else %}<span class="badge bg-secondary">Unpaid</span>{% endif %}</td>
+                <td>{% if lt.is_active %}<span class="badge bg-success">Active</span>{% else %}<span class="badge bg-danger">Inactive</span>{% endif %}</td>
+                <td>{{ lt.employees_using }}</td>
+                <td class="lv-actions">
+                  <button class="btn btn-sm btn-primary sharp" title="Edit" onclick="LeaveModule.openLeaveTypeModal({{ lt.id }})"><i class="fas fa-pen"></i></button>
+                  <button class="btn btn-sm {% if lt.is_active %}btn-outline-warning{% else %}btn-outline-success{% endif %}" title="{% if lt.is_active %}Disable{% else %}Enable{% endif %}" onclick="LeaveModule.toggleLeaveType({{ lt.id }})">
+                    <i class="fas {% if lt.is_active %}fa-toggle-off{% else %}fa-toggle-on{% endif %}"></i>
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger" title="Delete" onclick="LeaveModule.deleteLeaveType({{ lt.id }}, '{{ lt.name|escapejs }}')"><i class="fas fa-trash"></i></button>
+                </td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="6" class="hr-empty">No leave types yet. Add one above.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
 
-</p>
+    {# ================= LEAVE REQUESTS ================= #}
+    <div class="tab-pane fade {% if active_tab == 'requests' %}show active{% endif %}" id="lv-requests">
 
+      <div class="lv-filter-bar">
+        <form method="GET" id="lvRequestFilterForm">
+          <input type="hidden" name="tab" value="requests">
+          <div class="row align-items-center">
+            <div class="col-lg-3 col-md-6">
+              <input type="text" name="q" value="{{ filters.q }}" class="form-control" placeholder="Search employee, type...">
+            </div>
+            <div class="col-lg-2 col-md-6">
+              <select name="department" class="form-select">
+                <option value="">All Departments</option>
+                {% for d in departments %}
+                <option value="{{ d.id }}" {% if filters.department == d.id|stringformat:"s" %}selected{% endif %}>{{ d.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-lg-2 col-md-6">
+              <select name="leave_type" class="form-select">
+                <option value="">All Leave Types</option>
+                {% for lt in all_leave_types %}
+                <option value="{{ lt.id }}" {% if filters.leave_type == lt.id|stringformat:"s" %}selected{% endif %}>{{ lt.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-lg-2 col-md-6">
+              <select name="status" class="form-select">
+                <option value="">All Status</option>
+                <option value="pending" {% if filters.status == "pending" %}selected{% endif %}>Pending</option>
+                <option value="approved" {% if filters.status == "approved" %}selected{% endif %}>Approved</option>
+                <option value="rejected" {% if filters.status == "rejected" %}selected{% endif %}>Rejected</option>
+              </select>
+            </div>
+            <div class="col-lg-2 col-md-6">
+              <input type="date" name="date_from" value="{{ filters.date_from }}" class="form-control" title="From">
+            </div>
+            <div class="col-lg-1 col-md-6 d-flex">
+              <button class="btn btn-primary me-2"><i class="fas fa-search"></i></button>
+              <a href="{% url 'leave_list' %}?tab=requests" class="btn btn-secondary"><i class="fas fa-redo"></i></a>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="lv-card">
+        <div class="hr-table-wrap">
+          <table class="table hr-table align-middle">
+            <thead>
+              <tr>
+                <th>Employee</th><th>Department</th><th>Leave Type</th><th>Duration</th><th>Days</th>
+                <th>Applied On</th><th>Status</th><th style="width:210px;">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for lv in leaves %}
+              <tr>
+                <td>{{ lv.employee.name }}</td>
+                <td>{% if lv.employee.department %}{{ lv.employee.department.name }}{% else %}-{% endif %}</td>
+                <td>{{ lv.leave_type.name|default:"-" }}</td>
+                <td>{{ lv.start_date|date:"d M Y" }} – {{ lv.end_date|date:"d M Y" }}</td>
+                <td>{{ lv.days_count }}</td>
+                <td>{{ lv.applied_at|date:"d M Y" }}</td>
+                <td>
+                  <span class="badge {% if lv.status == 'pending' %}lv-badge-pending{% elif lv.status == 'approved' %}lv-badge-approved{% else %}lv-badge-rejected{% endif %}">{{ lv.get_status_display }}</span>
+                </td>
+                <td class="lv-actions">
+                  <button class="btn btn-sm btn-outline-info" title="View" onclick="LeaveModule.viewLeave({{ lv.id }})"><i class="fas fa-eye"></i></button>
+                  {% if lv.status == 'pending' %}
+                  <button class="btn btn-sm btn-outline-success" title="Approve" onclick="LeaveModule.actionLeave({{ lv.id }}, 'approved')"><i class="fas fa-check"></i></button>
+                  <button class="btn btn-sm btn-outline-danger" title="Reject" onclick="LeaveModule.actionLeave({{ lv.id }}, 'rejected')"><i class="fas fa-xmark"></i></button>
+                  <button class="btn btn-sm btn-primary sharp" title="Edit" onclick="LeaveModule.openEditModal({{ lv.id }})"><i class="fas fa-pen"></i></button>
+                  {% endif %}
+                  <button class="btn btn-sm btn-outline-danger" title="Delete" onclick="LeaveModule.deleteLeave({{ lv.id }}, '{{ lv.employee.name|escapejs }}')"><i class="fas fa-trash"></i></button>
+                </td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="8" class="hr-empty">No leave requests found</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2" style="margin-top:16px;">
+          <div>
+            <form method="GET" class="d-flex align-items-center gap-2">
+              <input type="hidden" name="tab" value="requests">
+              {% for key, val in filters.items %}{% if val %}<input type="hidden" name="{{ key }}" value="{{ val }}">{% endif %}{% endfor %}
+              <label style="font-size:13px;color:#6B7A77;">Show</label>
+              <select name="page_size" class="form-select form-select-sm" style="width:80px;" onchange="this.form.submit()">
+                <option value="10" {% if page_size == "10" %}selected{% endif %}>10</option>
+                <option value="25" {% if page_size == "25" %}selected{% endif %}>25</option>
+                <option value="50" {% if page_size == "50" %}selected{% endif %}>50</option>
+                <option value="100" {% if page_size == "100" %}selected{% endif %}>100</option>
+              </select>
+            </form>
+          </div>
+          {% if page_obj.has_other_pages %}
+          <nav>
+            <ul class="pagination pagination-sm mb-0">
+              {% if page_obj.has_previous %}
+              <li class="page-item"><a class="page-link" href="?tab=requests&page={{ page_obj.previous_page_number }}&page_size={{ page_size }}">Prev</a></li>
+              {% endif %}
+              <li class="page-item disabled"><span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span></li>
+              {% if page_obj.has_next %}
+              <li class="page-item"><a class="page-link" href="?tab=requests&page={{ page_obj.next_page_number }}&page_size={{ page_size }}">Next</a></li>
+              {% endif %}
+            </ul>
+          </nav>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    {# ================= LEAVE CALENDAR ================= #}
+    <div class="tab-pane fade {% if active_tab == 'calendar' %}show active{% endif %}" id="lv-calendar">
+      <div class="lv-card">
+        <div class="lv-cal-head">
+          <button class="lv-btn outline" onclick="LeaveModule.calendarNav(-1)"><i class="fas fa-chevron-left"></i></button>
+          <h3 id="lvCalendarTitle" style="margin:0;">{{ calendar_month_name }} {{ calendar_year }}</h3>
+          <button class="lv-btn outline" onclick="LeaveModule.calendarNav(1)"><i class="fas fa-chevron-right"></i></button>
+        </div>
+        <div class="lv-cal-grid" id="lvCalendarDow">
+          <div class="lv-cal-dow">Sun</div><div class="lv-cal-dow">Mon</div><div class="lv-cal-dow">Tue</div>
+          <div class="lv-cal-dow">Wed</div><div class="lv-cal-dow">Thu</div><div class="lv-cal-dow">Fri</div><div class="lv-cal-dow">Sat</div>
+        </div>
+        <div class="lv-cal-grid" id="lvCalendarBody"></div>
+        <div class="lv-cal-legend" id="lvCalendarLegend"></div>
+      </div>
+    </div>
+
+    {# ================= LEAVE REPORTS ================= #}
+    <div class="tab-pane fade {% if active_tab == 'reports' %}show active{% endif %}" id="lv-reports">
+      <div class="lv-card-head">
+        <h3 style="margin:0;">Leave Reports</h3>
+        <a href="{% url 'leave_reports_export_pdf' %}" class="lv-btn"><i class="fas fa-file-pdf"></i> Export PDF</a>
+      </div>
+
+      <div class="lv-stats">
+        <div class="lv-stat" style="background:linear-gradient(135deg,#4FB89D,#2E8A72);">
+          <i class="fas fa-file-lines"></i><span>Total Leaves</span><strong>{{ total_count }}</strong>
+        </div>
+        <div class="lv-stat" style="background:linear-gradient(135deg,#fbbf24,#d97706);">
+          <i class="fas fa-hourglass-half"></i><span>Pending</span><strong>{{ pending_count }}</strong>
+        </div>
+        <div class="lv-stat" style="background:linear-gradient(135deg,#34d399,#059669);">
+          <i class="fas fa-circle-check"></i><span>Approved</span><strong>{{ approved_count }}</strong>
+        </div>
+        <div class="lv-stat" style="background:linear-gradient(135deg,#f87171,#dc2626);">
+          <i class="fas fa-circle-xmark"></i><span>Rejected</span><strong>{{ rejected_count }}</strong>
+        </div>
+      </div>
+
+      <div class="lv-charts">
+        <div class="lv-chart-box"><h4>Monthly Leave</h4><canvas id="chartReportMonthly"></canvas></div>
+        <div class="lv-chart-box"><h4>Department Wise Leave</h4><canvas id="chartReportDept"></canvas></div>
+        <div class="lv-chart-box"><h4>Leave Type Distribution</h4><canvas id="chartReportType"></canvas></div>
+      </div>
+    </div>
+
+  </div>
 </div>
 
-<a href="{% url 'leave_create' %}"
-
-class="btn btn-primary">
-
-<i class="fas fa-plus"></i>
-
-Apply Leave
-
-</a>
-
+{# ===================== APPLY / EDIT LEAVE MODAL ===================== #}
+<div class="modal fade" id="leaveFormModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="leaveFormModalTitle">Apply Leave</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-danger d-none" id="leaveFormAlert"></div>
+        <div class="row g-3">
+          <div class="col-md-7">
+            <div class="mb-3">
+              <label class="form-label">Employee</label>
+              <select class="form-select" id="lvfEmployee">
+                <option value="">Select Employee</option>
+                {% for e in employees %}
+                <option value="{{ e.id }}">{{ e.name }}</option>
+                {% endfor %}
+              </select>
+              <div class="text-danger small mt-1" data-field="employee"></div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Leave Type</label>
+              <select class="form-select" id="lvfLeaveType">
+                <option value="">Select Leave Type</option>
+                {% for lt in all_leave_types %}
+                <option value="{{ lt.id }}">{{ lt.name }}</option>
+                {% endfor %}
+              </select>
+              <div class="text-danger small mt-1" data-field="leave_type"></div>
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Start Date</label>
+                <input type="date" class="form-control" id="lvfStartDate">
+                <div class="text-danger small mt-1" data-field="start_date"></div>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">End Date</label>
+                <input type="date" class="form-control" id="lvfEndDate">
+                <div class="text-danger small mt-1" data-field="end_date"></div>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Reason</label>
+              <textarea class="form-control" id="lvfReason" rows="4" placeholder="Reason for leave..."></textarea>
+              <div class="text-danger small mt-1" data-field="reason"></div>
+            </div>
+            <div class="text-danger small mt-1" data-field="__all__"></div>
+          </div>
+          <div class="col-md-5">
+            <div class="lv-summary-card">
+              <h4 style="margin:0 0 12px;font-size:14px;">Leave Summary</h4>
+              <div class="lv-summary-row"><span>Remaining Balance</span><span id="lvSummaryRemaining">-</span></div>
+              <div class="lv-summary-row"><span>Requested Days</span><span id="lvSummaryDays">0</span></div>
+              <div class="lv-summary-row"><span>Leave Status</span><span id="lvSummaryStatus">Pending</span></div>
+              <div class="lv-summary-row"><span>Applied Date</span><span id="lvSummaryApplied">Today</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="lv-btn" id="lvfSubmitBtn" onclick="LeaveModule.submitLeaveForm()">Submit</button>
+      </div>
+    </div>
+  </div>
 </div>
 
-
-<!-- Statistics -->
-
-<div class="row mb-4">
-
-<div class="col-lg-3 col-md-6">
-
-<div class="stats-card bg-blue">
-
-<p>Total Requests</p>
-
-<h2>{{ total_count }}</h2>
-
+{# ===================== LEAVE TYPE ADD/EDIT MODAL ===================== #}
+<div class="modal fade" id="leaveTypeModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="leaveTypeModalTitle">Add Leave Type</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-danger d-none" id="leaveTypeAlert"></div>
+        <div class="mb-3">
+          <label class="form-label">Leave Name</label>
+          <input type="text" class="form-control" id="ltName" placeholder="e.g. Annual Leave">
+          <div class="text-danger small mt-1" data-field="name"></div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Yearly Quota</label>
+          <input type="number" min="0" class="form-control" id="ltQuota" value="0">
+          <div class="text-danger small mt-1" data-field="yearly_quota"></div>
+        </div>
+        <div class="form-check mb-2">
+          <input type="checkbox" class="form-check-input" id="ltPaid">
+          <label class="form-check-label" for="ltPaid">Paid Leave</label>
+        </div>
+        <div class="form-check">
+          <input type="checkbox" class="form-check-input" id="ltActive" checked>
+          <label class="form-check-label" for="ltActive">Active</label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="lv-btn" onclick="LeaveModule.submitLeaveTypeForm()">Save</button>
+      </div>
+    </div>
+  </div>
 </div>
 
+{# ===================== LEAVE DETAIL DRAWER/MODAL ===================== #}
+<div class="modal fade" id="leaveDetailModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Leave Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="leaveDetailBody">
+        <div class="text-center text-muted py-4">Loading...</div>
+      </div>
+      <div class="modal-footer" id="leaveDetailFooter">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
 </div>
 
-<div class="col-lg-3 col-md-6">
-
-<div class="stats-card bg-orange">
-
-<p>Pending</p>
-
-<h2>{{ pending_count }}</h2>
-
+{# ===================== DELETE CONFIRM MODAL ===================== #}
+<div class="modal fade" id="lvDeleteModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Confirm Delete</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        Are you sure you want to delete <strong id="lvDeleteName"></strong>? This action cannot be undone.
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-danger" id="lvDeleteConfirmBtn">Delete</button>
+      </div>
+    </div>
+  </div>
 </div>
 
-</div>
-
-<div class="col-lg-3 col-md-6">
-
-<div class="stats-card bg-green">
-
-<p>Approved</p>
-
-<h2>{{ approved_count }}</h2>
-
-</div>
-
-</div>
-
-<div class="col-lg-3 col-md-6">
-
-<div class="stats-card bg-red">
-
-<p>Rejected</p>
-
-<h2>{{ rejected_count }}</h2>
-
-</div>
-
-</div>
-
-</div>
-
-
-<!-- Search -->
-
-<div class="leave-card">
-
-<form method="GET">
-
-<div class="search-box">
-
-<input
-
-type="text"
-
-name="q"
-
-value="{{ request.GET.q }}"
-
-class="form-control"
-
-placeholder="Search Employee / Department / Leave Type"
-
-style="max-width:350px;">
-
-<select
-
-name="status"
-
-class="form-select"
-
-style="max-width:180px;">
-
-<option value="">All Status</option>
-
-<option value="pending"
-
-{% if request.GET.status == 'pending' %}selected{% endif %}>
-
-Pending
-
-</option>
-
-<option value="approved"
-
-{% if request.GET.status == 'approved' %}selected{% endif %}>
-
-Approved
-
-</option>
-
-<option value="rejected"
-
-{% if request.GET.status == 'rejected' %}selected{% endif %}>
-
-Rejected
-
-</option>
-
-</select>
-
-<button
-
-class="btn btn-primary">
-
-<i class="fas fa-search"></i>
-
-Search
-
-</button>
-
-<a
-
-href="{% url 'leave_list' %}"
-
-class="btn btn-secondary">
-
-Reset
-
-</a>
-
-</div>
-
-</form>
-
-</div>
-
-
-<!-- Table -->
-
-<div class="leave-card">
-
-<div class="table-responsive">
-
-<table class="table table-hover align-middle">
-
-<thead class="table-light">
-
-<tr>
-
-<th>#</th>
-
-<th>Employee</th>
-
-<th>Department</th>
-
-<th>Leave Type</th>
-
-<th>Duration</th>
-
-<th>Total Days</th>
-
-<th>Status</th>
-
-<th width="230">
-
-Actions
-
-</th>
-
-</tr>
-
-</thead>
-
-<tbody>
-
-{% for l in leaves %}
-
-<tr>
-
-<td>
-
-{{ forloop.counter }}
-
-</td>
-
-<td>
-
-<strong>
-
-{{ l.employee.name }}
-
-</strong>
-
-<br>
-
-<small class="text-muted">
-
-{{ l.employee.email }}
-
-</small>
-
-</td>
-
-<td>
-
-<!-- {{ l.employee.department.name }} -->
-
-{% if l.employee.department %}
-    {{ l.employee.department.name }}
-{% else %}
-    -
-{% endif %}
-
-</td>
-
-<td>
-
-{{ l.leave_type.name }}
-
-</td>
-
-<td>
-
-{{ l.start_date }}
-
-<br>
-
-to
-
-<br>
-
-{{ l.end_date }}
-
-</td>
-
-<td>
-
-{{ l.start_date|timesince:l.end_date }}
-
-
-</td>
-
-<td>
-
-{% if l.status == "approved" %}
-
-<span class="badge bg-success">
-
-Approved
-
-</span>
-
-{% elif l.status == "rejected" %}
-
-<span class="badge bg-danger">
-
-Rejected
-
-</span>
-
-{% else %}
-
-<span class="badge bg-warning text-dark">
-
-Pending
-
-</span>
-
-{% endif %}
-
-</td>
-
-<td>
-
-{% if l.status == "pending" %}
-
-<a
-
-href="{% url 'leave_action' l.id 'approved' %}"
-
-class="btn btn-success btn-sm action-btn">
-
-<i class="fas fa-check"></i>
-
-</a>
-
-<a
-
-href="{% url 'leave_action' l.id 'rejected' %}"
-
-class="btn btn-danger btn-sm action-btn">
-
-<i class="fas fa-times"></i>
-
-</a>
-
-{% endif %}
-
-<a
-
-href="{% url 'leave_update' l.id %}"
-
-class="btn btn-primary btn-sm action-btn">
-
-<i class="fas fa-edit"></i>
-
-</a>
-
-<a
-
-href="{% url 'leave_delete' l.id %}"
-
-class="btn btn-outline-danger btn-sm action-btn">
-
-<i class="fas fa-trash"></i>
-
-</a>
-
-</td>
-
-</tr>
-
-{% empty %}
-
-<tr>
-
-<td colspan="8">
-
-<div class="text-center py-5">
-
-<i class="fas fa-calendar-times fa-4x text-muted mb-3"></i>
-
-<h5 class="text-muted">
-
-No Leave Requests Found
-
-</h5>
-
-<p class="text-muted">
-
-There are currently no leave applications available.
-
-</p>
-
-<a href="{% url 'leave_create' %}"
-
-class="btn btn-primary">
-
-<i class="fas fa-plus"></i>
-
-Apply First Leave
-
-</a>
-
-</div>
-
-</td>
-
-</tr>
-
-{% endfor %}
-
-</tbody>
-
-</table>
-
-</div>
-
-</div>
-
-
-<!-- Pagination -->
-
-{% if is_paginated %}
-
-<nav class="mt-4">
-
-<ul class="pagination justify-content-center">
-
-{% if page_obj.has_previous %}
-
-<li class="page-item">
-
-<a class="page-link"
-
-href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
-
-Previous
-
-</a>
-
-</li>
-
-{% endif %}
-
-{% for num in paginator.page_range %}
-
-{% if page_obj.number == num %}
-
-<li class="page-item active">
-
-<span class="page-link">
-
-{{ num }}
-
-</span>
-
-</li>
-
-{% else %}
-
-<li class="page-item">
-
-<a class="page-link"
-
-href="?page={{ num }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
-
-{{ num }}
-
-</a>
-
-</li>
-
-{% endif %}
-
-{% endfor %}
-
-{% if page_obj.has_next %}
-
-<li class="page-item">
-
-<a class="page-link"
-
-href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
-
-Next
-
-</a>
-
-</li>
-
-{% endif %}
-
-</ul>
-
-</nav>
-
-{% endif %}
-
-</div>
-
-
-<!-- Delete Confirmation Modal -->
-
-<div
-
-class="modal fade"
-
-id="deleteModal"
-
-tabindex="-1"
-
-aria-hidden="true">
-
-<div class="modal-dialog">
-
-<div class="modal-content">
-
-<div class="modal-header">
-
-<h5 class="modal-title">
-
-Delete Leave
-
-</h5>
-
-<button
-
-type="button"
-
-class="btn-close"
-
-data-bs-dismiss="modal">
-
-</button>
-
-</div>
-
-<div class="modal-body">
-
-Are you sure you want to delete this leave request?
-
-</div>
-
-<div class="modal-footer">
-
-<button
-
-class="btn btn-secondary"
-
-data-bs-dismiss="modal">
-
-Cancel
-
-</button>
-
-<a
-
-id="deleteBtn"
-
-href="#"
-
-class="btn btn-danger">
-
-Delete
-
-</a>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
+{{ calendar_events|json_script:"lv-calendar-events-json" }}
+{{ monthly_trend_chart|json_script:"lv-monthly-trend-json" }}
+{{ type_distribution_chart|json_script:"lv-type-dist-json" }}
+{{ department_usage_chart|json_script:"lv-dept-usage-json" }}
 
 <script>
+(function () {
+  function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+  }
+  const csrftoken = getCookie('csrftoken');
 
-document.querySelectorAll(".btn-outline-danger").forEach(function(btn){
+  const TPL = {
+    leaveUpdate: "{% url 'leave_update' 999999 %}",
+    leaveDelete: "{% url 'leave_delete' 999999 %}",
+    leaveAction: "{% url 'leave_action' 999999 'ACTIONX' %}",
+    leaveDetail: "{% url 'leave_detail_ajax' 999999 %}",
+    typeUpdate: "{% url 'leave_type_update' 999999 %}",
+    typeDelete: "{% url 'leave_type_delete' 999999 %}",
+    typeToggle: "{% url 'leave_type_toggle' 999999 %}",
+  };
 
-btn.addEventListener("click",function(e){
+  const URLS = {
+    leaveCreate: "{% url 'leave_create' %}",
+    leaveUpdate: pk => TPL.leaveUpdate.replace('999999', pk),
+    leaveDelete: pk => TPL.leaveDelete.replace('999999', pk),
+    leaveAction: (pk, action) => TPL.leaveAction.replace('999999', pk).replace('ACTIONX', action),
+    leaveDetail: pk => TPL.leaveDetail.replace('999999', pk),
+    leaveBalance: "{% url 'leave_employee_balance' %}",
+    typeCreate: "{% url 'leave_type_create' %}",
+    typeUpdate: pk => TPL.typeUpdate.replace('999999', pk),
+    typeDelete: pk => TPL.typeDelete.replace('999999', pk),
+    typeToggle: pk => TPL.typeToggle.replace('999999', pk),
+    calendarEvents: "{% url 'leave_calendar_events' %}",
+  };
 
-e.preventDefault();
+  let leaveFormMode = 'create';
+  let leaveFormPk = null;
+  let calMonth = {{ calendar_month }};
+  let calYear = {{ calendar_year }};
+  const initialCalendarEvents = JSON.parse(document.getElementById('lv-calendar-events-json').textContent);
 
-document.getElementById("deleteBtn").href=this.href;
+  const LeaveModule = {
+    goToTab(id) {
+      const btn = document.querySelector(`.lv-tabs button[data-bs-target="#${id}"]`);
+      if (btn) new bootstrap.Tab(btn).show();
+    },
 
-new bootstrap.Modal(
+    clearFormErrors(prefix) {
+      document.querySelectorAll(`#${prefix} .text-danger[data-field]`).forEach(el => el.textContent = '');
+      const alertBox = document.getElementById(prefix === 'leaveFormModal' ? 'leaveFormAlert' : 'leaveTypeAlert');
+      if (alertBox) alertBox.classList.add('d-none');
+    },
 
-document.getElementById("deleteModal")
+    showFormErrors(prefix, errors) {
+      Object.keys(errors || {}).forEach(field => {
+        const el = document.querySelector(`#${prefix} .text-danger[data-field="${field}"]`);
+        if (el) el.textContent = (errors[field] || []).map(e => e.message || e).join(', ');
+      });
+      const alertBox = document.getElementById(prefix === 'leaveFormModal' ? 'leaveFormAlert' : 'leaveTypeAlert');
+      if (alertBox) { alertBox.classList.remove('d-none'); alertBox.textContent = 'Please fix the highlighted errors.'; }
+    },
 
-).show();
+    // ---------------- Apply / Edit Leave ----------------
+    openApplyModal() {
+      leaveFormMode = 'create'; leaveFormPk = null;
+      document.getElementById('leaveFormModalTitle').textContent = 'Apply Leave';
+      document.getElementById('lvfEmployee').value = '';
+      document.getElementById('lvfLeaveType').value = '';
+      document.getElementById('lvfStartDate').value = '';
+      document.getElementById('lvfEndDate').value = '';
+      document.getElementById('lvfReason').value = '';
+      document.getElementById('lvSummaryRemaining').textContent = '-';
+      document.getElementById('lvSummaryDays').textContent = '0';
+      document.getElementById('lvSummaryStatus').textContent = 'Pending';
+      document.getElementById('lvSummaryApplied').textContent = 'Today';
+      this.clearFormErrors('leaveFormModal');
+      new bootstrap.Modal(document.getElementById('leaveFormModal')).show();
+    },
 
-});
+    openEditModal(pk) {
+      fetch(URLS.leaveDetail(pk), { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        .then(r => r.json())
+        .then(data => {
+          if (!data.success) return;
+          const lv = data.leave;
+          leaveFormMode = 'edit'; leaveFormPk = pk;
+          document.getElementById('leaveFormModalTitle').textContent = 'Edit Leave';
+          document.getElementById('lvfEmployee').value = lv.employee_id;
+          document.getElementById('lvfLeaveType').value = lv.leave_type_id;
+          document.getElementById('lvfStartDate').value = lv.start_date_iso;
+          document.getElementById('lvfEndDate').value = lv.end_date_iso;
+          document.getElementById('lvfReason').value = lv.reason;
+          document.getElementById('lvSummaryStatus').textContent = lv.status;
+          document.getElementById('lvSummaryApplied').textContent = lv.applied_at;
+          this.clearFormErrors('leaveFormModal');
+          this.refreshBalance();
+          this.refreshDaysCount();
+          new bootstrap.Modal(document.getElementById('leaveFormModal')).show();
+        });
+    },
 
-});
+    refreshDaysCount() {
+      const s = document.getElementById('lvfStartDate').value;
+      const e = document.getElementById('lvfEndDate').value;
+      if (!s || !e) { document.getElementById('lvSummaryDays').textContent = '0'; return; }
+      const days = Math.round((new Date(e) - new Date(s)) / 86400000) + 1;
+      document.getElementById('lvSummaryDays').textContent = days > 0 ? days : '0';
+    },
 
+    refreshBalance() {
+      const emp = document.getElementById('lvfEmployee').value;
+      const lt = document.getElementById('lvfLeaveType').value;
+      if (!emp || !lt) { document.getElementById('lvSummaryRemaining').textContent = '-'; return; }
+      fetch(`${URLS.leaveBalance}?employee=${emp}&leave_type=${lt}`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        .then(r => r.json())
+        .then(data => {
+          if (data.success) document.getElementById('lvSummaryRemaining').textContent = `${data.remaining_days} / ${data.quota} days`;
+        });
+    },
+
+    submitLeaveForm() {
+      this.clearFormErrors('leaveFormModal');
+      const payload = new URLSearchParams();
+      payload.append('employee', document.getElementById('lvfEmployee').value);
+      payload.append('leave_type', document.getElementById('lvfLeaveType').value);
+      payload.append('start_date', document.getElementById('lvfStartDate').value);
+      payload.append('end_date', document.getElementById('lvfEndDate').value);
+      payload.append('reason', document.getElementById('lvfReason').value);
+
+      const url = leaveFormMode === 'edit' ? URLS.leaveUpdate(leaveFormPk) : URLS.leaveCreate;
+
+      fetch(url, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': csrftoken, 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: payload,
+      })
+        .then(r => r.json())
+        .then(data => {
+          if (data.success) { window.location.reload(); }
+          else { this.showFormErrors('leaveFormModal', data.errors); }
+        })
+        .catch(() => { alert('Something went wrong. Please try again.'); });
+    },
+
+    // ---------------- View / Approve / Reject / Delete Leave ----------------
+    viewLeave(pk) {
+      const modalEl = document.getElementById('leaveDetailModal');
+      const modal = new bootstrap.Modal(modalEl);
+      document.getElementById('leaveDetailBody').innerHTML = '<div class="text-center text-muted py-4">Loading...</div>';
+      modal.show();
+
+      fetch(URLS.leaveDetail(pk), { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        .then(r => r.json())
+        .then(data => {
+          if (!data.success) return;
+          const lv = data.leave;
+          const statusClass = lv.status === 'pending' ? 'lv-badge-pending' : (lv.status === 'approved' ? 'lv-badge-approved' : 'lv-badge-rejected');
+          document.getElementById('leaveDetailBody').innerHTML = `
+            <div class="row g-3">
+              <div class="col-md-6"><strong>Employee</strong><div>${lv.employee}</div></div>
+              <div class="col-md-6"><strong>Department</strong><div>${lv.department}</div></div>
+              <div class="col-md-6"><strong>Leave Type</strong><div>${lv.leave_type}</div></div>
+              <div class="col-md-6"><strong>Status</strong><div><span class="badge ${statusClass}">${lv.status}</span></div></div>
+              <div class="col-md-6"><strong>Duration</strong><div>${lv.start_date} to ${lv.end_date} (${lv.days} days)</div></div>
+              <div class="col-md-6"><strong>Remaining Leave</strong><div>${lv.remaining_days} / ${lv.quota} days</div></div>
+              <div class="col-12"><strong>Reason</strong><div>${lv.reason}</div></div>
+              <div class="col-md-6"><strong>Applied On</strong><div>${lv.applied_at}</div></div>
+              <div class="col-md-6"><strong>Action Date</strong><div>${lv.action_date || '-'}</div></div>
+            </div>`;
+
+          const footer = document.getElementById('leaveDetailFooter');
+          if (lv.status === 'pending') {
+            footer.innerHTML = `
+              <button type="button" class="btn btn-outline-danger" onclick="LeaveModule.actionLeave(${lv.id}, 'rejected', true)">Reject</button>
+              <button type="button" class="btn btn-success" onclick="LeaveModule.actionLeave(${lv.id}, 'approved', true)">Approve</button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>`;
+          } else {
+            footer.innerHTML = `<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>`;
+          }
+        });
+    },
+
+    actionLeave(pk, action, fromDetail) {
+      fetch(URLS.leaveAction(pk, action), {
+        method: 'POST',
+        headers: { 'X-CSRFToken': csrftoken, 'X-Requested-With': 'XMLHttpRequest' },
+      })
+        .then(r => r.json())
+        .then(() => window.location.reload())
+        .catch(() => window.location.reload());
+    },
+
+    deleteLeave(pk, name) {
+      document.getElementById('lvDeleteName').textContent = name + "'s leave request";
+      const btn = document.getElementById('lvDeleteConfirmBtn');
+      btn.onclick = function () {
+        fetch(URLS.leaveDelete(pk), {
+          method: 'POST',
+          headers: { 'X-CSRFToken': csrftoken, 'X-Requested-With': 'XMLHttpRequest' },
+        }).then(() => window.location.reload());
+      };
+      new bootstrap.Modal(document.getElementById('lvDeleteModal')).show();
+    },
+
+    // ---------------- Leave Types ----------------
+    openLeaveTypeModal(pk) {
+      this.clearFormErrors('leaveTypeModal');
+      if (!pk) {
+        document.getElementById('leaveTypeModalTitle').textContent = 'Add Leave Type';
+        document.getElementById('ltName').value = '';
+        document.getElementById('ltQuota').value = 0;
+        document.getElementById('ltPaid').checked = false;
+        document.getElementById('ltActive').checked = true;
+        document.getElementById('leaveTypeModal').dataset.pk = '';
+        new bootstrap.Modal(document.getElementById('leaveTypeModal')).show();
+        return;
+      }
+      fetch(URLS.typeUpdate(pk), { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        .then(r => r.json())
+        .then(data => {
+          if (!data.success) return;
+          const lt = data.leave_type;
+          document.getElementById('leaveTypeModalTitle').textContent = 'Edit Leave Type';
+          document.getElementById('ltName').value = lt.name;
+          document.getElementById('ltQuota').value = lt.yearly_quota;
+          document.getElementById('ltPaid').checked = lt.is_paid;
+          document.getElementById('ltActive').checked = lt.is_active;
+          document.getElementById('leaveTypeModal').dataset.pk = pk;
+          new bootstrap.Modal(document.getElementById('leaveTypeModal')).show();
+        });
+    },
+
+    submitLeaveTypeForm() {
+      this.clearFormErrors('leaveTypeModal');
+      const pk = document.getElementById('leaveTypeModal').dataset.pk;
+      const payload = new URLSearchParams();
+      payload.append('name', document.getElementById('ltName').value);
+      payload.append('yearly_quota', document.getElementById('ltQuota').value);
+      if (document.getElementById('ltPaid').checked) payload.append('is_paid', 'on');
+      if (document.getElementById('ltActive').checked) payload.append('is_active', 'on');
+
+      const url = pk ? URLS.typeUpdate(pk) : URLS.typeCreate;
+
+      fetch(url, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': csrftoken, 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: payload,
+      })
+        .then(r => r.json())
+        .then(data => {
+          if (data.success) window.location.reload();
+          else this.showFormErrors('leaveTypeModal', data.errors);
+        });
+    },
+
+    toggleLeaveType(pk) {
+      fetch(URLS.typeToggle(pk), {
+        method: 'POST',
+        headers: { 'X-CSRFToken': csrftoken, 'X-Requested-With': 'XMLHttpRequest' },
+      }).then(() => window.location.reload());
+    },
+
+    deleteLeaveType(pk, name) {
+      document.getElementById('lvDeleteName').textContent = `leave type "${name}"`;
+      const btn = document.getElementById('lvDeleteConfirmBtn');
+      btn.onclick = function () {
+        fetch(URLS.typeDelete(pk), {
+          method: 'POST',
+          headers: { 'X-CSRFToken': csrftoken, 'X-Requested-With': 'XMLHttpRequest' },
+        })
+          .then(r => r.json())
+          .then(data => {
+            if (data.success) window.location.reload();
+            else alert(data.message || 'Could not delete this leave type.');
+          });
+      };
+      new bootstrap.Modal(document.getElementById('lvDeleteModal')).show();
+    },
+
+    // ---------------- Calendar ----------------
+    calendarNav(direction) {
+      calMonth += direction;
+      if (calMonth > 12) { calMonth = 1; calYear += 1; }
+      if (calMonth < 1) { calMonth = 12; calYear -= 1; }
+      this.loadCalendar();
+    },
+
+    loadCalendar() {
+      fetch(`${URLS.calendarEvents}?month=${calMonth}&year=${calYear}`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        .then(r => r.json())
+        .then(data => {
+          if (!data.success) return;
+          document.getElementById('lvCalendarTitle').textContent = `${data.month_name} ${data.year}`;
+          this.renderCalendar(data.year, data.month, data.events);
+        });
+    },
+
+    renderCalendar(year, month, events) {
+      const palette = ['#4FB89D', '#7c3aed', '#f59e0b', '#ef4444', '#3b82f6', '#ec4899', '#10b981'];
+      const typeColors = {};
+      let colorIdx = 0;
+      events.forEach(ev => {
+        if (!(ev.leave_type in typeColors)) { typeColors[ev.leave_type] = palette[colorIdx % palette.length]; colorIdx++; }
+      });
+
+      const firstDay = new Date(year, month - 1, 1);
+      const startWeekday = firstDay.getDay();
+      const daysInMonth = new Date(year, month, 0).getDate();
+
+      const body = document.getElementById('lvCalendarBody');
+      body.innerHTML = '';
+
+      for (let i = 0; i < startWeekday; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'lv-cal-cell empty';
+        body.appendChild(cell);
+      }
+
+      for (let d = 1; d <= daysInMonth; d++) {
+        const cell = document.createElement('div');
+        cell.className = 'lv-cal-cell';
+        const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        const dayNum = document.createElement('div');
+        dayNum.className = 'lv-cal-daynum';
+        dayNum.textContent = d;
+        cell.appendChild(dayNum);
+
+        events.filter(ev => dateStr >= ev.start && dateStr <= ev.end).forEach(ev => {
+          const evEl = document.createElement('div');
+          evEl.className = 'lv-cal-event';
+          evEl.style.background = typeColors[ev.leave_type];
+          evEl.textContent = `${ev.title} (${ev.leave_type})`;
+          evEl.title = `${ev.title} — ${ev.leave_type} — ${ev.department}`;
+          evEl.onclick = () => LeaveModule.viewLeave(ev.id);
+          cell.appendChild(evEl);
+        });
+
+        body.appendChild(cell);
+      }
+
+      const legend = document.getElementById('lvCalendarLegend');
+      legend.innerHTML = '';
+      Object.keys(typeColors).forEach(t => {
+        const item = document.createElement('div');
+        item.className = 'lv-cal-legend-item';
+        item.innerHTML = `<span class="lv-cal-legend-dot" style="background:${typeColors[t]};"></span>${t}`;
+        legend.appendChild(item);
+      });
+      if (Object.keys(typeColors).length === 0) {
+        legend.innerHTML = '<span style="color:#94a3b8;font-size:12.5px;">No leaves scheduled this month.</span>';
+      }
+    },
+  };
+
+  window.LeaveModule = LeaveModule;
+
+  document.addEventListener('DOMContentLoaded', function () {
+    ['lvfStartDate', 'lvfEndDate'].forEach(id => {
+      document.getElementById(id).addEventListener('change', () => LeaveModule.refreshDaysCount());
+    });
+    ['lvfEmployee', 'lvfLeaveType'].forEach(id => {
+      document.getElementById(id).addEventListener('change', () => LeaveModule.refreshBalance());
+    });
+
+    LeaveModule.renderCalendar(calYear, calMonth, initialCalendarEvents);
+
+    // Charts (guard in case Chart.js isn't loaded)
+    if (window.Chart) {
+      const monthlyData = JSON.parse(document.getElementById('lv-monthly-trend-json').textContent);
+      const typeData = JSON.parse(document.getElementById('lv-type-dist-json').textContent);
+      const deptData = JSON.parse(document.getElementById('lv-dept-usage-json').textContent);
+      const palette = ['#4FB89D', '#7c3aed', '#f59e0b', '#ef4444', '#3b82f6', '#ec4899', '#10b981', '#94a3b8'];
+
+      function makeLine(id, labels, values, color) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        new Chart(el.getContext('2d'), {
+          type: 'line',
+          data: { labels: labels, datasets: [{ label: 'Applications', data: values, borderColor: color, backgroundColor: color + '33', fill: true, tension: 0.35 }] },
+          options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } },
+        });
+      }
+      function makeDoughnut(id, labels, values) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        new Chart(el.getContext('2d'), {
+          type: 'doughnut',
+          data: { labels: labels, datasets: [{ data: values, backgroundColor: labels.map((_, i) => palette[i % palette.length]) }] },
+          options: { plugins: { legend: { position: 'bottom' } } },
+        });
+      }
+      function makeBar(id, labels, values, color) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        new Chart(el.getContext('2d'), {
+          type: 'bar',
+          data: { labels: labels, datasets: [{ label: 'Applications', data: values, backgroundColor: color }] },
+          options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } },
+        });
+      }
+
+      makeLine('chartMonthlyTrend', monthlyData.labels, monthlyData.values, '#4FB89D');
+      makeDoughnut('chartTypeDistribution', typeData.labels, typeData.values);
+      makeBar('chartDeptUsage', deptData.labels, deptData.values, '#7c3aed');
+
+      makeLine('chartReportMonthly', monthlyData.labels, monthlyData.values, '#4FB89D');
+      makeBar('chartReportDept', deptData.labels, deptData.values, '#3568d6');
+      makeDoughnut('chartReportType', typeData.labels, typeData.values);
+    }
+  });
+})();
 </script>
-
 {% endblock %}

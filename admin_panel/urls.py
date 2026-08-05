@@ -175,6 +175,7 @@ urlpatterns = [
     # Job Type
     path('job-types/', views.job_type_list, name='job_type_list'),
     path('job-types/create/', views.job_type_create, name='job_type_create'),
+    path('job-types/<int:pk>/edit/', views.job_type_update, name='job_type_update'),
 
     # ================= LEAVE MANAGEMENT =================
 

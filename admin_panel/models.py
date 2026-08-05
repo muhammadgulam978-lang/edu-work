@@ -750,10 +750,10 @@ class Employee(models.Model):
         if not self.job_type.is_leave_eligible:
             return False
 
-        probation_end = self.joining_date + relativedelta(
-            months=self.job_type.probation_months
-        )
-        return date.today() >= probation_end
+        # Probation-period restriction removed on request — employees are
+        # eligible for leave as soon as their job type allows it, regardless
+        # of how long they've been with the school.
+        return True
 
     def __str__(self):
         return self.name
@@ -1830,4 +1830,4 @@ class DutyEvent(models.Model):
         ordering = ['-date']
 
     def __str__(self):
-        return f"{self.name} ({self.date})"     
+        return f"{self.name} ({self.date})"

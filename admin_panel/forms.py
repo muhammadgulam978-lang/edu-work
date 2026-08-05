@@ -1056,7 +1056,7 @@ class JobTypeForm(forms.ModelForm):
                 "class": "form-check-input"
             }),
 
-            "allowed_leave_types": forms.SelectMultiple(attrs={
-                "class": "form-select"
+            "allowed_leave_types": forms.CheckboxSelectMultiple(attrs={
+                "class": "form-check-input"
             }),
         }

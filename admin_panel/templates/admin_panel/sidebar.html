@@ -110,10 +110,7 @@
                     <li><a href="{% url 'hr_dashboard' %}"><i class="fas fa-tachometer-alt"></i> HR Dashboard</a></li>
                    
                      <li><a href="{% url 'hr_setup' %}?tab=categories"><i class="fas fa-user-tag"></i> Staff Categories</a></li>
-                    <!-- <li><a href="{% url 'hr_setup' %}?tab=job_types"><i class="fas fa-briefcase"></i> Job Types</a></li>
-                    <li><a href="{% url 'hr_setup' %}?tab=departments"><i class="fas fa-building"></i> Departments</a></li>
-                    <li><a href="{% url 'hr_setup' %}?tab=designations"><i class="fas fa-id-badge"></i> Designations</a></li> -->
-
+                   
                    
                     <li><a href="{% url 'employee_create' %}"><i class="fas fa-user-plus"></i> Create Employee</a></li>
                      <li><a href="{% url 'employee_list' %}"><i class="fas fa-users"></i> Employees</a></li>
@@ -124,42 +121,11 @@
                 </ul>
             </li>
 
-            <li class="has-menu sidebar-leave" style="--sidebar-icon-color:#7c3aed; --sidebar-icon-bg:#f3e8ff;">
-                <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
+            <li class="sidebar-leave" style="--sidebar-icon-color:#7c3aed; --sidebar-icon-bg:#f3e8ff;">
+                <a href="{% url 'leave_list' %}" class="ai-icon" aria-expanded="false">
                     <i class="fas fa-calendar-minus"></i>
                     <span class="nav-text">Leave Management</span>
                 </a>
-                <ul aria-expanded="false">
-                    <!-- <li><a href="{% url 'leave_type_list' %}"><i class="fas fa-calendar-alt"></i> Leave Types</a></li>
-                    <li><a href="{% url 'leave_type_create' %}"><i class="fas fa-plus"></i> Add Leave Type</a></li>
-                    <li><a href="{% url 'leave_list' %}"><i class="fas fa-calendar-check"></i> Leave Applications</a></li>
-                    <li><a href="{% url 'leave_create' %}"><i class="fas fa-paper-plane"></i> Apply Leave</a></li> -->
-
-                    <li class="has-menu sidebar-leave" style="--sidebar-icon-color:#7c3aed; --sidebar-icon-bg:#f3e8ff;">
-    <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
-        <i class="fas fa-calendar-minus"></i>
-        <span class="nav-text">Leave Management</span>
-    </a>
-
-    <ul aria-expanded="false">
-
-        <li>
-            <a href="{% url 'leave_list' %}">
-                <i class="fas fa-chart-line"></i>
-                Leave Dashboard
-            </a>
-        </li>
-
-        <li>
-            <a href="{% url 'leave_create' %}">
-                <i class="fas fa-paper-plane"></i>
-                Apply Leave
-            </a>
-        </li>
-
-    </ul>
-</li>
-                </ul>
             </li>
 
             <li class="has-menu sidebar-appraisal" style="--sidebar-icon-color:#f59e0b; --sidebar-icon-bg:#fff7d6;">
