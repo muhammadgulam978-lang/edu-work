@@ -16,12 +16,17 @@ SECRET_KEY = 'django-insecure-1u@4sktn_vg=d#+u)*f^v9ut(jt&0&4g@s9_)-$d-l&mema=ei
 DEBUG = True
 
 # Allowed hosts (Render URL + localhost)
+PORTAL_BASE_DOMAIN = os.getenv("PORTAL_BASE_DOMAIN", "").strip().strip(".")
+PORTAL_SCHEME = os.getenv("PORTAL_SCHEME", "").strip()
 ALLOWED_HOSTS = [
-    'sms-2hxg.onrender.com', '127.0.0.1', 'localhost'
-    ]
+    'sms-2hxg.onrender.com', '127.0.0.1', 'localhost', '.localhost'
+]
+if PORTAL_BASE_DOMAIN:
+    ALLOWED_HOSTS.append(f".{PORTAL_BASE_DOMAIN}")
 CSRF_TRUSTED_ORIGINS = [  "https://sms-2hxg.onrender.com" ]
 # Application definition
 INSTALLED_APPS = [
+    "daphne",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -82,14 +87,30 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "sms.wsgi.application"
+ASGI_APPLICATION = "sms.asgi.application"
+
+REDIS_URL = os.getenv("REDIS_URL", "").strip()
+if REDIS_URL:
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels_redis.core.RedisChannelLayer",
+            "CONFIG": {"hosts": [REDIS_URL]},
+        }
+    }
+else:
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels.layers.InMemoryChannelLayer",
+        }
+    }
 
 
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'sms_database', 
-        'USER': 'postgres',
-        'PASSWORD': 'admin',
+        'NAME': 'edu_pilot_new',
+        'USER': 'GM123',
+        'PASSWORD': 'GM123',
         'HOST': 'localhost',
         'PORT': '5432',
     }

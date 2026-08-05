@@ -32,6 +32,9 @@ class Conversation(models.Model):
     )
     allow_all_members_post = models.BooleanField(default=True)
     is_archived = models.BooleanField(default=False)
+    direct_key = models.CharField(
+        max_length=64, null=True, blank=True, unique=True, db_index=True
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     last_message_at = models.DateTimeField(null=True, blank=True, db_index=True)
 
@@ -91,6 +94,20 @@ class Message(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     edited_at = models.DateTimeField(null=True, blank=True)
     deleted_at = models.DateTimeField(null=True, blank=True)
+    reply_to = models.ForeignKey(
+        "self",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="replies",
+    )
+    forwarded_from = models.ForeignKey(
+        "self",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="forwards",
+    )
 
     class Meta:
         ordering = ["created_at"]
@@ -101,7 +118,7 @@ class Message(models.Model):
 
 
 class MessageReceipt(models.Model):
-    STATUSES = [("DELIVERED", "Delivered"), ("READ", "Read")]
+    STATUSES = [("SENT", "Sent"), ("DELIVERED", "Delivered"), ("READ", "Read")]
 
     message = models.ForeignKey(
         Message, on_delete=models.CASCADE, related_name="receipts"
@@ -111,8 +128,8 @@ class MessageReceipt(models.Model):
         on_delete=models.CASCADE,
         related_name="communication_receipts",
     )
-    status = models.CharField(max_length=12, choices=STATUSES, default="DELIVERED")
-    delivered_at = models.DateTimeField(default=timezone.now)
+    status = models.CharField(max_length=12, choices=STATUSES, default="SENT")
+    delivered_at = models.DateTimeField(null=True, blank=True)
     read_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:

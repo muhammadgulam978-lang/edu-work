@@ -4,6 +4,7 @@ from django.contrib.auth.models import AbstractUser
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.db.models import Sum
+from django.utils import timezone
 from decimal import Decimal
 from datetime import date
 
@@ -137,6 +138,73 @@ class FeeVoucherItem(models.Model):
     fee_head = models.ForeignKey(FeeHead, on_delete=models.CASCADE)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
 
+
+class VoucherDelivery(models.Model):
+    ROLE_CHOICES = (
+        ('STUDENT', 'Student'),
+        ('PARENT', 'Parent'),
+        ('TEACHER', 'Teacher'),
+    )
+
+    voucher = models.ForeignKey(FeeVoucher, on_delete=models.CASCADE, related_name='deliveries')
+    recipient = models.ForeignKey('auth.User', on_delete=models.CASCADE, related_name='voucher_deliveries')
+    related_student = models.ForeignKey(
+        'student_profile.Student', on_delete=models.CASCADE, related_name='voucher_deliveries'
+    )
+    recipient_role = models.CharField(max_length=10, choices=ROLE_CHOICES)
+    delivered_at = models.DateTimeField(default=timezone.now)
+    viewed_at = models.DateTimeField(null=True, blank=True)
+    downloaded_at = models.DateTimeField(null=True, blank=True)
+    dismissed_at = models.DateTimeField(null=True, blank=True)
+    last_viewed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['voucher', 'recipient'], name='unique_voucher_recipient_delivery'
+            )
+        ]
+        indexes = [
+            models.Index(fields=['recipient', '-delivered_at'], name='voucher_rec_delivered_idx'),
+            models.Index(fields=['recipient', 'dismissed_at'], name='voucher_rec_dismissed_idx'),
+        ]
+        ordering = ['-delivered_at']
+
+
+class PortalNotification(models.Model):
+    TYPE_CHOICES = (
+        ('VOUCHER', 'Fee voucher'),
+        ('GENERAL', 'General'),
+    )
+
+    recipient = models.ForeignKey('auth.User', on_delete=models.CASCADE, related_name='portal_notifications')
+    notification_type = models.CharField(max_length=20, choices=TYPE_CHOICES, default='GENERAL')
+    title = models.CharField(max_length=180)
+    message = models.TextField()
+    related_student = models.ForeignKey(
+        'student_profile.Student', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='portal_notifications',
+    )
+    voucher = models.ForeignKey(
+        FeeVoucher, on_delete=models.CASCADE, null=True, blank=True,
+        related_name='portal_notifications',
+    )
+    is_read = models.BooleanField(default=False)
+    read_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['recipient', 'voucher', 'notification_type'],
+                name='unique_voucher_portal_notification',
+            )
+        ]
+        indexes = [
+            models.Index(fields=['recipient', 'is_read', '-created_at'], name='portal_notify_recipient_idx'),
+        ]
+        ordering = ['-created_at']
+
 # --- AUTOMATION & LOGGING MODELS ---
 class FeeGenerationSettings(models.Model):
     auto_enabled = models.BooleanField(default=False)
@@ -173,6 +241,63 @@ class AutomationJobDetail(models.Model):
     )
     status = models.CharField(max_length=20)
     error_message = models.TextField(null=True, blank=True)
+
+
+class AutomationProgressRun(models.Model):
+    """Reusable, persisted progress state for a long-running automation task."""
+
+    STATUS_CHOICES = (
+        ('PENDING', 'Pending'),
+        ('RUNNING', 'Running'),
+        ('COMPLETED', 'Completed'),
+        ('COMPLETED_WITH_ERRORS', 'Completed with errors'),
+        ('FAILED', 'Failed'),
+    )
+
+    task_type = models.CharField(max_length=60)
+    label = models.CharField(max_length=160)
+    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='PENDING')
+    total_items = models.PositiveIntegerField(default=0)
+    processed_items = models.PositiveIntegerField(default=0)
+    successful_items = models.PositiveIntegerField(default=0)
+    failed_items = models.PositiveIntegerField(default=0)
+    skipped_items = models.PositiveIntegerField(default=0)
+    current_name = models.CharField(max_length=255, blank=True)
+    current_identifier = models.CharField(max_length=100, blank=True)
+    current_channel = models.CharField(max_length=30, blank=True)
+    current_status = models.CharField(max_length=30, blank=True)
+    metadata = models.JSONField(default=dict, blank=True)
+    error_message = models.TextField(blank=True)
+    started_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-started_at']
+        indexes = [
+            models.Index(fields=['task_type', 'status'], name='edupilot_co_task_ty_65d9aa_idx'),
+            models.Index(fields=['-started_at'], name='edupilot_co_started_964c6a_idx'),
+        ]
+
+
+class AutomationProgressEvent(models.Model):
+    """A lightweight audit/feed row emitted as one automation item finishes."""
+
+    run = models.ForeignKey(AutomationProgressRun, on_delete=models.CASCADE, related_name='events')
+    sequence = models.PositiveIntegerField()
+    item_name = models.CharField(max_length=255)
+    item_identifier = models.CharField(max_length=100, blank=True)
+    channel = models.CharField(max_length=30, blank=True)
+    status = models.CharField(max_length=30)
+    message = models.TextField(blank=True)
+    occurred_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-sequence']
+        constraints = [
+            models.UniqueConstraint(fields=['run', 'sequence'], name='unique_automation_progress_event_sequence'),
+        ]
+        indexes = [models.Index(fields=['run', '-sequence'], name='edupilot_co_run_id_93138b_idx')]
 
 # class NotificationQueue(models.Model):
 #     STATUS_CHOICES = (('PENDING', 'Pending'), ('SENT', 'Sent'), ('FAILED', 'Failed'))
@@ -430,7 +555,10 @@ def create_ledger_entry(sender, instance, created, **kwargs):
         )
         if not balance_obj.canonical_student_id:
             balance_obj.canonical_student = instance.canonical_student or instance.student.canonical_student
-        balance_obj.outstanding_amount += Decimal(str(instance.net_amount))
+        balance_obj.outstanding_amount = (
+            Decimal(str(balance_obj.outstanding_amount or 0))
+            + Decimal(str(instance.net_amount))
+        )
         balance_obj.save()
 class Period(models.Model):
     class_name = models.CharField(max_length=50)

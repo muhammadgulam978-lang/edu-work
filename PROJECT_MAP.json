@@ -2,6 +2,28 @@
   "project": "EduPilot",
   "generated_on": "2026-07-27",
   "purpose": "Fast repository index for targeted future changes. Verify the relevant source files before editing.",
+  "recent_features": {
+    "communication": {
+      "http_route": "/communication/",
+      "websocket_route": "/ws/communication/<conversation_id>/",
+      "models": "communication/models.py",
+      "service": "communication/services.py",
+      "views": "communication/views.py",
+      "consumer": "communication/consumers.py",
+      "template": "communication/templates/communication/inbox.html",
+      "behavior": "One direct thread per normalized user pair, group messaging, receipts, typing, presence, mentions, actions, attachments, and polling fallback."
+    },
+    "portal_voucher_delivery": {
+      "websocket_route": "/ws/vouchers/",
+      "models": "edupilot_core/models.py",
+      "service": "edupilot_core/voucher_delivery.py",
+      "views": "edupilot_core/voucher_portal.py",
+      "consumer": "edupilot_core/consumers.py",
+      "templates": "edupilot_core/templates/voucher_portal/",
+      "assets": "admin_panel/static/admin_panel/{css/portal-vouchers.css,js/portal-vouchers.js}",
+      "behavior": "Distributes each canonical student fee voucher to the student, linked parents, and assigned class teacher with recipient-scoped history, PDF access, notifications, popup dismissal, and view/download tracking."
+    }
+  },
   "stack": {
     "framework": "Django 5.2",
     "language": "Python",

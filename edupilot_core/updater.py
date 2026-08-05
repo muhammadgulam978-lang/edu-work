@@ -3,15 +3,14 @@ from datetime import datetime
 from apscheduler.schedulers.background import BackgroundScheduler
 from django_apscheduler.jobstores import DjangoJobStore
 from django.utils import timezone
-from .services import FeeGenerationService, NotificationDispatcherService
-from .models import FeeGenerationSettings, AutomationJob, SalaryAutomationSettings
+from .automation_runner import start_fee_generation, start_notification_dispatch, start_salary_generation
+from .models import FeeGenerationSettings, SalaryAutomationSettings
 
 def run_scheduled_job():
     settings_obj = FeeGenerationSettings.objects.first()
     if settings_obj and settings_obj.auto_enabled:
         now = timezone.now()
-        job = AutomationJob.objects.create(job_type='AUTO_GENERATION', status='PENDING')
-        FeeGenerationService.generate_monthly_fees(now.strftime("%B"), now.year, job_id=job.id)
+        start_fee_generation(now.strftime("%B"), now.year, job_type='AUTO_GENERATION')
 
 def check_and_run_job():
     settings_obj = FeeGenerationSettings.objects.first()
@@ -23,14 +22,13 @@ def check_and_run_job():
             run_scheduled_job()
            
 def check_salary_job():
-    from .services import SalaryAutomationService
     settings_obj = SalaryAutomationSettings.objects.first()
     if settings_obj and settings_obj.auto_enabled:
         now = timezone.now()
         if now.day == settings_obj.generation_day and \
         now.hour == settings_obj.generation_time.hour and \
         now.minute == settings_obj.generation_time.minute :
-         SalaryAutomationService.generate_salaries()
+         start_salary_generation(now.strftime("%B"), now.year)
 
 def start():
     scheduler = BackgroundScheduler()
@@ -56,7 +54,7 @@ def start():
 
     # 3. SMS Dispatcher Job (Har 5 minute)
     scheduler.add_job(
-        NotificationDispatcherService.send_pending_notifications, 
+        start_notification_dispatch,
         'interval', 
         minutes=5, 
         id="sms_dispatcher_job", 

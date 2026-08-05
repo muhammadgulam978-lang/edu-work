@@ -1,0 +1,44 @@
+{% extends "admin_panel/bases.html" %}{% load static %}
+{% block title %}{{ student.name }} Enrollment{% endblock %}
+{% block head %}<link rel="stylesheet" href="{% static 'admin_panel/css/student-admissions.css' %}?v=admissions-5">{% endblock %}
+{% block content %}
+<main class="admission-workspace enrollment-profile">
+  <header class="ad-page-header">
+    <div><p class="ad-kicker">Enrollment Complete</p><h1>{{ student.name }}</h1><p>{{ student.student_id }} · {{ student.class_fk.class_name|default:"Class pending" }} / {{ student.section.section_name|default:"Section pending" }}</p></div>
+    <div class="enrollment-header-actions"><a class="edu-btn edu-btn-secondary" href="{% url 'student_admissions' %}"><i class="fas fa-arrow-left"></i> Applications</a>{% if student.class_fk_id %}<a class="edu-btn edu-btn-primary" href="{% url 'class_students' student.class_fk_id %}?q={{ student.student_id|urlencode }}"><i class="fas fa-users"></i> Open Class Profile</a>{% endif %}</div>
+  </header>
+
+  {% if issued_credentials %}
+  <section class="credential-receipt" aria-labelledby="credentialHeading">
+    <div class="credential-warning"><i class="fas fa-shield-alt"></i><div><h2 id="credentialHeading">Portal login credentials</h2><p>Copy these passwords now. For security, passwords are shown only once and are never stored as readable text.</p></div></div>
+    <div class="credential-grid">
+      <article><span class="credential-role"><i class="fas fa-user-graduate"></i> Student</span><strong>{{ student.name }}</strong><dl><div><dt>Login ID</dt><dd>{{ issued_credentials.student.username }}</dd></div><div><dt>Password</dt><dd class="secret-value">{{ issued_credentials.student.password }}</dd></div></dl></article>
+      {% for item in issued_credentials.guardians %}<article><span class="credential-role"><i class="fas fa-user-friends"></i> {{ item.relationship }}</span><strong>{{ item.name }}</strong><dl><div><dt>Login ID</dt><dd>{{ item.username }}</dd></div><div><dt>Password</dt><dd class="secret-value">{% if item.password %}{{ item.password }}{% elif item.existing %}Existing password unchanged{% else %}No portal login{% endif %}</dd></div></dl></article>{% endfor %}
+    </div>
+  </section>
+  {% else %}
+  <section class="ad-message"><i class="fas fa-lock"></i> Passwords are securely saved and cannot be displayed again. Login IDs remain available below; use password reset when a new password is required.</section>
+  {% endif %}
+
+  <section class="enrollment-kpis">
+    <article><span><i class="fas fa-id-card"></i></span><small>Student ID</small><strong>{{ student.student_id }}</strong></article>
+    <article><span><i class="fas fa-school"></i></span><small>Placement</small><strong>{{ student.class_fk.class_name|default:"Pending" }} · {{ student.section.section_name|default:"-" }}</strong></article>
+    <article><span><i class="fas fa-chalkboard-teacher"></i></span><small>Class Teacher</small><strong>{% if teacher_assignment %}{{ teacher_assignment.teacher.name }}{% else %}Not assigned{% endif %}</strong></article>
+    <article><span><i class="fas fa-file-invoice-dollar"></i></span><small>First Voucher</small><strong>{% if voucher %}{{ voucher.voucher_no }}{% else %}Pending{% endif %}</strong></article>
+  </section>
+
+  <div class="enrollment-sections">
+    <section class="ad-card"><div class="profile-section-title"><i class="fas fa-user"></i><h2>Student Profile</h2></div><dl class="profile-data-grid"><div><dt>Full name</dt><dd>{{ student.name }}</dd></div><div><dt>Portal login ID</dt><dd>{{ student.user.username }}</dd></div><div><dt>Email</dt><dd>{{ student.email }}</dd></div><div><dt>Phone</dt><dd>{{ student.phone|default:"Not provided" }}</dd></div><div><dt>Date of birth</dt><dd>{{ student.date_of_birth|date:"d M Y" }}</dd></div><div><dt>Gender</dt><dd>{{ student.gender }}</dd></div><div><dt>Nationality</dt><dd>{{ student.nationality|default:"Not provided" }}</dd></div><div><dt>Address</dt><dd>{{ student.address|default:"Not provided" }}</dd></div></dl></section>
+
+    <section class="ad-card"><div class="profile-section-title"><i class="fas fa-graduation-cap"></i><h2>Admission & Placement</h2></div><dl class="profile-data-grid"><div><dt>Reference</dt><dd>{{ workflow.reference_number }}</dd></div><div><dt>Admission date</dt><dd>{{ student.admission_date|date:"d M Y" }}</dd></div><div><dt>Academic year</dt><dd>{{ student.academic_year.year|default:"Not assigned" }}</dd></div><div><dt>Roll number</dt><dd>{{ student.roll_no }}</dd></div><div><dt>Class</dt><dd>{{ student.class_fk.class_name|default:"Not assigned" }}</dd></div><div><dt>Section</dt><dd>{{ student.section.section_name|default:"Not assigned" }}</dd></div><div><dt>Campus</dt><dd>{{ workflow.payload.campus|default:"Not provided" }}</dd></div><div><dt>Branch</dt><dd>{{ workflow.payload.branch|default:"Not provided" }}</dd></div></dl></section>
+
+    <section class="ad-card"><div class="profile-section-title"><i class="fas fa-heartbeat"></i><h2>Health & Emergency</h2></div><dl class="profile-data-grid"><div><dt>Blood group</dt><dd>{{ student.blood_group|default:"Not specified" }}</dd></div><div><dt>Emergency contact</dt><dd>{{ student.emergency_contact_name|default:"Not provided" }}</dd></div><div><dt>Emergency phone</dt><dd>{{ student.emergency_contact_phone|default:"Not provided" }}</dd></div><div class="wide"><dt>Medical notes</dt><dd>{{ student.medical_notes|default:"No medical notes" }}</dd></div></dl></section>
+
+    <section class="ad-card"><div class="profile-section-title"><i class="fas fa-user-friends"></i><h2>Parents & Guardians</h2></div><div class="guardian-profile-list">{% for link in guardian_links %}<article><div><strong>{{ link.parent.full_name }}</strong><span>{{ link.relationship }}{% if link.is_primary %} · Primary{% endif %}</span></div><dl><div><dt>Login ID</dt><dd>{% if link.parent.user %}{{ link.parent.user.username }}{% else %}No portal account{% endif %}</dd></div><div><dt>Email</dt><dd>{{ link.parent.email|default:"Not provided" }}</dd></div><div><dt>Phone</dt><dd>{{ link.parent.phone|default:"Not provided" }}</dd></div></dl></article>{% empty %}<p>No guardians linked.</p>{% endfor %}</div></section>
+
+    <section class="ad-card"><div class="profile-section-title"><i class="fas fa-wallet"></i><h2>Finance & Voucher</h2></div>{% if voucher %}<dl class="profile-data-grid"><div><dt>Voucher number</dt><dd>{{ voucher.voucher_no }}</dd></div><div><dt>Status</dt><dd><span class="ad-status {{ voucher.status|lower }}">{{ voucher.get_status_display }}</span></dd></div><div><dt>Issue date</dt><dd>{{ voucher.issue_date|date:"d M Y" }}</dd></div><div><dt>Due date</dt><dd>{{ voucher.due_date|date:"d M Y" }}</dd></div><div><dt>Gross amount</dt><dd>PKR {{ voucher.gross_amount }}</dd></div><div><dt>Net amount</dt><dd>PKR {{ voucher.net_amount }}</dd></div></dl>{% else %}<p>The first voucher is pending.</p>{% endif %}{% if workflow.last_error %}<div class="ad-message error">{{ workflow.last_error }}</div>{% endif %}</section>
+
+    <section class="ad-card"><div class="profile-section-title"><i class="fas fa-folder-open"></i><h2>Documents</h2></div><div class="document-profile-list">{% for document in workflow.documents.all %}<a href="{{ document.file.url }}" target="_blank"><i class="fas fa-file-alt"></i><span>{{ document.get_document_type_display }}</span><small>{% if document.verified %}Verified{% else %}Uploaded{% endif %}</small></a>{% empty %}<p>No documents uploaded.</p>{% endfor %}</div></section>
+  </div>
+</main>
+{% endblock %}

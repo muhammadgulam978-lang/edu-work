@@ -166,6 +166,13 @@ def _message_payload(message, viewer):
     for reaction in message.reactions.all():
         reactions.setdefault(reaction.emoji, 0)
         reactions[reaction.emoji] += 1
+    receipts = list(message.receipts.all())
+    delivered_values = [
+        receipt.delivered_at for receipt in receipts if receipt.delivered_at
+    ]
+    read_values = [receipt.read_at for receipt in receipts if receipt.read_at]
+    reply = message.reply_to
+    forwarded = message.forwarded_from
     return {
         "id": message.pk,
         "sender_id": message.sender_id,
@@ -181,11 +188,34 @@ def _message_payload(message, viewer):
             else ""
         ),
         "status": message.delivery_status,
+        "delivered_at": (
+            max(delivered_values).isoformat() if delivered_values else None
+        ),
+        "read_at": max(read_values).isoformat() if read_values else None,
         "created_at": message.created_at.isoformat(),
         "edited": bool(message.edited_at),
         "pinned": message.is_pinned,
         "deleted": bool(message.deleted_at),
         "reactions": reactions,
+        "reply_to": (
+            {
+                "id": reply.pk,
+                "sender": display_name(reply.sender),
+                "content": (
+                    "Message deleted" if reply.deleted_at else reply.content[:160]
+                ),
+            }
+            if reply
+            else None
+        ),
+        "forwarded_from": (
+            {
+                "id": forwarded.pk,
+                "sender": display_name(forwarded.sender),
+            }
+            if forwarded
+            else None
+        ),
     }
 
 
@@ -193,15 +223,21 @@ def _message_payload(message, viewer):
 @ensure_csrf_cookie
 def inbox(request):
     role, base_template, page_title = _config(request.user)
+    view_filter = request.GET.get("view", "inbox")
+    if view_filter not in {"inbox", "unread", "sent", "archived"}:
+        view_filter = "inbox"
     memberships = (
         ConversationParticipant.objects.filter(
             user=request.user,
-            is_archived=False,
             conversation__is_archived=False,
         )
         .select_related("conversation")
         .order_by("-conversation__last_message_at", "-conversation__created_at")
     )
+    if view_filter == "archived":
+        memberships = memberships.filter(is_archived=True)
+    else:
+        memberships = memberships.filter(is_archived=False)
     conversations = [
         membership.conversation
         for membership in memberships
@@ -214,6 +250,16 @@ def inbox(request):
         )
     }
     conversations = [hydrated[item.pk] for item in conversations if item.pk in hydrated]
+    if view_filter == "sent":
+        conversations = [
+            item for item in conversations if item.messages.filter(sender=request.user).exists()
+        ]
+    elif view_filter == "unread":
+        conversations = [
+            item
+            for item in conversations
+            if _conversation_payload(item, request.user)["unread"] > 0
+        ]
     active_id = request.GET.get("conversation")
     active = next(
         (item for item in conversations if str(item.pk) == str(active_id)),
@@ -252,8 +298,10 @@ def inbox(request):
         "initial_messages": (
             [
                 _message_payload(item, request.user)
-                for item in active.messages.select_related("sender").prefetch_related(
-                    "reactions"
+                for item in active.messages.select_related(
+                    "sender", "reply_to__sender", "forwarded_from__sender"
+                ).prefetch_related(
+                    "reactions", "receipts"
                 )[:150]
             ]
             if active
@@ -261,6 +309,7 @@ def inbox(request):
         ),
         "contacts": [_contact_payload(contact) for contact in contacts],
         "can_create_group": role in {"admin", "teacher"},
+        "view_filter": view_filter,
     }
     return render(request, "communication/inbox.html", context)
 
@@ -308,11 +357,18 @@ def create_group(request):
 def send_message(request, conversation_id):
     conversation = _member_conversation(request.user, conversation_id)
     try:
+        reply_to = None
+        reply_to_id = request.POST.get("reply_to_id")
+        if reply_to_id:
+            reply_to = get_object_or_404(
+                Message, pk=reply_to_id, conversation=conversation
+            )
         message = CommunicationService.send_message(
             conversation,
             request.user,
             request.POST.get("content", ""),
             request.FILES.get("attachment"),
+            reply_to=reply_to,
         )
     except (PermissionDenied, ValidationError) as exc:
         detail = exc.messages[0] if isinstance(exc, ValidationError) else str(exc)
@@ -332,8 +388,8 @@ def poll(request, conversation_id):
     CommunicationService.mark_read(conversation, request.user)
     messages_qs = (
         conversation.messages.filter(pk__gt=after_id)
-        .select_related("sender")
-        .prefetch_related("reactions")
+        .select_related("sender", "reply_to__sender", "forwarded_from__sender")
+        .prefetch_related("reactions", "receipts")
     )
     presence = {
         item.user_id: {
@@ -404,6 +460,18 @@ def message_action(request, message_id):
             )
             if not created:
                 reaction.delete()
+    elif action == "forward" and not message.deleted_at:
+        target = _member_conversation(
+            request.user, request.POST.get("target_conversation_id")
+        )
+        forwarded = CommunicationService.send_message(
+            target,
+            request.user,
+            forwarded_from=message,
+        )
+        return JsonResponse(
+            {"ok": True, "message": _message_payload(forwarded, request.user)}
+        )
     else:
         return JsonResponse({"ok": False, "error": "Action not permitted."}, status=403)
     message.refresh_from_db()
@@ -422,6 +490,9 @@ def conversation_setting(request, conversation_id):
         membership.save(update_fields=["is_muted"])
     elif action == "archive":
         membership.is_archived = True
+        membership.save(update_fields=["is_archived"])
+    elif action == "restore":
+        membership.is_archived = False
         membership.save(update_fields=["is_archived"])
     elif action == "block" and not membership.conversation.is_group:
         other = membership.conversation.memberships.exclude(user=request.user).first()

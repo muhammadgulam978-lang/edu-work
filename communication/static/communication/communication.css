@@ -72,6 +72,16 @@
 .communication-search { margin:12px; height:40px; border:1px solid var(--comm-line); border-radius:8px; display:flex; align-items:center; gap:9px; padding:0 11px; color:#8795a5; }
 .communication-search input { border:0; outline:0; width:100%; background:transparent; }
 .communication-conversations { max-height:560px; overflow:auto; }
+.communication-inbox-filters {
+  display:grid; grid-template-columns:repeat(4,1fr); gap:4px; padding:0 12px 10px;
+}
+.communication-inbox-filters a {
+  padding:7px 4px; border:1px solid var(--comm-line); border-radius:8px;
+  color:var(--comm-muted); text-align:center; text-decoration:none; font-size:10px;
+}
+.communication-inbox-filters a.is-active {
+  border-color:var(--comm-teal); color:#08776f; background:#f2fbfa;
+}
 .communication-conversation { min-height:68px; padding:12px 14px; border-top:1px solid #eef3f4; color:var(--comm-ink); text-decoration:none; display:flex; align-items:center; gap:10px; }
 .communication-conversation:hover { background:#f8fbfc; }
 .communication-conversation.is-active { background:#edf8ff; border-left:3px solid var(--comm-blue); padding-left:11px; }
@@ -136,6 +146,16 @@
 .communication-bubble { border:1px solid var(--comm-line); background:#fff; border-radius:4px 12px 12px; padding:10px 13px; }
 .communication-message.is-mine .communication-bubble { background:#eaf5ff; border-color:#d3e9fb; border-radius:12px 4px 12px 12px; }
 .communication-bubble strong { display:block; font-size:11px; color:var(--comm-blue); margin-bottom:4px; }
+.communication-reply-context {
+  margin:0 0 8px; padding:7px 9px; border-left:3px solid var(--comm-teal);
+  border-radius:4px; background:#f4f8f9; display:flex; flex-direction:column;
+}
+.communication-reply-context strong { margin:0; color:#08776f; }
+.communication-reply-context span {
+  color:var(--comm-muted); font-size:10px; overflow:hidden; text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.communication-forwarded { display:block; margin-bottom:6px; color:#7651dc; font-size:10px; }
 .communication-bubble p { margin:0; line-height:1.45; white-space:pre-wrap; overflow-wrap:anywhere; }
 .communication-bubble.is-deleted { color:#8a96a5; font-style:italic; background:#f7f8f9; }
 .communication-attachment { margin-top:8px; display:flex; gap:7px; align-items:center; color:#0b736d; text-decoration:none; font-size:12px; }
@@ -143,6 +163,19 @@
 .communication-message.is-mine footer { justify-content:flex-end; }
 .communication-message footer button { width:24px; height:24px; font-size:10px; padding:0; }
 .communication-typing { padding:3px 18px; color:#149876; font-size:11px; }
+.communication-compose-context {
+  min-height:44px; padding:7px 13px; border-top:1px solid var(--comm-line);
+  background:#f7fbfb; display:flex; align-items:center; justify-content:space-between; gap:10px;
+}
+.communication-compose-context[hidden],
+.communication-emoji-picker[hidden] { display:none; }
+.communication-compose-context span { min-width:0; display:flex; flex-direction:column; font-size:10px; }
+.communication-compose-context small { color:var(--comm-muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.communication-compose-context button,
+.communication-emoji-toggle {
+  width:36px; height:36px; flex:0 0 36px; border:1px solid var(--comm-line);
+  border-radius:8px; background:#fff; color:#526176;
+}
 .communication-compose { min-height:64px; padding:10px 12px; border-top:1px solid var(--comm-line); display:flex; align-items:flex-end; gap:8px; }
 .communication-compose textarea { min-height:40px; max-height:100px; resize:none; flex:1; padding:10px 13px; border:1px solid var(--comm-line); border-radius:8px; outline:none; }
 .communication-compose textarea:focus { border-color:var(--comm-teal); box-shadow:0 0 0 3px rgba(15,157,145,.1); }
@@ -150,6 +183,18 @@
 .communication-attach input { display:none; }
 .communication-send { width:40px; height:40px; border:1px solid var(--comm-blue); border-radius:8px; background:#fff; color:var(--comm-blue); }
 .communication-send:hover { background:#edf7ff; }
+.communication-compose-meta {
+  min-height:22px; padding:0 13px 6px; display:flex; align-items:flex-end;
+  justify-content:space-between; color:var(--comm-muted); font-size:9px;
+}
+.communication-emoji-picker {
+  padding:5px; border:1px solid var(--comm-line); border-radius:8px; background:#fff;
+  box-shadow:0 8px 20px rgba(25,48,67,.1);
+}
+.communication-emoji-picker button {
+  width:30px; height:30px; border:0; border-radius:6px; background:transparent;
+}
+.communication-emoji-picker button:hover { background:#f2f7f8; }
 .communication-form-error { padding:7px 13px; color:#c43c48; font-size:11px; }
 .communication-side { display:flex; flex-direction:column; gap:16px; }
 .communication-side-card { padding:16px; }
@@ -261,11 +306,35 @@
   font-size: 11px;
 }
 .communication-dialog fieldset { border:1px solid var(--comm-line); border-radius:8px; }
+.communication-member-search {
+  height:38px; margin:4px 6px 8px !important; padding:0 9px;
+  border:1px solid var(--comm-line); border-radius:8px; display:flex !important;
+  align-items:center; gap:8px; color:var(--comm-muted);
+}
+.communication-dialog .communication-member-search input {
+  margin:0; padding:0; border:0; outline:0;
+}
 .communication-member-list { max-height:180px; overflow:auto; display:grid; grid-template-columns:1fr 1fr; gap:5px; }
 .communication-member-list label { display:flex; gap:8px; align-items:center; margin:0; padding:7px; }
 .communication-member-list input { width:auto; margin:0; }
 .communication-member-list small { color:var(--comm-muted); }
 .communication-dialog footer { justify-content:flex-end; margin-top:16px; }
+
+#main-wrapper #forward-message-dialog header button[data-close-dialog] {
+  min-width:36px !important; width:36px !important; max-width:36px !important;
+  min-height:36px !important; height:36px !important; padding:0 !important;
+  border:1px solid var(--comm-line) !important; border-radius:8px !important;
+  background:#fff !important; color:#526176 !important; box-shadow:none !important;
+  display:inline-grid !important; place-items:center;
+}
+#main-wrapper #forward-message-dialog header button[data-close-dialog] i {
+  color:#526176 !important; font-family:"Font Awesome 5 Free" !important;
+  font-style:normal !important; font-weight:900 !important;
+}
+#main-wrapper #forward-message-dialog button.communication-btn {
+  min-height:40px !important; padding:8px 16px !important; border-radius:8px !important;
+  background:#fff !important; box-shadow:none !important;
+}
 
 @media (max-width: 1180px) {
   .communication-layout { grid-template-columns:280px minmax(0,1fr); }

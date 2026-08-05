@@ -18,22 +18,22 @@
             </div>
 
             <div class="role-select-grid">
-                <a href="{% url 'login_admin' %}" class="role-tile">
+                <a href="{{ admin_login_url }}" class="role-tile" target="_blank" rel="noopener">
                     <span><i class="fa-solid fa-user-shield"></i></span>
                     <strong>Admin Login</strong>
                     <small>Manage school operations</small>
                 </a>
-                <a href="{% url 'login_teacher' %}" class="role-tile">
+                <a href="{{ teacher_login_url }}" class="role-tile" target="_blank" rel="noopener">
                     <span><i class="fa-solid fa-chalkboard-user"></i></span>
                     <strong>Teacher Login</strong>
                     <small>Open classes and LMS</small>
                 </a>
-                <a href="{% url 'login_student' %}" class="role-tile">
+                <a href="{{ student_login_url }}" class="role-tile" target="_blank" rel="noopener">
                     <span><i class="fa-solid fa-user-graduate"></i></span>
                     <strong>Student Login</strong>
                     <small>Continue learning</small>
                 </a>
-                <a href="{% url 'login_parent' %}" class="role-tile">
+                <a href="{{ parent_login_url }}" class="role-tile" target="_blank" rel="noopener">
                     <span><i class="fa-solid fa-users"></i></span>
                     <strong>Parent Login</strong>
                     <small>Track child progress</small>

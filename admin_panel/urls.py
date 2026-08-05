@@ -2,6 +2,7 @@ from django.urls import path, include
 from .import views
 from django.contrib.auth import views as auth_views
 from admin_panel.views import bulk_upload_students, bulk_upload_teachers, bulk_delete_students,  bulk_delete_teachers
+from . import admission_views
 urlpatterns = [
     path('', include('admin_ai.urls')),
     path('', views.admin_panel_dashboard, name='admin_panel_dashboard'),
@@ -9,6 +10,10 @@ urlpatterns = [
     path('user_list/', views.user_list, name='user_list'),
     path('register/', views.register_admission, name='registration'),
     path('admission_list/', views.admission_list, name='admission_list'),
+    path('students/admissions/', admission_views.student_admissions, name='student_admissions'),
+    path('students/admissions/lookups/', admission_views.admission_lookups, name='admission_lookups'),
+    path('students/admissions/<int:pk>/enrollment/', admission_views.admission_enrollment_profile, name='admission_enrollment_profile'),
+    path('students/admissions/<int:pk>/retry-voucher/', admission_views.admission_retry_voucher, name='admission_retry_voucher'),
     path('admission/<int:pk>/update_status/', views.update_admission_status, name='update_admission_status'),
     path('rejection_reason/<int:admission_id>/', views.reject_reason, name='reject_reason'),
     path('admission/<int:admission_id>/approve-credentials/', views.approve_admission_credentials, name='approve_admission_credentials'),

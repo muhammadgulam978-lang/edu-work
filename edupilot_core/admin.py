@@ -13,7 +13,8 @@ from .models import (
     StudentLedger, StudentBalance, FeeVoucher, FeeVoucherItem,
     FeeGenerationSettings, NotificationQueue, FeeGenerationLog,
     AutomationJob, AutomationJobDetail, SalaryStructure, SalaryVoucher,
-    SalaryAutomationSettings, SalaryAutomationJob, SalaryAutomationJobDetail
+    SalaryAutomationSettings, SalaryAutomationJob, SalaryAutomationJobDetail,
+    VoucherDelivery, PortalNotification,
 )
 
 
@@ -221,6 +222,30 @@ class FeeVoucherAdmin(admin.ModelAdmin):
 class FeeVoucherItemAdmin(admin.ModelAdmin):
     list_display = ('voucher', 'fee_head', 'amount')
     list_filter = ('voucher',)
+
+
+@admin.register(VoucherDelivery)
+class VoucherDeliveryAdmin(admin.ModelAdmin):
+    list_display = (
+        'voucher', 'recipient', 'recipient_role', 'related_student',
+        'delivered_at', 'viewed_at', 'downloaded_at', 'dismissed_at',
+    )
+    list_filter = ('recipient_role', 'delivered_at', 'viewed_at', 'downloaded_at', 'dismissed_at')
+    search_fields = (
+        'voucher__voucher_no', 'recipient__username', 'recipient__email',
+        'related_student__name', 'related_student__student_id',
+    )
+    readonly_fields = (
+        'voucher', 'recipient', 'recipient_role', 'related_student', 'delivered_at',
+        'viewed_at', 'downloaded_at', 'dismissed_at', 'last_viewed_at',
+    )
+
+
+@admin.register(PortalNotification)
+class PortalNotificationAdmin(admin.ModelAdmin):
+    list_display = ('title', 'recipient', 'notification_type', 'related_student', 'is_read', 'created_at')
+    list_filter = ('notification_type', 'is_read', 'created_at')
+    search_fields = ('title', 'message', 'recipient__username', 'related_student__name')
 
 from edupilot_core.models import Period, AssignedPeriods, Fixture, Absence
 

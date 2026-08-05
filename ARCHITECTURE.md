@@ -69,6 +69,13 @@ The repository contains legacy/mirrored model and template families. Never choos
 2. `login.views` authenticates and redirects by role.
 3. Portal decorators/context processors enforce or expose role permissions.
 
+### Real-Time Communication
+
+1. `/communication/` resolves role-aware contacts and conversations through `communication.permissions` and `communication.views`.
+2. `CommunicationService` guarantees one direct thread per normalized user pair and persists messages, receipts, mentions, reactions, attachments, and notifications.
+3. `/ws/communication/<conversation_id>/` uses Django Channels for live messages, typing, presence, inbox changes, and receipt updates; HTTP polling remains the fallback.
+4. Redis backs production channel delivery when `REDIS_URL` is configured; local development uses the in-memory channel layer.
+
 ### Fee Generation and Notification
 
 1. Admin or scheduler enters `edupilot_core.views`.
@@ -77,6 +84,10 @@ The repository contains legacy/mirrored model and template families. Never choos
 4. Notification queue records are created for relevant recipients.
 5. Automation jobs/logs record counts, status, and errors.
 6. Dashboard and portal views prefer canonical records and retain legacy fallback.
+7. Manual and scheduled fee, salary, and notification jobs start through `edupilot_core.automation_runner`; a persistent `AutomationProgressRun` and per-record `AutomationProgressEvent` provide live polling updates without changing the original job history.
+8. A new `FeeVoucher` is distributed by `edupilot_core.voucher_delivery` to the canonical student account, linked parent accounts, and the assigned class teacher account.
+9. `VoucherDelivery` and `PortalNotification` persist recipient-specific delivery, read, view, download, popup-dismissal, and last-viewed state.
+10. Student, Parent, and Teacher voucher routes use `edupilot_core.voucher_portal`; `/ws/vouchers/` pushes new-voucher events and the portal JavaScript retains polling fallback.
                 
 ### Salary and Payslip
 

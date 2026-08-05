@@ -6,10 +6,16 @@ This is the fast lookup index for future work. Start here, then inspect only the
 
 ## Recent Feature Map
 
+- Real-time Communication: `communication/models.py`, `communication/services.py`, `communication/views.py`, `communication/consumers.py`, and `communication/routing.py`.
+- Communication UI: `/communication/` uses `communication/templates/communication/inbox.html` with its dedicated CSS/JS; Admin, Teacher, Student, and Parent portals share this screen with role-aware contact permissions.
+- Direct conversations use a unique normalized `direct_key`; receipts progress `SENT -> DELIVERED -> READ`; WebSocket route is `/ws/communication/<conversation_id>/` with polling fallback.
 - Announcements: `edupilot_core/models.py` (`Announcement`, `AnnouncementRead`, `AnnouncementNotification`), `edupilot_core/services.py` (`AnnouncementService`), `admin_panel/views.py` (`announcement_center`), `admin_panel/templates/admin_panel/announcement_center.html`, and `admin_panel/static/admin_panel/{css/announcement-center.css,js/announcement-center.js}`.
 - Admin route: `/admin_panel/announcements/` name=`announcement_center`; creation is CSRF-protected and targets live users by audience/class.
 - Recipient feeds share `templates/shared/announcements/feed_content.html` and `edupilot_core/announcement_views.py`.
 - Feed routes: `/teacher_dashboard/announcements/`, `/student/announcements/`, `/parent/announcements/`, and staff-only `/automation/announcements/`.
+- Automation live progress: `edupilot_core/automation_runner.py` starts bounded background fee, salary, and notification runs; `edupilot_core/progress.py` persists run/event state; `edupilot_core/services.py` records per-recipient progress; `/automation/progress/<run_id>/` polls snapshots; reusable UI lives in `edupilot_core/templates/automation/_progress_tracker.html` and `admin_panel/static/admin_panel/{css/automation-progress.css,js/automation-progress.js}`.
+- Portal voucher delivery: `edupilot_core/voucher_delivery.py` resolves Student/Parent/Class Teacher recipients; `edupilot_core/voucher_portal.py` provides recipient-scoped history/view/download/dismiss APIs; `VoucherDelivery` and `PortalNotification` live in `edupilot_core/models.py`; realtime route is `/ws/vouchers/` via `edupilot_core/consumers.py`.
+- Portal voucher UI: `edupilot_core/templates/voucher_portal/`, `admin_panel/static/admin_panel/{css/portal-vouchers.css,js/portal-vouchers.js}`, plus Student/Parent/Teacher dashboard includes, bases, sidebars, and URL modules.
 
 ## Runtime Entry Points
 
