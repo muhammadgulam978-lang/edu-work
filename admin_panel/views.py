@@ -6913,7 +6913,6 @@ def _str(val):
     s = str(val).strip()
     return '' if s.lower() in ('none', 'nan') else s
 
-
 @permission_required('admin_panel.add_admission', raise_exception=True)
 def bulk_upload_students(request):
     if request.method == 'POST' and request.FILES.get('excel_file'):
@@ -6936,10 +6935,24 @@ def bulk_upload_students(request):
         skip_count    = 0
         error_rows    = []
 
+        # Template columns (0-indexed):
+        # 0 S.No | 1 Student_Id | 2 Campus | 3 Branch | 4 Name | 5 Date_Of_Birth
+        # 6 Gender | 7 Email | 8 Contact No. | 9 Address | 10 Admission Date
+        # 11 Father's Name | 12 Father's Email | 13 Mother's Name
+        # 14 Father Contact Number | 15 Father's CNIC No | 16 Nationality
+        # 17 Class_Name | 18 Father's Occupation | 19 Admission_Status
+        # 20 Login_Id | 21 Password
+        EXPECTED_COLS = 22
+
         for row_num, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
 
             if not any(row):
                 continue
+
+            # Row ko hamesha 22 columns tak pad karo, taake short rows par
+            # "tuple index out of range" na aaye
+            if len(row) < EXPECTED_COLS:
+                row = row + (None,) * (EXPECTED_COLS - len(row))
 
             try:
                 student_id     = _str(row[1])
@@ -6954,15 +6967,15 @@ def bulk_upload_students(request):
                 admission_date = _parse_date(row[10])
                 father_name    = _str(row[11])
                 father_email   = _str(row[12])
-                class_name     = _str(row[14])
-                father_occ     = _str(row[15])
-                mother_name    = _str(row[16])
-                father_contact = _str(row[17])
-                father_cnic    = _str(row[18])
-                nationality    = _str(row[19])
-                raw_status     = _str(row[20]).lower() or 'pending'
-                login_id       = _str(row[21])
-                password       = _str(row[22])
+                mother_name    = _str(row[13])
+                father_contact = _str(row[14])
+                father_cnic    = _str(row[15])
+                nationality    = _str(row[16])
+                class_name     = _str(row[17])
+                father_occ     = _str(row[18])
+                raw_status     = _str(row[19]).lower() or 'pending'
+                login_id       = _str(row[20])
+                password       = _str(row[21])
 
                 if not name or not login_id or not password:
                     skip_count += 1
@@ -6977,6 +6990,7 @@ def bulk_upload_students(request):
                         f"Row {row_num}: Login ID '{login_id}' pehle se exist karta hai — skip kiya."
                     )
                     continue
+
                 try:
                     validate_password(password)
                 except Exception as exc:
@@ -7014,26 +7028,26 @@ def bulk_upload_students(request):
                         continue
 
                 admission = Admission.objects.create(
-                    student_id       = student_id or None,
-                    campus           = campus,
-                    branch           = branch,
-                    name             = name,
-                    dob              = dob,
-                    gender           = gender,
-                    email            = email,
-                    contact          = contact,
-                    address          = address,
-                    admission_date   = admission_date,
-                    father_name      = father_name,
-                    father_email     = father_email,
-                    mother_name      = mother_name,
-                    father_contact   = father_contact,
-                    father_cnic      = father_cnic,
-                    father_occupation= father_occ,
-                    academic_year    = active_year,
-                    class_fk         = class_obj,
-                    admission_status = admission_status,
-                    nationality      = nationality,
+                    student_id        = student_id or None,
+                    campus            = campus,
+                    branch            = branch,
+                    name              = name,
+                    dob               = dob,
+                    gender            = gender,
+                    email             = email,
+                    contact           = contact,
+                    address           = address,
+                    admission_date    = admission_date,
+                    father_name       = father_name,
+                    father_email      = father_email,
+                    mother_name       = mother_name,
+                    father_contact    = father_contact,
+                    father_cnic       = father_cnic,
+                    father_occupation = father_occ,
+                    academic_year     = active_year,
+                    class_fk          = class_obj,
+                    admission_status  = admission_status,
+                    nationality       = nationality,
                 )
 
                 if admission_status == 'approved':
@@ -7096,10 +7110,22 @@ def bulk_upload_teachers(request):
         skip_count    = 0
         error_rows    = []
 
+        # Template columns (0-indexed):
+        # 0 Id | 1 Name | 2 Email | 3 Phone Number | 4 Gender | 5 Date_Of_Birth
+        # 6 Qualification | 7 Experience | 8 Address | 9 Faculty Group
+        # 10 Department | 11 Subject | 12 Image | 13 Joining Date | 14 Status
+        # 15 Login_Id | 16 Password
+        EXPECTED_COLS = 17
+
         for row_num, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
 
             if not any(row):
                 continue
+
+            # Row ko hamesha 17 columns tak pad karo, taake short rows par
+            # "tuple index out of range" na aaye
+            if len(row) < EXPECTED_COLS:
+                row = row + (None,) * (EXPECTED_COLS - len(row))
 
             try:
                 teacher_id    = _str(row[0])
@@ -7132,12 +7158,14 @@ def bulk_upload_teachers(request):
                         f"Row {row_num}: Email '{email}' pehle se exist karta hai — skip kiya."
                     )
                     continue
+
                 if User.objects.filter(username__iexact=login_id).exists():
                     skip_count += 1
                     error_rows.append(
                         f"Row {row_num}: Login ID '{login_id}' pehle se exist karta hai — skip kiya."
                     )
                     continue
+
                 try:
                     validate_password(password)
                 except Exception as exc:
@@ -7197,7 +7225,6 @@ def bulk_upload_teachers(request):
         return redirect('teacher_list')
 
     return render(request, 'admin_panel/bulk_upload_teachers.html')
-
 
 # ==================== BULK DELETE ====================
 from django.views.decorators.http import require_POST
