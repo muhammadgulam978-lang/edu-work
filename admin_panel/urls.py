@@ -1,9 +1,14 @@
 from django.urls import path, include
 from .import views
 from django.contrib.auth import views as auth_views
+from django.views.generic import TemplateView
 from admin_panel.views import bulk_upload_students, bulk_upload_teachers, bulk_delete_students,  bulk_delete_teachers
 from . import admission_views
 urlpatterns = [
+    path('help-support/report-issue/', TemplateView.as_view(template_name='shared/help_support/report_issue.html', extra_context={'portal_base': 'admin_panel/base.html', 'portal_label': 'Admin', 'portal_kind': 'admin', 'report_route': 'admin_report_issue', 'reports_route': 'admin_requested_reports', 'suggestion_route': 'admin_suggestion_bucket', 'suggestions_route': 'admin_my_suggestions'}), name='admin_report_issue'),
+    path('help-support/requested-reports/', TemplateView.as_view(template_name='shared/help_support/requested_reports.html', extra_context={'portal_base': 'admin_panel/base.html', 'portal_label': 'Admin', 'portal_kind': 'admin', 'report_route': 'admin_report_issue', 'reports_route': 'admin_requested_reports', 'suggestion_route': 'admin_suggestion_bucket', 'suggestions_route': 'admin_my_suggestions'}), name='admin_requested_reports'),
+    path('help-support/suggestion-bucket/', TemplateView.as_view(template_name='shared/help_support/suggestion_bucket.html', extra_context={'portal_base': 'admin_panel/base.html', 'portal_label': 'Admin', 'portal_kind': 'admin', 'report_route': 'admin_report_issue', 'reports_route': 'admin_requested_reports', 'suggestion_route': 'admin_suggestion_bucket', 'suggestions_route': 'admin_my_suggestions'}), name='admin_suggestion_bucket'),
+    path('help-support/my-suggestions/', TemplateView.as_view(template_name='shared/help_support/my_suggestions.html', extra_context={'portal_base': 'admin_panel/base.html', 'portal_label': 'Admin', 'portal_kind': 'admin', 'report_route': 'admin_report_issue', 'reports_route': 'admin_requested_reports', 'suggestion_route': 'admin_suggestion_bucket', 'suggestions_route': 'admin_my_suggestions'}), name='admin_my_suggestions'),
     path('', include('admin_ai.urls')),
     path('', views.admin_panel_dashboard, name='admin_panel_dashboard'),
     path('announcements/', views.announcement_center, name='announcement_center'),

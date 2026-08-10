@@ -57,6 +57,19 @@
                 </a>
             </li>
 
+            <li class="sidebar-section">Support</li>
+            <li class="has-menu sidebar-help-support" style="--sidebar-icon-color:#7c3aed; --sidebar-icon-bg:#ede9fe;">
+                <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
+                    <i class="fas fa-life-ring"></i><span class="nav-text">Help &amp; Support</span>
+                </a>
+                <ul aria-expanded="false">
+                    <li><a href="{% url 'parent_report_issue' %}"><i class="fas fa-triangle-exclamation"></i> Report an Issue</a></li>
+                    <li><a href="{% url 'parent_requested_reports' %}"><i class="fas fa-clipboard-list"></i> Requested Reports</a></li>
+                    <li><a href="{% url 'parent_suggestion_bucket' %}"><i class="fas fa-lightbulb"></i> Suggestion Bucket</a></li>
+                    <li><a href="{% url 'parent_my_suggestions' %}"><i class="fas fa-list-check"></i> My Suggestions</a></li>
+                </ul>
+            </li>
+
             <li class="sidebar-section">Account</li>
             <li style="--sidebar-icon-color:#64748b; --sidebar-icon-bg:#eef2f7;">
                 <a href="{% url 'logout' %}" class="ai-icon">

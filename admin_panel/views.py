@@ -4124,13 +4124,19 @@ def assign_period_view(request):
         form = AssignedPeriodForm(request.POST)
         if form.is_valid():
             form.save()
-            return JsonResponse({'success': True})
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': True})
+            messages.success(request, 'Class period assigned successfully.')
+            return redirect('assign_period')
         else:
-            print("Form errors:", form.errors)
-            return JsonResponse({
-                'success': False,
-                'error': form.errors.get_json_data()
-            }, status=400)
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': False,
+                    'error': form.errors.get_json_data()
+                }, status=400)
+            for field_errors in form.errors.values():
+                for error in field_errors:
+                    messages.error(request, error)
 
     return render(request, 'admin_panel/assign_period.html', {
         'form': form,
@@ -4190,21 +4196,35 @@ def get_days_for_subject(request):
 
     if subject_id and section_id:
         try:
-            section = Section.objects.get(id=section_id)
+            section = Section.objects.select_related('class_fk__group').get(id=section_id)
             group = section.class_fk.group
-            subject = Subject.objects.get(id=subject_id)
-            class_ids = Class.objects.filter(group=group).values_list('id', flat=True)
-            subject_ids = Subject.objects.filter(class_fk_id__in=class_ids, name=subject.name).values_list('id', flat=True)
+            subject = Subject.objects.get(id=subject_id, class_fk=section.class_fk)
+            class_ids = Class.objects.filter(group=group).values_list('id', flat=True) if group else [section.class_fk_id]
+            subject_ids = Subject.objects.filter(
+                class_fk_id__in=class_ids, name=subject.name
+            ).values_list('id', flat=True)
 
             subject_periods = SubjectPeriod.objects.filter(
                 subject_id__in=subject_ids,
                 group=group,
                 periods__gt=0
-            )
-            days = subject_periods.values_list('day', 'periods').distinct()
-            result = [{'day': day, 'label': f"{day} ({periods})"} for day, periods in days]
+            ).order_by('day') if group else SubjectPeriod.objects.none()
+            days = list(subject_periods.values_list('day', 'periods').distinct())
+            if days:
+                result = [
+                    {'day': day, 'label': f"{day} ({periods} allowed)", 'configured': True}
+                    for day, periods in days
+                ]
+            else:
+                # A class can still be assigned when its weekly SubjectPeriod plan has
+                # not been configured yet. Available school periods become the fallback.
+                period_days = CreatePeriod.objects.order_by('day').values_list('day', flat=True).distinct()
+                result = [
+                    {'day': day, 'label': day, 'configured': False}
+                    for day in period_days
+                ]
             return JsonResponse(result, safe=False)
-        except Section.DoesNotExist:
+        except (Section.DoesNotExist, Subject.DoesNotExist):
             return JsonResponse([], safe=False)
     return JsonResponse([], safe=False)
 
@@ -4213,8 +4233,11 @@ def ajax_subject_periods(request):
     subject_id = request.GET.get('subject_id')
     try:
         subject = Subject.objects.get(id=subject_id)
-        teachers = subject.teachers.all()
-        data = {"teachers": [{"id": t.id, "name": t.name} for t in teachers]}
+        teachers = subject.teachers.filter(status='active').order_by('name')
+        data = {
+            "teachers": [{"id": t.id, "name": t.name} for t in teachers],
+            "message": "" if teachers.exists() else "No active teacher is assigned to this subject.",
+        }
     except Subject.DoesNotExist:
         data = {"teachers": []}
     return JsonResponse(data)
@@ -4230,10 +4253,10 @@ def ajax_time_slots(request):
         return JsonResponse({'error': 'Missing data'}, status=400)
 
     try:
-        section = Section.objects.get(id=section_id)
+        section = Section.objects.select_related('class_fk__group').get(id=section_id)
         group = section.class_fk.group
-        subject = Subject.objects.get(id=subject_id)
-        class_ids = Class.objects.filter(group=group).values_list('id', flat=True)
+        subject = Subject.objects.get(id=subject_id, class_fk=section.class_fk)
+        class_ids = Class.objects.filter(group=group).values_list('id', flat=True) if group else [section.class_fk_id]
         subject_ids = Subject.objects.filter(
             class_fk_id__in=class_ids,
             name=subject.name
@@ -4244,12 +4267,13 @@ def ajax_time_slots(request):
             group=group,
             day=day,
             periods__gt=0
-        ).first()
+        ).first() if group else None
 
         all_periods = CreatePeriod.objects.filter(day=day).order_by('start_time')
 
         data = {
-            "assignable": subject_period.periods if subject_period else 0,
+            "assignable": subject_period.periods if subject_period else all_periods.count(),
+            "configured": bool(subject_period),
             "periods": [
                 {
                     "id": p.id,

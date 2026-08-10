@@ -6,11 +6,24 @@ const periodSelect = document.getElementById('id_period');
 const teacherSelect = document.getElementById('id_teacher');
 const assignedTable = document.getElementById('assigned-classes-table');
 const toast = document.getElementById('toast');
+const assignmentForm = document.getElementById('assignPeriodForm');
 
 function showToast(message) {
   toast.textContent = message;
   toast.style.display = 'block';
   setTimeout(() => toast.style.display = 'none', 4000);
+}
+
+function setOptions(select, label) {
+  select.innerHTML = `<option value="">${label}</option>`;
+}
+
+function fetchJson(url) {
+  return fetch(url).then(async response => {
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Unable to load options.');
+    return data;
+  });
 }
 
 // ------------------- Class Change -------------------
@@ -25,14 +38,14 @@ classSelect.addEventListener('change', function () {
 
   if (!classId) return;
 
-  fetch(`/admin_panel/ajax/get_sections_for_class/?class_id=${classId}`)
-    .then(res => res.json())
+  fetchJson(`/admin_panel/ajax/get_sections_for_class/?class_id=${encodeURIComponent(classId)}`)
     .then(sections => {
-      sectionSelect.innerHTML = '<option value="">Select Section</option>';
+      setOptions(sectionSelect, sections.length ? 'Select Section' : 'No sections configured');
       sections.forEach(sec => {
         sectionSelect.innerHTML += `<option value="${sec.id}">${sec.name}</option>`;
       });
-    });
+    })
+    .catch(error => { setOptions(sectionSelect, 'Unable to load sections'); showToast(error.message); });
 });
 
 // ------------------- Section Change -------------------
@@ -46,11 +59,9 @@ sectionSelect.addEventListener('change', function () {
 
   if (!sectionId) return;
 
-  fetch(`/admin_panel/ajax/get_subjects_for_section/?section_id=${sectionId}`)
-    .then(res => res.json())
+  fetchJson(`/admin_panel/ajax/get_subjects_for_section/?section_id=${encodeURIComponent(sectionId)}`)
     .then(subjects => {
-      console.log("Subjects response:", subjects); // Debugging
-      subjectSelect.innerHTML = '<option value="">Select Subject</option>';
+      setOptions(subjectSelect, subjects.length ? 'Select Subject' : 'No subjects configured');
       subjects.forEach(sub => {
         let option = document.createElement('option');
         option.value = sub.id;
@@ -58,7 +69,8 @@ sectionSelect.addEventListener('change', function () {
         option.text = sub.name || sub.subject_name || sub.title || "Unnamed Subject";
         subjectSelect.add(option);
       });
-    });
+    })
+    .catch(error => { setOptions(subjectSelect, 'Unable to load subjects'); showToast(error.message); });
 });
 
 // ------------------- Subject Change -------------------
@@ -72,23 +84,23 @@ subjectSelect.addEventListener('change', function () {
 
   if (!subjectId || !sectionId) return;
 
-  fetch(`/admin_panel/ajax/get_days_for_subject/?subject_id=${subjectId}&section_id=${sectionId}`)
-    .then(res => res.json())
+  fetchJson(`/admin_panel/ajax/get_days_for_subject/?subject_id=${encodeURIComponent(subjectId)}&section_id=${encodeURIComponent(sectionId)}`)
     .then(days => {
-      daySelect.innerHTML = '<option value="">Select Day</option>';
+      setOptions(daySelect, days.length ? 'Select Day' : 'No school periods configured');
       days.forEach(day => {
         daySelect.innerHTML += `<option value="${day.day}">${day.label}</option>`;
       });
-    });
+    })
+    .catch(error => { setOptions(daySelect, 'Unable to load days'); showToast(error.message); });
 
-  fetch(`/admin_panel/ajax/subject_periods/?subject_id=${subjectId}`)
-    .then(res => res.json())
+  fetchJson(`/admin_panel/ajax/subject_periods/?subject_id=${encodeURIComponent(subjectId)}`)
     .then(data => {
-      teacherSelect.innerHTML = '<option value="">Select Teacher</option>';
+      setOptions(teacherSelect, data.teachers.length ? 'Select Teacher' : (data.message || 'No teachers assigned'));
       data.teachers.forEach(t => {
         teacherSelect.innerHTML += `<option value="${t.id}">${t.name}</option>`;
       });
-    });
+    })
+    .catch(error => { setOptions(teacherSelect, 'Unable to load teachers'); showToast(error.message); });
 });
 
 // ------------------- Day Change -------------------
@@ -99,10 +111,10 @@ daySelect.addEventListener('change', function () {
 
   if (!subjectId || !selectedDay || !sectionId) return;
 
-  fetch(`/admin_panel/ajax/time_slots/?subject_id=${subjectId}&day=${selectedDay}&section_id=${sectionId}`)
-    .then(res => res.json())
+  setOptions(periodSelect, 'Loading...');
+  fetchJson(`/admin_panel/ajax/time_slots/?subject_id=${encodeURIComponent(subjectId)}&day=${encodeURIComponent(selectedDay)}&section_id=${encodeURIComponent(sectionId)}`)
     .then(data => {
-      periodSelect.innerHTML = '';
+      setOptions(periodSelect, data.periods.length ? 'Select Period' : 'No periods configured for this day');
       data.periods.forEach(p => {
         periodSelect.innerHTML += `<option value="${p.id}">${p.label}</option>`;
       });
@@ -110,7 +122,7 @@ daySelect.addEventListener('change', function () {
       const assignable = data.assignable || 0;
       let lastValid = [];
 
-      periodSelect.addEventListener('change', function () {
+      periodSelect.onchange = function () {
         const selected = Array.from(this.selectedOptions);
         if (selected.length > assignable) {
           alert(`You can only assign ${assignable} period(s) for this subject.`);
@@ -118,8 +130,9 @@ daySelect.addEventListener('change', function () {
         } else {
           lastValid = selected.map(opt => opt.value);
         }
-      });
-    });
+      };
+    })
+    .catch(error => { setOptions(periodSelect, 'Unable to load periods'); showToast(error.message); });
 });
 
 // ------------------- Load Assigned Classes -------------------
@@ -153,14 +166,24 @@ function loadAssignedClasses() {
 document.addEventListener('DOMContentLoaded', loadAssignedClasses);
 
 // ------------------- Form Submit -------------------
-document.querySelector('form').addEventListener('submit', function (e) {
+assignmentForm.addEventListener('submit', function (e) {
   e.preventDefault();
   const form = this;
+  const requiredSelections = [sectionSelect, subjectSelect, daySelect, periodSelect, teacherSelect];
+  const missing = requiredSelections.find(select => !select.value);
+  if (!classSelect.value || missing) {
+    showToast('Please select Class, Section, Subject, Day, Period and Teacher.');
+    (missing || classSelect).focus();
+    return;
+  }
   const formData = new FormData(form);
   fetch(form.action, {
     method: 'POST',
     body: formData,
-    headers: { 'X-CSRFToken': formData.get('csrfmiddlewaretoken') }
+    headers: {
+      'X-CSRFToken': formData.get('csrfmiddlewaretoken'),
+      'X-Requested-With': 'XMLHttpRequest'
+    }
   })
   .then(async res => res.ok ? res.json() : Promise.reject(await res.json()))
   .then(data => {

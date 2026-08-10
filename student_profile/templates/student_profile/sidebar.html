@@ -62,3 +62,16 @@
                     <li><a href="{% url 'student_vouchers' %}"><i class="fas fa-file-invoice-dollar"></i> My Vouchers</a></li>
                 </ul>
             </li>
+
+            <li class="sidebar-section">Support</li>
+            <li class="has-menu" style="--sidebar-icon-color:#7c3aed; --sidebar-icon-bg:#f1e9ff;">
+                <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
+                    <i class="fas fa-life-ring"></i><span class="nav-text">Help &amp; Support</span>
+                </a>
+                <ul aria-expanded="false">
+                    <li><a href="{% url 'student_report_issue' %}"><i class="fas fa-triangle-exclamation"></i> Report an Issue</a></li>
+                    <li><a href="{% url 'student_requested_reports' %}"><i class="fas fa-clipboard-list"></i> Requested Reports</a></li>
+                    <li><a href="{% url 'student_suggestion_bucket' %}"><i class="far fa-lightbulb"></i> Suggestion Bucket</a></li>
+                    <li><a href="{% url 'student_my_suggestions' %}"><i class="fas fa-list-check"></i> My Suggestions</a></li>
+                </ul>
+            </li>

@@ -20,7 +20,7 @@
         href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{% static 'admin_panel/css/reference-sidebar.css' %}?v=unified-sidebar-1">
-    <link rel="stylesheet" href="{% static 'admin_panel/css/portal-header.css' %}?v=neutral-header-1">
+    <link rel="stylesheet" href="{% static 'admin_panel/css/portal-header.css' %}?v=parent-header-fix-2">
 
     {% block head %}{% endblock %}
 
@@ -32,6 +32,20 @@
         .content{
             margin-left:280px;
             padding:30px;
+            min-width:0;
+        }
+
+        /* Parent header already lives inside the sidebar-offset content area. */
+        .parent-portal-page .content > .edu-portal-header{
+            width:100% !important;
+            max-width:100% !important;
+            margin-left:0 !important;
+            margin-right:0 !important;
+            box-sizing:border-box;
+        }
+
+        .parent-portal-page .content > .edu-portal-header .edu-portal-header-main{
+            grid-template-columns:40px 150px minmax(220px, 1fr) auto auto 40px minmax(120px, auto);
         }
 
         .navbar-custom{
@@ -61,11 +75,24 @@
                 margin-left:0;
                 padding:18px;
             }
+
+            .parent-portal-page .content > .edu-portal-header .edu-portal-header-main{
+                grid-template-columns:40px minmax(180px,1fr) 40px 40px;
+            }
+
+            .parent-portal-page .content > .edu-portal-header .edu-portal-brand,
+            .parent-portal-page .content > .edu-portal-header .edu-portal-clock,
+            .parent-portal-page .content > .edu-portal-header .edu-portal-language,
+            .parent-portal-page .content > .edu-portal-header .edu-portal-profile span,
+            .parent-portal-page .content > .edu-portal-header .edu-portal-profile > i{
+                display:none;
+            }
         }
     </style>
 <link rel="stylesheet" href="{% static 'admin_panel/css/edupilot-buttons.css' %}?v=unified-buttons-4">
 <link rel="stylesheet" href="{% static 'admin_panel/css/edupilot-surfaces.css' %}?v=neutral-surfaces-4">
 <link rel="stylesheet" href="{% static 'admin_panel/css/portal-vouchers.css' %}?v=portal-vouchers-1">
+<link rel="stylesheet" href="{% static 'admin_panel/css/parent-help-support.css' %}?v=parent-help-2">
 
 </head>
 

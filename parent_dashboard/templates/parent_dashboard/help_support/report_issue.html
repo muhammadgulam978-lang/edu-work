@@ -1,0 +1,35 @@
+{% extends 'parent_dashboard/help_support/support_base.html' %}
+
+{% block support_title %}Report an Issue{% endblock %}
+{% block support_heading %}Report an Issue{% endblock %}
+{% block support_intro %}Tell the school support team what went wrong and include the details needed to investigate it.{% endblock %}
+{% block support_header_action %}
+<a class="phs-btn phs-btn-secondary" href="{% url 'parent_requested_reports' %}"><i class="fas fa-list-check"></i> My Reports <i class="fas fa-arrow-right"></i></a>
+{% endblock %}
+
+{% block support_content %}
+<div class="phs-layout">
+    <section class="phs-card">
+        <div class="phs-card-header">
+            <span class="phs-icon phs-icon-blue"><i class="fas fa-triangle-exclamation"></i></span>
+            <div><h2>Report Details</h2><p>Select a concern and describe the issue clearly.</p></div>
+        </div>
+        <div class="phs-card-body phs-form">
+            <label>Concern Type <span>*</span><select><option>Select a concern type</option><option>Portal access</option><option>Academic record</option><option>Fee or voucher</option><option>Technical issue</option></select></label>
+            <label>Related Student <span>*</span><select><option>Select a student</option><option>Your linked student</option></select></label>
+            <label>Issue Description <span>*</span><small>0/1000</small><textarea rows="6" placeholder="Describe what happened, when it occurred, and any relevant details..."></textarea><em>Minimum 10 characters required.</em></label>
+            <div class="phs-upload"><i class="fas fa-cloud-arrow-up"></i><strong>Attach screenshots</strong><span>PNG or JPG, up to 3 files</span></div>
+            <div class="phs-actions"><button type="button" class="phs-btn phs-btn-primary"><i class="fas fa-paper-plane"></i> Submit Report</button></div>
+        </div>
+    </section>
+    <aside class="phs-aside">
+        <section class="phs-card phs-guide"><h2><i class="far fa-lightbulb"></i> Guidelines</h2>
+            <div><strong>Be specific</strong><span>Clearly describe what happened and when it occurred.</span></div>
+            <div><strong>Select the right concern</strong><span>Choose the category that best matches your issue.</span></div>
+            <div><strong>Protect privacy</strong><span>Do not include passwords or sensitive login details.</span></div>
+            <div><strong>Add evidence</strong><span>Attach screenshots that help explain the issue.</span></div>
+        </section>
+        <section class="phs-card phs-next"><h2><i class="far fa-circle-check"></i> What happens next?</h2><p><b>1</b> School support reviews the report.</p><p><b>2</b> Its status appears under Requested Reports.</p></section>
+    </aside>
+</div>
+{% endblock %}

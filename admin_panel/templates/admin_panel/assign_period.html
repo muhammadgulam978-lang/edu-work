@@ -29,7 +29,7 @@
     <div class="ag-body">
       <div class="ag-panel">
         <h5 class="ag-section-title"><i class="fa fa-calendar-check"></i> Assignment Details</h5>
-        <form method="post" action="{% url 'assign_period' %}">
+        <form id="assignPeriodForm" method="post" action="{% url 'assign_period' %}">
           {% csrf_token %}
           <div class="ag-grid">
             <div class="ag-field">
@@ -108,5 +108,5 @@
   <div id="toast" class="toast"></div>
 </div>
 
-<script src="{% static 'admin_panel/js/assign_period.js' %}"></script>
+<script src="{% static 'admin_panel/js/assign_period.js' %}?v=assign-period-2"></script>
 {% endblock %}

@@ -4,8 +4,13 @@
 from django.urls import include, path
 from student_profile import views
 from edupilot_core import voucher_portal
+from django.views.generic import TemplateView
 
 urlpatterns = [
+    path('help-support/report-issue/', TemplateView.as_view(template_name='shared/help_support/report_issue.html', extra_context={'portal_base': 'student_profile/base.html', 'portal_label': 'Student', 'portal_kind': 'student', 'report_route': 'student_report_issue', 'reports_route': 'student_requested_reports', 'suggestion_route': 'student_suggestion_bucket', 'suggestions_route': 'student_my_suggestions'}), name='student_report_issue'),
+    path('help-support/requested-reports/', TemplateView.as_view(template_name='shared/help_support/requested_reports.html', extra_context={'portal_base': 'student_profile/base.html', 'portal_label': 'Student', 'portal_kind': 'student', 'report_route': 'student_report_issue', 'reports_route': 'student_requested_reports', 'suggestion_route': 'student_suggestion_bucket', 'suggestions_route': 'student_my_suggestions'}), name='student_requested_reports'),
+    path('help-support/suggestion-bucket/', TemplateView.as_view(template_name='shared/help_support/suggestion_bucket.html', extra_context={'portal_base': 'student_profile/base.html', 'portal_label': 'Student', 'portal_kind': 'student', 'report_route': 'student_report_issue', 'reports_route': 'student_requested_reports', 'suggestion_route': 'student_suggestion_bucket', 'suggestions_route': 'student_my_suggestions'}), name='student_suggestion_bucket'),
+    path('help-support/my-suggestions/', TemplateView.as_view(template_name='shared/help_support/my_suggestions.html', extra_context={'portal_base': 'student_profile/base.html', 'portal_label': 'Student', 'portal_kind': 'student', 'report_route': 'student_report_issue', 'reports_route': 'student_requested_reports', 'suggestion_route': 'student_suggestion_bucket', 'suggestions_route': 'student_my_suggestions'}), name='student_my_suggestions'),
     path('vouchers/', voucher_portal.portal_vouchers, {'portal_role': 'STUDENT'}, name='student_vouchers'),
     path('vouchers/summary/', voucher_portal.voucher_summary, {'portal_role': 'STUDENT'}, name='student_voucher_summary'),
     path('vouchers/<int:delivery_id>/view/', voucher_portal.voucher_view, {'portal_role': 'STUDENT'}, name='student_voucher_view'),

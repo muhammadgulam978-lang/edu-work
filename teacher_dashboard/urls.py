@@ -1,8 +1,13 @@
 from django.urls import path, include
 from . import views
 from edupilot_core import voucher_portal
+from django.views.generic import TemplateView
 
 urlpatterns = [
+    path('help-support/report-issue/', TemplateView.as_view(template_name='shared/help_support/report_issue.html', extra_context={'portal_base': 'teacher_dashboard/base.html', 'portal_label': 'Teacher', 'portal_kind': 'teacher', 'report_route': 'teacher_report_issue', 'reports_route': 'teacher_requested_reports', 'suggestion_route': 'teacher_suggestion_bucket', 'suggestions_route': 'teacher_my_suggestions'}), name='teacher_report_issue'),
+    path('help-support/requested-reports/', TemplateView.as_view(template_name='shared/help_support/requested_reports.html', extra_context={'portal_base': 'teacher_dashboard/base.html', 'portal_label': 'Teacher', 'portal_kind': 'teacher', 'report_route': 'teacher_report_issue', 'reports_route': 'teacher_requested_reports', 'suggestion_route': 'teacher_suggestion_bucket', 'suggestions_route': 'teacher_my_suggestions'}), name='teacher_requested_reports'),
+    path('help-support/suggestion-bucket/', TemplateView.as_view(template_name='shared/help_support/suggestion_bucket.html', extra_context={'portal_base': 'teacher_dashboard/base.html', 'portal_label': 'Teacher', 'portal_kind': 'teacher', 'report_route': 'teacher_report_issue', 'reports_route': 'teacher_requested_reports', 'suggestion_route': 'teacher_suggestion_bucket', 'suggestions_route': 'teacher_my_suggestions'}), name='teacher_suggestion_bucket'),
+    path('help-support/my-suggestions/', TemplateView.as_view(template_name='shared/help_support/my_suggestions.html', extra_context={'portal_base': 'teacher_dashboard/base.html', 'portal_label': 'Teacher', 'portal_kind': 'teacher', 'report_route': 'teacher_report_issue', 'reports_route': 'teacher_requested_reports', 'suggestion_route': 'teacher_suggestion_bucket', 'suggestions_route': 'teacher_my_suggestions'}), name='teacher_my_suggestions'),
     path('vouchers/', voucher_portal.portal_vouchers, {'portal_role': 'TEACHER'}, name='teacher_vouchers'),
     path('vouchers/summary/', voucher_portal.voucher_summary, {'portal_role': 'TEACHER'}, name='teacher_voucher_summary'),
     path('vouchers/<int:delivery_id>/view/', voucher_portal.voucher_view, {'portal_role': 'TEACHER'}, name='teacher_voucher_view'),

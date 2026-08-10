@@ -25,6 +25,10 @@ urlpatterns = [
     path('vouchers/<int:delivery_id>/dismiss/', voucher_portal.voucher_dismiss, {'portal_role': 'PARENT'}, name='parent_voucher_dismiss'),
     path('notifications/<int:notification_id>/read/', voucher_portal.notification_read, {'portal_role': 'PARENT'}, name='parent_notification_read'),
     path("announcements/", views.parent_announcements, name="parent_announcements"),
+    path("help-support/report-issue/", views.parent_report_issue, name="parent_report_issue"),
+    path("help-support/requested-reports/", views.parent_requested_reports, name="parent_requested_reports"),
+    path("help-support/suggestion-bucket/", views.parent_suggestion_bucket, name="parent_suggestion_bucket"),
+    path("help-support/my-suggestions/", views.parent_my_suggestions, name="parent_my_suggestions"),
     
     path(
         "home/",

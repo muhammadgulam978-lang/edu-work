@@ -21,12 +21,14 @@
     <link rel="stylesheet" href="{% static 'admin_panel/css/portal-header.css' %}?v=neutral-header-1">
 <link rel="stylesheet" href="{% static 'admin_panel/css/edupilot-buttons.css' %}?v=unified-buttons-4">
 <link rel="stylesheet" href="{% static 'admin_panel/css/edupilot-surfaces.css' %}?v=neutral-surfaces-4">
+<link rel="stylesheet" href="{% static 'admin_panel/css/parent-help-support.css' %}?v=help-support-portals-1">
+<link rel="stylesheet" href="{% static 'admin_panel/css/help-support-layout-fix.css' %}?v=4">
 <link rel="stylesheet" href="{% static 'admin_panel/css/ai-admin-design.css' %}?v=ai-admin-design-5">
 
     <script src="{% static 'admin_panel/vendor/chart.js/Chart.bundle.min.js' %}"></script>
 </head>
 
-<body class="edu-button-theme edu-neutral-surfaces">
+<body class="edu-button-theme edu-neutral-surfaces {% block body_class %}{% endblock %}">
     {% block navbar %}
     {% include 'shared/header/portal_header.html' with portal_kind='admin' %}
     {% endblock navbar %}

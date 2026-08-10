@@ -1,0 +1,69 @@
+body.help-support-page {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100vw !important;
+  overflow-x: hidden !important;
+}
+
+body.help-support-page .wrapper {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100vw !important;
+  overflow-x: hidden !important;
+}
+
+body.help-support-page > .edu-portal-header {
+  margin-left: var(--edu-sidebar-width, 280px) !important;
+  width: calc(100vw - var(--edu-sidebar-width, 280px)) !important;
+  max-width: calc(100vw - var(--edu-sidebar-width, 280px)) !important;
+  box-sizing: border-box !important;
+}
+
+body.help-support-page .main-content,
+body.help-support-page #content {
+  margin-left: var(--edu-sidebar-width, 280px) !important;
+  width: calc(100vw - var(--edu-sidebar-width, 280px)) !important;
+  max-width: calc(100vw - var(--edu-sidebar-width, 280px)) !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+  flex: none !important;
+}
+
+body.help-support-page .main-content {
+  padding: 24px !important;
+}
+
+body.help-support-page #content {
+  padding: 24px !important;
+}
+
+body.help-support-page #content > .edu-portal-header {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin-left: 0 !important;
+}
+
+.phs-page {
+  width: 100%;
+  max-width: 1320px;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+@media (max-width: 991px) {
+  body.help-support-page > .edu-portal-header,
+  body.help-support-page .main-content,
+  body.help-support-page #content {
+    margin-left: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  body.help-support-page #content {
+    padding: 16px !important;
+  }
+
+  body.help-support-page .main-content {
+    padding: 16px !important;
+  }
+}

@@ -76,6 +76,26 @@ def parent_announcements(request):
 
 
 @login_required
+def parent_report_issue(request):
+    return render(request, "parent_dashboard/help_support/report_issue.html")
+
+
+@login_required
+def parent_requested_reports(request):
+    return render(request, "parent_dashboard/help_support/requested_reports.html")
+
+
+@login_required
+def parent_suggestion_bucket(request):
+    return render(request, "parent_dashboard/help_support/suggestion_bucket.html")
+
+
+@login_required
+def parent_my_suggestions(request):
+    return render(request, "parent_dashboard/help_support/my_suggestions.html")
+
+
+@login_required
 def parent_dashboard_home(request):
     return redirect("parent_dashboard")
 

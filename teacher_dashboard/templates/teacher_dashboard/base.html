@@ -22,8 +22,10 @@
     </style>
 <link rel="stylesheet" href="{% static 'admin_panel/css/edupilot-buttons.css' %}?v=unified-buttons-4">
 <link rel="stylesheet" href="{% static 'admin_panel/css/edupilot-surfaces.css' %}?v=neutral-surfaces-4">
+<link rel="stylesheet" href="{% static 'admin_panel/css/parent-help-support.css' %}?v=help-support-portals-1">
+<link rel="stylesheet" href="{% static 'admin_panel/css/help-support-layout-fix.css' %}?v=4">
 </head>
-<body class="edu-button-theme edu-neutral-surfaces">
+<body class="edu-button-theme edu-neutral-surfaces {% block body_class %}{% endblock %}">
 
     <div class="wrapper d-flex">
         {% include 'shared/sidebar/shell.html' with sidebar_portal='teacher' sidebar_menu_template='teacher_dashboard/sidebar.html' %}

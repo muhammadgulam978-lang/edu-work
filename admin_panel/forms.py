@@ -281,6 +281,15 @@ class AssignedPeriodForm(forms.ModelForm):
         subject = cleaned_data.get('subject')
         is_bypass = cleaned_data.get('is_bypass')
 
+        if class_fk and section and section.class_fk_id != class_fk.pk:
+            self.add_error('section', 'The selected section does not belong to this class.')
+        if class_fk and subject and subject.class_fk_id != class_fk.pk:
+            self.add_error('subject', 'The selected subject does not belong to this class.')
+        if day and period and period.day != day:
+            self.add_error('period', 'The selected period does not belong to this day.')
+        if teacher and subject and not teacher.subjects.filter(pk=subject.pk).exists():
+            self.add_error('teacher', 'This teacher is not assigned to the selected subject.')
+
         if teacher and day and period and class_fk and not is_bypass:
             exists = AssignedPeriod.objects.filter(
                 teacher=teacher,
