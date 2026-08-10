@@ -100,7 +100,12 @@ def _create_delivery(voucher, student, user, role):
         },
     )
     if created:
-        transaction.on_commit(lambda: _broadcast(user.pk, voucher.pk))
+        def notify_recipient():
+            _broadcast(user.pk, voucher.pk)
+            from .email_delivery import queue_voucher_email
+            queue_voucher_email(voucher, student, user, role)
+
+        transaction.on_commit(notify_recipient)
     return delivery
 
 

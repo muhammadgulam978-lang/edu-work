@@ -5,6 +5,7 @@ from django_apscheduler.jobstores import DjangoJobStore
 from django.utils import timezone
 from .automation_runner import start_fee_generation, start_notification_dispatch, start_salary_generation
 from .models import FeeGenerationSettings, SalaryAutomationSettings
+from .email_delivery import kick_email_dispatch
 
 def run_scheduled_job():
     settings_obj = FeeGenerationSettings.objects.first()
@@ -59,6 +60,14 @@ def start():
         minutes=5, 
         id="sms_dispatcher_job", 
         replace_existing=True
+    )
+
+    scheduler.add_job(
+        kick_email_dispatch,
+        'interval',
+        minutes=1,
+        id='email_outbox_dispatcher',
+        replace_existing=True,
     )
     
     scheduler.start()

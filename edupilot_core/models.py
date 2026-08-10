@@ -325,6 +325,29 @@ class NotificationQueue(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
 
+class EmailOutbox(models.Model):
+    STATUS_CHOICES = (
+        ('PENDING', 'Pending'), ('SENDING', 'Sending'),
+        ('SENT', 'Sent'), ('FAILED', 'Failed'),
+    )
+
+    recipient = models.EmailField()
+    subject = models.CharField(max_length=255)
+    body = models.TextField()
+    attachment_path = models.CharField(max_length=500, blank=True)
+    dedupe_key = models.CharField(max_length=180, unique=True)
+    sensitive = models.BooleanField(default=False)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PENDING')
+    attempts = models.PositiveSmallIntegerField(default=0)
+    last_error = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    sent_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['created_at']
+        indexes = [models.Index(fields=['status', 'created_at'], name='email_outbox_pending_idx')]
+
+
 class Announcement(models.Model):
     CATEGORY_CHOICES = [
         ('ACADEMIC', 'Academic'), ('EVENT', 'Event'), ('HOLIDAY', 'Holiday'),

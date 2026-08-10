@@ -249,7 +249,7 @@ upload
                  required id="fileInput" onchange="pickFile(this)">
           <span class="dz-icon">📊</span>
           <div class="dz-title">Click it drag  and &amp; drop the file here</div>
-          <div class="dz-sub">Only.xlsx — max 10MB</div>
+          <div class="dz-sub">.xlsx only - large files are streamed instead of loaded fully into memory</div>
         </div>
         <div id="fileBadge" class="file-badge"></div>
 
@@ -266,9 +266,15 @@ upload
   <div class="card">
     <div class="card-head">
       <div class="ch-icon ci-blue">📋</div>
-      <h5>Required Excel Columns — Row 1 = Header</h5>
+      <h5>Excel Columns - Row 1 must contain headers</h5>
     </div>
     <div class="card-body" style="padding-top:14px;">
+      <div class="tip">
+        Every data column is optional and column order does not matter. Keep the header names below;
+        missing IDs, login IDs and emails are generated, while other missing profile values use safe defaults.
+        A fee plan is inferred from Class and Academic Year when a unique matching plan exists. Parent details create
+        or reuse a linked Parent Portal account; real email addresses receive credentials automatically.
+      </div>
       <div class="tbl-wrap">
         <table class="fmt">
           <thead>
@@ -281,10 +287,10 @@ upload
           </thead>
           <tbody>
             <tr><td>A</td><td class="cn">S.No</td>                  <td class="ce">1, 2, 3…</td>                   <td><span class="bdg b-gry">Serial</span></td></tr>
-            <tr><td>B</td><td class="cn">Student_Id</td>             <td class="ce">STU-2024-0001</td>               <td><span class="bdg b-red">Required · Unique</span></td></tr>
+            <tr><td>B</td><td class="cn">Student_Id</td>             <td class="ce">STU-2024-0001</td>               <td>Optional - generated if blank</td></tr>
             <tr><td>C</td><td class="cn">Campus</td>                 <td class="ce">North Campus</td>                <td>—</td></tr>
             <tr><td>D</td><td class="cn">Branch</td>                 <td class="ce">Computer Science</td>            <td>—</td></tr>
-            <tr><td>E</td><td class="cn">Student Name</td>           <td class="ce">Tariq Rana</td>                  <td><span class="bdg b-red">Required</span></td></tr>
+            <tr><td>E</td><td class="cn">Student Name</td>           <td class="ce">Tariq Rana</td>                  <td>Optional - N/A if blank</td></tr>
             <tr><td>F</td><td class="cn">Date_Of_Birth</td>          <td class="ce">16-Aug-2004</td>                 <td><span class="bdg b-blue">DD-Mon-YYYY</span></td></tr>
             <tr><td>G</td><td class="cn">Gender</td>                 <td class="ce">Male / Female</td>               <td>—</td></tr>
             <tr><td>H</td><td class="cn">Email</td>                  <td class="ce">tariq@student.edu.pk</td>        <td>—</td></tr>
@@ -295,14 +301,25 @@ upload
             <tr><td>M</td><td class="cn">Father's Email</td>         <td class="ce">ahmad@gmail.com</td>             <td>—</td></tr>
             <tr><td>N</td><td class="cn">Academic Year</td>          <td class="ce">2026</td>                        <td>—</td></tr>
             <tr><td>O</td><td class="cn">Class</td>                  <td class="ce">3, 4, 5…</td>                   <td>—</td></tr>
-            <tr><td>P</td><td class="cn">Father's Occuppation</td>   <td class="ce">Retired / Engineer</td>         <td>—</td></tr>
-            <tr><td>Q</td><td class="cn">Mother's Name</td>          <td class="ce">Sara Bibi</td>                   <td>—</td></tr>
-            <tr><td>R</td><td class="cn">Father Contact Number</td>  <td class="ce">03009876543</td>                 <td>—</td></tr>
-            <tr><td>S</td><td class="cn">Father's CNIC No</td>       <td class="ce">42101-1234567-1</td>             <td>—</td></tr>
-            <tr><td>T</td><td class="cn">Nationality</td>            <td class="ce">Pakistani</td>                   <td>—</td></tr>
-            <tr><td>U</td><td class="cn">Admission_Status</td>       <td class="ce">Active / Inactive</td>           <td><span class="bdg b-grn">Active = Approved</span></td></tr>
-            <tr><td>V</td><td class="cn">Login_Id</td>               <td class="ce">student.ahmed</td>                <td><span class="bdg b-red">Required · Unique</span></td></tr>
-            <tr><td>W</td><td class="cn">Password</td>               <td class="ce">Student@12345</td>                <td><span class="bdg b-red">Required</span></td></tr>
+            <tr><td>P</td><td class="cn">Section</td>                <td class="ce">A</td>                            <td>Optional</td></tr>
+            <tr><td>Q</td><td class="cn">Father's Occupation</td>    <td class="ce">Retired / Engineer</td>           <td>Optional</td></tr>
+            <tr><td>R</td><td class="cn">Mother's Name</td>          <td class="ce">Sara Bibi</td>                    <td>Optional</td></tr>
+            <tr><td>S</td><td class="cn">Father Contact Number</td>  <td class="ce">03009876543</td>                  <td>Optional</td></tr>
+            <tr><td>T</td><td class="cn">Father's CNIC No</td>       <td class="ce">42101-1234567-1</td>              <td>Optional</td></tr>
+            <tr><td>U</td><td class="cn">Nationality</td>            <td class="ce">Pakistani</td>                    <td>Optional</td></tr>
+            <tr><td>V</td><td class="cn">Admission_Status</td>       <td class="ce">Approved</td>                     <td>Optional - defaults to Approved</td></tr>
+            <tr><td>W</td><td class="cn">Login_Id</td>               <td class="ce">student.ahmed</td>                 <td>Optional - generated if blank</td></tr>
+            <tr><td>X</td><td class="cn">Password</td>               <td class="ce">Student@12345</td>                 <td>Optional - securely generated for real emails</td></tr>
+            <tr><td>Y</td><td class="cn">Fee_Plan</td>               <td class="ce">Grade 5 Annual Plan</td>            <td>Optional - inferred when possible</td></tr>
+            <tr><td>Z</td><td class="cn">Transport_Route</td>        <td class="ce">Route A</td>                       <td>Optional</td></tr>
+            <tr><td>AA</td><td class="cn">Scholarship</td>           <td class="ce">Merit 10%</td>                     <td>Optional</td></tr>
+            <tr><td>AB</td><td class="cn">Roll_No</td>               <td class="ce">G5-A-001</td>                      <td>Optional</td></tr>
+            <tr><td>AC</td><td class="cn">Parent_Name</td>           <td class="ce">Ahmad Khan</td>                    <td>Optional - Father's Name also works</td></tr>
+            <tr><td>AD</td><td class="cn">Parent_Email</td>          <td class="ce">ahmad@example.com</td>             <td>Optional - used to reuse an existing parent</td></tr>
+            <tr><td>AE</td><td class="cn">Parent_Phone</td>          <td class="ce">03009876543</td>                   <td>Optional - secondary parent match</td></tr>
+            <tr><td>AF</td><td class="cn">Parent_Relationship</td>   <td class="ce">Father</td>                        <td>Optional - defaults to Father</td></tr>
+            <tr><td>AG</td><td class="cn">Parent_Login_Id</td>       <td class="ce">parent.ahmad</td>                  <td>Optional - generated if blank</td></tr>
+            <tr><td>AH</td><td class="cn">Parent_Password</td>       <td class="ce">Parent@12345</td>                  <td>Optional - securely generated for real emails</td></tr>
           </tbody>
         </table>
       </div>

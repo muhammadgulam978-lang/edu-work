@@ -6938,7 +6938,7 @@ def _str(val):
     return '' if s.lower() in ('none', 'nan') else s
 
 @permission_required('admin_panel.add_admission', raise_exception=True)
-def bulk_upload_students(request):
+def _legacy_bulk_upload_students(request):
     if request.method == 'POST' and request.FILES.get('excel_file'):
         excel_file = request.FILES['excel_file']
 
@@ -7114,6 +7114,57 @@ def bulk_upload_students(request):
         return redirect('admission_list')
 
     return render(request, 'admin_panel/bulk_upload_students.html')
+
+
+@permission_required('admin_panel.add_admission', raise_exception=True)
+def bulk_upload_students(request):
+    if request.method != 'POST':
+        return render(request, 'admin_panel/bulk_upload_students.html')
+
+    excel_file = request.FILES.get('excel_file')
+    if not excel_file:
+        messages.error(request, 'Please select an .xlsx file to upload.')
+        return redirect('bulk_upload_students')
+    if not excel_file.name.lower().endswith('.xlsx'):
+        messages.error(request, 'Only .xlsx Excel files are supported.')
+        return redirect('bulk_upload_students')
+
+    active_year = AcademicYear.objects.filter(is_active=True).first()
+    if not active_year:
+        messages.error(request, 'Set an active academic year before uploading students.')
+        return redirect('bulk_upload_students')
+
+    workbook = None
+    try:
+        workbook = openpyxl.load_workbook(excel_file, read_only=True, data_only=True)
+        from .bulk_student_import import import_students_from_worksheet
+        result = import_students_from_worksheet(workbook.active, active_year)
+    except Exception as exc:
+        messages.error(request, f'Could not import this Excel file: {exc}')
+        return redirect('bulk_upload_students')
+    finally:
+        if workbook is not None:
+            workbook.close()
+
+    if result.imported:
+        messages.success(
+            request,
+            f'{result.imported} rows imported; {result.enrolled} students enrolled; '
+            f'{result.parents_linked} parents linked; '
+            f'{result.fee_ready} students are ready for fee voucher generation; '
+            f'{result.credential_emails_queued} credential emails queued.',
+        )
+    if result.password_reset_required:
+        messages.warning(
+            request,
+            f'{result.password_reset_required} generated accounts have no password. '
+            'Set their password before portal login.',
+        )
+    if result.skipped:
+        messages.warning(request, f'{result.skipped} rows were skipped. The first errors are shown below.')
+    for error in result.errors:
+        messages.error(request, error)
+    return redirect('admission_list')
 
 
 @permission_required('teacher_dashboard.add_teacher', raise_exception=True)
