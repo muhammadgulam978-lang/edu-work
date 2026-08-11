@@ -5,10 +5,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student ID Card</title>
-    <link rel="stylesheet" href="{% static 'admin_panel/css/student_gateway.css' %}?v=student-gateway-1">
+    <link rel="stylesheet" href="{% static 'admin_panel/icons/font-awesome/css/all.min.css' %}">
+    <link rel="stylesheet" href="{% static 'admin_panel/css/student_gateway.css' %}?v=student-id-actions-1">
 </head>
 <body class="student-id-print">
-    <div class="id-card">
+    <main class="id-card-screen">
+    <div class="id-card" id="student-id-card">
         <div class="id-card-header">
             <h1>EDUPILOT SCHOOL</h1>
             <p>Teach, Track, Transform</p>
@@ -34,5 +36,75 @@
         <div class="info"><strong>Gender</strong> <span>{{ student.gender|default:"N/A" }}</span></div>
         <div class="info"><strong>DOB</strong> <span>{{ student.date_of_birth }}</span></div>
     </div>
+
+    <div class="id-card-actions" aria-label="Student ID card actions">
+        <button type="button" class="id-card-action" id="share-card" title="Share card link">
+            <i class="fa-solid fa-share-nodes" aria-hidden="true"></i>
+            <span>Share</span>
+        </button>
+        <button type="button" class="id-card-action" id="copy-card-link" title="Copy card link">
+            <i class="fa-regular fa-copy" aria-hidden="true"></i>
+            <span>Copy Link</span>
+        </button>
+        <a class="id-card-action id-card-action-primary" href="{% url 'download_student_id_card' student.id %}" title="Download card as PDF">
+            <i class="fa-solid fa-download" aria-hidden="true"></i>
+            <span>Download</span>
+        </a>
+    </div>
+    <p class="id-card-feedback" id="id-card-feedback" role="status" aria-live="polite"></p>
+    </main>
+
+    <script>
+        (function () {
+            const shareButton = document.getElementById('share-card');
+            const copyButton = document.getElementById('copy-card-link');
+            const feedback = document.getElementById('id-card-feedback');
+            const cardUrl = window.location.href;
+            const shareData = {
+                title: '{{ student.name|escapejs }} - EduPilot Student ID Card',
+                text: 'View {{ student.name|escapejs }}\'s EduPilot student identity card.',
+                url: cardUrl
+            };
+
+            function showFeedback(message) {
+                feedback.textContent = message;
+                window.clearTimeout(showFeedback.timer);
+                showFeedback.timer = window.setTimeout(function () {
+                    feedback.textContent = '';
+                }, 2600);
+            }
+
+            async function copyLink() {
+                try {
+                    await navigator.clipboard.writeText(cardUrl);
+                    showFeedback('Card link copied.');
+                } catch (error) {
+                    const input = document.createElement('input');
+                    input.value = cardUrl;
+                    document.body.appendChild(input);
+                    input.select();
+                    document.execCommand('copy');
+                    input.remove();
+                    showFeedback('Card link copied.');
+                }
+            }
+
+            copyButton.addEventListener('click', copyLink);
+            shareButton.addEventListener('click', async function () {
+                if (navigator.share) {
+                    try {
+                        await navigator.share(shareData);
+                    } catch (error) {
+                        if (error.name !== 'AbortError') {
+                            await copyLink();
+                        }
+                    }
+                    return;
+                }
+                await copyLink();
+                showFeedback('Sharing is unavailable here, so the link was copied.');
+            });
+        }());
+    </script>
 </body>
 </html>

@@ -1,11 +1,11 @@
 {% extends "admin_panel/bases.html" %}{% load static %}
 {% block title %}{{ student.name }} Enrollment{% endblock %}
-{% block head %}<link rel="stylesheet" href="{% static 'admin_panel/css/student-admissions.css' %}?v=admissions-5">{% endblock %}
+{% block head %}<link rel="stylesheet" href="{% static 'admin_panel/css/student-admissions.css' %}?v=admissions-6-avatar">{% endblock %}
 {% block content %}
 <main class="admission-workspace enrollment-profile">
   <header class="ad-page-header">
     <div><p class="ad-kicker">Enrollment Complete</p><h1>{{ student.name }}</h1><p>{{ student.student_id }} · {{ student.class_fk.class_name|default:"Class pending" }} / {{ student.section.section_name|default:"Section pending" }}</p></div>
-    <div class="enrollment-header-actions"><a class="edu-btn edu-btn-secondary" href="{% url 'student_admissions' %}"><i class="fas fa-arrow-left"></i> Applications</a>{% if student.class_fk_id %}<a class="edu-btn edu-btn-primary" href="{% url 'class_students' student.class_fk_id %}?q={{ student.student_id|urlencode }}"><i class="fas fa-users"></i> Open Class Profile</a>{% endif %}</div>
+    <div class="enrollment-header-actions"><a class="edu-btn edu-btn-secondary" href="{% url 'student_admissions' %}"><i class="fas fa-arrow-left"></i> Applications</a><a class="edu-btn edu-btn-primary" href="{% url 'student_admissions' %}?tab=new&amp;workflow={{ workflow.pk }}&amp;step=1&amp;edit=1"><i class="fas fa-pencil-alt"></i> Edit Enrollment</a>{% if student.class_fk_id %}<a class="edu-btn edu-btn-primary" href="{% url 'class_students' student.class_fk_id %}?q={{ student.student_id|urlencode }}"><i class="fas fa-users"></i> Open Class Profile</a>{% endif %}</div>
   </header>
 
   {% if issued_credentials %}
@@ -20,6 +20,8 @@
   <section class="ad-message"><i class="fas fa-lock"></i> Passwords are securely saved and cannot be displayed again. Login IDs remain available below; use password reset when a new password is required.</section>
   {% endif %}
 
+  {% if workflow.payload.deferred_items %}<section class="ad-message"><i class="fas fa-clock"></i><div><strong>Complete later</strong><p>This admission was not blocked. Use <b>Edit Enrollment</b> to add: {{ workflow.payload.deferred_items|join:", " }}.</p></div></section>{% endif %}
+
   <section class="enrollment-kpis">
     <article><span><i class="fas fa-id-card"></i></span><small>Student ID</small><strong>{{ student.student_id }}</strong></article>
     <article><span><i class="fas fa-school"></i></span><small>Placement</small><strong>{{ student.class_fk.class_name|default:"Pending" }} · {{ student.section.section_name|default:"-" }}</strong></article>
@@ -28,7 +30,7 @@
   </section>
 
   <div class="enrollment-sections">
-    <section class="ad-card"><div class="profile-section-title"><i class="fas fa-user"></i><h2>Student Profile</h2></div><dl class="profile-data-grid"><div><dt>Full name</dt><dd>{{ student.name }}</dd></div><div><dt>Portal login ID</dt><dd>{{ student.user.username }}</dd></div><div><dt>Email</dt><dd>{{ student.email }}</dd></div><div><dt>Phone</dt><dd>{{ student.phone|default:"Not provided" }}</dd></div><div><dt>Date of birth</dt><dd>{{ student.date_of_birth|date:"d M Y" }}</dd></div><div><dt>Gender</dt><dd>{{ student.gender }}</dd></div><div><dt>Nationality</dt><dd>{{ student.nationality|default:"Not provided" }}</dd></div><div><dt>Address</dt><dd>{{ student.address|default:"Not provided" }}</dd></div></dl></section>
+    <section class="ad-card"><div class="profile-section-title"><i class="fas fa-user"></i><h2>Student Profile</h2></div><div class="enrollment-student-summary">{% if student.photo %}<img class="enrollment-student-avatar" src="{{ student.photo.url }}" alt="{{ student.name }} photograph">{% else %}<span class="enrollment-student-avatar enrollment-student-avatar-fallback" aria-hidden="true"><i class="fas fa-user-graduate"></i></span>{% endif %}<div><strong>{{ student.name }}</strong><small>{{ student.student_id }}</small></div></div><dl class="profile-data-grid"><div><dt>Full name</dt><dd>{{ student.name }}</dd></div><div><dt>Portal login ID</dt><dd>{{ student.user.username }}</dd></div><div><dt>Email</dt><dd>{{ student.email }}</dd></div><div><dt>Phone</dt><dd>{{ student.phone|default:"Not provided" }}</dd></div><div><dt>Date of birth</dt><dd>{{ student.date_of_birth|date:"d M Y" }}</dd></div><div><dt>Gender</dt><dd>{{ student.gender }}</dd></div><div><dt>Nationality</dt><dd>{{ student.nationality|default:"Not provided" }}</dd></div><div><dt>Address</dt><dd>{{ student.address|default:"Not provided" }}</dd></div></dl></section>
 
     <section class="ad-card"><div class="profile-section-title"><i class="fas fa-graduation-cap"></i><h2>Admission & Placement</h2></div><dl class="profile-data-grid"><div><dt>Reference</dt><dd>{{ workflow.reference_number }}</dd></div><div><dt>Admission date</dt><dd>{{ student.admission_date|date:"d M Y" }}</dd></div><div><dt>Academic year</dt><dd>{{ student.academic_year.year|default:"Not assigned" }}</dd></div><div><dt>Roll number</dt><dd>{{ student.roll_no }}</dd></div><div><dt>Class</dt><dd>{{ student.class_fk.class_name|default:"Not assigned" }}</dd></div><div><dt>Section</dt><dd>{{ student.section.section_name|default:"Not assigned" }}</dd></div><div><dt>Campus</dt><dd>{{ workflow.payload.campus|default:"Not provided" }}</dd></div><div><dt>Branch</dt><dd>{{ workflow.payload.branch|default:"Not provided" }}</dd></div></dl></section>
 

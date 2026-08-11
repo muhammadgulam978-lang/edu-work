@@ -75,7 +75,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Sum
-from django.views.decorators.csrf import csrf_protect
+from django.views.decorators.csrf import csrf_protect, ensure_csrf_cookie
 from datetime import date, datetime
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -2439,7 +2439,16 @@ def register_admission(request):
 def admission_list(request):
     active_year = AcademicYear.objects.filter(is_active=True).first()
     if active_year:
-        admissions = Admission.objects.filter(academic_year=active_year).order_by('id')
+        admissions = list(Admission.objects.filter(academic_year=active_year).order_by('id'))
+        from student_profile.models import Student as PortalStudent
+        portal_ids = set(PortalStudent.objects.filter(
+            student_id__in=[item.student_id for item in admissions]
+        ).values_list('student_id', flat=True))
+        for admission in admissions:
+            admission.profile_url = (
+                reverse('admin_ai_student_intelligence_detail', args=[admission.student_id])
+                if admission.student_id in portal_ids else ''
+            )
     else:
         admissions = Admission.objects.none()
 
@@ -4645,6 +4654,89 @@ from student_profile.models import Student
 def generate_student_id_card(request, student_id):
     student = get_object_or_404(Student, id=student_id)
     return render(request, 'admin_panel/id_card.html', {'student': student})
+
+
+@permission_required('student_profile.view_studentidcard', raise_exception=True)
+def download_student_id_card(request, student_id):
+    """Generate a self-contained, printable PDF for one student ID card."""
+    from io import BytesIO
+
+    from reportlab.lib.colors import HexColor
+    from reportlab.lib.utils import ImageReader
+    from reportlab.pdfgen import canvas
+
+    student = get_object_or_404(Student, id=student_id)
+    width, height = 360, 610
+    buffer = BytesIO()
+    pdf = canvas.Canvas(buffer, pagesize=(width, height))
+    pdf.setTitle(f"{student.student_id} Student ID Card")
+
+    pdf.setFillColor(HexColor('#f7f8fb'))
+    pdf.rect(0, 0, width, height, fill=1, stroke=0)
+    pdf.setFillColor(HexColor('#ffffff'))
+    pdf.roundRect(12, 12, width - 24, height - 24, 18, fill=1, stroke=0)
+
+    pdf.setFillColor(HexColor('#88d0c5'))
+    pdf.roundRect(12, height - 115, width - 24, 103, 18, fill=1, stroke=0)
+    pdf.rect(12, height - 115, width - 24, 18, fill=1, stroke=0)
+    pdf.setFillColor(HexColor('#111827'))
+    pdf.setFont('Helvetica-Bold', 19)
+    pdf.drawCentredString(width / 2, height - 58, 'EDUPILOT SCHOOL')
+    pdf.setFont('Helvetica', 10)
+    pdf.drawCentredString(width / 2, height - 78, 'Teach, Track, Transform')
+
+    photo_y = height - 235
+    if student.photo:
+        try:
+            pdf.drawImage(
+                ImageReader(student.photo.path),
+                (width - 104) / 2,
+                photo_y,
+                104,
+                104,
+                preserveAspectRatio=True,
+                anchor='c',
+                mask='auto',
+            )
+        except (OSError, ValueError):
+            pass
+
+    pdf.setFillColor(HexColor('#4faea1'))
+    pdf.setFont('Helvetica-Bold', 14)
+    pdf.drawCentredString(width / 2, photo_y - 25, 'STUDENT IDENTITY CARD')
+
+    rows = [
+        ('ID', student.student_id),
+        ('Academic Year', getattr(student.academic_year, 'year', None) or 'N/A'),
+        ('Name', student.name),
+        ('Father', student.father_name),
+        ('Class', getattr(student.class_fk, 'class_name', None) or 'N/A'),
+        ('Section', getattr(student.section, 'section_name', None) or 'N/A'),
+        ('Roll No', student.roll_no or 'N/A'),
+        ('Phone', str(student.phone) if student.phone else 'N/A'),
+        ('Gender', student.gender or 'N/A'),
+        ('DOB', student.date_of_birth.strftime('%b. %d, %Y') if student.date_of_birth else 'N/A'),
+    ]
+    y = photo_y - 52
+    for label, value in rows:
+        pdf.setStrokeColor(HexColor('#eef2f4'))
+        pdf.line(32, y + 8, width - 32, y + 8)
+        pdf.setFillColor(HexColor('#6b7280'))
+        pdf.setFont('Helvetica', 9.5)
+        pdf.drawString(32, y - 7, label)
+        pdf.setFillColor(HexColor('#111827'))
+        pdf.setFont('Helvetica', 9.5)
+        pdf.drawRightString(width - 32, y - 7, str(value)[:42])
+        y -= 33
+
+    pdf.showPage()
+    pdf.save()
+    buffer.seek(0)
+    response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
+    response['Content-Disposition'] = (
+        f'attachment; filename="EduPilot_ID_Card_{student.student_id}.pdf"'
+    )
+    return response
 
 
 @permission_required('admin_panel.view_admission', raise_exception=True)
@@ -6889,6 +6981,10 @@ def academic_calendar_export_pdf(request):
 
 # ==================== BULK UPLOAD ====================
 import openpyxl
+import uuid as uuid_module
+from io import BytesIO
+from django.core.files.storage import default_storage
+from django.urls import reverse
 import uuid
 from datetime import datetime
 from django.contrib.auth.decorators import permission_required
@@ -7116,55 +7212,240 @@ def _legacy_bulk_upload_students(request):
     return render(request, 'admin_panel/bulk_upload_students.html')
 
 
+@login_required(login_url='login_admin')
 @permission_required('admin_panel.add_admission', raise_exception=True)
+@ensure_csrf_cookie
 def bulk_upload_students(request):
-    if request.method != 'POST':
-        return render(request, 'admin_panel/bulk_upload_students.html')
-
-    excel_file = request.FILES.get('excel_file')
-    if not excel_file:
-        messages.error(request, 'Please select an .xlsx file to upload.')
-        return redirect('bulk_upload_students')
-    if not excel_file.name.lower().endswith('.xlsx'):
-        messages.error(request, 'Only .xlsx Excel files are supported.')
-        return redirect('bulk_upload_students')
-
     active_year = AcademicYear.objects.filter(is_active=True).first()
+    context = _bulk_student_upload_context(active_year)
+    if request.method != 'POST':
+        context['result'] = _bulk_student_import_report(
+            request.session.get('bulk_student_last_result')
+        )
+        return render(request, 'admin_panel/bulk_upload_students.html', context)
+
+    action = request.POST.get('action', 'preview')
+    pending = request.session.get('bulk_student_pending') or {}
+
+    if action == 'cancel':
+        _delete_pending_bulk_upload(request)
+        messages.info(request, 'Pending student import was cancelled.')
+        return redirect('bulk_upload_students')
+
     if not active_year:
         messages.error(request, 'Set an active academic year before uploading students.')
         return redirect('bulk_upload_students')
 
+    if action == 'confirm':
+        from time import perf_counter
+
+        token = request.POST.get('upload_token', '')
+        if not token or token != pending.get('token') or not pending.get('path'):
+            messages.error(request, 'This upload preview expired. Please validate the file again.')
+            return redirect('bulk_upload_students')
+        workbook = None
+        started_at = perf_counter()
+        try:
+            with default_storage.open(pending['path'], 'rb') as stored_file:
+                workbook = openpyxl.load_workbook(stored_file, read_only=True, data_only=True)
+                from .bulk_student_import import import_students_from_worksheet
+                result = import_students_from_worksheet(workbook.active, active_year)
+        except Exception as exc:
+            messages.error(request, f'Could not import this Excel file: {exc}')
+            return redirect('bulk_upload_students')
+        finally:
+            if workbook is not None:
+                workbook.close()
+            _delete_pending_bulk_upload(request)
+
+        request.session['bulk_student_last_result'] = {
+            'imported': result.imported,
+            'enrolled': result.enrolled,
+            'skipped': result.skipped,
+            'student_accounts_created': result.student_accounts_created,
+            'student_logins_ready': result.student_logins_ready,
+            'parent_logins_ready': result.parent_logins_ready,
+            'parents_linked': result.parents_linked,
+            'parent_accounts_created': result.parent_accounts_created,
+            'fee_ready': result.fee_ready,
+            'credential_emails_queued': result.credential_emails_queued,
+            'credential_email_ids': result.credential_email_ids,
+            'messages_queued': result.messages_queued,
+            'message_ids': result.message_ids,
+            'password_reset_required': result.password_reset_required,
+            'processing_seconds': round(perf_counter() - started_at, 2),
+            'completed_at': timezone.now().isoformat(),
+            'errors': result.errors,
+        }
+        if result.imported:
+            messages.success(request, f'{result.imported} student rows imported successfully.')
+        if result.skipped:
+            messages.warning(request, f'{result.skipped} rows were skipped. Review the result below.')
+        return redirect('bulk_upload_students')
+
+    excel_file = request.FILES.get('excel_file')
+    max_size = getattr(settings, 'BULK_STUDENT_UPLOAD_MAX_BYTES', 10 * 1024 * 1024)
+    if not excel_file:
+        messages.error(request, 'Please select an .xlsx file to validate.')
+        return redirect('bulk_upload_students')
+    if not excel_file.name.lower().endswith('.xlsx'):
+        messages.error(request, 'Only .xlsx Excel files are supported.')
+        return redirect('bulk_upload_students')
+    if excel_file.size > max_size:
+        messages.error(request, f'The selected file exceeds the {max_size // (1024 * 1024)} MB limit.')
+        return redirect('bulk_upload_students')
+
+    _delete_pending_bulk_upload(request)
+    token = uuid_module.uuid4().hex
+    path = default_storage.save(
+        f'bulk_upload_previews/user_{request.user.pk}/{token}.xlsx', excel_file
+    )
     workbook = None
     try:
-        workbook = openpyxl.load_workbook(excel_file, read_only=True, data_only=True)
-        from .bulk_student_import import import_students_from_worksheet
-        result = import_students_from_worksheet(workbook.active, active_year)
+        with default_storage.open(path, 'rb') as stored_file:
+            workbook = openpyxl.load_workbook(stored_file, read_only=True, data_only=True)
+            from .bulk_student_import import preview_students_from_worksheet
+            preview = preview_students_from_worksheet(workbook.active, active_year)
     except Exception as exc:
-        messages.error(request, f'Could not import this Excel file: {exc}')
+        if default_storage.exists(path):
+            default_storage.delete(path)
+        messages.error(request, f'Could not validate this Excel file: {exc}')
         return redirect('bulk_upload_students')
     finally:
         if workbook is not None:
             workbook.close()
 
-    if result.imported:
-        messages.success(
-            request,
-            f'{result.imported} rows imported; {result.enrolled} students enrolled; '
-            f'{result.parents_linked} parents linked; '
-            f'{result.fee_ready} students are ready for fee voucher generation; '
-            f'{result.credential_emails_queued} credential emails queued.',
-        )
-    if result.password_reset_required:
-        messages.warning(
-            request,
-            f'{result.password_reset_required} generated accounts have no password. '
-            'Set their password before portal login.',
-        )
-    if result.skipped:
-        messages.warning(request, f'{result.skipped} rows were skipped. The first errors are shown below.')
-    for error in result.errors:
-        messages.error(request, error)
-    return redirect('admission_list')
+    request.session['bulk_student_pending'] = {
+        'token': token, 'path': path, 'name': excel_file.name,
+        'size': excel_file.size, 'created_at': timezone.now().isoformat(),
+    }
+    context.update({'preview': preview, 'pending_upload': request.session['bulk_student_pending']})
+    return render(request, 'admin_panel/bulk_upload_students.html', context)
+
+
+def _delete_pending_bulk_upload(request):
+    pending = request.session.pop('bulk_student_pending', None) or {}
+    path = pending.get('path', '')
+    if path.startswith(f'bulk_upload_previews/user_{request.user.pk}/') and default_storage.exists(path):
+        default_storage.delete(path)
+
+
+def _bulk_student_upload_context(active_year=None):
+    from student_profile.models import Student as PortalStudent
+    from parent_dashboard.models import Parent
+
+    recent_students = list(
+        PortalStudent.objects.select_related('class_fk', 'section').order_by('-pk')[:6]
+    )
+    recent_parents = list(Parent.objects.prefetch_related('students').order_by('-pk')[:6])
+    return {
+        'active_year': active_year,
+        'student_count': PortalStudent.objects.count(),
+        'parent_count': Parent.objects.count(),
+        'recent_students': recent_students,
+        'recent_parents': recent_parents,
+    }
+
+
+def _bulk_student_import_report(raw_result):
+    if not raw_result:
+        return None
+    from edupilot_core.models import EmailOutbox
+    from edupilot_core.models import NotificationQueue as CoreNotificationQueue
+
+    report = dict(raw_result)
+    email_ids = report.get('credential_email_ids') or []
+    message_ids = report.get('message_ids') or []
+    email_statuses = list(
+        EmailOutbox.objects.filter(pk__in=email_ids).values_list('status', flat=True)
+    )
+    message_statuses = list(
+        CoreNotificationQueue.objects.filter(pk__in=message_ids).values_list('status', flat=True)
+    )
+    report.update({
+        'total_rows': report.get('imported', 0) + report.get('skipped', 0),
+        'login_ready': (
+            report.get('student_logins_ready', 0) + report.get('parent_logins_ready', 0)
+        ),
+        'emails_sent': email_statuses.count('SENT'),
+        'emails_pending': email_statuses.count('PENDING') + email_statuses.count('SENDING'),
+        'emails_failed': email_statuses.count('FAILED'),
+        'messages_sent': message_statuses.count('SENT'),
+        'messages_pending': message_statuses.count('PENDING'),
+        'messages_failed': message_statuses.count('FAILED'),
+    })
+    total_rows = report['total_rows']
+    report['success_rate'] = round((report.get('imported', 0) / total_rows) * 100) if total_rows else 0
+    return report
+
+
+@login_required(login_url='login_admin')
+@permission_required('admin_panel.add_admission', raise_exception=True)
+def bulk_upload_students_activity(request):
+    from student_profile.models import Student as PortalStudent
+    from parent_dashboard.models import Parent
+
+    students = PortalStudent.objects.select_related('class_fk', 'section').order_by('-pk')[:6]
+    parents = Parent.objects.prefetch_related('students').order_by('-pk')[:6]
+    return JsonResponse({
+        'student_count': PortalStudent.objects.count(),
+        'parent_count': Parent.objects.count(),
+        'students': [{
+            'name': student.name,
+            'student_id': student.student_id,
+            'class_name': student.class_fk.class_name if student.class_fk else 'Not assigned',
+            'section': student.section.section_name if student.section else '',
+            'url': reverse('admin_ai_student_intelligence_detail', args=[student.student_id]),
+        } for student in students],
+        'parents': [{
+            'name': parent.full_name,
+            'email': parent.email or 'No email',
+            'children': parent.students.count(),
+        } for parent in parents],
+        'updated_at': timezone.localtime().strftime('%b %d, %Y %I:%M %p'),
+        'result': _bulk_student_import_report(request.session.get('bulk_student_last_result')),
+    })
+
+
+@login_required(login_url='login_admin')
+@permission_required('admin_panel.add_admission', raise_exception=True)
+def bulk_upload_students_template(request):
+    workbook = openpyxl.Workbook()
+    sheet = workbook.active
+    sheet.title = 'Students'
+    headers = [
+        'Student_Id', 'Student Name', 'DOB', 'Gender', 'Email', 'Contact No',
+        'Address', 'Admission Date', 'Academic Year', 'Class', 'Section', 'Roll No',
+        'Login_Id', 'Password', 'Father Name', 'Mother Name', 'Father Email',
+        'Father Contact', 'Father Occupation', 'Father CNIC', 'Nationality',
+        'Parent Name', 'Parent Email', 'Parent Phone', 'Parent Occupation',
+        'Parent Address', 'Parent Relationship', 'Parent Login_Id', 'Parent Password',
+        'Fee Plan', 'Transport Route', 'Scholarship', 'Admission Status', 'Campus', 'Branch',
+    ]
+    sheet.append(headers)
+    sheet.append([
+        'STU-001', 'Example Student', '2012-01-15', 'Male', 'student@example.com',
+        '03001234567', 'School Road', timezone.localdate().isoformat(),
+        AcademicYear.objects.filter(is_active=True).values_list('year', flat=True).first() or '',
+        '', '', '1', 'student.001', 'ChangeMe@12345', 'Example Father',
+        'Example Mother', 'parent@example.com', '03007654321', 'Engineer',
+        '00000-0000000-0', 'Pakistani', 'Example Parent', 'parent@example.com',
+        '03007654321', 'Engineer', 'School Road', 'Father', 'parent.001',
+        'ChangeMe@12345', '', '', '', 'approved', 'Main Campus', 'Main Branch',
+    ])
+    sheet.freeze_panes = 'A2'
+    sheet.auto_filter.ref = sheet.dimensions
+    for column in sheet.columns:
+        width = min(max(len(str(cell.value or '')) for cell in column) + 3, 28)
+        sheet.column_dimensions[column[0].column_letter].width = width
+    stream = BytesIO()
+    workbook.save(stream)
+    response = HttpResponse(
+        stream.getvalue(),
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    )
+    response['Content-Disposition'] = 'attachment; filename="EduPilot_Student_Import_Template.xlsx"'
+    return response
 
 
 @permission_required('teacher_dashboard.add_teacher', raise_exception=True)

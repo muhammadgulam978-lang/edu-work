@@ -12,7 +12,9 @@ from django.db import transaction
 from edupilot_core.canonical_sync import ensure_legacy_student
 from edupilot_core.email_delivery import kick_email_dispatch, queue_account_email
 from edupilot_core.models import (
+    EmailOutbox,
     FeePlan,
+    NotificationQueue,
     Scholarship,
     StudentFeeAssignment,
     TransportRoute,
@@ -32,8 +34,30 @@ class BulkStudentImportResult:
     password_reset_required: int = 0
     parents_linked: int = 0
     parent_accounts_created: int = 0
+    student_accounts_created: int = 0
+    student_logins_ready: int = 0
+    parent_logins_ready: int = 0
     credential_emails_queued: int = 0
+    messages_queued: int = 0
     errors: list[str] = field(default_factory=list)
+    student_ids: list[str] = field(default_factory=list)
+    parent_ids: list[int] = field(default_factory=list)
+    credential_email_ids: list[int] = field(default_factory=list)
+    message_ids: list[int] = field(default_factory=list)
+
+
+@dataclass
+class BulkStudentPreviewResult:
+    total_rows: int = 0
+    valid_rows: int = 0
+    invalid_rows: int = 0
+    duplicate_rows: int = 0
+    parent_rows: int = 0
+    existing_parents: int = 0
+    new_parents: int = 0
+    fee_ready_rows: int = 0
+    errors: list[str] = field(default_factory=list)
+    rows: list[dict] = field(default_factory=list)
 
 
 ALIASES = {
@@ -122,9 +146,7 @@ def _generated_password():
     return f'Edu@{secrets.token_urlsafe(9)}'
 
 
-def import_students_from_worksheet(worksheet, active_year):
-    """Import a streaming worksheet without retaining its rows in memory."""
-    result = BulkStudentImportResult()
+def _worksheet_reader(worksheet):
     header_row = next(worksheet.iter_rows(min_row=1, max_row=1, values_only=True), ())
     headers = {_header(value): index for index, value in enumerate(header_row) if _text(value)}
     if not headers:
@@ -136,6 +158,138 @@ def import_students_from_worksheet(worksheet, active_year):
             if index is not None and index < len(row):
                 return _text(row[index])
         return ''
+
+    return headers, cell
+
+
+def preview_students_from_worksheet(worksheet, active_year, sample_limit=12):
+    """Validate a worksheet without creating users or school records."""
+    result = BulkStudentPreviewResult()
+    _headers, cell = _worksheet_reader(worksheet)
+    existing_usernames = {v.lower() for v in User.objects.values_list('username', flat=True)}
+    existing_student_ids = {v.lower() for v in Student.objects.values_list('student_id', flat=True) if v}
+    existing_emails = {v.lower() for v in Student.objects.values_list('email', flat=True) if v}
+    seen_usernames = set(existing_usernames)
+    seen_student_ids = set(existing_student_ids)
+    seen_emails = set(existing_emails)
+    parent_emails = {
+        value.strip().lower()
+        for value in Parent.objects.exclude(email__isnull=True).values_list('email', flat=True)
+        if value and value.strip()
+    }
+    parent_phones = {
+        value.strip()
+        for value in Parent.objects.exclude(phone__isnull=True).values_list('phone', flat=True)
+        if value and value.strip()
+    }
+    class_names = {obj.class_name.lower() for obj in Class.objects.all()}
+    year_names = {obj.year.lower() for obj in AcademicYear.objects.all()}
+    fee_plans = list(FeePlan.objects.all())
+    fee_plan_names = {obj.name.lower() for obj in fee_plans}
+
+    for row_number, row in enumerate(worksheet.iter_rows(min_row=2, values_only=True), start=2):
+        if not any(value not in (None, '') for value in row):
+            continue
+        result.total_rows += 1
+        errors = []
+        duplicate = False
+        student_id = cell(row, 'student_id')
+        login_id = cell(row, 'login_id')
+        email = cell(row, 'email')
+        password = cell(row, 'password')
+        class_name = cell(row, 'class_name')
+        requested_year = cell(row, 'academic_year')
+        fee_plan_name = cell(row, 'fee_plan')
+        parent_email = cell(row, 'parent_email') or cell(row, 'father_email')
+        parent_phone = cell(row, 'parent_phone') or cell(row, 'father_contact')
+        parent_name = cell(row, 'parent_name') or cell(row, 'father_name')
+
+        if student_id and student_id.lower() in seen_student_ids:
+            errors.append(f"Student ID '{student_id}' already exists or is repeated")
+            duplicate = True
+        if login_id and login_id.lower() in seen_usernames:
+            errors.append(f"Login ID '{login_id}' already exists or is repeated")
+            duplicate = True
+        if email and email.lower() in seen_emails:
+            errors.append(f"Student email '{email}' already exists or is repeated")
+            duplicate = True
+        if password:
+            try:
+                validate_password(password)
+            except ValidationError as exc:
+                errors.append('Password: ' + '; '.join(exc.messages))
+        if requested_year and requested_year.lower() not in year_names:
+            errors.append(
+                f"Academic year '{requested_year}' is not configured; active year {active_year.year} will be used"
+            )
+        if class_name and class_name.lower() not in class_names:
+            errors.append(f"Class '{class_name}' is not configured; student will be imported without placement")
+        if fee_plan_name and fee_plan_name.lower() not in fee_plan_names:
+            errors.append(f"Fee plan '{fee_plan_name}' is not configured")
+
+        parent_supplied = any((
+            parent_name, parent_email, parent_phone,
+            cell(row, 'parent_login_id'), cell(row, 'parent_password'),
+        ))
+        if parent_supplied:
+            result.parent_rows += 1
+            if ((parent_email and parent_email.lower() in parent_emails)
+                    or (parent_phone and parent_phone in parent_phones)):
+                result.existing_parents += 1
+            else:
+                result.new_parents += 1
+
+        fee_ready = False
+        if fee_plan_name and fee_plan_name.lower() in fee_plan_names:
+            fee_ready = True
+        elif class_name:
+            matching = [p for p in fee_plans if p.class_name.lower() == class_name.lower()]
+            fee_ready = any(p.session.lower() == (requested_year or active_year.year).lower() for p in matching)
+            fee_ready = fee_ready or len(matching) == 1
+        elif len(fee_plans) == 1:
+            fee_ready = True
+        if fee_ready:
+            result.fee_ready_rows += 1
+
+        blocking_errors = [
+            error for error in errors
+            if 'will be used' not in error and 'without placement' not in error
+        ]
+        if blocking_errors:
+            result.invalid_rows += 1
+            if duplicate:
+                result.duplicate_rows += 1
+            if len(result.errors) < 100:
+                result.errors.append(f"Row {row_number}: {'; '.join(errors)}")
+            status = 'invalid'
+        else:
+            result.valid_rows += 1
+            status = 'warning' if errors else 'valid'
+
+        if student_id:
+            seen_student_ids.add(student_id.lower())
+        if login_id:
+            seen_usernames.add(login_id.lower())
+        if email:
+            seen_emails.add(email.lower())
+        if len(result.rows) < sample_limit:
+            result.rows.append({
+                'row_number': row_number,
+                'student_id': student_id or 'Generated automatically',
+                'name': cell(row, 'name') or 'N/A',
+                'class_name': class_name or 'Not assigned',
+                'parent': parent_name or 'Not supplied',
+                'fee_status': 'Ready' if fee_ready else 'Not assigned',
+                'status': status,
+                'message': '; '.join(errors) if errors else 'Ready to import',
+            })
+    return result
+
+
+def import_students_from_worksheet(worksheet, active_year):
+    """Import a streaming worksheet without retaining its rows in memory."""
+    result = BulkStudentImportResult()
+    _headers, cell = _worksheet_reader(worksheet)
 
     student_group, _ = Group.objects.get_or_create(name='Student')
     existing_usernames = {v.lower() for v in User.objects.values_list('username', flat=True)}
@@ -254,6 +408,9 @@ def import_students_from_worksheet(worksheet, active_year):
                         result.password_reset_required += 1
                     user.save()
                     user.groups.add(student_group)
+                    result.student_accounts_created += 1
+                    if user.has_usable_password():
+                        result.student_logins_ready += 1
                     portal_student = Student.objects.create(
                         user=user,
                         academic_year=academic_year,
@@ -272,11 +429,32 @@ def import_students_from_worksheet(worksheet, active_year):
                         address=cell(row, 'address') or 'N/A',
                         admission_date=_date(cell(row, 'admission_date')) or today,
                     )
+                    result.student_ids.append(portal_student.student_id)
                     legacy_student = ensure_legacy_student(portal_student)
                     if queue_account_email(
                         user=user, password=password, role='student', display_name=name
                     ):
                         result.credential_emails_queued += 1
+                        outbox = EmailOutbox.objects.filter(
+                            dedupe_key=f'account-welcome:{user.pk}'
+                        ).only('pk').first()
+                        if outbox:
+                            result.credential_email_ids.append(outbox.pk)
+
+                    student_phone = cell(row, 'contact')
+                    if student_phone and student_phone.upper() != 'N/A':
+                        notification = NotificationQueue.objects.create(
+                            student=legacy_student,
+                            canonical_student=portal_student,
+                            notification_type='SMS',
+                            content=(
+                                f'Your EduPilot Student Portal account is ready. '
+                                f'Login ID: {user.username}'
+                            ),
+                            status='PENDING',
+                        )
+                        result.messages_queued += 1
+                        result.message_ids.append(notification.pk)
 
                     parent_name = cell(row, 'parent_name') or cell(row, 'father_name')
                     parent_email = cell(row, 'parent_email') or cell(row, 'father_email')
@@ -329,6 +507,8 @@ def import_students_from_worksheet(worksheet, active_year):
                             parent.user = parent_user
                             parent.save(update_fields=['user'])
                             result.parent_accounts_created += 1
+                            if parent_user.has_usable_password():
+                                result.parent_logins_ready += 1
                             if queue_account_email(
                                 user=parent_user,
                                 password=parent_password,
@@ -336,6 +516,24 @@ def import_students_from_worksheet(worksheet, active_year):
                                 display_name=parent.full_name,
                             ):
                                 result.credential_emails_queued += 1
+                                outbox = EmailOutbox.objects.filter(
+                                    dedupe_key=f'account-welcome:{parent_user.pk}'
+                                ).only('pk').first()
+                                if outbox:
+                                    result.credential_email_ids.append(outbox.pk)
+                            if parent_phone and parent_phone.upper() != 'N/A':
+                                notification = NotificationQueue.objects.create(
+                                    student=legacy_student,
+                                    canonical_student=portal_student,
+                                    notification_type='SMS',
+                                    content=(
+                                        f'Your EduPilot Parent Portal account is ready. '
+                                        f'Login ID: {parent_user.username}'
+                                    ),
+                                    status='PENDING',
+                                )
+                                result.messages_queued += 1
+                                result.message_ids.append(notification.pk)
 
                         parent.students.add(portal_student)
                         StudentGuardian.objects.update_or_create(
@@ -349,6 +547,8 @@ def import_students_from_worksheet(worksheet, active_year):
                             },
                         )
                         result.parents_linked += 1
+                        if parent.pk not in result.parent_ids:
+                            result.parent_ids.append(parent.pk)
                     result.enrolled += 1
                     if fee_plan:
                         StudentFeeAssignment.objects.update_or_create(

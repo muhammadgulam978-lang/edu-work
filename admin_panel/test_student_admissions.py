@@ -4,6 +4,7 @@ from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
+from django.urls import reverse
 
 from edupilot_core.models import FeeHead, FeePlan, FeePlanDetail, FeeVoucher
 from parent_dashboard.models import Parent, StudentGuardian
@@ -71,6 +72,23 @@ class StudentAdmissionWorkflowTests(TestCase):
         self.assertFalse(Student.objects.filter(email='areeba.admission@example.com').exists())
         self.assertFalse(User.objects.filter(username='admission.test.student').exists())
         self.assertEqual(FeeVoucher.objects.count(), 0)
+
+    def test_inline_fee_plan_creation_creates_details_and_returns_selection(self):
+        self.admin.is_superuser = True
+        self.admin.save(update_fields=['is_superuser'])
+        self.client.force_login(self.admin)
+        response = self.client.post(reverse('admission_create_fee_plan'), {
+            'class_id': self.class_obj.pk,
+            'academic_year_id': self.year.pk,
+            'name': 'Inline Admission Plan',
+            f'head_{self.head.pk}': '12500.00',
+        })
+        self.assertEqual(response.status_code, 200)
+        plan = FeePlan.objects.get(name='Inline Admission Plan')
+        self.assertEqual(plan.class_name, self.class_obj.class_name)
+        self.assertEqual(plan.session, self.year.year)
+        self.assertEqual(FeePlanDetail.objects.get(fee_plan=plan).amount, 12500)
+        self.assertEqual(response.json()['plan']['id'], plan.pk)
 
     def test_approve_is_idempotent_and_creates_complete_enrollment(self):
         workflow = self.workflow()

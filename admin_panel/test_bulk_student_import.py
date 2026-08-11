@@ -1,11 +1,13 @@
+from datetime import date
+
 from django.test import TestCase
 from openpyxl import Workbook
 
-from edupilot_core.models import EmailOutbox, FeePlan, StudentFeeAssignment
+from edupilot_core.models import EmailOutbox, FeePlan, NotificationQueue, StudentFeeAssignment
 from parent_dashboard.models import Parent, StudentGuardian
 from student_profile.models import Student
 
-from .bulk_student_import import import_students_from_worksheet
+from .bulk_student_import import import_students_from_worksheet, preview_students_from_worksheet
 from .models import AcademicYear, Admission, Class
 
 
@@ -67,11 +69,11 @@ class BulkStudentImportTests(TestCase):
         sheet = self.worksheet(
             [
                 'Student_Id', 'Student Name', 'Email', 'Class',
-                'Parent_Name', 'Parent_Email', 'Parent_Relationship',
+                'Parent_Name', 'Parent_Email', 'Parent_Phone', 'Parent_Relationship',
             ],
             [[
                 'STU-200', 'Sara Ahmed', 'sara.ahmed@example.com', 'Grade 5',
-                'Ahmed Raza', 'ahmed.raza@example.com', 'Father',
+                'Ahmed Raza', 'ahmed.raza@example.com', '03001112222', 'Father',
             ]],
         )
 
@@ -82,7 +84,12 @@ class BulkStudentImportTests(TestCase):
         parent = Parent.objects.get(email='ahmed.raza@example.com')
         self.assertEqual(result.parents_linked, 1)
         self.assertEqual(result.parent_accounts_created, 1)
+        self.assertEqual(result.student_accounts_created, 1)
+        self.assertEqual(result.student_logins_ready, 1)
+        self.assertEqual(result.parent_logins_ready, 1)
         self.assertEqual(result.credential_emails_queued, 2)
+        self.assertEqual(len(result.credential_email_ids), 2)
+        self.assertEqual(result.messages_queued, 1)
         self.assertTrue(parent.students.filter(pk=student.pk).exists())
         self.assertTrue(parent.user.has_usable_password())
         self.assertTrue(student.user.has_usable_password())
@@ -90,6 +97,21 @@ class BulkStudentImportTests(TestCase):
             parent=parent, student=student, is_primary=True
         ).exists())
         self.assertEqual(EmailOutbox.objects.filter(status='PENDING').count(), 2)
+
+    def test_student_phone_creates_trackable_message_queue_record(self):
+        sheet = self.worksheet(
+            ['Student_Id', 'Student Name', 'Email', 'Contact No'],
+            [['STU-202', 'Message Student', 'message.student@example.com', '03001234567']],
+        )
+
+        result = import_students_from_worksheet(sheet, self.year)
+
+        self.assertEqual(result.imported, 1, result.errors)
+        self.assertEqual(result.messages_queued, 1)
+        self.assertEqual(len(result.message_ids), 1)
+        queued = NotificationQueue.objects.get(pk=result.message_ids[0])
+        self.assertEqual(queued.status, 'PENDING')
+        self.assertEqual(queued.canonical_student.student_id, 'STU-202')
 
     def test_existing_parent_is_reused_without_password_change(self):
         from django.contrib.auth.models import User
@@ -112,3 +134,36 @@ class BulkStudentImportTests(TestCase):
         self.assertEqual(result.parent_accounts_created, 0)
         self.assertTrue(user.check_password('KeepMe@12345'))
         self.assertTrue(parent.students.filter(student_id='STU-201').exists())
+
+    def test_preview_reports_student_parent_and_fee_readiness_without_writes(self):
+        sheet = self.worksheet(
+            ['Student_Id', 'Student Name', 'Class', 'Parent_Name', 'Parent_Email'],
+            [['STU-300', 'Preview Student', 'Grade 5', 'Preview Parent', 'preview.parent@example.com']],
+        )
+
+        result = preview_students_from_worksheet(sheet, self.year)
+
+        self.assertEqual(result.total_rows, 1)
+        self.assertEqual(result.valid_rows, 1)
+        self.assertEqual(result.parent_rows, 1)
+        self.assertEqual(result.new_parents, 1)
+        self.assertEqual(result.fee_ready_rows, 1)
+        self.assertEqual(Student.objects.count(), 0)
+        self.assertEqual(Parent.objects.count(), 0)
+
+    def test_preview_blocks_duplicates_before_import(self):
+        Student.objects.create(
+            student_id='STU-301', name='Existing', father_name='N/A', mother_name='N/A',
+            roll_no='301', date_of_birth=date.today(),
+            email='existing.student@example.com',
+        )
+        sheet = self.worksheet(
+            ['Student_Id', 'Student Name', 'Email'],
+            [['STU-301', 'Duplicate', 'duplicate@example.com']],
+        )
+
+        result = preview_students_from_worksheet(sheet, self.year)
+
+        self.assertEqual(result.invalid_rows, 1)
+        self.assertEqual(result.duplicate_rows, 1)
+        self.assertIn("Student ID 'STU-301' already exists", result.errors[0])

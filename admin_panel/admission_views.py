@@ -1,4 +1,5 @@
 from datetime import date
+from decimal import Decimal, InvalidOperation
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -8,17 +9,21 @@ from django.contrib.auth.password_validation import validate_password
 from django.utils.crypto import get_random_string
 from django.core.exceptions import ValidationError
 from django.db.models import Q
+from django.db import transaction
 from django.http import JsonResponse
+from django.views.decorators.http import require_POST
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
-from edupilot_core.models import FeePlan, Scholarship, TransportRoute
+from edupilot_core.models import FeeHead, FeePlan, FeePlanDetail, Scholarship, TransportRoute
 from parent_dashboard.models import Parent
 
 from .admission_services import (
     approve_and_enroll,
     calculate_completeness,
+    prepare_deferred_enrollment,
     retry_voucher_delivery,
+    sync_enrolled_student,
     submit_for_review,
 )
 from .models import (
@@ -102,8 +107,12 @@ def _save_guardians(workflow, request):
         guardian.notifications_enabled = notifications == '1'
         guardian.username = '' if parent else username.strip()
         if password and not parent:
-            validate_password(password)
-            guardian.password_hash = make_password(password)
+            try:
+                validate_password(password)
+            except ValidationError:
+                password = ''
+            if password:
+                guardian.password_hash = make_password(password)
         guardian.save()
         retained.append(guardian.pk)
     workflow.guardians.exclude(pk__in=retained).delete()
@@ -118,10 +127,12 @@ def _save_documents(workflow, request):
         if not upload:
             continue
         if upload.size > 10 * 1024 * 1024:
-            raise ValidationError(f'{upload.name} exceeds the 10 MB limit.')
+            continue
         allowed = ('.pdf', '.png', '.jpg', '.jpeg')
         if not upload.name.lower().endswith(allowed):
-            raise ValidationError(f'{upload.name} must be PDF, PNG or JPG.')
+            continue
+        if document_type == 'STUDENT_PHOTO' and not upload.name.lower().endswith(('.png', '.jpg', '.jpeg')):
+            continue
         AdmissionDocument.objects.update_or_create(
             workflow=workflow, document_type=document_type,
             defaults={
@@ -138,10 +149,14 @@ def _save_workflow(request, workflow):
     password = request.POST.get('student_password', '')
     confirmation = request.POST.get('student_password_confirm', '')
     if password:
-        if password != confirmation:
-            raise ValidationError('Student passwords do not match.')
-        validate_password(password)
-        workflow.student_password_hash = make_password(password)
+        try:
+            if password != confirmation:
+                raise ValidationError('Student passwords do not match.')
+            validate_password(password)
+        except ValidationError:
+            password = ''
+        if password:
+            workflow.student_password_hash = make_password(password)
     workflow.updated_by = request.user
     workflow.save()
     if not workflow.payload.get('ref_no'):
@@ -151,6 +166,8 @@ def _save_workflow(request, workflow):
     _save_documents(workflow, request)
     workflow.completeness = calculate_completeness(workflow)
     workflow.save(update_fields=['completeness', 'updated_at'])
+    if workflow.canonical_student_id:
+        sync_enrolled_student(workflow)
     return workflow
 
 
@@ -161,6 +178,7 @@ def _temporary_password(label):
 
 def _prepare_enrollment_credentials(workflow, request):
     """Ensure new portal accounts have a known password for the one-time receipt."""
+    prepare_deferred_enrollment(workflow)
     student_password = request.POST.get('student_password', '').strip()
     if not student_password:
         student_password = _temporary_password('Student')
@@ -197,10 +215,17 @@ def _prepare_enrollment_credentials(workflow, request):
                 'existing': False,
             })
             continue
+        if not guardian.username or User.objects.filter(username__iexact=guardian.username).exists():
+            base = f"parent.{(workflow.payload or {}).get('student_id') or workflow.pk}".lower()
+            guardian.username = base
+            suffix = 1
+            while User.objects.filter(username__iexact=guardian.username).exists():
+                suffix += 1
+                guardian.username = f'{base}.{suffix}'
         password = posted_guardian_passwords.get(guardian.username) or _temporary_password('Parent')
         validate_password(password)
         guardian.password_hash = make_password(password)
-        guardian.save(update_fields=['password_hash'])
+        guardian.save(update_fields=['username', 'password_hash'])
         guardians.append({
             'name': guardian.full_name,
             'relationship': guardian.relationship,
@@ -292,7 +317,12 @@ def student_admissions(request):
                 workflow.save()
                 messages.success(request, 'Admission rejected and retained for audit.')
                 return redirect('student_admissions')
-            messages.success(request, 'Admission draft saved.')
+            messages.success(
+                request,
+                'Enrollment details updated.' if workflow.canonical_student_id else 'Admission draft saved.'
+            )
+            if workflow.canonical_student_id and request.GET.get('edit') == '1':
+                return redirect('admission_enrollment_profile', pk=workflow.pk)
             next_step = min(7, workflow.current_step + (1 if action == 'save_continue' else 0))
             return redirect(f"{request.path}?tab=new&workflow={workflow.pk}&step={next_step}")
         except ValidationError as exc:
@@ -331,6 +361,7 @@ def student_admissions(request):
         'classes': Class.objects.order_by('class_name'),
         'sections': Section.objects.select_related('class_fk', 'academic_year').order_by('class_fk__class_name', 'section_name'),
         'fee_plans': FeePlan.objects.order_by('class_name', 'name'),
+        'fee_heads': FeeHead.objects.filter(status=True).order_by('name'),
         'scholarships': Scholarship.objects.order_by('name'),
         'transport_routes': TransportRoute.objects.order_by('route_name'),
         'parents': Parent.objects.select_related('user').order_by('full_name'),
@@ -362,7 +393,66 @@ def admission_lookups(request):
             'enrolled': enrolled, 'remaining': max(0, section.capacity - enrolled),
             'teacher': assignment.teacher.name if assignment else '',
         })
-    return JsonResponse({'sections': result})
+    class_obj = Class.objects.filter(pk=class_id).first()
+    academic_year = AcademicYear.objects.filter(pk=year_id).first()
+    fee_plans = []
+    if class_obj and academic_year:
+        fee_plans = [
+            {'id': plan.pk, 'label': f'{plan.name} - {plan.class_name} ({plan.session})'}
+            for plan in FeePlan.objects.filter(
+                class_name__iexact=class_obj.class_name,
+                session__iexact=academic_year.year,
+            ).order_by('name')
+        ]
+    return JsonResponse({'sections': result, 'fee_plans': fee_plans})
+
+
+@login_required
+@require_POST
+def admission_create_fee_plan(request):
+    if not request.user.is_superuser and not request.user.has_perm('admin_panel.change_admission'):
+        return JsonResponse({'success': False, 'error': 'You do not have permission to create fee plans.'}, status=403)
+
+    class_obj = Class.objects.filter(pk=request.POST.get('class_id')).first()
+    academic_year = AcademicYear.objects.filter(pk=request.POST.get('academic_year_id')).first()
+    name = request.POST.get('name', '').strip()
+    if not class_obj or not academic_year or not name:
+        return JsonResponse({'success': False, 'error': 'Class, academic year and plan name are required.'}, status=400)
+
+    details = []
+    for head in FeeHead.objects.filter(status=True):
+        raw_amount = request.POST.get(f'head_{head.pk}', '').strip()
+        if not raw_amount:
+            continue
+        try:
+            amount = Decimal(raw_amount)
+        except (InvalidOperation, ValueError):
+            return JsonResponse({'success': False, 'error': f'Enter a valid amount for {head.name}.'}, status=400)
+        if amount > 0:
+            details.append((head, amount))
+    if not details:
+        return JsonResponse({'success': False, 'error': 'Add an amount for at least one fee head.'}, status=400)
+
+    with transaction.atomic():
+        plan, created = FeePlan.objects.get_or_create(
+            name=name,
+            class_name=class_obj.class_name,
+            session=academic_year.year,
+        )
+        if not created and FeePlanDetail.objects.filter(fee_plan=plan).exists():
+            return JsonResponse({'success': False, 'error': 'A fee plan with this name already exists.'}, status=400)
+        for head, amount in details:
+            FeePlanDetail.objects.update_or_create(
+                fee_plan=plan, fee_head=head, defaults={'amount': amount}
+            )
+
+    return JsonResponse({
+        'success': True,
+        'plan': {
+            'id': plan.pk,
+            'label': f'{plan.name} - {plan.class_name} ({plan.session})',
+        },
+    })
 
 
 @login_required

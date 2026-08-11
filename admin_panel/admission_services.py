@@ -4,6 +4,7 @@ from datetime import date
 from decimal import Decimal
 
 from django.contrib.auth.models import Group, User
+from django.contrib.auth.hashers import make_password
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.db import transaction
@@ -11,6 +12,7 @@ from django.utils import timezone
 
 from parent_dashboard.models import Parent, StudentGuardian
 from student_profile.models import Student
+from edupilot_core.canonical_sync import ensure_legacy_student
 
 from .models import Admission, ClassTeacher, StudentAdmissionWorkflow
 
@@ -21,6 +23,12 @@ REQUIRED_PAYLOAD_FIELDS = (
     'class_id', 'section_id', 'roll_no', 'fee_plan_id', 'voucher_month',
     'voucher_issue_date', 'voucher_due_date',
 )
+
+DEFERRED_LABELS = {
+    'phone': 'Student phone', 'nationality': 'Nationality', 'address': 'Address',
+    'campus': 'Campus', 'branch': 'Branch', 'academic_year_id': 'Academic year',
+    'class_id': 'Class', 'section_id': 'Section', 'fee_plan_id': 'Fee plan',
+}
 
 
 def calculate_completeness(workflow):
@@ -56,22 +64,9 @@ def validate_workflow(workflow, for_approval=False):
         'voucher_month': 'First voucher month', 'voucher_issue_date': 'Voucher issue date',
         'voucher_due_date': 'Voucher due date',
     }
-    for field in REQUIRED_PAYLOAD_FIELDS:
-        _required(payload, field, labels[field], errors)
-
-    primary_guardians = workflow.guardians.filter(is_primary=True)
-    if primary_guardians.count() != 1:
-        errors.append('Exactly one primary guardian is required.')
-
-    if for_approval:
-        if not workflow.student_username or not workflow.student_password_hash:
-            errors.append('Student portal credentials are required.')
-        if not workflow.documents.filter(
-            document_type__in=['B_FORM', 'BIRTH_CERTIFICATE']
-        ).exists():
-            errors.append('A B-Form or birth certificate is required.')
-        if not workflow.documents.filter(document_type='GUARDIAN_CNIC').exists():
-            errors.append('Primary guardian CNIC document is required.')
+    # Admission must remain available when operational details are incomplete.
+    # Database-critical identity values are supplied safely during enrollment;
+    # guardians, documents, placement and finance can be completed later.
 
     email = payload.get('email', '').strip()
     student_id = payload.get('student_id', '').strip()
@@ -91,44 +86,122 @@ def validate_workflow(workflow, for_approval=False):
     try:
         academic_year = workflow_academic_year(workflow)
         if academic_year and not academic_year.is_active:
-            errors.append('The selected academic year is inactive.')
+            payload['academic_year_id'] = ''
         section = workflow_section(workflow)
         if section:
             enrolled = Student.objects.filter(section=section).exclude(
                 pk=workflow.canonical_student_id
             ).count()
             if enrolled >= section.capacity and not payload.get('capacity_override'):
-                errors.append('The selected section has no available seats.')
+                payload['capacity_override'] = True
         fee_plan = FeePlan.objects.filter(pk=payload.get('fee_plan_id')).first()
         class_obj = workflow_class(workflow)
         if fee_plan and class_obj and fee_plan.class_name.casefold() != class_obj.class_name.casefold():
-            errors.append('The selected fee plan does not belong to this class.')
+            payload['fee_plan_id'] = ''
         if fee_plan and academic_year and fee_plan.session != academic_year.year:
-            errors.append('The selected fee plan does not belong to this academic year.')
+            payload['fee_plan_id'] = ''
     except (TypeError, ValueError):
-        errors.append('One or more academic selections are invalid.')
+        # Stale browser selections must not block enrollment. They remain
+        # visible in the deferred list and can be corrected after enrollment.
+        for field in ('academic_year_id', 'class_id', 'section_id', 'fee_plan_id'):
+            payload[field] = ''
 
-    for guardian in workflow.guardians.filter(existing_parent__isnull=True, portal_access=True):
-        if not guardian.username or not guardian.password_hash:
-            errors.append(f'Portal credentials are required for {guardian.full_name}.')
-        elif User.objects.filter(username__iexact=guardian.username).exists():
-            errors.append(f'Guardian username {guardian.username} is already in use.')
+    workflow.payload = payload
+    workflow.save(update_fields=['payload', 'updated_at'])
+
     return errors
+
+
+def _unique_value(model, field, preferred, fallback, exclude_pk=None):
+    value = (preferred or '').strip()
+    matches = model.objects.filter(**{f'{field}__iexact': value}) if value else model.objects.none()
+    if exclude_pk:
+        matches = matches.exclude(pk=exclude_pk)
+    if value and not matches.exists():
+        return value
+    candidate = fallback
+    suffix = 1
+    while model.objects.filter(**{f'{field}__iexact': candidate}).exists():
+        suffix += 1
+        candidate = f'{fallback}-{suffix}'
+    return candidate
+
+
+def prepare_deferred_enrollment(workflow):
+    """Fill only database-critical values and record everything left for later."""
+    payload = dict(workflow.payload or {})
+    token = re.sub(r'[^A-Za-z0-9]', '', workflow.reference_number)[-10:] or str(workflow.pk)
+    payload['name'] = payload.get('name') or f'Student {workflow.reference_number}'
+    current_pk = workflow.canonical_student_id
+    payload['student_id'] = _unique_value(
+        Student, 'student_id', payload.get('student_id'), f'PENDING-{token}', current_pk
+    )
+    payload['email'] = _unique_value(
+        Student, 'email', payload.get('email'), f'pending-{token}@pending.edupilot.local', current_pk
+    )
+    payload['date_of_birth'] = payload.get('date_of_birth') or payload.get('admission_date') or date.today().isoformat()
+    payload['admission_date'] = payload.get('admission_date') or date.today().isoformat()
+    payload['gender'] = payload.get('gender') or 'Other'
+    payload['roll_no'] = payload.get('roll_no') or f'PENDING-{token}'
+    payload['ref_no'] = payload.get('ref_no') or workflow.reference_number
+
+    class_obj = workflow_class(workflow)
+    academic_year = workflow_academic_year(workflow)
+    from edupilot_core.models import FeePlan
+    fee_plan = FeePlan.objects.filter(pk=payload.get('fee_plan_id')).first()
+    if fee_plan and (
+        (class_obj and fee_plan.class_name.casefold() != class_obj.class_name.casefold())
+        or (academic_year and fee_plan.session != academic_year.year)
+    ):
+        payload['fee_plan_id'] = ''
+
+    deferred = [label for field, label in DEFERRED_LABELS.items() if not payload.get(field)]
+    if not workflow.guardians.exists():
+        deferred.append('Parent / guardian')
+    if not workflow.documents.exists():
+        deferred.append('Admission documents')
+    if not payload.get('fee_plan_id'):
+        deferred.extend(['First fee assignment', 'First voucher'])
+    payload['deferred_items'] = list(dict.fromkeys(deferred))
+    payload['capacity_override'] = True
+    workflow.payload = payload
+    username_matches = User.objects.filter(username__iexact=workflow.student_username)
+    if workflow.canonical_student_id and workflow.canonical_student.user_id:
+        username_matches = username_matches.exclude(pk=workflow.canonical_student.user_id)
+    if not workflow.student_username or username_matches.exists():
+        base = re.sub(r'[^a-z0-9_.]', '', payload['student_id'].lower()) or f'student{workflow.pk}'
+        username = base
+        suffix = 1
+        while User.objects.filter(username__iexact=username).exists():
+            suffix += 1
+            username = f'{base}{suffix}'
+        workflow.student_username = username
+    workflow.save(update_fields=['payload', 'student_username', 'updated_at'])
+    return payload
 
 
 def workflow_academic_year(workflow):
     from .models import AcademicYear
-    return AcademicYear.objects.filter(pk=(workflow.payload or {}).get('academic_year_id')).first()
+    try:
+        return AcademicYear.objects.filter(pk=(workflow.payload or {}).get('academic_year_id')).first()
+    except (TypeError, ValueError):
+        return None
 
 
 def workflow_class(workflow):
     from .models import Class
-    return Class.objects.filter(pk=(workflow.payload or {}).get('class_id')).first()
+    try:
+        return Class.objects.filter(pk=(workflow.payload or {}).get('class_id')).first()
+    except (TypeError, ValueError):
+        return None
 
 
 def workflow_section(workflow):
     from .models import Section
-    return Section.objects.filter(pk=(workflow.payload or {}).get('section_id')).first()
+    try:
+        return Section.objects.filter(pk=(workflow.payload or {}).get('section_id')).first()
+    except (TypeError, ValueError):
+        return None
 
 
 def sync_admission_record(workflow, status=None):
@@ -164,6 +237,7 @@ def sync_admission_record(workflow, status=None):
 
 
 def submit_for_review(workflow, user):
+    prepare_deferred_enrollment(workflow)
     errors = validate_workflow(workflow, for_approval=False)
     if errors:
         raise ValidationError(errors)
@@ -257,19 +331,21 @@ def approve_and_enroll(workflow, user):
 
     workflow = StudentAdmissionWorkflow.objects.select_for_update().get(pk=workflow.pk)
     if workflow.canonical_student_id:
-        return workflow.canonical_student
+        return sync_enrolled_student(workflow)
+    prepare_deferred_enrollment(workflow)
     errors = validate_workflow(workflow, for_approval=True)
     if errors:
         raise ValidationError(errors)
     p = workflow.payload
     admission = sync_admission_record(workflow, 'approved')
-    primary = workflow.guardians.get(is_primary=True)
+    primary = workflow.guardians.filter(is_primary=True).first()
     student_user = _create_user(
-        workflow.student_username, workflow.student_password_hash, p['email'], 'Student', p['name']
+        workflow.student_username, workflow.student_password_hash or make_password(None),
+        p['email'], 'Student', p['name']
     )
     student = Student.objects.create(
         user=student_user, student_id=admission.student_id, name=p['name'],
-        father_name=primary.full_name, mother_name=p.get('mother_name') or 'Not provided',
+        father_name=primary.full_name if primary else 'Add later', mother_name=p.get('mother_name') or 'Add later',
         academic_year=workflow_academic_year(workflow), class_fk=workflow_class(workflow),
         section=workflow_section(workflow), roll_no=p['roll_no'], phone=p.get('phone') or None,
         gender=p['gender'].title(), date_of_birth=p['date_of_birth'], email=p['email'],
@@ -279,11 +355,16 @@ def approve_and_enroll(workflow, user):
         emergency_contact_phone=p.get('emergency_contact_phone', ''),
         admission_date=p.get('admission_date'), previous_school=p.get('previous_school', ''),
     )
+    photo_document = workflow.documents.filter(document_type='STUDENT_PHOTO').first()
+    if photo_document:
+        student.photo = photo_document.file
+        student.save(update_fields=['photo'])
     for guardian in workflow.guardians.all():
         parent = guardian.existing_parent
         if parent is None:
             parent_user = _create_user(
-                guardian.username, guardian.password_hash, guardian.email,
+                guardian.username or f'parent.{student.student_id.lower()}.{guardian.pk}',
+                guardian.password_hash or make_password(None), guardian.email,
                 'Parent', guardian.full_name,
             ) if guardian.portal_access else None
             parent = Parent.objects.create(
@@ -302,18 +383,104 @@ def approve_and_enroll(workflow, user):
         )
     workflow.documents.update(canonical_student=student)
     legacy_student = ensure_legacy_student(student)
-    voucher = _create_initial_voucher(workflow, student, legacy_student)
+    voucher = None
+    if p.get('fee_plan_id') and p.get('voucher_month') and p.get('voucher_issue_date') and p.get('voucher_due_date'):
+        voucher = _create_initial_voucher(workflow, student, legacy_student)
     now = timezone.now()
     workflow.canonical_student = student
-    workflow.initial_voucher_pk = voucher.pk
+    workflow.initial_voucher_pk = voucher.pk if voucher else None
     workflow.status = StudentAdmissionWorkflow.STATUS_APPROVED
     workflow.approved_by = user
     workflow.approved_at = now
     workflow.enrolled_at = now
-    workflow.completeness = 100
+    workflow.completeness = calculate_completeness(workflow)
     workflow.updated_by = user
     workflow.save()
-    transaction.on_commit(lambda: _finish_voucher(voucher.pk, workflow.pk))
+    if voucher:
+        transaction.on_commit(lambda: _finish_voucher(voucher.pk, workflow.pk))
+    return student
+
+
+def sync_enrolled_student(workflow):
+    """Apply later wizard edits to the already enrolled canonical student."""
+    student = workflow.canonical_student
+    p = prepare_deferred_enrollment(workflow)
+    primary = workflow.guardians.filter(is_primary=True).first()
+    values = {
+        'name': p['name'], 'student_id': p['student_id'], 'email': p['email'],
+        'phone': p.get('phone') or None, 'gender': p['gender'].title(),
+        'date_of_birth': p['date_of_birth'], 'nationality': p.get('nationality', ''),
+        'address': p.get('address', ''), 'blood_group': p.get('blood_group', ''),
+        'medical_notes': p.get('medical_notes', ''),
+        'emergency_contact_name': p.get('emergency_contact_name', ''),
+        'emergency_contact_phone': p.get('emergency_contact_phone', ''),
+        'admission_date': p.get('admission_date'), 'previous_school': p.get('previous_school', ''),
+        'academic_year': workflow_academic_year(workflow), 'class_fk': workflow_class(workflow),
+        'section': workflow_section(workflow), 'roll_no': p['roll_no'],
+        'father_name': primary.full_name if primary else student.father_name or 'Add later',
+        'mother_name': p.get('mother_name') or student.mother_name or 'Add later',
+    }
+    for field, value in values.items():
+        setattr(student, field, value)
+
+    photo_document = workflow.documents.filter(document_type='STUDENT_PHOTO').first()
+    if photo_document:
+        student.photo = photo_document.file
+    student.save()
+    workflow.documents.update(canonical_student=student)
+
+    legacy_student = ensure_legacy_student(student)
+    legacy_student.full_name = student.name
+    legacy_student.student_id = student.student_id
+    legacy_student.current_class = student.class_fk.class_name if student.class_fk_id else ''
+    legacy_student.is_active = True
+    legacy_student.save(update_fields=['full_name', 'student_id', 'current_class', 'is_active'])
+    if student.user_id:
+        student.user.username = workflow.student_username
+        student.user.email = p['email']
+        if workflow.student_password_hash:
+            student.user.password = workflow.student_password_hash
+        student.user.save()
+
+    for guardian in workflow.guardians.all():
+        parent = guardian.existing_parent
+        link = StudentGuardian.objects.filter(student=student, relationship=guardian.relationship).first()
+        if parent is None and link:
+            parent = link.parent
+        if parent is None:
+            parent_user = None
+            if guardian.portal_access:
+                username = guardian.username or f'parent.{student.student_id.lower()}'
+                if User.objects.filter(username__iexact=username).exists():
+                    username = f'{username}.{guardian.pk}'
+                password_hash = guardian.password_hash or make_password(None)
+                parent_user = _create_user(
+                    username, password_hash, guardian.email, 'Parent', guardian.full_name
+                )
+            parent = Parent.objects.create(
+                user=parent_user, full_name=guardian.full_name or 'Guardian',
+                phone=guardian.phone or None, email=guardian.email or None,
+                address=guardian.address or None, occupation=guardian.occupation or None,
+            )
+        parent.students.add(student)
+        StudentGuardian.objects.update_or_create(
+            parent=parent, student=student,
+            defaults={
+                'relationship': guardian.relationship or 'Guardian',
+                'is_primary': guardian.is_primary, 'portal_access': guardian.portal_access,
+                'notifications_enabled': guardian.notifications_enabled,
+            },
+        )
+
+    if not workflow.initial_voucher_pk and p.get('fee_plan_id') and p.get('voucher_month') \
+            and p.get('voucher_issue_date') and p.get('voucher_due_date'):
+        voucher = _create_initial_voucher(workflow, student, legacy_student)
+        workflow.initial_voucher_pk = voucher.pk
+        transaction.on_commit(lambda: _finish_voucher(voucher.pk, workflow.pk))
+    sync_admission_record(workflow, 'approved')
+    workflow.completeness = calculate_completeness(workflow)
+    workflow.updated_at = timezone.now()
+    workflow.save(update_fields=['initial_voucher_pk', 'completeness', 'updated_at'])
     return student
 
 

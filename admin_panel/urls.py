@@ -17,6 +17,7 @@ urlpatterns = [
     path('admission_list/', views.admission_list, name='admission_list'),
     path('students/admissions/', admission_views.student_admissions, name='student_admissions'),
     path('students/admissions/lookups/', admission_views.admission_lookups, name='admission_lookups'),
+    path('students/admissions/fee-plans/create/', admission_views.admission_create_fee_plan, name='admission_create_fee_plan'),
     path('students/admissions/<int:pk>/enrollment/', admission_views.admission_enrollment_profile, name='admission_enrollment_profile'),
     path('students/admissions/<int:pk>/retry-voucher/', admission_views.admission_retry_voucher, name='admission_retry_voucher'),
     path('admission/<int:pk>/update_status/', views.update_admission_status, name='update_admission_status'),
@@ -98,6 +99,7 @@ urlpatterns = [
     path('teachers/duty-roster/report/', views.teacher_duty_roster_report, name='teacher_duty_roster_report'),
 
     path('id_card/<int:student_id>/', views.generate_student_id_card, name='generate_id_card'),
+    path('id_card/<int:student_id>/download/', views.download_student_id_card, name='download_student_id_card'),
     path('upload-photo/<int:student_id>/', views.upload_student_photo, name='upload_student_photo'),
     path('dashboard/', views.admin_dashboard, name='admin_dashboard'),  
     path('hello/', views.my_view, name='hello'),
@@ -223,6 +225,8 @@ urlpatterns = [
     
     ## Students
     path('bulk-upload-students/', views.bulk_upload_students, name='bulk_upload_students'),
+    path('bulk-upload-students/template/', views.bulk_upload_students_template, name='bulk_upload_students_template'),
+    path('bulk-upload-students/activity/', views.bulk_upload_students_activity, name='bulk_upload_students_activity'),
     ## Teachers  
     path('bulk-upload-teachers/', views.bulk_upload_teachers, name='bulk_upload_teachers'),
     

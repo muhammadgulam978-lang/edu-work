@@ -78,7 +78,15 @@
                   <td>{{ admission.academic_year }}</td>
                   <td>{{ admission.branch }}</td>
                   <td>{{ admission.ref_no }}</td>
-                  <td>{{ admission.name }}</td>
+                  <td>
+                    {% if admission.profile_url %}
+                      <a class="sg-student-profile-link" href="{{ admission.profile_url }}" title="Open Student Insight Profile">
+                        {{ admission.name }} <i class="fa fa-arrow-up-right-from-square" aria-hidden="true"></i>
+                      </a>
+                    {% else %}
+                      {{ admission.name }}
+                    {% endif %}
+                  </td>
                   <td>{{ admission.class_fk.class_name }}</td>
                   <td>{{ admission.dob }}</td>
                   <td>{{ admission.gender }}</td>

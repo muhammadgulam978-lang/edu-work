@@ -508,6 +508,13 @@
   padding: 28px;
 }
 
+.student-id-print .id-card-screen {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
 .student-id-print .id-card {
   background: #ffffff;
   border: 1px solid #dfe8e6;
@@ -585,6 +592,90 @@
   text-align: right;
 }
 
+.student-id-print .id-card-actions {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 18px;
+  width: 360px;
+}
+
+.student-id-print .id-card-action {
+  align-items: center;
+  appearance: none;
+  background: #ffffff;
+  border: 1px solid #cfe9e5;
+  border-radius: 10px;
+  color: #173d38;
+  cursor: pointer;
+  display: inline-flex;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  gap: 7px;
+  justify-content: center;
+  min-height: 42px;
+  padding: 9px 10px;
+  text-decoration: none;
+  transition: background-color 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+
+.student-id-print .id-card-action:hover {
+  background: #eef9f7;
+  border-color: #88d0c5;
+  color: #10201e;
+  transform: translateY(-1px);
+}
+
+.student-id-print .id-card-action-primary {
+  background: #88d0c5;
+  border-color: #88d0c5;
+  color: #10201e;
+}
+
+.student-id-print .id-card-action i {
+  font-size: 14px;
+}
+
+.student-id-print .id-card-feedback {
+  color: #4b5563;
+  font-size: 12px;
+  margin: 9px 0 0;
+  min-height: 16px;
+  text-align: center;
+}
+
+@media (max-width: 460px) {
+  .student-id-print {
+    padding: 16px;
+  }
+
+  .student-id-print .id-card,
+  .student-id-print .id-card-actions {
+    width: 100%;
+  }
+
+  .student-id-print .id-card-actions {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media print {
+  .student-id-print {
+    background: #ffffff;
+    padding: 0;
+  }
+
+  .student-id-print .id-card-actions,
+  .student-id-print .id-card-feedback {
+    display: none;
+  }
+
+  .student-id-print .id-card {
+    box-shadow: none;
+  }
+}
+
 @media (max-width: 991px) {
   .student-gateway {
     padding: 22px 14px 34px;
@@ -632,3 +723,20 @@
     width: 100%;
   }
 }
+.sg-student-profile-link {
+  color: #111;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.sg-student-profile-link:hover,
+.sg-student-profile-link:focus-visible {
+  color: #247f76;
+  text-decoration: underline;
+}
+
+.sg-student-profile-link i { font-size: 11px; }

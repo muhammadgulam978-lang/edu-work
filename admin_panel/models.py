@@ -298,6 +298,7 @@ class AdmissionGuardian(models.Model):
 
 class AdmissionDocument(models.Model):
     DOCUMENT_CHOICES = [
+        ('STUDENT_PHOTO', 'Student Photograph'),
         ('B_FORM', 'B-Form'),
         ('BIRTH_CERTIFICATE', 'Birth Certificate'),
         ('GUARDIAN_CNIC', 'Guardian CNIC'),
