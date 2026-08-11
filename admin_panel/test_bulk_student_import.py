@@ -167,3 +167,30 @@ class BulkStudentImportTests(TestCase):
         self.assertEqual(result.invalid_rows, 1)
         self.assertEqual(result.duplicate_rows, 1)
         self.assertIn("Student ID 'STU-301' already exists", result.errors[0])
+
+    def test_parent_dataset_child_columns_create_named_student(self):
+        sheet = self.worksheet(
+            [
+                'S.No', 'Parent ID', 'Father Name', 'Father Phone', 'Father Email',
+                'Guardian Name', 'Guardian Relationship', 'Guardian Phone',
+                'Home Address', 'Child Name', 'Child Admission Number',
+                'Registration Date', 'Is Active',
+            ],
+            [[
+                1, 'PAR5002', 'Ahmed Ahmed', '03238719076',
+                'ahmed.ahmed1@edupilot.test', 'Ismail Ahmed', 'Mother',
+                '03167303868', 'House 982, Street 43', 'Hassan Ahmed',
+                'STU5002', '2025-10-16', 'Yes',
+            ]],
+        )
+
+        preview = preview_students_from_worksheet(sheet, self.year)
+        result = import_students_from_worksheet(sheet, self.year)
+
+        self.assertEqual(preview.rows[0]['name'], 'Hassan Ahmed')
+        self.assertEqual(preview.rows[0]['student_id'], 'STU5002')
+        self.assertEqual(result.imported, 1, result.errors)
+        student = Student.objects.get(student_id='STU5002')
+        self.assertEqual(student.name, 'Hassan Ahmed')
+        self.assertEqual(student.address, 'House 982, Street 43')
+        self.assertEqual(Admission.objects.get(student_id='STU5002').name, 'Hassan Ahmed')

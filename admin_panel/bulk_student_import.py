@@ -61,22 +61,27 @@ class BulkStudentPreviewResult:
 
 
 ALIASES = {
-    'student_id': ('studentid', 'admissionnumber', 'admissionno'),
+    'student_id': (
+        'studentid', 'admissionnumber', 'admissionno',
+        'childadmissionnumber', 'childstudentid',
+    ),
     'campus': ('campus',), 'branch': ('branch',),
-    'name': ('studentname', 'name', 'fullname'),
+    'name': ('studentname', 'name', 'fullname', 'childname', 'studentfullname'),
     'dob': ('dateofbirth', 'dob'), 'gender': ('gender',),
     'email': ('email', 'studentemail'),
     'contact': ('contactno', 'contactnumber', 'phone', 'studentphone'),
-    'address': ('address',), 'admission_date': ('admissiondate',),
+    'address': ('address', 'homeaddress'),
+    'admission_date': ('admissiondate', 'registrationdate'),
     'father_name': ('fathersname', 'fathername'),
     'father_email': ('fathersemail', 'fatheremail'),
     'academic_year': ('academicyear', 'session'),
     'class_name': ('classname', 'class'), 'section': ('section', 'sectionname'),
     'father_occ': ('fathersoccupation', 'fatheroccupation', 'fathersoccuppation'),
     'mother_name': ('mothersname', 'mothername'),
-    'father_contact': ('fathercontactnumber', 'fathercontact'),
+    'father_contact': ('fathercontactnumber', 'fathercontact', 'fatherphone'),
     'father_cnic': ('fatherscnicno', 'fathercnic', 'cnic'),
-    'nationality': ('nationality',), 'status': ('admissionstatus', 'status'),
+    'nationality': ('nationality',),
+    'status': ('admissionstatus', 'status', 'isactive'),
     'login_id': ('loginid', 'username'), 'password': ('password',),
     'fee_plan': ('feeplan', 'feeplanname'),
     'transport_route': ('transportroute', 'route'),
@@ -84,9 +89,9 @@ ALIASES = {
     'roll_no': ('rollno', 'rollnumber'),
     'parent_name': ('parentname', 'guardianname'),
     'parent_email': ('parentemail', 'guardianemail'),
-    'parent_phone': ('parentphone', 'guardianphone'),
+    'parent_phone': ('parentphone', 'guardianphone', 'fatherphone'),
     'parent_occupation': ('parentoccupation', 'guardianoccupation'),
-    'parent_address': ('parentaddress', 'guardianaddress'),
+    'parent_address': ('parentaddress', 'guardianaddress', 'homeaddress'),
     'parent_relationship': ('parentrelationship', 'guardianrelationship', 'relationship'),
     'parent_login_id': ('parentloginid', 'guardianloginid', 'parentusername'),
     'parent_password': ('parentpassword', 'guardianpassword'),
@@ -361,7 +366,8 @@ def import_students_from_worksheet(worksheet, active_year):
             status = {
                 'active': 'approved', 'approved': 'approved',
                 'inactive': 'rejected', 'rejected': 'rejected',
-                'pending': 'pending',
+                'pending': 'pending', 'yes': 'approved', 'true': 'approved', '1': 'approved',
+                'no': 'rejected', 'false': 'rejected', '0': 'rejected',
             }.get(raw_status, 'approved')
 
             fee_plan = fee_plan_map.get(cell(row, 'fee_plan').lower()) if cell(row, 'fee_plan') else None
