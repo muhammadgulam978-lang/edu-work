@@ -256,7 +256,7 @@
         The file format is as follows <strong>Row 1 </strong>contains the headers for the columns.
       </div>
 
-      <form method="post" enctype="multipart/form-data">
+      <form method="post" enctype="multipart/form-data" action="{% url 'bulk_upload_teachers' %}">
         {% csrf_token %}
 
         <div class="drop-zone">
@@ -301,12 +301,12 @@
             <tr><td>D</td><td class="cn">Phone Number</td>   <td class="ce">03001234567</td>                   <td>—</td></tr>
             <tr><td>E</td><td class="cn">Gender</td>         <td class="ce">Male / Female</td>                 <td>—</td></tr>
             <tr><td>F</td><td class="cn">Date_Of_Birth</td>  <td class="ce">24-Nov-1989</td>                   <td><span class="bdg b-blue">DD-Mon-YYYY</span></td></tr>
-            <tr><td>G</td><td class="cn">Qualification</td>  <td class="ce">MS / BE / MBA</td>                 <td>—</td></tr>
+            <tr><td>G</td><td class="cn">Qualification</td>  <td class="ce">Masters / Bachelor / Diploma</td> <td>MS, MBA, BS and BE are normalized</td></tr>
             <tr><td>H</td><td class="cn">Experience</td>     <td class="ce">5 years / 10</td>                  <td><span class="bdg b-gry">Number ya "X years"</span></td></tr>
             <tr><td>I</td><td class="cn">Address</td>        <td class="ce">House 5, Street 1, Karachi</td>    <td>—</td></tr>
-            <tr><td>J</td><td class="cn">Faculty Group</td>  <td class="ce">Faculty of Engineering</td>        <td>—</td></tr>
+            <tr><td>J</td><td class="cn">Faculty Group</td>  <td class="ce">Junior Section</td>                 <td>Must match a configured faculty choice</td></tr>
             <tr><td>K</td><td class="cn">Department</td>     <td class="ce">Computer Science</td>              <td>—</td></tr>
-            <tr><td>L</td><td class="cn">Subject</td>        <td class="ce">OOP</td>                           <td><span class="bdg b-org">DB mein hona chahiye</span></td></tr>
+            <tr><td>L</td><td class="cn">Subject</td>        <td class="ce">Science</td>                       <td><span class="bdg b-org">Must already exist</span></td></tr>
             <tr><td>M</td><td class="cn">Image</td>          <td class="ce">sara.jpg</td>                      <td><span class="bdg b-gry">Skip — upload nahi hota</span></td></tr>
             <tr><td>N</td><td class="cn">Joining Date</td>   <td class="ce">21-Feb-2016</td>                   <td><span class="bdg b-blue">DD-Mon-YYYY</span></td></tr>
             <tr><td>O</td><td class="cn">Status</td>         <td class="ce">Active / Inactive / On Leave</td>  <td><span class="bdg b-grn">Active = Login enabled</span></td></tr>

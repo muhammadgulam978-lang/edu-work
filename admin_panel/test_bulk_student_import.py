@@ -7,7 +7,11 @@ from edupilot_core.models import EmailOutbox, FeePlan, NotificationQueue, Studen
 from parent_dashboard.models import Parent, StudentGuardian
 from student_profile.models import Student
 
-from .bulk_student_import import import_students_from_worksheet, preview_students_from_worksheet
+from .bulk_student_import import (
+    import_students_from_worksheet,
+    preview_students_from_worksheet,
+    select_student_worksheet,
+)
 from .models import AcademicYear, Admission, Class
 
 
@@ -194,3 +198,55 @@ class BulkStudentImportTests(TestCase):
         self.assertEqual(student.name, 'Hassan Ahmed')
         self.assertEqual(student.address, 'House 982, Street 43')
         self.assertEqual(Admission.objects.get(student_id='STU5002').name, 'Hassan Ahmed')
+
+    def test_selects_data_sheet_instead_of_active_instructions_sheet(self):
+        workbook = Workbook()
+        instructions = workbook.active
+        instructions.title = 'Instructions'
+        instructions.append(['Read this file before importing'])
+        data = workbook.create_sheet('Student Data')
+        data.append(['Student_Id', 'Student Name', 'Email'])
+        data.append(['STU-SHEET-1', 'Correct Sheet Student', 'sheet.student@example.com'])
+
+        selected = select_student_worksheet(workbook)
+        result = import_students_from_worksheet(selected, self.year)
+
+        self.assertEqual(selected.title, 'Student Data')
+        self.assertEqual(result.imported, 1, result.errors)
+        self.assertEqual(Student.objects.get().name, 'Correct Sheet Student')
+
+    def test_numeric_identifiers_do_not_gain_decimal_suffix(self):
+        sheet = self.worksheet(
+            ['Student_Id', 'Student Name', 'Roll_No'],
+            [[5001.0, 'Numeric Student', 17.0]],
+        )
+
+        result = import_students_from_worksheet(sheet, self.year)
+
+        self.assertEqual(result.imported, 1, result.errors)
+        student = Student.objects.get()
+        self.assertEqual(student.student_id, '5001')
+        self.assertEqual(student.roll_no, '17')
+
+    def test_invalid_row_does_not_reserve_identifiers_from_later_valid_row(self):
+        sheet = self.worksheet(
+            ['Student_Id', 'Student Name', 'Email', 'Login_Id', 'Password'],
+            [
+                ['STU-REUSE-1', 'Invalid First', 'reuse@example.com', 'reuse.login', 'short'],
+                ['STU-REUSE-1', 'Valid Second', 'reuse@example.com', 'reuse.login', 'StrongPass@12345'],
+            ],
+        )
+
+        preview = preview_students_from_worksheet(sheet, self.year)
+
+        self.assertEqual(preview.invalid_rows, 1)
+        self.assertEqual(preview.valid_rows, 1)
+
+    def test_duplicate_header_is_rejected_explicitly(self):
+        sheet = self.worksheet(
+            ['Student Name', 'Student Name', 'Email'],
+            [['First Value', 'Second Value', 'duplicate.header@example.com']],
+        )
+
+        with self.assertRaisesRegex(ValueError, 'Duplicate Excel headers'):
+            preview_students_from_worksheet(sheet, self.year)

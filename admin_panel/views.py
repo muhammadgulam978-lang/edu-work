@@ -7248,8 +7248,12 @@ def bulk_upload_students(request):
         try:
             with default_storage.open(pending['path'], 'rb') as stored_file:
                 workbook = openpyxl.load_workbook(stored_file, read_only=True, data_only=True)
-                from .bulk_student_import import import_students_from_worksheet
-                result = import_students_from_worksheet(workbook.active, active_year)
+                from .bulk_student_import import (
+                    import_students_from_worksheet,
+                    select_student_worksheet,
+                )
+                worksheet = select_student_worksheet(workbook)
+                result = import_students_from_worksheet(worksheet, active_year)
         except Exception as exc:
             messages.error(request, f'Could not import this Excel file: {exc}')
             return redirect('bulk_upload_students')
@@ -7304,8 +7308,12 @@ def bulk_upload_students(request):
     try:
         with default_storage.open(path, 'rb') as stored_file:
             workbook = openpyxl.load_workbook(stored_file, read_only=True, data_only=True)
-            from .bulk_student_import import preview_students_from_worksheet
-            preview = preview_students_from_worksheet(workbook.active, active_year)
+            from .bulk_student_import import (
+                preview_students_from_worksheet,
+                select_student_worksheet,
+            )
+            worksheet = select_student_worksheet(workbook)
+            preview = preview_students_from_worksheet(worksheet, active_year)
     except Exception as exc:
         if default_storage.exists(path):
             default_storage.delete(path)
@@ -7318,9 +7326,170 @@ def bulk_upload_students(request):
     request.session['bulk_student_pending'] = {
         'token': token, 'path': path, 'name': excel_file.name,
         'size': excel_file.size, 'created_at': timezone.now().isoformat(),
+        'sheet_name': worksheet.title,
+        'total_rows': preview.total_rows,
+        'valid_rows': preview.valid_rows,
+        'invalid_rows': preview.invalid_rows,
     }
     context.update({'preview': preview, 'pending_upload': request.session['bulk_student_pending']})
     return render(request, 'admin_panel/bulk_upload_students.html', context)
+
+
+_BULK_STUDENT_COUNT_FIELDS = (
+    'imported', 'enrolled', 'fee_ready', 'skipped', 'password_reset_required',
+    'parents_linked', 'parent_accounts_created', 'student_accounts_created',
+    'student_logins_ready', 'parent_logins_ready', 'credential_emails_queued',
+    'messages_queued', 'scanned_rows',
+)
+_BULK_STUDENT_LIST_FIELDS = (
+    'errors', 'student_ids', 'parent_ids', 'credential_email_ids', 'message_ids',
+)
+
+
+def _empty_bulk_student_result():
+    result = {field: 0 for field in _BULK_STUDENT_COUNT_FIELDS}
+    result.update({field: [] for field in _BULK_STUDENT_LIST_FIELDS})
+    return result
+
+
+def _merge_bulk_student_result(aggregate, chunk):
+    for field in _BULK_STUDENT_COUNT_FIELDS:
+        aggregate[field] = aggregate.get(field, 0) + getattr(chunk, field, 0)
+    for field in _BULK_STUDENT_LIST_FIELDS:
+        existing = aggregate.setdefault(field, [])
+        for value in getattr(chunk, field, []):
+            if value not in existing:
+                existing.append(value)
+        if field == 'errors':
+            del existing[50:]
+
+
+@login_required(login_url='login_admin')
+@permission_required('admin_panel.add_admission', raise_exception=True)
+@require_POST
+def bulk_upload_students_progress(request):
+    """Process a validated workbook in resumable chunks and report committed progress."""
+    import time
+
+    operation = request.POST.get('operation', 'start')
+    token = request.POST.get('upload_token', '')
+    pending = request.session.get('bulk_student_pending') or {}
+    if not token or token != pending.get('token') or not pending.get('path'):
+        return JsonResponse({'error': 'This upload preview expired. Validate the file again.'}, status=409)
+    if pending.get('invalid_rows') or not pending.get('valid_rows'):
+        return JsonResponse({'error': 'Only a fully validated file can be imported.'}, status=400)
+
+    if operation == 'start':
+        existing_state = request.session.get('bulk_student_progress') or {}
+        if existing_state.get('token') == token:
+            elapsed = max(0.0, time.time() - existing_state.get('started_at', time.time()))
+            processed = existing_state.get('processed_rows', 0)
+            total = existing_state.get('total_rows', pending.get('total_rows', 0))
+            remaining = max(0, total - processed)
+            eta = (elapsed / processed) * remaining if processed else None
+            return JsonResponse({
+                'done': False,
+                'cursor': existing_state.get('next_row', 2),
+                'percent': min(99, round((processed / total) * 100)) if total else 0,
+                'processed_rows': processed,
+                'total_rows': total,
+                'elapsed_seconds': round(elapsed, 1),
+                'eta_seconds': round(eta, 1) if eta is not None else None,
+            })
+        state = {
+            'token': token,
+            'next_row': 2,
+            'total_rows': pending.get('total_rows', 0),
+            'processed_rows': 0,
+            'started_at': time.time(),
+            'result': _empty_bulk_student_result(),
+        }
+        request.session['bulk_student_progress'] = state
+        request.session.modified = True
+        return JsonResponse({
+            'done': False, 'cursor': 2, 'percent': 0,
+            'processed_rows': 0, 'total_rows': state['total_rows'],
+            'elapsed_seconds': 0, 'eta_seconds': None,
+        })
+
+    state = request.session.get('bulk_student_progress') or {}
+    if state.get('token') != token:
+        return JsonResponse({'error': 'Import state expired. Start the confirmed import again.'}, status=409)
+    try:
+        requested_cursor = int(request.POST.get('cursor') or 0)
+    except (TypeError, ValueError):
+        return JsonResponse({'error': 'The import cursor is invalid.'}, status=400)
+    if requested_cursor != state.get('next_row'):
+        return JsonResponse({
+            'error': 'A stale import request was rejected.',
+            'cursor': state.get('next_row'),
+        }, status=409)
+
+    active_year = AcademicYear.objects.filter(is_active=True).first()
+    if not active_year:
+        return JsonResponse({'error': 'No active academic year is configured.'}, status=400)
+
+    workbook = None
+    try:
+        with default_storage.open(pending['path'], 'rb') as stored_file:
+            workbook = openpyxl.load_workbook(stored_file, read_only=True, data_only=True)
+            from .bulk_student_import import (
+                import_students_from_worksheet,
+                select_student_worksheet,
+            )
+            worksheet = select_student_worksheet(workbook)
+            chunk = import_students_from_worksheet(
+                worksheet,
+                active_year,
+                start_row=state['next_row'],
+                max_rows=getattr(settings, 'BULK_STUDENT_IMPORT_CHUNK_ROWS', 25),
+                dispatch_emails=False,
+            )
+    except Exception as exc:
+        return JsonResponse({'error': f'Import could not continue: {exc}'}, status=400)
+    finally:
+        if workbook is not None:
+            workbook.close()
+
+    _merge_bulk_student_result(state['result'], chunk)
+    state['next_row'] = chunk.last_row_number + 1
+    state['processed_rows'] = state['result']['imported'] + state['result']['skipped']
+    elapsed = max(0.01, time.time() - state['started_at'])
+    total = state['total_rows']
+    processed = min(state['processed_rows'], total)
+    remaining = max(0, total - processed)
+    eta = (elapsed / processed) * remaining if processed else None
+    percent = min(99, round((processed / total) * 100)) if total else 99
+
+    if chunk.complete:
+        from edupilot_core.email_delivery import kick_email_dispatch
+
+        if state['result'].get('credential_emails_queued'):
+            kick_email_dispatch()
+        final_result = dict(state['result'])
+        final_result.update({
+            'processing_seconds': round(elapsed, 2),
+            'completed_at': timezone.now().isoformat(),
+        })
+        request.session['bulk_student_last_result'] = final_result
+        request.session.pop('bulk_student_progress', None)
+        _delete_pending_bulk_upload(request)
+        request.session.modified = True
+        return JsonResponse({
+            'done': True, 'percent': 100,
+            'processed_rows': processed, 'total_rows': total,
+            'elapsed_seconds': round(elapsed, 1), 'eta_seconds': 0,
+            'redirect_url': reverse('bulk_upload_students'),
+        })
+
+    request.session['bulk_student_progress'] = state
+    request.session.modified = True
+    return JsonResponse({
+        'done': False, 'cursor': state['next_row'], 'percent': percent,
+        'processed_rows': processed, 'total_rows': total,
+        'elapsed_seconds': round(elapsed, 1),
+        'eta_seconds': round(eta, 1) if eta is not None else None,
+    })
 
 
 def _delete_pending_bulk_upload(request):
@@ -7450,6 +7619,47 @@ def bulk_upload_students_template(request):
 
 @permission_required('teacher_dashboard.add_teacher', raise_exception=True)
 def bulk_upload_teachers(request):
+    if request.method == 'POST':
+        excel_file = request.FILES.get('excel_file')
+        if not excel_file:
+            messages.error(request, 'Choose an Excel file before uploading.')
+            return render(request, 'admin_panel/bulk_upload_teachers.html')
+        if not excel_file.name.lower().endswith('.xlsx'):
+            messages.error(request, 'Only .xlsx Excel files are supported.')
+            return render(request, 'admin_panel/bulk_upload_teachers.html')
+        if excel_file.size > getattr(settings, 'BULK_UPLOAD_MAX_BYTES', 10 * 1024 * 1024):
+            messages.error(request, 'The Excel file is larger than the allowed 10 MB limit.')
+            return render(request, 'admin_panel/bulk_upload_teachers.html')
+
+        workbook = None
+        try:
+            workbook = openpyxl.load_workbook(excel_file, read_only=True, data_only=True)
+            from .bulk_teacher_import import (
+                import_teachers_from_worksheet,
+                select_teacher_worksheet,
+            )
+
+            worksheet = select_teacher_worksheet(workbook)
+            result = import_teachers_from_worksheet(worksheet)
+        except Exception as exc:
+            messages.error(request, f'Could not import this Excel file: {exc}')
+            return render(request, 'admin_panel/bulk_upload_teachers.html')
+        finally:
+            if workbook is not None:
+                workbook.close()
+
+        if result.imported:
+            messages.success(request, f'{result.imported} teachers were imported successfully.')
+        if result.skipped:
+            messages.warning(request, f'{result.skipped} rows were skipped. Review the row messages below.')
+        for warning in result.warnings[:20]:
+            messages.warning(request, warning)
+        for error in result.errors[:50]:
+            messages.error(request, error)
+        if result.imported:
+            return redirect('teacher_list')
+        return render(request, 'admin_panel/bulk_upload_teachers.html')
+
     if request.method == 'POST' and request.FILES.get('excel_file'):
         excel_file = request.FILES['excel_file']
 

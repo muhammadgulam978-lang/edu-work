@@ -227,6 +227,7 @@ urlpatterns = [
     path('bulk-upload-students/', views.bulk_upload_students, name='bulk_upload_students'),
     path('bulk-upload-students/template/', views.bulk_upload_students_template, name='bulk_upload_students_template'),
     path('bulk-upload-students/activity/', views.bulk_upload_students_activity, name='bulk_upload_students_activity'),
+    path('bulk-upload-students/progress/', views.bulk_upload_students_progress, name='bulk_upload_students_progress'),
     ## Teachers  
     path('bulk-upload-teachers/', views.bulk_upload_teachers, name='bulk_upload_teachers'),
     

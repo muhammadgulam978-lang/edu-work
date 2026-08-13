@@ -62,6 +62,7 @@ class BulkStudentUploadViewTests(TestCase):
             'bulk_upload_students',
             'bulk_upload_students_template',
             'bulk_upload_students_activity',
+            'bulk_upload_students_progress',
         ):
             response = anonymous.get(reverse(route_name))
             self.assertEqual(response.status_code, 302)
@@ -111,6 +112,59 @@ class BulkStudentUploadViewTests(TestCase):
         activity = self.client.get(reverse('bulk_upload_students_activity')).json()
         self.assertEqual(activity['result']['login_ready'], 2)
         self.assertEqual(activity['result']['total_rows'], 1)
+
+    def test_chunked_progress_reports_committed_rows_and_finishes(self):
+        preview = self.client.post(
+            reverse('bulk_upload_students'),
+            {'action': 'preview', 'excel_file': self.upload_file('STU-PROGRESS-1')},
+        )
+        self.assertEqual(preview.status_code, 200)
+        token = self.client.session['bulk_student_pending']['token']
+
+        start = self.client.post(reverse('bulk_upload_students_progress'), {
+            'operation': 'start', 'upload_token': token,
+        })
+        self.assertEqual(start.status_code, 200)
+        self.assertEqual(start.json()['processed_rows'], 0)
+
+        process = self.client.post(reverse('bulk_upload_students_progress'), {
+            'operation': 'process', 'upload_token': token,
+            'cursor': start.json()['cursor'],
+        })
+        payload = process.json()
+        self.assertEqual(process.status_code, 200)
+        self.assertTrue(payload['done'])
+        self.assertEqual(payload['percent'], 100)
+        self.assertEqual(payload['processed_rows'], 1)
+        self.assertTrue(Student.objects.filter(student_id='STU-PROGRESS-1').exists())
+
+    def test_progress_start_resumes_existing_import_state(self):
+        session = self.client.session
+        session['bulk_student_pending'] = {
+            'token': 'resume-token',
+            'path': 'bulk_upload_previews/user_1/resume.xlsx',
+            'total_rows': 10,
+            'valid_rows': 10,
+            'invalid_rows': 0,
+        }
+        session['bulk_student_progress'] = {
+            'token': 'resume-token',
+            'next_row': 7,
+            'total_rows': 10,
+            'processed_rows': 5,
+            'started_at': 1,
+            'result': {},
+        }
+        session.save()
+
+        response = self.client.post(
+            reverse('bulk_upload_students_progress'),
+            {'operation': 'start', 'upload_token': 'resume-token'},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['cursor'], 7)
+        self.assertEqual(response.json()['processed_rows'], 5)
 
     def test_admission_student_name_links_to_insight_profile(self):
         student = Student.objects.create(

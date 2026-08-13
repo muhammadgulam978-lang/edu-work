@@ -7,10 +7,8 @@
   const output = root.querySelector('[data-file-output]');
   const overlay = document.querySelector('[data-progress-overlay]');
   const closeButton = overlay && overlay.querySelector('[data-progress-close]');
-  let progressTimer = null;
   let elapsedTimer = null;
   let startedAt = 0;
-  let estimatedSeconds = 5;
   let currentProgress = 0;
   let requestFailed = false;
 
@@ -84,13 +82,14 @@
           <span><b>${escapeHtml(parent.name)}</b><small>${escapeHtml(parent.email)} - ${parent.children} linked child${parent.children === 1 ? '' : 'ren'}</small></span>
         </div>`).join('') : '<p class="bulk-empty">No parents linked yet.</p>';
     } catch (error) {
-      // Retain server-rendered values if live polling is unavailable.
+      // Keep server-rendered values when live polling is unavailable.
     }
   }
 
   function formatDuration(seconds) {
-    if (!Number.isFinite(seconds) || seconds < 1) return '< 1s';
-    const rounded = Math.ceil(seconds);
+    if (seconds === null || seconds === undefined || !Number.isFinite(Number(seconds))) return 'Calculating';
+    if (Number(seconds) < 1) return '< 1s';
+    const rounded = Math.ceil(Number(seconds));
     if (rounded < 60) return `${rounded}s`;
     const minutes = Math.floor(rounded / 60);
     const remaining = rounded % 60;
@@ -106,64 +105,52 @@
     if (copy && copy.stage) overlay.querySelector('[data-progress-stage]').textContent = copy.stage;
     if (copy && copy.title) overlay.querySelector('[data-progress-title]').textContent = copy.title;
     if (copy && copy.detail) overlay.querySelector('[data-progress-detail]').textContent = copy.detail;
+    if (copy && Object.prototype.hasOwnProperty.call(copy, 'elapsed')) {
+      overlay.querySelector('[data-progress-elapsed]').textContent = formatDuration(copy.elapsed);
+    }
+    if (copy && Object.prototype.hasOwnProperty.call(copy, 'remaining')) {
+      overlay.querySelector('[data-progress-remaining]').textContent = copy.remaining === 0 ? 'Complete' : formatDuration(copy.remaining);
+    }
   }
 
-  function updateTimes() {
+  function updateElapsed() {
     if (!overlay || !startedAt) return;
-    const elapsed = (Date.now() - startedAt) / 1000;
-    overlay.querySelector('[data-progress-elapsed]').textContent = formatDuration(elapsed);
-    overlay.querySelector('[data-progress-remaining]').textContent = currentProgress >= 100 ? 'Complete' : formatDuration(Math.max(0, estimatedSeconds - elapsed));
+    overlay.querySelector('[data-progress-elapsed]').textContent = formatDuration((Date.now() - startedAt) / 1000);
   }
 
-  function stopTimers() {
-    window.clearInterval(progressTimer);
+  function stopTimer() {
     window.clearInterval(elapsedTimer);
-    progressTimer = null;
     elapsedTimer = null;
-  }
-
-  function beginProcessing(mode) {
-    window.clearInterval(progressTimer);
-    setProgress(Math.max(currentProgress, mode === 'validate' ? 38 : 12), {
-      stage: mode === 'validate' ? 'Checking spreadsheet' : 'Creating live records',
-      title: mode === 'validate' ? 'Validating student and parent data' : 'Importing students and portal accounts',
-      detail: mode === 'validate'
-        ? 'Checking columns, duplicates, class placement and account readiness.'
-        : 'Creating students, parents, login accounts, fee links and delivery queues.',
-    });
-    progressTimer = window.setInterval(() => {
-      const elapsed = (Date.now() - startedAt) / 1000;
-      const target = 38 + (Math.min(0.96, elapsed / Math.max(estimatedSeconds, 1)) * 56);
-      if (currentProgress < 94) setProgress(Math.min(94, Math.max(currentProgress + 1, target)));
-    }, 450);
   }
 
   function showProgress(form) {
     if (!overlay) return;
     const mode = form.dataset.progressMode || 'validate';
     const rows = Number(form.dataset.totalRows || 0);
-    const file = input && input.files[0];
-    const megabytes = file ? file.size / 1048576 : 0;
-    estimatedSeconds = mode === 'import' ? Math.max(5, 3 + (rows * 0.22)) : Math.max(4, 2.5 + (megabytes * 1.7));
     startedAt = Date.now();
     currentProgress = 0;
     requestFailed = false;
     overlay.hidden = false;
     document.body.classList.add('bulk-progress-open');
     closeButton.hidden = true;
-    setProgress(2, {
-      stage: mode === 'validate' ? 'Uploading spreadsheet' : 'Starting import',
+    setProgress(0, {
+      stage: mode === 'validate' ? 'Uploading spreadsheet' : 'Starting validated import',
       title: mode === 'validate' ? 'Preparing student data' : `Importing ${rows} validated row${rows === 1 ? '' : 's'}`,
-      detail: 'Keep this page open. Progress reaches 100% only after EduPilot confirms completion.',
+      detail: 'Keep this page open. Progress is confirmed from the server.',
+      elapsed: 0,
+      remaining: null,
     });
-    elapsedTimer = window.setInterval(updateTimes, 250);
-    updateTimes();
+    elapsedTimer = window.setInterval(updateElapsed, 250);
   }
 
   function showFailure(message) {
     requestFailed = true;
-    stopTimers();
-    setProgress(currentProgress, { stage: 'Import interrupted', title: 'EduPilot could not complete this request', detail: message });
+    stopTimer();
+    setProgress(currentProgress, {
+      stage: 'Import interrupted',
+      title: 'EduPilot could not complete this request',
+      detail: message,
+    });
     overlay.querySelector('[data-progress-remaining]').textContent = 'Stopped';
     closeButton.hidden = false;
   }
@@ -173,54 +160,110 @@
     return document.cookie.split(';').map((value) => value.trim()).find((value) => value.startsWith(prefix))?.slice(prefix.length) || '';
   }
 
-  function submitWithProgress(form, csrfToken) {
+  function responseMessage(request) {
+    try {
+      const payload = JSON.parse(request.responseText);
+      if (payload.error) return payload.error;
+    } catch (error) {
+      // The validation endpoint returns HTML; use a concise status fallback.
+    }
+    return `The server returned status ${request.status}. Completion was not confirmed.`;
+  }
+
+  function submitValidation(form, csrfToken) {
     const button = form.querySelector('[type="submit"]');
-    if (button && button.disabled) return;
-    const mode = form.dataset.progressMode || 'validate';
     showProgress(form);
     if (button) button.disabled = true;
-
     const request = new XMLHttpRequest();
-    // A hidden field named "action" shadows HTMLFormElement.action, so read the
-    // attribute directly to avoid posting to "[object HTMLInputElement]".
     const requestUrl = form.getAttribute('action') || window.location.pathname;
     request.open((form.method || 'POST').toUpperCase(), requestUrl, true);
+    request.timeout = 10 * 60 * 1000;
     request.withCredentials = true;
     request.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
     request.setRequestHeader('X-CSRFToken', csrfToken);
     request.upload.addEventListener('progress', (event) => {
-      if (!event.lengthComputable || mode !== 'validate') return;
-      setProgress(3 + ((event.loaded / event.total) * 32), { stage: 'Uploading spreadsheet', title: `Uploading ${input.files[0].name}` });
+      if (!event.lengthComputable) return;
+      setProgress((event.loaded / event.total) * 35, {
+        stage: 'Uploading spreadsheet',
+        title: `Uploading ${input.files[0].name}`,
+        detail: `${Math.round(event.loaded / 1024)} KB of ${Math.round(event.total / 1024)} KB uploaded.`,
+      });
     });
-    request.upload.addEventListener('load', () => beginProcessing(mode));
+    request.upload.addEventListener('load', () => setProgress(35, {
+      stage: 'Validating on server',
+      title: 'Checking student and parent data',
+      detail: 'Checking headers, duplicate values, placement, credentials and fee readiness.',
+    }));
     request.addEventListener('load', () => {
       if (request.status >= 200 && request.status < 400) {
-        stopTimers();
+        stopTimer();
         setProgress(100, {
-          stage: 'Completed',
-          title: mode === 'validate' ? 'Validation report is ready' : 'Student import completed',
-          detail: mode === 'validate' ? 'Opening the validation preview.' : 'Opening the complete import and delivery report.',
+          stage: 'Completed', title: 'Validation report is ready',
+          detail: 'Opening the validation preview.', remaining: 0,
         });
-        updateTimes();
         window.setTimeout(() => {
           document.open();
           document.write(request.responseText);
           document.close();
-        }, 450);
+        }, 250);
       } else {
-        showFailure(`The server returned status ${request.status}. Completion was not confirmed.`);
+        showFailure(responseMessage(request));
         if (button) button.disabled = false;
       }
     });
     request.addEventListener('error', () => {
-      showFailure('The server could not be reached. The import was not confirmed.');
+      showFailure('The server could not be reached. No completion was confirmed.');
       if (button) button.disabled = false;
     });
     request.addEventListener('timeout', () => {
-      showFailure('The request timed out before completion was confirmed.');
+      showFailure('The request timed out before validation was confirmed.');
       if (button) button.disabled = false;
     });
     request.send(new FormData(form));
+  }
+
+  async function postProgress(payload, csrfToken) {
+    const body = new URLSearchParams(payload);
+    const response = await fetch(root.dataset.importProgressUrl, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {
+        'X-CSRFToken': csrfToken,
+        'X-Requested-With': 'XMLHttpRequest',
+        'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+      },
+      body,
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || `The server returned status ${response.status}.`);
+    return data;
+  }
+
+  async function submitChunkedImport(form, csrfToken) {
+    const button = form.querySelector('[type="submit"]');
+    const token = form.querySelector('[name="upload_token"]').value;
+    showProgress(form);
+    if (button) button.disabled = true;
+    try {
+      let state = await postProgress({ operation: 'start', upload_token: token }, csrfToken);
+      while (!state.done) {
+        state = await postProgress({ operation: 'process', upload_token: token, cursor: state.cursor }, csrfToken);
+        setProgress(state.percent, {
+          stage: state.done ? 'Completed' : 'Creating live records',
+          title: state.done ? 'Student import completed' : `Processed ${state.processed_rows} of ${state.total_rows} rows`,
+          detail: state.done
+            ? 'Opening the complete import and delivery report.'
+            : 'Committed students, parents, portal accounts, fee links and delivery queues are included.',
+          elapsed: state.elapsed_seconds,
+          remaining: state.eta_seconds,
+        });
+      }
+      stopTimer();
+      window.setTimeout(() => window.location.assign(state.redirect_url), 250);
+    } catch (error) {
+      showFailure(error.message || 'The import stopped before completion was confirmed.');
+      if (button) button.disabled = false;
+    }
   }
 
   root.querySelectorAll('[data-progress-form]').forEach((form) => form.addEventListener('submit', (event) => {
@@ -228,16 +271,19 @@
       event.preventDefault();
       return;
     }
-
     event.preventDefault();
     const csrfInput = form.querySelector('input[name="csrfmiddlewaretoken"]');
     const csrfToken = csrfInput?.value || getCookie('csrftoken');
     if (!csrfToken) {
       showProgress(form);
-      showFailure('Your secure session token is unavailable. Reload this page and try again. No data was submitted.');
+      showFailure('Your secure session token is unavailable. Reload this page and try again.');
       return;
     }
-    submitWithProgress(form, csrfToken);
+    if ((form.dataset.progressMode || 'validate') === 'import') {
+      submitChunkedImport(form, csrfToken);
+    } else {
+      submitValidation(form, csrfToken);
+    }
   }));
 
   if (closeButton) closeButton.addEventListener('click', () => {

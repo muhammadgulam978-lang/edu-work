@@ -44,6 +44,9 @@ class BulkStudentImportResult:
     parent_ids: list[int] = field(default_factory=list)
     credential_email_ids: list[int] = field(default_factory=list)
     message_ids: list[int] = field(default_factory=list)
+    scanned_rows: int = 0
+    last_row_number: int = 1
+    complete: bool = True
 
 
 @dataclass
@@ -101,6 +104,8 @@ ALIASES = {
 def _text(value):
     if value is None:
         return ''
+    if isinstance(value, float) and value.is_integer():
+        value = int(value)
     value = str(value).strip()
     return '' if value.lower() in {'none', 'nan'} else value
 
@@ -153,9 +158,30 @@ def _generated_password():
 
 def _worksheet_reader(worksheet):
     header_row = next(worksheet.iter_rows(min_row=1, max_row=1, values_only=True), ())
-    headers = {_header(value): index for index, value in enumerate(header_row) if _text(value)}
+    alias_to_field = {
+        alias: field_name for field_name, aliases in ALIASES.items() for alias in aliases
+    }
+    headers = {}
+    mapped_fields = {}
+    duplicate_headers = []
+    for index, value in enumerate(header_row):
+        normalized = _header(value)
+        if not normalized:
+            continue
+        field_name = alias_to_field.get(normalized)
+        if normalized in headers:
+            duplicate_headers.append(_text(value))
+            continue
+        headers[normalized] = index
+        if field_name:
+            mapped_fields.setdefault(field_name, index)
     if not headers:
         raise ValueError('Excel first row must contain column headers.')
+    if duplicate_headers:
+        names = ', '.join(sorted(set(duplicate_headers)))
+        raise ValueError(f'Duplicate Excel headers were found: {names}. Keep each header once.')
+    if not mapped_fields:
+        raise ValueError('No supported student columns were found in the first row.')
 
     def cell(row, field):
         for alias in ALIASES[field]:
@@ -164,13 +190,32 @@ def _worksheet_reader(worksheet):
                 return _text(row[index])
         return ''
 
-    return headers, cell
+    def has_mapped_data(row):
+        return any(index < len(row) and _text(row[index]) for index in mapped_fields.values())
+
+    return headers, cell, has_mapped_data
+
+
+def select_student_worksheet(workbook):
+    """Select the worksheet containing the strongest supported student header set."""
+    alias_set = {alias for aliases in ALIASES.values() for alias in aliases}
+    candidates = []
+    for position, worksheet in enumerate(workbook.worksheets):
+        header_row = next(worksheet.iter_rows(min_row=1, max_row=1, values_only=True), ())
+        score = sum(1 for value in header_row if _header(value) in alias_set)
+        if score:
+            candidates.append((score, -position, worksheet))
+    if not candidates:
+        raise ValueError('No worksheet with supported student column headers was found.')
+    worksheet = max(candidates, key=lambda item: (item[0], item[1]))[2]
+    _worksheet_reader(worksheet)
+    return worksheet
 
 
 def preview_students_from_worksheet(worksheet, active_year, sample_limit=12):
     """Validate a worksheet without creating users or school records."""
     result = BulkStudentPreviewResult()
-    _headers, cell = _worksheet_reader(worksheet)
+    _headers, cell, has_mapped_data = _worksheet_reader(worksheet)
     existing_usernames = {v.lower() for v in User.objects.values_list('username', flat=True)}
     existing_student_ids = {v.lower() for v in Student.objects.values_list('student_id', flat=True) if v}
     existing_emails = {v.lower() for v in Student.objects.values_list('email', flat=True) if v}
@@ -193,7 +238,7 @@ def preview_students_from_worksheet(worksheet, active_year, sample_limit=12):
     fee_plan_names = {obj.name.lower() for obj in fee_plans}
 
     for row_number, row in enumerate(worksheet.iter_rows(min_row=2, values_only=True), start=2):
-        if not any(value not in (None, '') for value in row):
+        if not has_mapped_data(row):
             continue
         result.total_rows += 1
         errors = []
@@ -271,12 +316,13 @@ def preview_students_from_worksheet(worksheet, active_year, sample_limit=12):
             result.valid_rows += 1
             status = 'warning' if errors else 'valid'
 
-        if student_id:
-            seen_student_ids.add(student_id.lower())
-        if login_id:
-            seen_usernames.add(login_id.lower())
-        if email:
-            seen_emails.add(email.lower())
+        if not blocking_errors:
+            if student_id:
+                seen_student_ids.add(student_id.lower())
+            if login_id:
+                seen_usernames.add(login_id.lower())
+            if email:
+                seen_emails.add(email.lower())
         if len(result.rows) < sample_limit:
             result.rows.append({
                 'row_number': row_number,
@@ -291,10 +337,12 @@ def preview_students_from_worksheet(worksheet, active_year, sample_limit=12):
     return result
 
 
-def import_students_from_worksheet(worksheet, active_year):
+def import_students_from_worksheet(
+    worksheet, active_year, *, start_row=2, max_rows=None, dispatch_emails=True
+):
     """Import a streaming worksheet without retaining its rows in memory."""
     result = BulkStudentImportResult()
-    _headers, cell = _worksheet_reader(worksheet)
+    _headers, cell, has_mapped_data = _worksheet_reader(worksheet)
 
     student_group, _ = Group.objects.get_or_create(name='Student')
     existing_usernames = {v.lower() for v in User.objects.values_list('username', flat=True)}
@@ -325,8 +373,16 @@ def import_students_from_worksheet(worksheet, active_year):
     }
     today = date.today()
 
-    for row_number, row in enumerate(worksheet.iter_rows(min_row=2, values_only=True), start=2):
-        if not any(value not in (None, '') for value in row):
+    max_row = worksheet.max_row or 1
+    end_row = max_row if max_rows is None else min(max_row, start_row + max_rows - 1)
+    result.last_row_number = max(1, end_row)
+    result.complete = end_row >= max_row
+
+    for row_number, row in enumerate(
+        worksheet.iter_rows(min_row=start_row, max_row=end_row, values_only=True), start=start_row
+    ):
+        result.scanned_rows += 1
+        if not has_mapped_data(row):
             continue
         try:
             student_id = cell(row, 'student_id') or f"STU-{uuid.uuid4().hex[:12].upper()}"
@@ -371,6 +427,8 @@ def import_students_from_worksheet(worksheet, active_year):
             }.get(raw_status, 'approved')
 
             fee_plan = fee_plan_map.get(cell(row, 'fee_plan').lower()) if cell(row, 'fee_plan') else None
+            if cell(row, 'fee_plan') and not fee_plan:
+                raise ValueError(f"Fee plan '{cell(row, 'fee_plan')}' is not configured")
             if not fee_plan and class_obj:
                 matching = [p for p in fee_plans if p.class_name.lower() == class_obj.class_name.lower()]
                 fee_plan = next((p for p in matching if p.session.lower() == academic_year.year.lower()), None)
@@ -577,6 +635,6 @@ def import_students_from_worksheet(worksheet, active_year):
             if len(result.errors) < 50:
                 result.errors.append(f'Row {row_number}: {exc}')
 
-    if result.credential_emails_queued:
+    if dispatch_emails and result.credential_emails_queued:
         kick_email_dispatch()
     return result

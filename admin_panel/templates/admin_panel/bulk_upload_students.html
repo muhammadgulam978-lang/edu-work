@@ -9,7 +9,7 @@
 {% endblock %}
 
 {% block content %}
-<main class="bulk-student-page" data-activity-url="{% url 'bulk_upload_students_activity' %}">
+<main class="bulk-student-page" data-activity-url="{% url 'bulk_upload_students_activity' %}" data-import-progress-url="{% url 'bulk_upload_students_progress' %}">
   <section class="bulk-hero">
     <div>
       <p class="bulk-kicker">Student Gateway</p>
@@ -121,8 +121,8 @@
     <strong class="bulk-progress-percent" data-progress-percent>0%</strong>
     <div class="bulk-progress-track"><span data-progress-bar></span></div>
     <div class="bulk-progress-times"><span><i class="far fa-clock"></i> Elapsed: <b data-progress-elapsed>0s</b></span><span>Estimated remaining: <b data-progress-remaining>Calculating</b></span></div>
-    <p class="bulk-progress-estimate">Processing time is an estimate based on file size and validated row count. Completion is confirmed only after the server responds.</p>
+    <p class="bulk-progress-estimate">Upload progress uses transferred bytes. Import progress, elapsed time and remaining time use rows committed by the server.</p>
   </div>
 </div>
-<script src="{% static 'admin_panel/js/bulk-student-upload.js' %}?v=bulk-student-action-url-1"></script>
+<script src="{% static 'admin_panel/js/bulk-student-upload.js' %}?v=bulk-student-real-progress-1"></script>
 {% endblock %}
