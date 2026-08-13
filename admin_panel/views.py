@@ -9087,3 +9087,259 @@ def announcement_center(request):
             return redirect('announcement_center')
         context['form'] = form
     return render(request, 'admin_panel/announcement_center.html', context)
+
+
+# -----------------------------------------------------------------------------
+# Canonical student directory
+# -----------------------------------------------------------------------------
+def _canonical_student_queryset():
+    """One optimized source for every Student Gateway directory screen."""
+    from student_profile.models import Student as CanonicalStudent
+
+    return (
+        CanonicalStudent.objects
+        .select_related('user', 'academic_year', 'class_fk', 'section')
+        .prefetch_related('guardian_links__parent')
+    )
+
+
+def _student_class_teacher(student):
+    from .models import ClassTeacher
+
+    if not student.class_fk_id or not student.section_id:
+        return None
+    assignment = (
+        ClassTeacher.objects.select_related('teacher')
+        .filter(
+            class_fk_id=student.class_fk_id,
+            section_id=student.section_id,
+            academic_year_id=student.academic_year_id,
+        )
+        .first()
+    )
+    return assignment.teacher if assignment else None
+
+
+@login_required
+@user_passes_test(is_admin)
+def student_directory(request):
+    from django.core.paginator import Paginator
+
+    students = _canonical_student_queryset().order_by('name', 'student_id')
+    all_students = students
+    query = request.GET.get('q', '').strip()
+    class_id = request.GET.get('class', '').strip()
+    section_id = request.GET.get('section', '').strip()
+    academic_year_id = request.GET.get('academic_year', '').strip()
+    gender = request.GET.get('gender', '').strip()
+    account = request.GET.get('account', '').strip()
+
+    if query:
+        students = students.filter(
+            Q(name__icontains=query)
+            | Q(student_id__icontains=query)
+            | Q(roll_no__icontains=query)
+            | Q(email__icontains=query)
+            | Q(phone__icontains=query)
+            | Q(father_name__icontains=query)
+            | Q(mother_name__icontains=query)
+            | Q(user__username__icontains=query)
+            | Q(class_fk__class_name__icontains=query)
+            | Q(section__section_name__icontains=query)
+            | Q(guardian_links__parent__full_name__icontains=query)
+            | Q(guardian_links__parent__email__icontains=query)
+        )
+    if class_id.isdigit():
+        students = students.filter(class_fk_id=class_id)
+    if section_id.isdigit():
+        students = students.filter(section_id=section_id)
+    if academic_year_id.isdigit():
+        students = students.filter(academic_year_id=academic_year_id)
+    if gender in {'Male', 'Female', 'Other'}:
+        students = students.filter(gender=gender)
+    if account == 'active':
+        students = students.filter(user__is_active=True)
+    elif account == 'inactive':
+        students = students.filter(user__is_active=False)
+    elif account == 'missing':
+        students = students.filter(user__isnull=True)
+
+    students = students.distinct()
+    paginator = Paginator(students, 12)
+    page_obj = paginator.get_page(request.GET.get('page'))
+    context = {
+        'page_obj': page_obj,
+        'students': page_obj.object_list,
+        'total_students': all_students.count(),
+        'active_accounts': all_students.filter(user__is_active=True).count(),
+        'missing_accounts': all_students.filter(user__isnull=True).count(),
+        'unplaced_students': all_students.filter(Q(class_fk__isnull=True) | Q(section__isnull=True)).count(),
+        'classes': Class.objects.order_by('class_name'),
+        'sections': Section.objects.select_related('class_fk').order_by('class_fk__class_name', 'section_name'),
+        'academic_years': AcademicYear.objects.order_by('-id'),
+        'filters': {
+            'q': query,
+            'class': class_id,
+            'section': section_id,
+            'academic_year': academic_year_id,
+            'gender': gender,
+            'account': account,
+        },
+    }
+    return render(request, 'admin_panel/student_directory.html', context)
+
+
+@login_required
+@user_passes_test(is_admin)
+def student_directory_detail(request, pk):
+    from edupilot_core.models import FeeVoucher as AutomationFeeVoucher
+
+    student = get_object_or_404(_canonical_student_queryset(), pk=pk)
+    guardians = student.guardian_links.select_related('parent', 'parent__user').all()
+    vouchers = (
+        AutomationFeeVoucher.objects.filter(canonical_student=student)
+        .order_by('-year', '-issue_date')[:8]
+    )
+    workflow = getattr(student, 'admission_workflow', None)
+    context = {
+        'student': student,
+        'guardians': guardians,
+        'class_teacher': _student_class_teacher(student),
+        'vouchers': vouchers,
+        'workflow': workflow,
+    }
+    return render(request, 'admin_panel/student_directory_detail.html', context)
+
+
+@login_required
+@user_passes_test(is_admin)
+def student_directory_update(request, pk):
+    from .forms import StudentDirectoryForm
+
+    student = get_object_or_404(_canonical_student_queryset(), pk=pk)
+    if request.method == 'POST':
+        form = StudentDirectoryForm(request.POST, request.FILES, instance=student)
+        if form.is_valid():
+            with transaction.atomic():
+                student = form.save()
+                username = form.cleaned_data.get('username')
+                account_active = form.cleaned_data.get('account_active', False)
+                user = student.user
+                if username:
+                    if user is None:
+                        user = User(username=username)
+                        user.set_unusable_password()
+                    user.username = username
+                    name_parts = student.name.strip().split(maxsplit=1)
+                    user.first_name = name_parts[0] if name_parts else ''
+                    user.last_name = name_parts[1] if len(name_parts) > 1 else ''
+                    user.email = student.email or ''
+                    user.is_active = account_active
+                    user.save()
+                    user.groups.add(Group.objects.get_or_create(name='Student')[0])
+                    if student.user_id != user.pk:
+                        student.user = user
+                        student.save(update_fields=['user'])
+                elif user:
+                    user.email = student.email or ''
+                    user.is_active = account_active
+                    user.save(update_fields=['email', 'is_active'])
+
+                current_class = student.class_fk.class_name if student.class_fk_id else 'N/A'
+                try:
+                    from edupilot_core.models import Student as LegacyStudent
+                    LegacyStudent.objects.filter(canonical_student=student).update(
+                        full_name=student.name,
+                        admission_number=student.student_id,
+                        student_id=student.student_id,
+                        current_class=current_class,
+                        is_active=bool(user and user.is_active),
+                        admission_date=student.admission_date or timezone.localdate(),
+                    )
+                except Exception:
+                    # Canonical save remains valid even if an optional compatibility row is absent.
+                    pass
+
+                workflow = getattr(student, 'admission_workflow', None)
+                if workflow and user:
+                    workflow.student_username = user.username
+                    workflow.save(update_fields=['student_username', 'updated_at'])
+            messages.success(request, f'{student.name} was updated across the Student Gateway.')
+            return redirect('student_directory_detail', pk=student.pk)
+    else:
+        form = StudentDirectoryForm(instance=student)
+    return render(request, 'admin_panel/student_directory_form.html', {'student': student, 'form': form})
+
+
+@login_required
+@user_passes_test(is_admin)
+def student_directory_reset_password(request, pk):
+    student = get_object_or_404(_canonical_student_queryset(), pk=pk)
+    if request.method != 'POST':
+        return redirect('student_directory_detail', pk=student.pk)
+
+    password = request.POST.get('password', '')
+    confirmation = request.POST.get('password_confirm', '')
+    username = request.POST.get('username', '').strip()
+    if password != confirmation:
+        messages.error(request, 'Password confirmation does not match.')
+        return redirect('student_directory_detail', pk=student.pk)
+    if not username and not student.user_id:
+        messages.error(request, 'Enter a login ID before setting the password.')
+        return redirect('student_directory_detail', pk=student.pk)
+    if username and User.objects.filter(username__iexact=username).exclude(pk=student.user_id).exists():
+        messages.error(request, 'This login ID is already in use.')
+        return redirect('student_directory_detail', pk=student.pk)
+
+    user = student.user or User(username=username)
+    if username:
+        user.username = username
+    try:
+        validate_password(password, user=user)
+    except Exception as exc:
+        for error in getattr(exc, 'messages', [str(exc)]):
+            messages.error(request, error)
+        return redirect('student_directory_detail', pk=student.pk)
+
+    with transaction.atomic():
+        user.email = student.email or ''
+        user.is_active = True
+        user.set_password(password)
+        user.save()
+        user.groups.add(Group.objects.get_or_create(name='Student')[0])
+        if student.user_id != user.pk:
+            student.user = user
+            student.save(update_fields=['user'])
+        workflow = getattr(student, 'admission_workflow', None)
+        if workflow:
+            workflow.student_username = user.username
+            workflow.student_password_hash = user.password
+            workflow.save(update_fields=['student_username', 'student_password_hash', 'updated_at'])
+    messages.success(request, f'Portal password reset for {student.name}.')
+    return redirect('student_directory_detail', pk=student.pk)
+
+
+@login_required
+@user_passes_test(is_admin)
+def student_directory_delete(request, pk):
+    from django.db.models.deletion import ProtectedError
+
+    student = get_object_or_404(_canonical_student_queryset(), pk=pk)
+    if request.method == 'POST':
+        if request.POST.get('confirmation', '').strip() != student.student_id:
+            messages.error(request, 'Student ID confirmation did not match. Nothing was deleted.')
+        else:
+            name = student.name
+            try:
+                student.delete()
+                messages.success(request, f'{name} was deleted.')
+                return redirect('student_directory')
+            except ProtectedError:
+                messages.error(request, 'This student has protected academic records and cannot be deleted. Deactivate the account instead.')
+                return redirect('student_directory_detail', pk=student.pk)
+    context = {
+        'student': student,
+        'guardian_count': student.guardian_links.count(),
+        'voucher_count': student.automation_fee_vouchers.count(),
+    }
+    return render(request, 'admin_panel/student_directory_confirm_delete.html', context)

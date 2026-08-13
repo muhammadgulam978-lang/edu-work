@@ -1069,3 +1069,63 @@ class JobTypeForm(forms.ModelForm):
                 "class": "form-check-input"
             }),
         }
+
+
+# Student Gateway directory editing. New records continue to use the complete
+# Admissions workflow so guardian, placement, finance and access setup stay in sync.
+class StudentDirectoryForm(forms.ModelForm):
+    username = forms.CharField(
+        max_length=150,
+        required=False,
+        help_text='Leave blank only when this student should not have portal access yet.',
+    )
+    account_active = forms.BooleanField(required=False, initial=True)
+
+    class Meta:
+        from student_profile.models import Student
+        model = Student
+        fields = [
+            'photo', 'student_id', 'name', 'father_name', 'mother_name',
+            'academic_year', 'class_fk', 'section', 'roll_no', 'gender',
+            'date_of_birth', 'email', 'phone', 'nationality', 'address',
+            'blood_group', 'medical_notes', 'emergency_contact_name',
+            'emergency_contact_phone', 'admission_date', 'previous_school',
+        ]
+        widgets = {
+            'photo': forms.ClearableFileInput(attrs={'accept': 'image/png,image/jpeg'}),
+            'date_of_birth': forms.DateInput(attrs={'type': 'date'}),
+            'admission_date': forms.DateInput(attrs={'type': 'date'}),
+            'address': forms.Textarea(attrs={'rows': 3}),
+            'medical_notes': forms.Textarea(attrs={'rows': 3}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            if not isinstance(field.widget, forms.CheckboxInput):
+                field.widget.attrs.setdefault('class', 'sd-input')
+        if self.instance and self.instance.pk and self.instance.user_id:
+            self.fields['username'].initial = self.instance.user.username
+            self.fields['account_active'].initial = self.instance.user.is_active
+
+    def clean_username(self):
+        username = (self.cleaned_data.get('username') or '').strip()
+        if not username:
+            return username
+        users = User.objects.filter(username__iexact=username)
+        if self.instance and self.instance.user_id:
+            users = users.exclude(pk=self.instance.user_id)
+        if users.exists():
+            raise forms.ValidationError('This portal login ID is already in use.')
+        return username
+
+    def clean(self):
+        cleaned = super().clean()
+        section = cleaned.get('section')
+        class_fk = cleaned.get('class_fk')
+        academic_year = cleaned.get('academic_year')
+        if section and class_fk and section.class_fk_id != class_fk.pk:
+            self.add_error('section', 'Select a section belonging to the chosen class.')
+        if section and academic_year and section.academic_year_id != academic_year.pk:
+            self.add_error('section', 'Select a section belonging to the chosen academic year.')
+        return cleaned

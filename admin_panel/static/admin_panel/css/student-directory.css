@@ -1,0 +1,93 @@
+.sd-page {
+    --sd-teal: #069b8a;
+    --sd-blue: #267be7;
+    --sd-purple: #7651df;
+    --sd-amber: #d78c05;
+    --sd-red: #dc4b55;
+    --sd-border: #d8e3e7;
+    --sd-muted: #68758d;
+    max-width: 1540px;
+    margin: 0 auto;
+    padding: 26px 22px 48px;
+    color: #0b1d35;
+}
+.sd-page * { box-sizing: border-box; }
+.sd-head, .sd-card, .sd-panel, .sd-filter, .sd-metric {
+    background: #fff;
+    border: 1px solid var(--sd-border);
+    border-radius: 8px;
+}
+.sd-head { display:flex; justify-content:space-between; gap:20px; align-items:center; padding:22px 24px; margin-bottom:18px; }
+.sd-eyebrow { color:var(--sd-teal); font-size:13px; font-weight:600; text-transform:uppercase; margin-bottom:5px; }
+.sd-head h1 { margin:0 0 5px; font-size:32px; line-height:1.15; }
+.sd-head p, .sd-muted { color:var(--sd-muted); margin:0; }
+.sd-actions { display:flex; gap:10px; flex-wrap:wrap; }
+.sd-btn { min-height:40px; display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:8px 16px; border:1px solid var(--sd-teal); border-radius:8px; background:#fff; color:#075f59; text-decoration:none; cursor:pointer; font:inherit; }
+.sd-btn:hover { background:#f1fbf9; color:#054a46; }
+.sd-btn-secondary { border-color:var(--sd-purple); color:#49318f; }
+.sd-btn-danger { border-color:var(--sd-red); color:#a62431; }
+.sd-btn-block { width:100%; }
+.sd-metrics { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin-bottom:18px; }
+.sd-metric { padding:16px; border-left:4px solid var(--sd-blue); }
+.sd-metric:nth-child(2) { border-left-color:var(--sd-teal); }
+.sd-metric:nth-child(3) { border-left-color:var(--sd-amber); }
+.sd-metric:nth-child(4) { border-left-color:var(--sd-purple); }
+.sd-metric strong { display:block; font-size:27px; margin-top:5px; }
+.sd-filter { padding:18px; margin-bottom:20px; }
+.sd-filter-grid { display:grid; grid-template-columns:2fr repeat(5,minmax(130px,1fr)); gap:12px; align-items:end; }
+.sd-field label { display:block; font-size:13px; color:#536078; margin-bottom:6px; }
+.sd-input, .sd-field input, .sd-field select, .sd-field textarea { width:100%; min-height:44px; border:1px solid #dbe3eb; border-radius:8px; background:#fff; padding:9px 12px; color:#0b1d35; font:inherit; }
+.sd-field textarea { min-height:96px; resize:vertical; }
+.sd-filter-actions { display:flex; gap:10px; margin-top:14px; justify-content:flex-end; }
+.sd-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; }
+.sd-card { padding:18px; min-width:0; transition:border-color .18s, box-shadow .18s; }
+.sd-card:hover { border-color:#8ccfc7; box-shadow:0 8px 22px rgba(17,55,74,.08); }
+.sd-card-top { display:flex; gap:14px; align-items:center; }
+.sd-avatar { width:82px; height:82px; flex:0 0 82px; border-radius:50%; object-fit:cover; border:4px solid #e8f7f5; background:#eef7fa; }
+.sd-avatar-lg { width:128px; height:128px; flex-basis:128px; }
+.sd-avatar-fallback { display:flex; align-items:center; justify-content:center; color:var(--sd-teal); font-size:30px; font-weight:700; }
+.sd-card h2, .sd-card h3 { margin:0 0 4px; line-height:1.25; overflow-wrap:anywhere; }
+.sd-id { color:var(--sd-teal); font-weight:600; }
+.sd-card-data { display:grid; grid-template-columns:1fr 1fr; gap:9px; margin:16px 0; }
+.sd-data { border-top:1px solid #edf1f4; padding-top:9px; min-width:0; }
+.sd-data span { display:block; color:var(--sd-muted); font-size:12px; }
+.sd-data strong { display:block; margin-top:3px; overflow-wrap:anywhere; }
+.sd-status { display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border-radius:8px; background:#ecf8f1; color:#13824f; font-size:12px; }
+.sd-status-off { background:#fff3e5; color:#a86500; }
+.sd-empty { grid-column:1/-1; padding:54px 20px; text-align:center; background:#fff; border:1px dashed var(--sd-border); border-radius:8px; color:var(--sd-muted); }
+.sd-pagination { display:flex; justify-content:center; align-items:center; gap:8px; margin-top:22px; }
+.sd-profile-hero { display:flex; gap:22px; align-items:center; }
+.sd-profile-meta { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+.sd-layout { display:grid; grid-template-columns:minmax(0,2fr) minmax(300px,1fr); gap:16px; }
+.sd-panel { padding:20px; margin-bottom:16px; overflow:hidden; }
+.sd-panel h2 { font-size:21px; margin:0 0 16px; padding-bottom:12px; border-bottom:1px solid #e6ecef; }
+.sd-detail-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.sd-detail { border:1px solid #e3eaee; border-radius:8px; padding:12px; min-width:0; }
+.sd-detail span { display:block; color:var(--sd-muted); font-size:12px; margin-bottom:5px; }
+.sd-detail strong { overflow-wrap:anywhere; }
+.sd-guardian { padding:12px 0; border-bottom:1px solid #e7ecef; }
+.sd-guardian:last-child { border-bottom:0; }
+.sd-table-wrap { overflow-x:auto; }
+.sd-table { width:100%; border-collapse:collapse; min-width:620px; }
+.sd-table th, .sd-table td { padding:11px; border-bottom:1px solid #e5ebee; text-align:left; }
+.sd-table th { background:#f5f7fb; font-size:13px; }
+.sd-note { padding:12px; border:1px solid #c8e4df; background:#f6fcfb; border-radius:8px; color:#47647a; }
+.sd-form-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:15px; }
+.sd-form-grid .sd-wide { grid-column:1/-1; }
+.sd-error { color:#b42332; font-size:12px; margin-top:5px; }
+.sd-photo-editor { display:flex; align-items:center; gap:16px; margin-bottom:18px; }
+.sd-danger-zone { border-color:#efbdc2; }
+.sd-danger-zone h2 { color:#a62431; }
+@media (max-width:1180px) {
+    .sd-filter-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
+    .sd-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .sd-layout { grid-template-columns:1fr; }
+}
+@media (max-width:720px) {
+    .sd-page { padding:16px 12px 36px; }
+    .sd-head, .sd-profile-hero { align-items:flex-start; flex-direction:column; }
+    .sd-head h1 { font-size:27px; }
+    .sd-metrics, .sd-filter-grid, .sd-grid, .sd-form-grid, .sd-detail-grid { grid-template-columns:1fr; }
+    .sd-form-grid .sd-wide { grid-column:auto; }
+    .sd-avatar-lg { width:104px; height:104px; flex-basis:104px; }
+}

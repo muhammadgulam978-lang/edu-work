@@ -1,0 +1,15 @@
+{% extends 'admin_panel/bases.html' %}
+{% load static %}
+{% block title %}Delete {{ student.name }}{% endblock %}
+{% block head %}<link rel="stylesheet" href="{% static 'admin_panel/css/student-directory.css' %}?v=1">{% endblock %}
+{% block content %}
+<main class="sd-page">
+  <section class="sd-head"><div><div class="sd-eyebrow">Protected action</div><h1>Delete Student</h1><p>Review the linked data before permanently deleting this canonical profile.</p></div></section>
+  <section class="sd-panel sd-danger-zone" style="max-width:760px;margin:0 auto">
+    <div class="sd-profile-hero">{% if student.photo %}<img class="sd-avatar" src="{{ student.photo.url }}" alt="{{ student.name }}">{% else %}<div class="sd-avatar sd-avatar-fallback">{{ student.name|first|upper }}</div>{% endif %}<div><h2 style="border:0;margin:0;padding:0">{{ student.name }}</h2><p>{{ student.student_id }} · {{ student.class_fk.class_name|default:'Unplaced' }}</p></div></div>
+    <p>This student has <strong>{{ guardian_count }} guardian link(s)</strong> and <strong>{{ voucher_count }} voucher(s)</strong>. Related records may also be removed, while protected records will stop deletion.</p>
+    <div class="sd-note">To confirm, enter the Student ID exactly: <strong>{{ student.student_id }}</strong></div>
+    <form method="post" style="margin-top:16px">{% csrf_token %}<div class="sd-field"><label>Student ID confirmation</label><input name="confirmation" autocomplete="off" required></div><div class="sd-filter-actions"><a class="sd-btn sd-btn-secondary" href="{% url 'student_directory_detail' student.pk %}">Cancel</a><button class="sd-btn sd-btn-danger" type="submit"><i class="fas fa-trash-alt"></i> Permanently Delete</button></div></form>
+  </section>
+</main>
+{% endblock %}

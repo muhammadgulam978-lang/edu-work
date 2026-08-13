@@ -1,0 +1,40 @@
+{% extends 'admin_panel/bases.html' %}
+{% load static %}
+{% block title %}{{ student.name }}{% endblock %}
+{% block head %}<link rel="stylesheet" href="{% static 'admin_panel/css/student-directory.css' %}?v=1">{% endblock %}
+{% block content %}
+<main class="sd-page">
+  <section class="sd-head">
+    <div class="sd-profile-hero">
+      {% if student.photo %}<img class="sd-avatar sd-avatar-lg" src="{{ student.photo.url }}" alt="{{ student.name }}">{% else %}<div class="sd-avatar sd-avatar-lg sd-avatar-fallback">{{ student.name|first|upper }}</div>{% endif %}
+      <div><div class="sd-eyebrow">Complete Student Profile</div><h1>{{ student.name }}</h1><p>{{ student.student_id }} · {{ student.class_fk.class_name|default:'Class pending' }}{% if student.section %} / {{ student.section.section_name }}{% endif %}</p><div class="sd-profile-meta"><span class="sd-status">{{ student.academic_year.year|default:'Year pending' }}</span><span class="sd-status {% if not student.user or not student.user.is_active %}sd-status-off{% endif %}">{% if student.user and student.user.is_active %}Portal active{% elif student.user %}Portal inactive{% else %}No portal login{% endif %}</span></div></div>
+    </div>
+    <div class="sd-actions"><a class="sd-btn sd-btn-secondary" href="{% url 'student_directory' %}"><i class="fas fa-arrow-left"></i> Students</a><a class="sd-btn" href="{% url 'student_directory_update' student.pk %}"><i class="fas fa-pencil-alt"></i> Edit Profile</a></div>
+  </section>
+  <div class="sd-layout">
+    <div>
+      <section class="sd-panel"><h2><i class="fas fa-user"></i> Personal & Health</h2><div class="sd-detail-grid">
+        <div class="sd-detail"><span>Full name</span><strong>{{ student.name }}</strong></div><div class="sd-detail"><span>Date of birth</span><strong>{{ student.date_of_birth|date:'d M Y' }}</strong></div>
+        <div class="sd-detail"><span>Gender</span><strong>{{ student.gender|default:'N/A' }}</strong></div><div class="sd-detail"><span>Nationality</span><strong>{{ student.nationality|default:'N/A' }}</strong></div>
+        <div class="sd-detail"><span>Email</span><strong>{{ student.email|default:'N/A' }}</strong></div><div class="sd-detail"><span>Phone</span><strong>{{ student.phone|default:'N/A' }}</strong></div>
+        <div class="sd-detail"><span>Father</span><strong>{{ student.father_name|default:'N/A' }}</strong></div><div class="sd-detail"><span>Mother</span><strong>{{ student.mother_name|default:'N/A' }}</strong></div>
+        <div class="sd-detail"><span>Blood group</span><strong>{{ student.blood_group|default:'Not specified' }}</strong></div><div class="sd-detail"><span>Emergency contact</span><strong>{{ student.emergency_contact_name|default:'N/A' }} · {{ student.emergency_contact_phone|default:'N/A' }}</strong></div>
+        <div class="sd-detail"><span>Address</span><strong>{{ student.address|default:'N/A' }}</strong></div><div class="sd-detail"><span>Medical notes</span><strong>{{ student.medical_notes|default:'None recorded' }}</strong></div>
+      </div></section>
+      <section class="sd-panel"><h2><i class="fas fa-school"></i> Admission & Placement</h2><div class="sd-detail-grid">
+        <div class="sd-detail"><span>Student ID</span><strong>{{ student.student_id }}</strong></div><div class="sd-detail"><span>Roll number</span><strong>{{ student.roll_no|default:'N/A' }}</strong></div>
+        <div class="sd-detail"><span>Academic year</span><strong>{{ student.academic_year.year|default:'N/A' }}</strong></div><div class="sd-detail"><span>Admission date</span><strong>{{ student.admission_date|date:'d M Y'|default:'N/A' }}</strong></div>
+        <div class="sd-detail"><span>Class</span><strong>{{ student.class_fk.class_name|default:'Not assigned' }}</strong></div><div class="sd-detail"><span>Section</span><strong>{{ student.section.section_name|default:'Not assigned' }}</strong></div>
+        <div class="sd-detail"><span>Class teacher</span><strong>{{ class_teacher.name|default:'Not assigned' }}</strong></div><div class="sd-detail"><span>Previous school</span><strong>{{ student.previous_school|default:'N/A' }}</strong></div>
+      </div></section>
+      <section class="sd-panel"><h2><i class="fas fa-users"></i> Guardians</h2>{% for link in guardians %}<div class="sd-guardian"><strong>{{ link.parent.full_name }}</strong> · {{ link.relationship }}{% if link.is_primary %} <span class="sd-status">Primary</span>{% endif %}<div class="sd-muted">{{ link.parent.email|default:'No email' }} · {{ link.parent.phone|default:'No phone' }} · Login: {{ link.parent.user.username|default:'Not created' }}</div></div>{% empty %}<p class="sd-muted">No guardian is linked to this student.</p>{% endfor %}</section>
+      <section class="sd-panel"><h2><i class="fas fa-file-invoice-dollar"></i> Voucher History</h2><div class="sd-table-wrap"><table class="sd-table"><thead><tr><th>Voucher</th><th>Period</th><th>Amount</th><th>Status</th><th>Due date</th></tr></thead><tbody>{% for voucher in vouchers %}<tr><td>{{ voucher.voucher_no }}</td><td>{{ voucher.month }} {{ voucher.year }}</td><td>PKR {{ voucher.net_amount }}</td><td>{{ voucher.status }}</td><td>{{ voucher.due_date|date:'d M Y' }}</td></tr>{% empty %}<tr><td colspan="5">No fee vouchers have been generated.</td></tr>{% endfor %}</tbody></table></div></section>
+    </div>
+    <aside>
+      <section class="sd-panel"><h2><i class="fas fa-key"></i> Portal Access</h2><div class="sd-detail"><span>Login ID</span><strong>{{ student.user.username|default:'Not created' }}</strong></div><br><div class="sd-note"><i class="fas fa-lock"></i> Passwords are securely hashed and cannot be displayed. Set a new password below when access must be restored.</div><form method="post" action="{% url 'student_directory_reset_password' student.pk %}" style="margin-top:15px">{% csrf_token %}<div class="sd-field"><label>Login ID</label><input name="username" value="{{ student.user.username|default:'' }}" required></div><div class="sd-field" style="margin-top:10px"><label>New password</label><input type="password" name="password" required autocomplete="new-password"></div><div class="sd-field" style="margin-top:10px"><label>Confirm password</label><input type="password" name="password_confirm" required autocomplete="new-password"></div><button class="sd-btn sd-btn-block" type="submit" style="margin-top:12px"><i class="fas fa-unlock-alt"></i> Reset Portal Password</button></form></section>
+      <section class="sd-panel"><h2><i class="fas fa-clipboard-check"></i> Enrollment</h2><div class="sd-detail"><span>Reference</span><strong>{{ workflow.reference_number|default:'N/A' }}</strong></div><br><div class="sd-detail"><span>Status</span><strong>{{ workflow.get_status_display|default:'Canonical record' }}</strong></div></section>
+      <section class="sd-panel sd-danger-zone"><h2><i class="fas fa-exclamation-triangle"></i> Record Controls</h2><p class="sd-muted">Delete is guarded because this may affect linked academic history.</p><a class="sd-btn sd-btn-danger sd-btn-block" href="{% url 'student_directory_delete' student.pk %}"><i class="fas fa-trash-alt"></i> Delete Student</a></section>
+    </aside>
+  </div>
+</main>
+{% endblock %}

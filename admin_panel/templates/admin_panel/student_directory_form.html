@@ -1,0 +1,17 @@
+{% extends 'admin_panel/bases.html' %}
+{% load static %}
+{% block title %}Edit {{ student.name }}{% endblock %}
+{% block head %}<link rel="stylesheet" href="{% static 'admin_panel/css/student-directory.css' %}?v=1">{% endblock %}
+{% block content %}
+<main class="sd-page">
+  <section class="sd-head"><div><div class="sd-eyebrow">Student Gateway</div><h1>Edit Student Profile</h1><p>Changes save to the canonical student record used across classes, ID cards and portals.</p></div><a class="sd-btn sd-btn-secondary" href="{% url 'student_directory_detail' student.pk %}"><i class="fas fa-times"></i> Cancel</a></section>
+  <form class="sd-panel" method="post" enctype="multipart/form-data">{% csrf_token %}
+    <div class="sd-photo-editor">{% if student.photo %}<img class="sd-avatar sd-avatar-lg" src="{{ student.photo.url }}" alt="{{ student.name }}">{% else %}<div class="sd-avatar sd-avatar-lg sd-avatar-fallback">{{ student.name|first|upper }}</div>{% endif %}<div class="sd-field" style="flex:1"><label>{{ form.photo.label }}</label>{{ form.photo }}{% for error in form.photo.errors %}<div class="sd-error">{{ error }}</div>{% endfor %}<small class="sd-muted">JPG or PNG. The image will appear anywhere this canonical profile is used.</small></div></div>
+    {% if form.non_field_errors %}<div class="sd-note">{{ form.non_field_errors }}</div>{% endif %}
+    <div class="sd-form-grid">
+      {% for field in form %}{% if field.name != 'photo' %}<div class="sd-field {% if field.name == 'address' or field.name == 'medical_notes' %}sd-wide{% endif %}"><label for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} *{% endif %}</label>{{ field }}{% if field.help_text %}<small class="sd-muted">{{ field.help_text }}</small>{% endif %}{% for error in field.errors %}<div class="sd-error">{{ error }}</div>{% endfor %}</div>{% endif %}{% endfor %}
+    </div>
+    <div class="sd-filter-actions"><a class="sd-btn sd-btn-secondary" href="{% url 'student_directory_detail' student.pk %}">Cancel</a><button class="sd-btn" type="submit"><i class="fas fa-save"></i> Save Changes</button></div>
+  </form>
+</main>
+{% endblock %}

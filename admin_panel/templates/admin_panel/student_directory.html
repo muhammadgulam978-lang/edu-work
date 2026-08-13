@@ -1,0 +1,47 @@
+{% extends 'admin_panel/bases.html' %}
+{% load static %}
+{% block title %}Students List{% endblock %}
+{% block head %}<link rel="stylesheet" href="{% static 'admin_panel/css/student-directory.css' %}?v=1">{% endblock %}
+{% block content %}
+<main class="sd-page">
+  <section class="sd-head">
+    <div><div class="sd-eyebrow">Student Gateway</div><h1>Students List</h1><p>Search, review and manage every canonical student profile from one screen.</p></div>
+    <div class="sd-actions"><a class="sd-btn" href="{% url 'student_admissions' %}?tab=new"><i class="fas fa-user-plus"></i> New Admission</a><a class="sd-btn sd-btn-secondary" href="{% url 'bulk_upload_students' %}"><i class="fas fa-file-import"></i> Bulk Upload</a></div>
+  </section>
+  <section class="sd-metrics">
+    <div class="sd-metric"><span>Total Students</span><strong>{{ total_students }}</strong><small class="sd-muted">Canonical profiles</small></div>
+    <div class="sd-metric"><span>Active Accounts</span><strong>{{ active_accounts }}</strong><small class="sd-muted">Portal access enabled</small></div>
+    <div class="sd-metric"><span>Login Pending</span><strong>{{ missing_accounts }}</strong><small class="sd-muted">No portal account</small></div>
+    <div class="sd-metric"><span>Placement Pending</span><strong>{{ unplaced_students }}</strong><small class="sd-muted">Class or section missing</small></div>
+  </section>
+  <form class="sd-filter" method="get">
+    <div class="sd-filter-grid">
+      <div class="sd-field"><label for="sd-q">Global Search</label><input id="sd-q" name="q" value="{{ filters.q }}" placeholder="Name, ID, roll no, email, parent..."></div>
+      <div class="sd-field"><label>Academic Year</label><select name="academic_year"><option value="">All Years</option>{% for year in academic_years %}<option value="{{ year.pk }}" {% if filters.academic_year == year.pk|stringformat:'s' %}selected{% endif %}>{{ year.year }}</option>{% endfor %}</select></div>
+      <div class="sd-field"><label>Class</label><select name="class"><option value="">All Classes</option>{% for class in classes %}<option value="{{ class.pk }}" {% if filters.class == class.pk|stringformat:'s' %}selected{% endif %}>{{ class.class_name }}</option>{% endfor %}</select></div>
+      <div class="sd-field"><label>Section</label><select name="section"><option value="">All Sections</option>{% for section in sections %}<option value="{{ section.pk }}" {% if filters.section == section.pk|stringformat:'s' %}selected{% endif %}>{{ section.class_fk.class_name }} / {{ section.section_name }}</option>{% endfor %}</select></div>
+      <div class="sd-field"><label>Gender</label><select name="gender"><option value="">All</option><option {% if filters.gender == 'Male' %}selected{% endif %}>Male</option><option {% if filters.gender == 'Female' %}selected{% endif %}>Female</option><option {% if filters.gender == 'Other' %}selected{% endif %}>Other</option></select></div>
+      <div class="sd-field"><label>Account</label><select name="account"><option value="">All Accounts</option><option value="active" {% if filters.account == 'active' %}selected{% endif %}>Active</option><option value="inactive" {% if filters.account == 'inactive' %}selected{% endif %}>Inactive</option><option value="missing" {% if filters.account == 'missing' %}selected{% endif %}>Not Created</option></select></div>
+    </div>
+    <div class="sd-filter-actions"><a class="sd-btn sd-btn-secondary" href="{% url 'student_directory' %}"><i class="fas fa-undo"></i> Reset</a><button class="sd-btn" type="submit"><i class="fas fa-search"></i> Apply Search</button></div>
+  </form>
+  <section class="sd-grid">
+    {% for student in students %}
+    <article class="sd-card">
+      <div class="sd-card-top">
+        {% if student.photo %}<img class="sd-avatar" src="{{ student.photo.url }}" alt="{{ student.name }}">{% else %}<div class="sd-avatar sd-avatar-fallback">{{ student.name|first|upper }}</div>{% endif %}
+        <div><div class="sd-id">{{ student.student_id }}</div><h2>{{ student.name }}</h2><span class="sd-status {% if not student.user or not student.user.is_active %}sd-status-off{% endif %}"><i class="fas fa-circle"></i>{% if student.user and student.user.is_active %}Active{% elif student.user %}Inactive{% else %}Login pending{% endif %}</span></div>
+      </div>
+      <div class="sd-card-data">
+        <div class="sd-data"><span>Placement</span><strong>{{ student.class_fk.class_name|default:'Not assigned' }}{% if student.section %} / {{ student.section.section_name }}{% endif %}</strong></div>
+        <div class="sd-data"><span>Roll Number</span><strong>{{ student.roll_no|default:'N/A' }}</strong></div>
+        <div class="sd-data"><span>Academic Year</span><strong>{{ student.academic_year.year|default:'N/A' }}</strong></div>
+        <div class="sd-data"><span>Guardian</span><strong>{% with link=student.guardian_links.all|first %}{% if link %}{{ link.parent.full_name }}{% else %}Not linked{% endif %}{% endwith %}</strong></div>
+      </div>
+      <a class="sd-btn sd-btn-block" href="{% url 'student_directory_detail' student.pk %}"><i class="fas fa-expand-alt"></i> Open Complete Profile</a>
+    </article>
+    {% empty %}<div class="sd-empty"><i class="fas fa-user-graduate fa-2x"></i><h2>No students found</h2><p>Try changing the advanced filters or create a new admission.</p></div>{% endfor %}
+  </section>
+  {% if page_obj.paginator.num_pages > 1 %}<nav class="sd-pagination" aria-label="Student pages">{% if page_obj.has_previous %}<a class="sd-btn" href="?page={{ page_obj.previous_page_number }}&q={{ filters.q|urlencode }}&academic_year={{ filters.academic_year }}&class={{ filters.class }}&section={{ filters.section }}&gender={{ filters.gender }}&account={{ filters.account }}"><i class="fas fa-chevron-left"></i></a>{% endif %}<span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>{% if page_obj.has_next %}<a class="sd-btn" href="?page={{ page_obj.next_page_number }}&q={{ filters.q|urlencode }}&academic_year={{ filters.academic_year }}&class={{ filters.class }}&section={{ filters.section }}&gender={{ filters.gender }}&account={{ filters.account }}"><i class="fas fa-chevron-right"></i></a>{% endif %}</nav>{% endif %}
+</main>
+{% endblock %}
