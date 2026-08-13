@@ -57,6 +57,7 @@
         <div class="profile-item"><span class="profile-label">Phone</span><span class="profile-value">{{ snapshot.student.phone|default:"Not set" }}</span></div>
         <div class="profile-item"><span class="profile-label">Gender</span><span class="profile-value">{{ snapshot.student.gender|default:"Not set" }}</span></div>
         <div class="profile-item"><span class="profile-label">Date of Birth</span><span class="profile-value">{{ snapshot.student.date_of_birth|default:"Not set" }}</span></div>
+        <div class="profile-item"><span class="profile-label">Password</span><span class="profile-value">{% if bulk_temporary_password %}<code>{{ bulk_temporary_password }}</code>{% else %}Not available or expired{% endif %}</span></div>
       </div>
     </article>
 

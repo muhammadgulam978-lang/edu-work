@@ -17,6 +17,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login
 from django.utils import timezone
 from datetime import timedelta
+import secrets
 
 
 
@@ -3437,9 +3438,17 @@ def class_students(request, pk):
 @permission_required('admin_panel.add_class', raise_exception=True)
 def class_create(request):
     if request.method == 'POST':
-        form = ClassForm(request.POST)
+        form_data = request.POST.copy()
+        new_group_name = request.POST.get('new_group_name', '').strip()
+        if new_group_name:
+            group = ClassGroup.objects.filter(group_name__iexact=new_group_name).first()
+            if group is None:
+                group = ClassGroup.objects.create(group_name=new_group_name)
+            form_data['group'] = group.pk
+        form = ClassForm(form_data)
         if form.is_valid():
             form.save()
+            messages.success(request, 'Class saved successfully.')
             return redirect('class_list')
     else:
         form = ClassForm()
@@ -3450,9 +3459,17 @@ def class_create(request):
 def class_update(request, pk):
     class_obj = get_object_or_404(Class, pk=pk)
     if request.method == 'POST':
-        form = ClassForm(request.POST, instance=class_obj)
+        form_data = request.POST.copy()
+        new_group_name = request.POST.get('new_group_name', '').strip()
+        if new_group_name:
+            group = ClassGroup.objects.filter(group_name__iexact=new_group_name).first()
+            if group is None:
+                group = ClassGroup.objects.create(group_name=new_group_name)
+            form_data['group'] = group.pk
+        form = ClassForm(form_data, instance=class_obj)
         if form.is_valid():
             form.save()
+            messages.success(request, 'Class updated successfully.')
             return redirect('class_list')
     else:
         form = ClassForm(instance=class_obj)
@@ -3463,7 +3480,9 @@ def class_update(request, pk):
 def class_delete(request, pk):
     class_obj = get_object_or_404(Class, pk=pk)
     if request.method == 'POST':
+        class_name = class_obj.class_name
         class_obj.delete()
+        messages.success(request, f"Class '{class_name}' deleted successfully.")
         return redirect('class_list')
     return render(request, 'admin_panel/class_confirm_delete.html', {'class': class_obj})
 
@@ -4401,9 +4420,13 @@ def class_teacher_list(request):
     return render(request, 'admin_panel/class_teacher_list.html', {'assignments': assignments})
 
 
-def class_teacher_create(request):
-    classes = Class.objects.all()
-    academic_years = AcademicYear.objects.all()
+def _class_teacher_create_legacy(request):
+    classes = Class.objects.select_related('group').order_by('class_name')
+    academic_years = AcademicYear.objects.order_by('-year')
+    sections = Section.objects.select_related('academic_year', 'class_fk').order_by(
+        '-academic_year__year', 'class_fk__class_name', 'section_name'
+    )
+    teachers = Teacher.objects.order_by('name')
 
     if request.method == 'POST':
         academic_year = request.POST.get('academic_year')
@@ -4445,6 +4468,47 @@ def class_teacher_create(request):
         'classes': classes,
         'academic_years': academic_years
     })
+
+
+def class_teacher_create(request):
+    classes = Class.objects.select_related('group').order_by('class_name')
+    academic_years = AcademicYear.objects.order_by('-year')
+    sections = Section.objects.select_related('academic_year', 'class_fk').order_by(
+        '-academic_year__year', 'class_fk__class_name', 'section_name'
+    )
+    teachers = Teacher.objects.order_by('name')
+    context = {
+        'classes': classes,
+        'academic_years': academic_years,
+        'sections': sections,
+        'teachers': teachers,
+    }
+
+    if request.method == 'POST':
+        academic_year = request.POST.get('academic_year')
+        class_id = request.POST.get('class_fk')
+        section_id = request.POST.get('section')
+        teacher_id = request.POST.get('teacher')
+        context.update({
+            'selected_academic_year': academic_year,
+            'selected_class': class_id,
+            'selected_section': section_id,
+            'selected_teacher': teacher_id,
+        })
+
+        if academic_year and class_id and section_id and teacher_id:
+            assignment, created = ClassTeacher.objects.update_or_create(
+                academic_year_id=academic_year,
+                class_fk_id=class_id,
+                section_id=section_id,
+                defaults={'teacher_id': teacher_id},
+            )
+            action = 'created' if created else 'updated'
+            messages.success(request, f'Class teacher assignment {action} successfully.')
+            return redirect('class_teacher_list')
+        context['error'] = 'Please fill all required fields.'
+
+    return render(request, 'admin_panel/class_teacher_form.html', context)
 
 
 def class_teacher_update(request, pk):
@@ -6983,6 +7047,7 @@ def academic_calendar_export_pdf(request):
 import openpyxl
 import uuid as uuid_module
 from io import BytesIO
+from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.urls import reverse
 import uuid
@@ -7222,6 +7287,9 @@ def bulk_upload_students(request):
         context['result'] = _bulk_student_import_report(
             request.session.get('bulk_student_last_result')
         )
+        pending = request.session.get('bulk_student_pending') or {}
+        if pending.get('preview'):
+            context.update({'preview': pending['preview'], 'pending_upload': pending})
         return render(request, 'admin_panel/bulk_upload_students.html', context)
 
     action = request.POST.get('action', 'preview')
@@ -7253,7 +7321,9 @@ def bulk_upload_students(request):
                     select_student_worksheet,
                 )
                 worksheet = select_student_worksheet(workbook)
-                result = import_students_from_worksheet(worksheet, active_year)
+                result = import_students_from_worksheet(
+                    worksheet, active_year, credential_created_by=request.user
+                )
         except Exception as exc:
             messages.error(request, f'Could not import this Excel file: {exc}')
             return redirect('bulk_upload_students')
@@ -7280,7 +7350,12 @@ def bulk_upload_students(request):
             'processing_seconds': round(perf_counter() - started_at, 2),
             'completed_at': timezone.now().isoformat(),
             'errors': result.errors,
+            'student_ids': result.student_ids,
+            'parent_data_missing': result.parent_data_missing,
         }
+        credentials_path = _save_bulk_student_credentials(request.user.pk, result.credentials)
+        if credentials_path:
+            request.session['bulk_student_last_result']['credentials_report_path'] = credentials_path
         if result.imported:
             messages.success(request, f'{result.imported} student rows imported successfully.')
         if result.skipped:
@@ -7308,12 +7383,10 @@ def bulk_upload_students(request):
     try:
         with default_storage.open(path, 'rb') as stored_file:
             workbook = openpyxl.load_workbook(stored_file, read_only=True, data_only=True)
-            from .bulk_student_import import (
-                preview_students_from_worksheet,
-                select_student_worksheet,
-            )
+            from .bulk_student_import import select_student_worksheet
             worksheet = select_student_worksheet(workbook)
-            preview = preview_students_from_worksheet(worksheet, active_year)
+            sheet_name = worksheet.title
+            sheet_rows = max(0, (worksheet.max_row or 1) - 1)
     except Exception as exc:
         if default_storage.exists(path):
             default_storage.delete(path)
@@ -7323,27 +7396,63 @@ def bulk_upload_students(request):
         if workbook is not None:
             workbook.close()
 
-    request.session['bulk_student_pending'] = {
+    pending_upload = {
         'token': token, 'path': path, 'name': excel_file.name,
         'size': excel_file.size, 'created_at': timezone.now().isoformat(),
-        'sheet_name': worksheet.title,
-        'total_rows': preview.total_rows,
-        'valid_rows': preview.valid_rows,
-        'invalid_rows': preview.invalid_rows,
+        'sheet_name': sheet_name, 'total_work_units': sheet_rows,
+        'validation_complete': False,
     }
-    context.update({'preview': preview, 'pending_upload': request.session['bulk_student_pending']})
-    return render(request, 'admin_panel/bulk_upload_students.html', context)
+    request.session['bulk_student_pending'] = pending_upload
+    request.session['bulk_student_validation_progress'] = {
+        'token': token, 'next_row': 2, 'total_work_units': sheet_rows,
+        'scanned_rows': 0, 'started_at': timezone.now().timestamp(),
+        'result': _empty_bulk_student_preview(),
+        'seen': {'student_ids': [], 'usernames': [], 'emails': []},
+    }
+    request.session.modified = True
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return JsonResponse({
+            'validation_pending': True, 'token': token, 'cursor': 2,
+            'total_rows': sheet_rows,
+        }, status=202)
+
+    # JavaScript drives chunked validation. Without it, keep the file pending
+    # and explain that validation requires the live progress workflow.
+    messages.info(request, 'The file is ready. Enable JavaScript and upload it again for live validation.')
+    return redirect('bulk_upload_students')
 
 
 _BULK_STUDENT_COUNT_FIELDS = (
     'imported', 'enrolled', 'fee_ready', 'skipped', 'password_reset_required',
     'parents_linked', 'parent_accounts_created', 'student_accounts_created',
     'student_logins_ready', 'parent_logins_ready', 'credential_emails_queued',
-    'messages_queued', 'scanned_rows',
+    'messages_queued', 'scanned_rows', 'parent_data_missing',
 )
 _BULK_STUDENT_LIST_FIELDS = (
     'errors', 'student_ids', 'parent_ids', 'credential_email_ids', 'message_ids',
+    'credentials',
 )
+
+_BULK_PREVIEW_COUNT_FIELDS = (
+    'total_rows', 'valid_rows', 'invalid_rows', 'duplicate_rows', 'parent_rows',
+    'existing_parents', 'new_parents', 'fee_ready_rows', 'parent_data_missing',
+    'scanned_rows',
+)
+
+
+def _empty_bulk_student_preview():
+    result = {field: 0 for field in _BULK_PREVIEW_COUNT_FIELDS}
+    result.update({'errors': [], 'rows': []})
+    return result
+
+
+def _merge_bulk_student_preview(aggregate, chunk):
+    for field in _BULK_PREVIEW_COUNT_FIELDS:
+        aggregate[field] = aggregate.get(field, 0) + getattr(chunk, field, 0)
+    aggregate['errors'].extend(chunk.errors)
+    del aggregate['errors'][100:]
+    remaining = max(0, 12 - len(aggregate['rows']))
+    aggregate['rows'].extend(chunk.rows[:remaining])
 
 
 def _empty_bulk_student_result():
@@ -7376,6 +7485,89 @@ def bulk_upload_students_progress(request):
     pending = request.session.get('bulk_student_pending') or {}
     if not token or token != pending.get('token') or not pending.get('path'):
         return JsonResponse({'error': 'This upload preview expired. Validate the file again.'}, status=409)
+
+    if operation in {'validate_start', 'validate_process'}:
+        state = request.session.get('bulk_student_validation_progress') or {}
+        if state.get('token') != token:
+            return JsonResponse({'error': 'Validation state expired. Upload the file again.'}, status=409)
+        elapsed = max(0.01, time.time() - state.get('started_at', time.time()))
+        total_work = max(0, int(state.get('total_work_units') or 0))
+        scanned = min(int(state.get('scanned_rows') or 0), total_work)
+        if operation == 'validate_start':
+            return JsonResponse({
+                'done': False, 'cursor': state.get('next_row', 2),
+                'percent': round((scanned / total_work) * 100) if total_work else 0,
+                'processed_rows': scanned, 'total_rows': total_work,
+                'elapsed_seconds': round(elapsed, 1), 'eta_seconds': None,
+            })
+
+        try:
+            requested_cursor = int(request.POST.get('cursor') or 0)
+        except (TypeError, ValueError):
+            return JsonResponse({'error': 'The validation cursor is invalid.'}, status=400)
+        if requested_cursor != state.get('next_row'):
+            return JsonResponse({'error': 'A stale validation request was rejected.'}, status=409)
+        active_year = AcademicYear.objects.filter(is_active=True).first()
+        if not active_year:
+            return JsonResponse({'error': 'No active academic year is configured.'}, status=400)
+        workbook = None
+        try:
+            with default_storage.open(pending['path'], 'rb') as stored_file:
+                workbook = openpyxl.load_workbook(stored_file, read_only=True, data_only=True)
+                from .bulk_student_import import preview_students_from_worksheet
+                worksheet = workbook[pending['sheet_name']]
+                chunk = preview_students_from_worksheet(
+                    worksheet, active_year,
+                    start_row=state['next_row'],
+                    max_rows=getattr(settings, 'BULK_STUDENT_VALIDATION_CHUNK_ROWS', 40),
+                    seen=state.get('seen'),
+                )
+        except Exception as exc:
+            return JsonResponse({'error': f'Validation could not continue: {exc}'}, status=400)
+        finally:
+            if workbook is not None:
+                workbook.close()
+
+        _merge_bulk_student_preview(state['result'], chunk)
+        state['seen'] = {
+            'student_ids': chunk.seen_student_ids,
+            'usernames': chunk.seen_usernames,
+            'emails': chunk.seen_emails,
+        }
+        state['scanned_rows'] += chunk.scanned_rows
+        state['next_row'] = chunk.last_row_number + 1
+        scanned = min(state['scanned_rows'], total_work)
+        elapsed = max(0.01, time.time() - state['started_at'])
+        remaining = max(0, total_work - scanned)
+        eta = (elapsed / scanned) * remaining if scanned else None
+        percent = min(99, round((scanned / total_work) * 100)) if total_work else 99
+
+        if chunk.complete:
+            preview = dict(state['result'])
+            pending.update({
+                'preview': preview, 'total_rows': preview['total_rows'],
+                'valid_rows': preview['valid_rows'], 'invalid_rows': preview['invalid_rows'],
+                'validation_complete': True,
+            })
+            request.session['bulk_student_pending'] = pending
+            request.session.pop('bulk_student_validation_progress', None)
+            request.session.modified = True
+            return JsonResponse({
+                'done': True, 'percent': 100,
+                'processed_rows': scanned, 'total_rows': total_work,
+                'elapsed_seconds': round(elapsed, 1), 'eta_seconds': 0,
+                'redirect_url': reverse('bulk_upload_students'),
+            })
+
+        request.session['bulk_student_validation_progress'] = state
+        request.session.modified = True
+        return JsonResponse({
+            'done': False, 'cursor': state['next_row'], 'percent': percent,
+            'processed_rows': scanned, 'total_rows': total_work,
+            'elapsed_seconds': round(elapsed, 1),
+            'eta_seconds': round(eta, 1) if eta is not None else None,
+        })
+
     if pending.get('invalid_rows') or not pending.get('valid_rows'):
         return JsonResponse({'error': 'Only a fully validated file can be imported.'}, status=400)
 
@@ -7385,12 +7577,14 @@ def bulk_upload_students_progress(request):
             elapsed = max(0.0, time.time() - existing_state.get('started_at', time.time()))
             processed = existing_state.get('processed_rows', 0)
             total = existing_state.get('total_rows', pending.get('total_rows', 0))
-            remaining = max(0, total - processed)
-            eta = (elapsed / processed) * remaining if processed else None
+            total_work = max(1, int(existing_state.get('total_work_units') or total or 1))
+            scanned = min(int(existing_state.get('scanned_rows') or 0), total_work)
+            remaining = max(0, total_work - scanned)
+            eta = (elapsed / scanned) * remaining if scanned else None
             return JsonResponse({
                 'done': False,
                 'cursor': existing_state.get('next_row', 2),
-                'percent': min(99, round((processed / total) * 100)) if total else 0,
+                'percent': min(99, round((scanned / total_work) * 100)),
                 'processed_rows': processed,
                 'total_rows': total,
                 'elapsed_seconds': round(elapsed, 1),
@@ -7401,6 +7595,8 @@ def bulk_upload_students_progress(request):
             'next_row': 2,
             'total_rows': pending.get('total_rows', 0),
             'processed_rows': 0,
+            'scanned_rows': 0,
+            'total_work_units': pending.get('total_work_units', pending.get('total_rows', 0)),
             'started_at': time.time(),
             'result': _empty_bulk_student_result(),
         }
@@ -7444,6 +7640,7 @@ def bulk_upload_students_progress(request):
                 start_row=state['next_row'],
                 max_rows=getattr(settings, 'BULK_STUDENT_IMPORT_CHUNK_ROWS', 25),
                 dispatch_emails=False,
+                credential_created_by=request.user,
             )
     except Exception as exc:
         return JsonResponse({'error': f'Import could not continue: {exc}'}, status=400)
@@ -7454,12 +7651,15 @@ def bulk_upload_students_progress(request):
     _merge_bulk_student_result(state['result'], chunk)
     state['next_row'] = chunk.last_row_number + 1
     state['processed_rows'] = state['result']['imported'] + state['result']['skipped']
+    state['scanned_rows'] = state.get('scanned_rows', 0) + chunk.scanned_rows
     elapsed = max(0.01, time.time() - state['started_at'])
     total = state['total_rows']
     processed = min(state['processed_rows'], total)
-    remaining = max(0, total - processed)
-    eta = (elapsed / processed) * remaining if processed else None
-    percent = min(99, round((processed / total) * 100)) if total else 99
+    total_work = max(1, int(state.get('total_work_units') or total or 1))
+    scanned = min(state['scanned_rows'], total_work)
+    remaining = max(0, total_work - scanned)
+    eta = (elapsed / scanned) * remaining if scanned else None
+    percent = min(99, round((scanned / total_work) * 100))
 
     if chunk.complete:
         from edupilot_core.email_delivery import kick_email_dispatch
@@ -7467,10 +7667,14 @@ def bulk_upload_students_progress(request):
         if state['result'].get('credential_emails_queued'):
             kick_email_dispatch()
         final_result = dict(state['result'])
+        credentials = final_result.pop('credentials', [])
+        credentials_path = _save_bulk_student_credentials(request.user.pk, credentials)
         final_result.update({
             'processing_seconds': round(elapsed, 2),
             'completed_at': timezone.now().isoformat(),
         })
+        if credentials_path:
+            final_result['credentials_report_path'] = credentials_path
         request.session['bulk_student_last_result'] = final_result
         request.session.pop('bulk_student_progress', None)
         _delete_pending_bulk_upload(request)
@@ -7487,6 +7691,189 @@ def bulk_upload_students_progress(request):
     return JsonResponse({
         'done': False, 'cursor': state['next_row'], 'percent': percent,
         'processed_rows': processed, 'total_rows': total,
+        'elapsed_seconds': round(elapsed, 1),
+        'eta_seconds': round(eta, 1) if eta is not None else None,
+    })
+
+
+def _save_bulk_student_credentials(user_id, credentials):
+    """Persist one-time generated credentials outside the browser session."""
+    if not credentials:
+        return ''
+    workbook = openpyxl.Workbook()
+    sheet = workbook.active
+    sheet.title = 'Portal Credentials'
+    sheet.append(['Role', 'Name', 'Student ID', 'Login ID', 'Password', 'Email'])
+    for item in credentials:
+        sheet.append([
+            item.get('role', ''), item.get('name', ''), item.get('student_id', ''),
+            item.get('login_id', ''), item.get('password', ''), item.get('email', ''),
+        ])
+    for column, width in {'A': 14, 'B': 26, 'C': 22, 'D': 28, 'E': 28, 'F': 36}.items():
+        sheet.column_dimensions[column].width = width
+    output = BytesIO()
+    workbook.save(output)
+    workbook.close()
+    path = f'bulk_student_credentials/user_{user_id}/{uuid_module.uuid4().hex}.xlsx'
+    return default_storage.save(path, ContentFile(output.getvalue()))
+
+
+@login_required(login_url='login_admin')
+@permission_required('admin_panel.add_admission', raise_exception=True)
+def bulk_upload_students_credentials(request):
+    report = request.session.get('bulk_student_last_result') or {}
+    path = report.get('credentials_report_path', '')
+    allowed_prefix = f'bulk_student_credentials/user_{request.user.pk}/'
+    if not path.startswith(allowed_prefix) or not default_storage.exists(path):
+        messages.error(request, 'No credential report is available for the latest import.')
+        return redirect('bulk_upload_students')
+    response = HttpResponse(
+        default_storage.open(path, 'rb').read(),
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    )
+    response['Content-Disposition'] = 'attachment; filename="EduPilot_Portal_Credentials.xlsx"'
+    response['Cache-Control'] = 'no-store'
+    return response
+
+
+@login_required(login_url='login_admin')
+@permission_required('admin_panel.add_admission', raise_exception=True)
+@require_POST
+def bulk_upload_students_activate_logins(request):
+    """Activate latest bulk-import logins in short, resumable batches."""
+    from student_profile.models import Student as PortalStudent
+
+    report = request.session.get('bulk_student_last_result') or {}
+    operation = request.POST.get('operation', 'start')
+    is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
+
+    if not is_ajax:
+        messages.info(request, 'Portal activation uses live batch progress. Please enable JavaScript and try again.')
+        return redirect('bulk_upload_students')
+
+    if operation == 'start':
+        student_ids = list(report.get('student_ids') or [])
+        expected = int(report.get('password_reset_required') or 0)
+        if not student_ids and expected:
+            # Older reports did not store IDs. Freeze the newest reported import
+            # before filtering by password state so a partially completed retry
+            # cannot spill into an earlier import.
+            student_ids = list(
+                PortalStudent.objects.filter(
+                    user__username__startswith='student_stu_',
+                    user__email__endswith='@students.edupilot.local',
+                )
+                .order_by('-pk')
+                .values_list('student_id', flat=True)[:expected]
+            )
+        if not student_ids:
+            return JsonResponse(
+                {'error': 'No latest bulk-import student accounts are available to activate.'},
+                status=400,
+            )
+        # Keep only linked portal accounts and retain the frozen order.
+        linked_ids = set(
+            PortalStudent.objects.filter(student_id__in=student_ids, user__isnull=False)
+            .values_list('student_id', flat=True)
+        )
+        student_ids = [student_id for student_id in student_ids if student_id in linked_ids]
+        state = {
+            'student_ids': student_ids,
+            'cursor': 0,
+            'credentials': [],
+            'started_at': timezone.now().timestamp(),
+            'total': len(student_ids),
+        }
+        request.session['bulk_student_activation_progress'] = state
+        request.session.modified = True
+        return JsonResponse({
+            'done': not student_ids,
+            'cursor': 0,
+            'processed_rows': 0,
+            'total_rows': len(student_ids),
+            'percent': 0,
+            'elapsed_seconds': 0,
+            'eta_seconds': None,
+        })
+
+    if operation != 'process':
+        return JsonResponse({'error': 'Unsupported activation operation.'}, status=400)
+
+    state = request.session.get('bulk_student_activation_progress') or {}
+    student_ids = state.get('student_ids') or []
+    cursor = int(state.get('cursor') or 0)
+    total = int(state.get('total') or len(student_ids))
+    if not student_ids or cursor >= total:
+        return JsonResponse({'error': 'Activation session expired. Start the action again.'}, status=409)
+
+    batch_ids = student_ids[cursor:cursor + 8]
+    students_by_id = {
+        student.student_id: student
+        for student in PortalStudent.objects.select_related('user').filter(student_id__in=batch_ids)
+    }
+    credentials = list(state.get('credentials') or [])
+    for student_id in batch_ids:
+        student = students_by_id.get(student_id)
+        if not student or not student.user_id:
+            continue
+        # Reissue credentials for the frozen latest-import set. This also repairs
+        # accounts whose earlier long request was killed after saving a password
+        # but before producing the downloadable credentials report.
+        from .bulk_credentials import (
+            generate_unique_student_password,
+            store_bulk_student_credential,
+        )
+        password = generate_unique_student_password()
+        student.user.set_password(password)
+        student.user.save(update_fields=['password'])
+        store_bulk_student_credential(student, password, created_by=request.user)
+        credentials.append({
+            'role': 'Student', 'name': student.name, 'student_id': student.student_id,
+            'login_id': student.user.username, 'password': password,
+            'email': student.user.email,
+        })
+
+    cursor += len(batch_ids)
+    elapsed = max(0.01, timezone.now().timestamp() - float(state.get('started_at') or timezone.now().timestamp()))
+    percent = round((cursor / total) * 100) if total else 100
+    eta = (elapsed / cursor) * (total - cursor) if cursor else None
+
+    if cursor >= total:
+        path = _save_bulk_student_credentials(request.user.pk, credentials)
+        if path:
+            report['credentials_report_path'] = path
+        report['student_logins_ready'] = total
+        report['login_ready'] = total + int(report.get('parent_logins_ready') or 0)
+        report['password_reset_required'] = max(
+            0, int(report.get('student_accounts_created') or total) - total
+        )
+        request.session['bulk_student_last_result'] = report
+        request.session.pop('bulk_student_activation_progress', None)
+        request.session.modified = True
+        messages.success(
+            request,
+            f'{len(credentials)} student portal logins activated. Download the new IDs and passwords below.',
+        )
+        return JsonResponse({
+            'done': True,
+            'cursor': cursor,
+            'processed_rows': cursor,
+            'total_rows': total,
+            'percent': 100,
+            'elapsed_seconds': round(elapsed, 1),
+            'eta_seconds': 0,
+            'redirect_url': reverse('bulk_upload_students'),
+        })
+
+    state.update({'cursor': cursor, 'credentials': credentials})
+    request.session['bulk_student_activation_progress'] = state
+    request.session.modified = True
+    return JsonResponse({
+        'done': False,
+        'cursor': cursor,
+        'processed_rows': cursor,
+        'total_rows': total,
+        'percent': percent,
         'elapsed_seconds': round(elapsed, 1),
         'eta_seconds': round(eta, 1) if eta is not None else None,
     })

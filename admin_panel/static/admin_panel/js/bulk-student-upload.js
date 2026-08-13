@@ -133,13 +133,20 @@
     overlay.hidden = false;
     document.body.classList.add('bulk-progress-open');
     closeButton.hidden = true;
+    const activation = mode === 'activation';
+    const estimate = root.querySelector('[data-progress-estimate]');
     setProgress(0, {
-      stage: mode === 'validate' ? 'Uploading spreadsheet' : 'Starting validated import',
-      title: mode === 'validate' ? 'Preparing student data' : `Importing ${rows} validated row${rows === 1 ? '' : 's'}`,
-      detail: 'Keep this page open. Progress is confirmed from the server.',
+      stage: activation ? 'Preparing portal access' : (mode === 'validate' ? 'Uploading spreadsheet' : 'Starting validated import'),
+      title: activation ? `Activating ${rows} student login${rows === 1 ? '' : 's'}` : (mode === 'validate' ? 'Preparing student data' : `Importing ${rows} validated row${rows === 1 ? '' : 's'}`),
+      detail: activation ? 'Secure passwords will be created in small server-confirmed batches.' : 'Keep this page open. Progress is confirmed from the server.',
       elapsed: 0,
       remaining: null,
     });
+    if (estimate) {
+      estimate.textContent = activation
+        ? 'Login activation progress, elapsed time and remaining time are based on accounts completed by the server.'
+        : 'Upload progress uses transferred bytes. Import progress, elapsed time and remaining time use rows committed by the server.';
+    }
     elapsedTimer = window.setInterval(updateElapsed, 250);
   }
 
@@ -170,6 +177,40 @@
     return `The server returned status ${request.status}. Completion was not confirmed.`;
   }
 
+  async function continueValidation(uploadState, csrfToken) {
+    let state = await postProgress({
+      operation: 'validate_start',
+      upload_token: uploadState.token,
+    }, csrfToken);
+    setProgress(state.percent, {
+      stage: 'Validating on server',
+      title: `Checked ${state.processed_rows} of ${state.total_rows} rows`,
+      detail: 'Checking student data, duplicates, placement, parent links and fee readiness.',
+      elapsed: state.elapsed_seconds,
+      remaining: state.eta_seconds,
+    });
+    while (!state.done) {
+      state = await postProgress({
+        operation: 'validate_process',
+        upload_token: uploadState.token,
+        cursor: state.cursor,
+      }, csrfToken);
+      setProgress(state.percent, {
+        stage: state.done ? 'Completed' : 'Validating on server',
+        title: state.done
+          ? 'Validation report is ready'
+          : `Checked ${state.processed_rows} of ${state.total_rows} rows`,
+        detail: state.done
+          ? 'Opening the validation preview.'
+          : 'Progress and remaining time are calculated from rows confirmed by the server.',
+        elapsed: state.elapsed_seconds,
+        remaining: state.eta_seconds,
+      });
+    }
+    stopTimer();
+    window.setTimeout(() => window.location.assign(state.redirect_url), 250);
+  }
+
   function submitValidation(form, csrfToken) {
     const button = form.querySelector('[type="submit"]');
     showProgress(form);
@@ -183,29 +224,31 @@
     request.setRequestHeader('X-CSRFToken', csrfToken);
     request.upload.addEventListener('progress', (event) => {
       if (!event.lengthComputable) return;
-      setProgress((event.loaded / event.total) * 35, {
+      setProgress((event.loaded / event.total) * 100, {
         stage: 'Uploading spreadsheet',
         title: `Uploading ${input.files[0].name}`,
         detail: `${Math.round(event.loaded / 1024)} KB of ${Math.round(event.total / 1024)} KB uploaded.`,
       });
     });
-    request.upload.addEventListener('load', () => setProgress(35, {
+    request.upload.addEventListener('load', () => setProgress(0, {
       stage: 'Validating on server',
       title: 'Checking student and parent data',
-      detail: 'Checking headers, duplicate values, placement, credentials and fee readiness.',
+      detail: 'Waiting for the first server-confirmed row batch.',
+      elapsed: 0,
+      remaining: null,
     }));
-    request.addEventListener('load', () => {
+    request.addEventListener('load', async () => {
       if (request.status >= 200 && request.status < 400) {
-        stopTimer();
-        setProgress(100, {
-          stage: 'Completed', title: 'Validation report is ready',
-          detail: 'Opening the validation preview.', remaining: 0,
-        });
-        window.setTimeout(() => {
-          document.open();
-          document.write(request.responseText);
-          document.close();
-        }, 250);
+        try {
+          const uploadState = JSON.parse(request.responseText);
+          if (!uploadState.validation_pending || !uploadState.token) {
+            throw new Error('The server did not return a valid bulk validation session.');
+          }
+          await continueValidation(uploadState, csrfToken);
+        } catch (error) {
+          showFailure(error.message || 'Validation stopped before completion was confirmed.');
+          if (button) button.disabled = false;
+        }
       } else {
         showFailure(responseMessage(request));
         if (button) button.disabled = false;
@@ -266,6 +309,48 @@
     }
   }
 
+  async function postActivation(form, payload, csrfToken) {
+    const response = await fetch(form.getAttribute('action'), {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {
+        'X-CSRFToken': csrfToken,
+        'X-Requested-With': 'XMLHttpRequest',
+        'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+      },
+      body: new URLSearchParams(payload),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || `The server returned status ${response.status}.`);
+    return data;
+  }
+
+  async function submitLoginActivation(form, csrfToken) {
+    const button = form.querySelector('[type="submit"]');
+    showProgress(form);
+    if (button) button.disabled = true;
+    try {
+      let state = await postActivation(form, { operation: 'start' }, csrfToken);
+      while (!state.done) {
+        state = await postActivation(form, { operation: 'process', cursor: state.cursor }, csrfToken);
+        setProgress(state.percent, {
+          stage: state.done ? 'Portal access ready' : 'Creating secure credentials',
+          title: state.done ? 'Student logins activated' : `Activated ${state.processed_rows} of ${state.total_rows} logins`,
+          detail: state.done
+            ? 'Opening the report and downloadable portal credentials.'
+            : 'Each completed batch is saved by the server before the next batch starts.',
+          elapsed: state.elapsed_seconds,
+          remaining: state.eta_seconds,
+        });
+      }
+      stopTimer();
+      window.setTimeout(() => window.location.assign(state.redirect_url), 250);
+    } catch (error) {
+      showFailure(error.message || 'Portal activation stopped before completion was confirmed.');
+      if (button) button.disabled = false;
+    }
+  }
+
   root.querySelectorAll('[data-progress-form]').forEach((form) => form.addEventListener('submit', (event) => {
     if (!form.reportValidity()) {
       event.preventDefault();
@@ -285,6 +370,19 @@
       submitValidation(form, csrfToken);
     }
   }));
+
+  const activationForm = root.querySelector('[data-activation-form]');
+  if (activationForm) activationForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const csrfInput = activationForm.querySelector('input[name="csrfmiddlewaretoken"]');
+    const csrfToken = csrfInput?.value || getCookie('csrftoken');
+    if (!csrfToken) {
+      showProgress(activationForm);
+      showFailure('Your secure session token is unavailable. Reload this page and try again.');
+      return;
+    }
+    submitLoginActivation(activationForm, csrfToken);
+  });
 
   if (closeButton) closeButton.addEventListener('click', () => {
     if (!requestFailed) return;

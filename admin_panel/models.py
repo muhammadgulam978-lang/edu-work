@@ -75,6 +75,29 @@ class RoleActivityLog(models.Model):
         return f"{self.get_action_type_display()} - {self.created_at:%Y-%m-%d %H:%M}"
 
 
+class BulkStudentCredential(models.Model):
+    """Short-lived encrypted credential created by the bulk student workflow."""
+
+    student = models.OneToOneField(
+        'student_profile.Student', on_delete=models.CASCADE, related_name='bulk_credential'
+    )
+    encrypted_password = models.TextField()
+    password_fingerprint = models.CharField(max_length=64, unique=True, db_index=True)
+    created_by = models.ForeignKey(
+        User, null=True, blank=True, on_delete=models.SET_NULL,
+        related_name='bulk_student_credentials_created',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    last_viewed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Bulk credential for {self.student.student_id}"
+
+
 # -----------------------------------------------
 
 class AcademicYear(models.Model):

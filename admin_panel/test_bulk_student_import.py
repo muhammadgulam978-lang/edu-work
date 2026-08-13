@@ -1,6 +1,9 @@
 from datetime import date
+from unittest.mock import patch
 
+from django.contrib.auth.models import User
 from django.test import TestCase
+from django.urls import reverse
 from openpyxl import Workbook
 
 from edupilot_core.models import EmailOutbox, FeePlan, NotificationQueue, StudentFeeAssignment
@@ -12,7 +15,8 @@ from .bulk_student_import import (
     preview_students_from_worksheet,
     select_student_worksheet,
 )
-from .models import AcademicYear, Admission, Class
+from .bulk_credentials import get_bulk_student_password
+from .models import AcademicYear, Admission, BulkStudentCredential, Class
 
 
 class BulkStudentImportTests(TestCase):
@@ -45,7 +49,10 @@ class BulkStudentImportTests(TestCase):
         student = Student.objects.get()
         self.assertEqual(student.name, 'N/A')
         self.assertTrue(student.student_id.startswith('STU-'))
-        self.assertFalse(student.user.has_usable_password())
+        self.assertTrue(student.user.has_usable_password())
+        self.assertEqual(result.student_logins_ready, 1)
+        self.assertEqual(len(result.credentials), 1)
+        self.assertEqual(result.parent_data_missing, 1)
         self.assertEqual(Admission.objects.get().admission_status, 'approved')
         self.assertEqual(
             StudentFeeAssignment.objects.get(canonical_student=student).fee_plan,
@@ -101,6 +108,51 @@ class BulkStudentImportTests(TestCase):
             parent=parent, student=student, is_primary=True
         ).exists())
         self.assertEqual(EmailOutbox.objects.filter(status='PENDING').count(), 2)
+        self.assertEqual(len(result.credentials), 2)
+
+    def test_local_email_still_gets_usable_generated_portal_password(self):
+        sheet = self.worksheet(
+            ['Student Name', 'Email'],
+            [['Local Account', 'local.account@students.edupilot.local']],
+        )
+
+        result = import_students_from_worksheet(sheet, self.year)
+
+        student = Student.objects.get(name='Local Account')
+        self.assertTrue(student.user.has_usable_password())
+        self.assertEqual(result.student_logins_ready, 1)
+        self.assertEqual(result.password_reset_required, 0)
+        self.assertEqual(result.credentials[0]['login_id'], student.user.username)
+
+    def test_each_bulk_student_gets_a_distinct_securely_stored_password(self):
+        sheet = self.worksheet(
+            ['Student_Id', 'Student Name', 'Login_Id', 'Password'],
+            [
+                ['STU-PASS-1', 'Similar Student', 'similar.student.1', 'SharedSheetPassword'],
+                ['STU-PASS-2', 'Similar Student', 'similar.student.2', 'SharedSheetPassword'],
+            ],
+        )
+
+        result = import_students_from_worksheet(sheet, self.year)
+
+        self.assertEqual(result.imported, 2, result.errors)
+        passwords = [item['password'] for item in result.credentials]
+        self.assertEqual(len(passwords), len(set(passwords)))
+        self.assertEqual(BulkStudentCredential.objects.count(), 2)
+        for item in result.credentials:
+            student = Student.objects.get(student_id=item['student_id'])
+            self.assertTrue(student.user.check_password(item['password']))
+            self.assertEqual(get_bulk_student_password(student), item['password'])
+
+    def test_parent_data_is_not_fabricated_when_workbook_does_not_supply_it(self):
+        sheet = self.worksheet(['Student Name'], [['Student Without Parent']])
+
+        preview = preview_students_from_worksheet(sheet, self.year)
+        result = import_students_from_worksheet(sheet, self.year)
+
+        self.assertEqual(preview.parent_data_missing, 1)
+        self.assertEqual(result.parent_data_missing, 1)
+        self.assertEqual(Parent.objects.count(), 0)
 
     def test_student_phone_creates_trackable_message_queue_record(self):
         sheet = self.worksheet(
@@ -250,3 +302,103 @@ class BulkStudentImportTests(TestCase):
 
         with self.assertRaisesRegex(ValueError, 'Duplicate Excel headers'):
             preview_students_from_worksheet(sheet, self.year)
+
+    def test_teacher_workbook_is_rejected_by_student_import(self):
+        sheet = self.worksheet(
+            [
+                'S.No', 'Teacher Name', 'Teacher ID', 'Department', 'Subject',
+                'Qualification', 'Experience (Years)', 'Phone Number', 'Email',
+                'Joining Date', 'Is Active',
+            ],
+            [[
+                1, 'Wrong Portal Teacher', 'T1001', 'Science', 'Science',
+                'Masters', 5, '03001234567', 'teacher@example.com',
+                '2026-01-01', 'Yes',
+            ]],
+        )
+
+        with self.assertRaisesRegex(ValueError, 'teacher-format workbook'):
+            preview_students_from_worksheet(sheet, self.year)
+
+    def test_student_sheet_is_selected_when_workbook_also_has_teacher_sheet(self):
+        workbook = Workbook()
+        teacher_sheet = workbook.active
+        teacher_sheet.title = 'Teachers'
+        teacher_sheet.append(['Teacher Name', 'Teacher ID', 'Department', 'Email'])
+        teacher_sheet.append(['Teacher One', 'T1', 'Science', 'teacher@example.com'])
+        student_sheet = workbook.create_sheet('Students')
+        student_sheet.append(['Student_Id', 'Student Name', 'Email'])
+        student_sheet.append(['STU-MIXED-1', 'Correct Student', 'student@example.com'])
+
+        selected = select_student_worksheet(workbook)
+
+        self.assertEqual(selected.title, 'Students')
+
+
+class BulkStudentLoginActivationTests(TestCase):
+    def setUp(self):
+        self.admin = User.objects.create_superuser(
+            username='bulk-admin', email='bulk-admin@example.com', password='AdminPass@123'
+        )
+        self.client.force_login(self.admin)
+        self.year = AcademicYear.objects.create(year='2027-28', is_active=True)
+        self.student_ids = []
+        for index in range(10):
+            user = User.objects.create_user(
+                username=f'student_stu_batch_{index}',
+                email=f'batch{index}@students.edupilot.local',
+            )
+            user.set_unusable_password()
+            user.save(update_fields=['password'])
+            student = Student.objects.create(
+                academic_year=self.year,
+                user=user,
+                student_id=f'STU-BATCH-{index}',
+                name=f'Batch Student {index}',
+                father_name='N/A',
+                mother_name='N/A',
+                roll_no=str(index + 1),
+                gender='Male',
+                date_of_birth=date(2012, 1, 1),
+                email=f'batch{index}@students.edupilot.local',
+            )
+            self.student_ids.append(student.student_id)
+        session = self.client.session
+        session['bulk_student_last_result'] = {
+            'student_ids': self.student_ids,
+            'student_accounts_created': 10,
+            'student_logins_ready': 0,
+            'parent_logins_ready': 0,
+            'password_reset_required': 10,
+        }
+        session.save()
+
+    @patch('admin_panel.views._save_bulk_student_credentials', return_value='bulk/credentials.xlsx')
+    def test_activation_runs_in_short_batches_and_finishes_report(self, save_credentials):
+        url = reverse('bulk_upload_students_activate_logins')
+        start = self.client.post(
+            url, {'operation': 'start'}, HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+
+        self.assertEqual(start.status_code, 200)
+        self.assertEqual(start.json()['total_rows'], 10)
+
+        first = self.client.post(
+            url, {'operation': 'process', 'cursor': 0},
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+        )
+        self.assertFalse(first.json()['done'])
+        self.assertEqual(first.json()['processed_rows'], 8)
+
+        second = self.client.post(
+            url, {'operation': 'process', 'cursor': 8},
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+        )
+        self.assertTrue(second.json()['done'])
+        self.assertEqual(second.json()['processed_rows'], 10)
+        self.assertTrue(all(student.user.has_usable_password() for student in Student.objects.select_related('user')))
+        report = self.client.session['bulk_student_last_result']
+        self.assertEqual(report['student_logins_ready'], 10)
+        self.assertEqual(report['password_reset_required'], 0)
+        self.assertEqual(report['credentials_report_path'], 'bulk/credentials.xlsx')
+        self.assertEqual(len(save_credentials.call_args.args[1]), 10)

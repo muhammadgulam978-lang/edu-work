@@ -39,11 +39,13 @@ class BulkStudentImportResult:
     parent_logins_ready: int = 0
     credential_emails_queued: int = 0
     messages_queued: int = 0
+    parent_data_missing: int = 0
     errors: list[str] = field(default_factory=list)
     student_ids: list[str] = field(default_factory=list)
     parent_ids: list[int] = field(default_factory=list)
     credential_email_ids: list[int] = field(default_factory=list)
     message_ids: list[int] = field(default_factory=list)
+    credentials: list[dict] = field(default_factory=list)
     scanned_rows: int = 0
     last_row_number: int = 1
     complete: bool = True
@@ -59,8 +61,15 @@ class BulkStudentPreviewResult:
     existing_parents: int = 0
     new_parents: int = 0
     fee_ready_rows: int = 0
+    parent_data_missing: int = 0
     errors: list[str] = field(default_factory=list)
     rows: list[dict] = field(default_factory=list)
+    scanned_rows: int = 0
+    last_row_number: int = 1
+    complete: bool = True
+    seen_student_ids: list[str] = field(default_factory=list)
+    seen_usernames: list[str] = field(default_factory=list)
+    seen_emails: list[str] = field(default_factory=list)
 
 
 ALIASES = {
@@ -98,6 +107,15 @@ ALIASES = {
     'parent_relationship': ('parentrelationship', 'guardianrelationship', 'relationship'),
     'parent_login_id': ('parentloginid', 'guardianloginid', 'parentusername'),
     'parent_password': ('parentpassword', 'guardianpassword'),
+}
+
+# Headers that identify a teacher/payroll workbook. Some generic columns such as
+# Email, Phone and Status overlap with student imports, so a wrong workbook must
+# be rejected before those shared fields make its rows appear valid.
+TEACHER_WORKBOOK_HEADERS = {
+    'teachername', 'teacherid', 'department', 'subject', 'qualification',
+    'experienceyears', 'basicsalary', 'houseallowance', 'medicalallowance',
+    'transportallowance', 'utilityallowance', 'specialallowance', 'joiningdate',
 }
 
 
@@ -158,6 +176,13 @@ def _generated_password():
 
 def _worksheet_reader(worksheet):
     header_row = next(worksheet.iter_rows(min_row=1, max_row=1, values_only=True), ())
+    normalized_headers = {_header(value) for value in header_row if _header(value)}
+    teacher_headers = normalized_headers & TEACHER_WORKBOOK_HEADERS
+    if len(teacher_headers) >= 2:
+        raise ValueError(
+            'This is a teacher-format workbook, not a student workbook. '
+            'Please upload it from Bulk Upload Teachers.'
+        )
     alias_to_field = {
         alias: field_name for field_name, aliases in ALIASES.items() for alias in aliases
     }
@@ -200,28 +225,47 @@ def select_student_worksheet(workbook):
     """Select the worksheet containing the strongest supported student header set."""
     alias_set = {alias for aliases in ALIASES.values() for alias in aliases}
     candidates = []
+    teacher_workbook_found = False
     for position, worksheet in enumerate(workbook.worksheets):
         header_row = next(worksheet.iter_rows(min_row=1, max_row=1, values_only=True), ())
+        normalized_headers = {_header(value) for value in header_row if _header(value)}
+        if len(normalized_headers & TEACHER_WORKBOOK_HEADERS) >= 2:
+            teacher_workbook_found = True
+            continue
         score = sum(1 for value in header_row if _header(value) in alias_set)
         if score:
             candidates.append((score, -position, worksheet))
     if not candidates:
-        raise ValueError('No worksheet with supported student column headers was found.')
+        if teacher_workbook_found:
+            raise ValueError(
+                'This is a teacher-format workbook, not a student workbook. '
+                'Please upload it from Bulk Upload Teachers.'
+            )
+        raise ValueError(
+            'No worksheet with supported student column headers was found. '
+            'If this is a teacher file, use Bulk Upload Teachers.'
+        )
     worksheet = max(candidates, key=lambda item: (item[0], item[1]))[2]
     _worksheet_reader(worksheet)
     return worksheet
 
 
-def preview_students_from_worksheet(worksheet, active_year, sample_limit=12):
+def preview_students_from_worksheet(
+    worksheet, active_year, sample_limit=12, *, start_row=2, max_rows=None, seen=None
+):
     """Validate a worksheet without creating users or school records."""
     result = BulkStudentPreviewResult()
     _headers, cell, has_mapped_data = _worksheet_reader(worksheet)
     existing_usernames = {v.lower() for v in User.objects.values_list('username', flat=True)}
     existing_student_ids = {v.lower() for v in Student.objects.values_list('student_id', flat=True) if v}
     existing_emails = {v.lower() for v in Student.objects.values_list('email', flat=True) if v}
-    seen_usernames = set(existing_usernames)
-    seen_student_ids = set(existing_student_ids)
-    seen_emails = set(existing_emails)
+    seen = seen or {}
+    workbook_usernames = {value.lower() for value in seen.get('usernames', [])}
+    workbook_student_ids = {value.lower() for value in seen.get('student_ids', [])}
+    workbook_emails = {value.lower() for value in seen.get('emails', [])}
+    seen_usernames = existing_usernames | workbook_usernames
+    seen_student_ids = existing_student_ids | workbook_student_ids
+    seen_emails = existing_emails | workbook_emails
     parent_emails = {
         value.strip().lower()
         for value in Parent.objects.exclude(email__isnull=True).values_list('email', flat=True)
@@ -237,7 +281,21 @@ def preview_students_from_worksheet(worksheet, active_year, sample_limit=12):
     fee_plans = list(FeePlan.objects.all())
     fee_plan_names = {obj.name.lower() for obj in fee_plans}
 
-    for row_number, row in enumerate(worksheet.iter_rows(min_row=2, values_only=True), start=2):
+    max_row = worksheet.max_row or 1
+    if start_row > max_row:
+        result.last_row_number = max_row
+        result.complete = True
+        result.seen_student_ids = sorted(workbook_student_ids)
+        result.seen_usernames = sorted(workbook_usernames)
+        result.seen_emails = sorted(workbook_emails)
+        return result
+    end_row = max_row if max_rows is None else min(max_row, start_row + max_rows - 1)
+    result.last_row_number = max(1, end_row)
+    result.complete = end_row >= max_row
+    for row_number, row in enumerate(
+        worksheet.iter_rows(min_row=start_row, max_row=end_row, values_only=True), start=start_row
+    ):
+        result.scanned_rows += 1
         if not has_mapped_data(row):
             continue
         result.total_rows += 1
@@ -246,7 +304,6 @@ def preview_students_from_worksheet(worksheet, active_year, sample_limit=12):
         student_id = cell(row, 'student_id')
         login_id = cell(row, 'login_id')
         email = cell(row, 'email')
-        password = cell(row, 'password')
         class_name = cell(row, 'class_name')
         requested_year = cell(row, 'academic_year')
         fee_plan_name = cell(row, 'fee_plan')
@@ -263,11 +320,6 @@ def preview_students_from_worksheet(worksheet, active_year, sample_limit=12):
         if email and email.lower() in seen_emails:
             errors.append(f"Student email '{email}' already exists or is repeated")
             duplicate = True
-        if password:
-            try:
-                validate_password(password)
-            except ValidationError as exc:
-                errors.append('Password: ' + '; '.join(exc.messages))
         if requested_year and requested_year.lower() not in year_names:
             errors.append(
                 f"Academic year '{requested_year}' is not configured; active year {active_year.year} will be used"
@@ -288,6 +340,8 @@ def preview_students_from_worksheet(worksheet, active_year, sample_limit=12):
                 result.existing_parents += 1
             else:
                 result.new_parents += 1
+        else:
+            result.parent_data_missing += 1
 
         fee_ready = False
         if fee_plan_name and fee_plan_name.lower() in fee_plan_names:
@@ -319,10 +373,13 @@ def preview_students_from_worksheet(worksheet, active_year, sample_limit=12):
         if not blocking_errors:
             if student_id:
                 seen_student_ids.add(student_id.lower())
+                workbook_student_ids.add(student_id.lower())
             if login_id:
                 seen_usernames.add(login_id.lower())
+                workbook_usernames.add(login_id.lower())
             if email:
                 seen_emails.add(email.lower())
+                workbook_emails.add(email.lower())
         if len(result.rows) < sample_limit:
             result.rows.append({
                 'row_number': row_number,
@@ -334,11 +391,15 @@ def preview_students_from_worksheet(worksheet, active_year, sample_limit=12):
                 'status': status,
                 'message': '; '.join(errors) if errors else 'Ready to import',
             })
+    result.seen_student_ids = sorted(workbook_student_ids)
+    result.seen_usernames = sorted(workbook_usernames)
+    result.seen_emails = sorted(workbook_emails)
     return result
 
 
 def import_students_from_worksheet(
-    worksheet, active_year, *, start_row=2, max_rows=None, dispatch_emails=True
+    worksheet, active_year, *, start_row=2, max_rows=None, dispatch_emails=True,
+    credential_created_by=None,
 ):
     """Import a streaming worksheet without retaining its rows in memory."""
     result = BulkStudentImportResult()
@@ -389,7 +450,8 @@ def import_students_from_worksheet(
             name = cell(row, 'name') or 'N/A'
             login_id = cell(row, 'login_id') or f"student_{student_id.lower().replace('-', '_')}"
             email = cell(row, 'email') or f'{login_id}@students.edupilot.local'
-            password = cell(row, 'password')
+            from .bulk_credentials import generate_unique_student_password
+            password = generate_unique_student_password()
 
             if student_id.lower() in existing_student_ids:
                 raise ValueError(f"Student ID '{student_id}' already exists")
@@ -397,11 +459,6 @@ def import_students_from_worksheet(
                 raise ValueError(f"Login ID '{login_id}' already exists")
             if email.lower() in existing_emails:
                 raise ValueError(f"Student email '{email}' already exists")
-            if password:
-                validate_password(password)
-            elif _is_real_email(email):
-                password = _generated_password()
-
             requested_year = cell(row, 'academic_year').lower()
             academic_year = year_map.get(requested_year) or active_year
             class_obj = class_map.get(cell(row, 'class_name').lower()) if cell(row, 'class_name') else None
@@ -465,16 +522,20 @@ def import_students_from_worksheet(
 
                 if status == 'approved':
                     user = User(username=login_id, email=email, first_name=name[:150])
-                    if password:
-                        user.set_password(password)
-                    else:
-                        user.set_unusable_password()
-                        result.password_reset_required += 1
+                    user.set_password(password)
                     user.save()
                     user.groups.add(student_group)
                     result.student_accounts_created += 1
                     if user.has_usable_password():
                         result.student_logins_ready += 1
+                    result.credentials.append({
+                        'role': 'Student',
+                        'name': name,
+                        'login_id': user.username,
+                        'password': password,
+                        'email': email,
+                        'student_id': student_id,
+                    })
                     portal_student = Student.objects.create(
                         user=user,
                         academic_year=academic_year,
@@ -492,6 +553,10 @@ def import_students_from_worksheet(
                         nationality=cell(row, 'nationality') or 'N/A',
                         address=cell(row, 'address') or 'N/A',
                         admission_date=_date(cell(row, 'admission_date')) or today,
+                    )
+                    from .bulk_credentials import store_bulk_student_credential
+                    store_bulk_student_credential(
+                        portal_student, password, created_by=credential_created_by
                     )
                     result.student_ids.append(portal_student.student_id)
                     legacy_student = ensure_legacy_student(portal_student)
@@ -553,18 +618,14 @@ def import_students_from_worksheet(
                             parent_login = _available_username(preferred_parent_login, existing_usernames)
                             if parent_password:
                                 validate_password(parent_password)
-                            elif _is_real_email(parent_email):
+                            else:
                                 parent_password = _generated_password()
                             parent_user = User(
                                 username=parent_login,
                                 email=parent_email or '',
                                 first_name=(parent.full_name or 'Parent')[:150],
                             )
-                            if parent_password:
-                                parent_user.set_password(parent_password)
-                            else:
-                                parent_user.set_unusable_password()
-                                result.password_reset_required += 1
+                            parent_user.set_password(parent_password)
                             parent_user.save()
                             parent_group, _ = Group.objects.get_or_create(name='Parent')
                             parent_user.groups.add(parent_group)
@@ -573,6 +634,14 @@ def import_students_from_worksheet(
                             result.parent_accounts_created += 1
                             if parent_user.has_usable_password():
                                 result.parent_logins_ready += 1
+                            result.credentials.append({
+                                'role': 'Parent',
+                                'name': parent.full_name or 'Parent',
+                                'login_id': parent_user.username,
+                                'password': parent_password,
+                                'email': parent_email or '',
+                                'student_id': student_id,
+                            })
                             if queue_account_email(
                                 user=parent_user,
                                 password=parent_password,
@@ -613,6 +682,8 @@ def import_students_from_worksheet(
                         result.parents_linked += 1
                         if parent.pk not in result.parent_ids:
                             result.parent_ids.append(parent.pk)
+                    else:
+                        result.parent_data_missing += 1
                     result.enrolled += 1
                     if fee_plan:
                         StudentFeeAssignment.objects.update_or_create(

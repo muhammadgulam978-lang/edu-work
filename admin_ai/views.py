@@ -375,8 +375,21 @@ def student_intelligence_detail(request, student_id):
     if not snapshot:
         messages.error(request, "Student profile not found.")
         return redirect("admin_ai_student_intelligence")
+    from admin_panel.bulk_credentials import get_bulk_student_password
+    from student_profile.models import Student as PortalStudent
+
+    portal_student = PortalStudent.objects.filter(
+        student_id=snapshot["student"]["student_id"]
+    ).first()
+    temporary_password = get_bulk_student_password(portal_student) if portal_student else ""
     profile_url = request.build_absolute_uri(reverse("admin_ai_student_intelligence_detail", kwargs={"student_id": snapshot["student"]["student_id"]}))
-    return render(request, "admin_ai/student_intelligence_detail.html", {"snapshot": snapshot, "profile_url": profile_url})
+    response = render(request, "admin_ai/student_intelligence_detail.html", {
+        "snapshot": snapshot,
+        "profile_url": profile_url,
+        "bulk_temporary_password": temporary_password,
+    })
+    response["Cache-Control"] = "private, no-store"
+    return response
 
 
 @login_required

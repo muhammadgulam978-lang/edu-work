@@ -97,6 +97,11 @@
       <article><i class="fa fa-wallet"></i><strong>{{ result.fee_ready }}</strong><span>Fee assignments ready</span><small>Ready for fee automation</small></article>
       <article class="{% if result.password_reset_required %}is-warning{% endif %}"><i class="fa fa-key"></i><strong>{{ result.password_reset_required }}</strong><span>Password action needed</span><small>Accounts without usable password</small></article>
     </div>
+    <div class="bulk-actions">
+      {% if result.credentials_report_path %}<a class="bulk-btn bulk-btn-primary" href="{% url 'bulk_upload_students_credentials' %}"><i class="fa fa-file-excel"></i> Download Portal IDs & Passwords</a>{% endif %}
+      {% if result.password_reset_required %}<form method="post" action="{% url 'bulk_upload_students_activate_logins' %}" data-activation-form data-progress-mode="activation" data-total-rows="{{ result.password_reset_required }}">{% csrf_token %}<button class="bulk-btn bulk-btn-primary" type="submit"><i class="fa fa-key"></i> Activate {{ result.password_reset_required }} Portal Logins</button></form>{% endif %}
+    </div>
+    {% if result.parent_data_missing %}<div class="bulk-guidance"><i class="fa fa-info-circle"></i><span>{{ result.parent_data_missing }} row{{ result.parent_data_missing|pluralize }} had no father/parent identity or contact columns, so no parent account could be linked. Upload those rows again with Parent/Father Name plus Parent Email, Phone, Login ID and Password.</span></div>{% elif result.student_accounts_created and not result.parents_linked %}<div class="bulk-guidance"><i class="fa fa-info-circle"></i><span>No parent records were linked from this import. The uploaded workbook did not provide usable parent or father identity/contact data. Parent accounts are created only from supplied family data to avoid linking a student to an invented or incorrect parent.</span></div>{% endif %}
     <div class="bulk-delivery-note"><i class="fa fa-sync-alt"></i><span>Delivery status updates live every 15 seconds. Queued does not mean delivered; only confirmed deliveries appear under Sent.</span></div>
     {% if result.errors %}<details class="bulk-errors"><summary>View skipped-row errors</summary>{% for error in result.errors %}<p>{{ error }}</p>{% endfor %}</details>{% endif %}
   </section>
@@ -121,8 +126,8 @@
     <strong class="bulk-progress-percent" data-progress-percent>0%</strong>
     <div class="bulk-progress-track"><span data-progress-bar></span></div>
     <div class="bulk-progress-times"><span><i class="far fa-clock"></i> Elapsed: <b data-progress-elapsed>0s</b></span><span>Estimated remaining: <b data-progress-remaining>Calculating</b></span></div>
-    <p class="bulk-progress-estimate">Upload progress uses transferred bytes. Import progress, elapsed time and remaining time use rows committed by the server.</p>
+    <p class="bulk-progress-estimate" data-progress-estimate>Upload progress uses transferred bytes. Import progress, elapsed time and remaining time use rows committed by the server.</p>
   </div>
 </div>
-<script src="{% static 'admin_panel/js/bulk-student-upload.js' %}?v=bulk-student-real-progress-1"></script>
+<script src="{% static 'admin_panel/js/bulk-student-upload.js' %}?v=bulk-live-progress-credentials-1"></script>
 {% endblock %}
