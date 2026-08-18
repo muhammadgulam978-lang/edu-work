@@ -1,0 +1,403 @@
+{% extends 'admin_panel/bases.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}
+  {% if form.instance.pk %}Edit Teacher{% else %}Create Teacher{% endif %}
+{% endblock %}
+
+{% block extra_head %}
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/3.3.0/select2.css" />
+{% endblock %}
+
+{% block content %}
+<style>
+  .teacher-form-page {
+    --edu-teal: #88D0C5;
+    --edu-green: #8BC740;
+    --edu-bg: #F5F5FD;
+    --edu-border: #e9ecef;
+    --edu-muted: #6c757d;
+    margin: 0 20px 30px;
+    color: #111;
+  }
+  .teacher-form-card {
+    border: 1px solid var(--edu-border);
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, .05);
+    overflow: hidden;
+  }
+  .teacher-form-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 24px 28px;
+    background: linear-gradient(90deg, rgba(136, 208, 197, .24), rgba(245, 245, 253, .9));
+    border-bottom: 1px solid var(--edu-border);
+  }
+  .teacher-form-header h4 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 500;
+  }
+  .teacher-form-header p {
+    margin: 6px 0 0;
+    color: var(--edu-muted);
+    font-size: 14px;
+    font-weight: 400;
+  }
+  .teacher-form-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .teacher-form-body {
+    padding: 28px;
+  }
+  .teacher-form-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 24px;
+  }
+  .teacher-form-section {
+    border: 1px solid var(--edu-border);
+    border-radius: 14px;
+    background: #fff;
+    padding: 22px;
+  }
+  .teacher-form-section h5 {
+    margin: 0 0 18px;
+    font-size: 18px;
+    font-weight: 500;
+  }
+  .teacher-field {
+    margin-bottom: 18px;
+  }
+  .teacher-field label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--edu-muted);
+    font-size: 14px;
+    font-weight: 400;
+  }
+  .teacher-field .form-control,
+  .teacher-field select,
+  .teacher-field textarea,
+  .teacher-field input[type="text"],
+  .teacher-field input[type="email"],
+  .teacher-field input[type="password"],
+  .teacher-field input[type="number"],
+  .teacher-field input[type="date"] {
+    width: 100%;
+    min-height: 48px;
+    border: 1px solid var(--edu-border);
+    border-radius: 12px;
+    background: #fff;
+    color: #111;
+    font-size: 14px;
+    font-weight: 400;
+    padding: 10px 14px;
+    outline: none;
+    box-shadow: none;
+  }
+  .teacher-field .form-control:focus,
+  .teacher-field select:focus,
+  .teacher-field input:focus {
+    border-color: var(--edu-teal);
+    box-shadow: 0 0 0 4px rgba(136, 208, 197, .18);
+  }
+  .teacher-photo-panel {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 18px;
+    align-items: center;
+    margin-bottom: 24px;
+    padding: 20px;
+    border: 1px solid var(--edu-border);
+    border-radius: 14px;
+    background: rgba(245, 245, 253, .65);
+  }
+  .teacher-photo-panel img {
+    width: 112px;
+    height: 112px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 5px solid #fff;
+    box-shadow: 0 10px 22px rgba(0, 0, 0, .07);
+    background: #fff;
+  }
+  .teacher-photo-panel input[type="file"] {
+    width: 100%;
+    border: 1px solid var(--edu-border);
+    border-radius: 12px;
+    background: #fff;
+    padding: 10px;
+    font-size: 14px;
+  }
+  .teacher-soft-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 10px 20px;
+    border: 1px solid rgba(136, 208, 197, .65);
+    border-radius: 999px;
+    background: var(--edu-teal);
+    color: #111;
+    font-weight: 500;
+    text-decoration: none;
+    box-shadow: 0 8px 18px rgba(136, 208, 197, .22);
+  }
+  .teacher-soft-btn:hover {
+    color: #111;
+    text-decoration: none;
+  }
+  .teacher-soft-btn.secondary {
+    background: #fff;
+    box-shadow: none;
+  }
+  .teacher-submit-row {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 24px;
+  }
+  .teacher-form-errors {
+    margin-bottom: 22px;
+    padding: 16px 18px;
+    border: 1px solid rgba(255, 77, 61, .22);
+    border-radius: 12px;
+    background: #FFEDEA;
+    color: #111;
+  }
+  .teacher-form-errors ul {
+    margin: 0;
+    padding-left: 18px;
+  }
+  .teacher-checkbox-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 48px;
+    padding: 10px 14px;
+    border: 1px solid var(--edu-border);
+    border-radius: 12px;
+    background: #fff;
+  }
+  .teacher-checkbox-wrap input {
+    width: 18px;
+    height: 18px;
+  }
+  .teacher-form-page .select2-container {
+    width: 100% !important;
+  }
+  .teacher-form-page .select2-container-multi .select2-choices,
+  .teacher-form-page .select2-container .select2-choice {
+    min-height: 48px;
+    border: 1px solid var(--edu-border) !important;
+    border-radius: 12px !important;
+    background: #fff !important;
+    box-shadow: none !important;
+    padding: 6px 10px;
+  }
+  .teacher-form-page .select2-container-multi .select2-choices .select2-search-choice {
+    margin: 4px 6px 4px 0;
+    padding: 7px 12px 7px 26px !important;
+    border: 1px solid rgba(136, 208, 197, .6) !important;
+    border-radius: 999px !important;
+    background: rgba(136, 208, 197, .28) !important;
+    color: #111 !important;
+    font-size: 13px;
+    font-weight: 400;
+    box-shadow: none !important;
+  }
+  .teacher-form-page .select2-search-choice-close {
+    top: 8px !important;
+    left: 9px !important;
+  }
+  @media (max-width: 992px) {
+    .teacher-form-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  @media (max-width: 680px) {
+    .teacher-form-page {
+      margin: 0 12px 24px;
+    }
+    .teacher-form-header,
+    .teacher-photo-panel {
+      align-items: flex-start;
+      flex-direction: column;
+      grid-template-columns: 1fr;
+    }
+    .teacher-form-body {
+      padding: 20px;
+    }
+    .teacher-submit-row,
+    .teacher-form-actions {
+      flex-direction: column;
+    }
+    .teacher-soft-btn {
+      width: 100%;
+    }
+  }
+</style>
+
+<div class="teacher-form-page">
+  <div class="teacher-form-card">
+    <div class="teacher-form-header">
+      <div>
+        <h4>{% if form.instance.pk %}Edit Teacher{% else %}Create New Teacher{% endif %}</h4>
+        <p>{% if form.instance.pk %}Update profile, subjects, status, and teaching details.{% else %}Create teacher profile and portal login credentials.{% endif %}</p>
+      </div>
+      <div class="teacher-form-actions">
+        {% if form.instance.pk %}
+          <a href="{% url 'teacher_profile' form.instance.pk %}" class="teacher-soft-btn secondary"><i class="fa fa-eye"></i>View Profile</a>
+        {% endif %}
+        <a href="{% url 'teacher_list' %}" class="teacher-soft-btn secondary"><i class="fa fa-arrow-left"></i>Back to List</a>
+      </div>
+    </div>
+
+    <div class="teacher-form-body">
+      <form method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
+        {% csrf_token %}
+
+        {% if form.errors %}
+          <div class="teacher-form-errors">
+            <ul>
+              {% for field in form %}
+                {% for error in field.errors %}
+                  <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                {% endfor %}
+              {% endfor %}
+              {% for error in form.non_field_errors %}
+                <li>{{ error }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% endif %}
+
+        <div class="teacher-photo-panel">
+          {% if form.instance.image %}
+            <img src="{{ form.instance.image.url }}" alt="{{ form.instance.name|default:'Teacher' }}">
+          {% else %}
+            <img src="{% static 'admin_panel/images/dummy-profile.png' %}" alt="Teacher avatar">
+          {% endif %}
+          <div class="teacher-field" style="margin-bottom:0;">
+            <label>Profile Picture</label>
+            {{ form.image }}
+          </div>
+        </div>
+
+        <div class="teacher-form-grid">
+          <section class="teacher-form-section">
+            <h5>Personal Details</h5>
+            <div class="teacher-field">
+              <label>Full Name</label>
+              {{ form.name|add_class:"form-control" }}
+            </div>
+            <div class="teacher-field">
+              <label>Email</label>
+              {{ form.email|add_class:"form-control" }}
+            </div>
+            <div class="teacher-field">
+              <label>Phone</label>
+              {{ form.phone|add_class:"form-control" }}
+            </div>
+            <div class="teacher-field">
+              <label>Gender</label>
+              {{ form.gender|add_class:"form-control" }}
+            </div>
+            <div class="teacher-field">
+              <label>Date of Birth</label>
+              {{ form.date_of_birth|add_class:"form-control" }}
+            </div>
+            <div class="teacher-field">
+              <label>Qualification</label>
+              {{ form.qualification|add_class:"form-control" }}
+            </div>
+            <div class="teacher-field">
+              <label>Address</label>
+              {{ form.Address|add_class:"form-control" }}
+            </div>
+          </section>
+
+          <section class="teacher-form-section">
+            <h5>Teaching & Portal Details</h5>
+            {% if not form.instance.pk %}
+              <div class="teacher-field">
+                <label>Login ID</label>
+                {{ form.login_id|add_class:"form-control" }}
+              </div>
+              <div class="teacher-field">
+                <label>Password</label>
+                {{ form.password|add_class:"form-control" }}
+              </div>
+              <div class="teacher-field">
+                <label>Confirm Password</label>
+                {{ form.confirm_password|add_class:"form-control" }}
+              </div>
+            {% endif %}
+            <div class="teacher-field">
+              <label>Faculty Group</label>
+              {{ form.faculty_group|add_class:"form-control select2" }}
+            </div>
+            <div class="teacher-field">
+              <label>Department</label>
+              {{ form.department|add_class:"form-control" }}
+            </div>
+            <div class="teacher-field">
+              <label for="{{ form.subjects.id_for_label }}">Subjects</label>
+              {{ form.subjects|add_class:"form-control select2" }}
+            </div>
+            <div class="teacher-field">
+              <label>Status</label>
+              {{ form.status|add_class:"form-control" }}
+            </div>
+            <div class="teacher-field">
+              <label>Experience (Years)</label>
+              {{ form.experience|add_class:"form-control" }}
+            </div>
+            <div class="teacher-field">
+              <label>Joining Date</label>
+              {{ form.joining_date|add_class:"form-control" }}
+            </div>
+            <div class="teacher-field">
+              <label>Merge Class</label>
+              <div class="teacher-checkbox-wrap">
+                {{ form.is_merge }}
+                <span>Allow merged class assignment</span>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <div class="teacher-submit-row">
+          <a href="{% url 'teacher_list' %}" class="teacher-soft-btn secondary">Cancel</a>
+          <button type="submit" class="teacher-soft-btn">
+            {% if form.instance.pk %}Update Teacher{% else %}Submit{% endif %}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://code.jquery.com/jquery-1.8.3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/3.3.0/select2.min.js"></script>
+<script>
+  $(document).ready(function() {
+    $('.select2').select2({
+      placeholder: "Select options",
+      allowClear: true,
+      closeOnSelect: false
+    });
+  });
+</script>
+{% endblock %}

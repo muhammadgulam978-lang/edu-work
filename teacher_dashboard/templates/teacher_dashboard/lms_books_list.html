@@ -1,0 +1,72 @@
+{% extends "teacher_dashboard/bases.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+
+  <!-- ================= HEADER ================= -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h3 class="mb-1">Books</h3>
+      <p class="text-muted mb-0">
+        Create a book first, then upload chapters inside it
+      </p>
+    </div>
+
+    <!-- ✅ CREATE BOOK (ONLY NAME) -->
+    <a class="btn btn-primary"
+       href="{% url 'lms_create_book' class_id section_id subject_id %}">
+      + Create Book
+    </a>
+  </div>
+
+  <!-- ================= BOOKS LIST ================= -->
+  {% if books %}
+    <div class="card">
+      <div class="card-body">
+        <div class="table-responsive">
+
+          <table class="table table-bordered table-hover mb-0">
+            <thead class="table-light">
+              <tr>
+                <th style="width: 60%">Book Name</th>
+                <th style="width: 20%">Class</th>
+                <th style="width: 20%">Action</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {% for book in books %}
+                <tr>
+                  <td>
+                    <strong>{{ book.title }}</strong>
+                  </td>
+                  <td>
+                    {{ book.class_for }}
+                  </td>
+                  <td>
+                    <!-- ✅ OPEN BOOK → CHAPTERS PAGE -->
+                    <a class="btn btn-sm btn-outline-primary"
+                       href="{% url 'lms_book_chapters' book.id %}">
+                      Open Book
+                    </a>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+
+          </table>
+
+        </div>
+      </div>
+    </div>
+  {% else %}
+    <!-- ================= EMPTY STATE ================= -->
+    <div class="alert alert-info">
+      <strong>No books created yet.</strong><br>
+      Please click <b>“Create Book”</b> to add a book for this subject.
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

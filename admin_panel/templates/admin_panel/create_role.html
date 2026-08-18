@@ -1,0 +1,77 @@
+{% extends "admin_panel/bases.html" %}
+{% load static %}
+
+{% block title %}Create Role{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'admin_panel/css/query.css' %}">
+<style>
+    fieldset {
+        border: 1px solid #dcdcdc;
+        padding: 12px 15px;
+        border-radius: 6px;
+        background: #ffffff;
+    }
+    legend {
+        font-size: 16px;
+        font-weight: bold;
+        padding: 0 10px;
+    }
+    .checkbox-label {
+        margin-bottom: 5px;
+        display: block;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="col-12">
+  <div class="card" style="background:#f8f9fa; margin:20px;">
+
+    <!-- Card Header -->
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h4 class="card-title mb-0">Create New Role</h4>
+    </div>
+
+    <!-- Card Body -->
+    <div class="card-body">
+
+      <form method="POST">
+        {% csrf_token %}
+
+        <!-- Role Name -->
+        <div class="mb-3">
+          <label for="id_name" class="form-label"><strong>Role Name:</strong></label>
+          {{ form.name }}
+        </div>
+
+        <h5 class="mt-4 mb-3"><strong>Select Permissions (Grouped by Model)</strong></h5>
+
+        <!-- Permission Groups -->
+        <div class="row">
+          {% for model_name, perms in form.grouped_permissions.items %}
+          <div class="col-md-6 mb-3">
+            <fieldset>
+              <legend>{{ model_name }}</legend>
+              {% for perm in perms %}
+              <label class="checkbox-label">
+                <input type="checkbox" name="permissions" value="{{ perm.id }}">
+                {{ perm.name }}
+              </label>
+              {% endfor %}
+            </fieldset>
+          </div>
+          {% endfor %}
+        </div>
+
+        <!-- Submit -->
+        <button type="submit" class="btn btn-success mt-3">Create Role</button>
+
+      </form>
+
+    </div>
+  </div>
+</div>
+
+{% endblock %}

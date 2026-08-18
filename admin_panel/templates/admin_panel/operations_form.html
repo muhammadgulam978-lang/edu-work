@@ -1,0 +1,42 @@
+{% extends "admin_panel/bases.html" %}
+{% load static %}
+
+{% block title %}{% if is_edit %}Edit{% else %}Add{% endif %} {{ singular }} | EduPilot{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{% static 'admin_panel/css/operations_admin.css' %}?v=operations-1">
+{% endblock %}
+
+{% block content %}
+<div class="ops-page ops-form-page">
+    <div class="ops-heading">
+        <div class="ops-title">
+            <span class="ops-title-icon"><i class="fas {{ icon }}"></i></span>
+            <div>
+                <h2>{% if is_edit %}Edit{% else %}Add{% endif %} {{ singular }}</h2>
+                <p>{% if is_edit %}Update this record's details.{% else %}Create a new record for {{ title|lower }}.{% endif %}</p>
+            </div>
+        </div>
+    </div>
+
+    <section class="ops-panel ops-form-panel">
+        <form method="post" novalidate>
+            {% csrf_token %}
+            {% if form.non_field_errors %}<div class="ops-form-error">{{ form.non_field_errors }}</div>{% endif %}
+            <div class="ops-form-grid">
+                {% for field in form %}
+                <div class="ops-field{% if field.field.widget.input_type == 'checkbox' %} ops-checkbox-field{% endif %}">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %}<span>*</span>{% endif %}</label>
+                    {{ field }}
+                    {% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}
+                    {% for error in field.errors %}<div class="ops-field-error">{{ error }}</div>{% endfor %}
+                </div>
+                {% endfor %}
+            </div>
+            <div class="ops-form-actions">
+                <a href="{% url list_url %}" class="ops-btn ops-btn-secondary"><i class="fas fa-arrow-left"></i> Cancel</a>
+                <button type="submit" class="ops-btn ops-btn-primary"><i class="fas fa-save"></i> Save {{ singular }}</button>
+            </div>
+        </form>
+    </section>
+</div>
+{% endblock %}

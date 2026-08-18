@@ -1,0 +1,69 @@
+{% extends "admin_panel/bases.html" %}
+{% load static %}
+
+{% block title %}Create Exam Format{% endblock %}
+{% block content %}
+<div class="col-12">
+  <div class="card" style="background: #f8f9fa; margin-left:20px; margin-right:20px;">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h4 class="card-title mb-0">Create Exam Format</h4>
+      <a href="{% url 'format_list' %}" class="btn btn-secondary me-2">
+        <i class="fa fa-arrow-left me-2"></i>Back to Formats
+      </a>
+    </div>
+
+    <div class="card-body">
+      <form method="post">
+        {% csrf_token %}
+        
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label class="form-label">Class</label>
+            <select name="class" class="form-select" required>
+              <option value="">-- Select Class --</option>
+              {% for cls in classes %}
+              <option value="{{ cls.id }}">{{ cls.class_name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Subject</label>
+            <select name="subject" class="form-select" required>
+              <option value="">-- Select Subject --</option>
+              {% for sub in subjects %}
+              <option value="{{ sub.id }}">{{ sub.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Format Name</label>
+          <input type="text" name="format_name" class="form-control" placeholder="e.g. Midterm 2025" required>
+        </div>
+
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label class="form-label">No. of MCQs</label>
+            <input type="number" name="num_mcqs" class="form-control" min="0">
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label">No. of Short Questions</label>
+            <input type="number" name="num_short" class="form-control" min="0">
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label">No. of Long Questions</label>
+            <input type="number" name="num_long" class="form-control" min="0">
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-end">
+          <button type="submit" class="btn btn-primary">
+            <i class="fa fa-save me-2"></i>Save Format
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

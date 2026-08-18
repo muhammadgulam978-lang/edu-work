@@ -1,0 +1,51 @@
+{% extends "admin_panel/bases.html" %}
+
+{% block title %}Search{% endblock %}
+{% block page_title %}Search{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+                <h4 class="mb-1">Search Results</h4>
+                <p class="text-muted mb-0">Results for "{{ query }}"</p>
+            </div>
+            <form class="input-group" action="{% url 'admin_search' %}" method="get" style="max-width: 420px;">
+                <input type="text" class="form-control" name="q" value="{{ query }}" placeholder="Search again...">
+                <button class="btn btn-primary" type="submit">Search</button>
+            </form>
+        </div>
+        <div class="card-body">
+            {% if results %}
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Module</th>
+                                <th>Description</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in results %}
+                                <tr>
+                                    <td>{{ item.title }}</td>
+                                    <td>{{ item.module }}</td>
+                                    <td>{{ item.description|default:"-" }}</td>
+                                    <td>{{ item.status|default:"-" }}</td>
+                                    <td><a class="btn btn-sm btn-primary" href="{{ item.url }}">Open</a></td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-muted mb-0">No matching results found.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

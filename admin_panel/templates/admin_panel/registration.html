@@ -1,0 +1,229 @@
+{% extends 'admin_panel/bases.html' %}
+{% load static %}
+
+{% block title %}Registration Admission Form{% endblock %}
+
+{% block head %}
+  <link rel="stylesheet" href="{% static 'admin_panel/css/student_gateway.css' %}?v=student-gateway-1">
+{% endblock %}
+
+{% block content %}
+<div class="student-gateway">
+  <section class="sg-card">
+    <div class="sg-header">
+      <div>
+        <p class="sg-kicker">Student Management</p>
+        <h1 class="sg-title">Student Admission Form</h1>
+        <p class="sg-subtitle">Capture school, student, parent, and admission details in one structured workflow.</p>
+      </div>
+      <div class="sg-actions">
+        <a href="{% url 'admission_list' %}" class="sg-btn sg-btn-secondary">
+          <i class="fa fa-arrow-left"></i>
+          <span>Back to List</span>
+        </a>
+        <button type="submit" form="student-admission-form" class="sg-btn sg-btn-primary">
+          <i class="fa fa-check"></i>
+          <span>Submit Admission</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="sg-body">
+      {% if form.errors %}
+        <div class="sg-alert sg-warning">
+          Please review the highlighted admission details and submit again.
+        </div>
+      {% endif %}
+
+      <form method="POST" action="{% url 'registration' %}" id="student-admission-form" class="needs-validation" novalidate>
+        {% csrf_token %}
+
+        <div class="sg-panel">
+          <h2 class="sg-section-title">
+            <i class="fa fa-school"></i>
+            School Details
+          </h2>
+          <div class="sg-grid">
+            <div class="sg-field">
+              <label for="campus">Campus</label>
+              <select id="campus" name="campus" required>
+                <option value="">Select Campus</option>
+                <option value="main" {% if form.campus.value == "main" %}selected{% endif %}>Main Campus</option>
+                <option value="city" {% if form.campus.value == "city" %}selected{% endif %}>City Campus</option>
+                <option value="boys" {% if form.campus.value == "boys" %}selected{% endif %}>Boys Campus</option>
+                <option value="girls" {% if form.campus.value == "girls" %}selected{% endif %}>Girls Campus</option>
+              </select>
+              <div class="invalid-feedback">Please select a campus.</div>
+            </div>
+
+            <div class="sg-field">
+              <label for="branch">Branch</label>
+              <select id="branch" name="branch" required>
+                <option value="">Select Branch</option>
+                <option value="main" {% if form.branch.value == "main" %}selected{% endif %}>Main Campus</option>
+                <option value="city" {% if form.branch.value == "city" %}selected{% endif %}>City Campus</option>
+                <option value="boys" {% if form.branch.value == "boys" %}selected{% endif %}>Boys Campus</option>
+                <option value="girls" {% if form.branch.value == "girls" %}selected{% endif %}>Girls Campus</option>
+              </select>
+              <div class="invalid-feedback">Please select a branch.</div>
+            </div>
+
+            <div class="sg-field">
+              <label for="academic_year">Academic Year</label>
+              <select id="academic_year" name="academic_year" required>
+                <option value="">Select Academic Year</option>
+                {% for year in academic_years %}
+                  <option value="{{ year.id }}" {% if academic_year == year.id or form.academic_year.value|stringformat:"s" == year.id|stringformat:"s" %}selected{% endif %}>{{ year.year }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="sg-field">
+              <label for="class_fk">Class</label>
+              <select id="class_fk" name="class_fk" required>
+                <option value="">Select Class</option>
+                {% for class_obj in classes %}
+                  <option value="{{ class_obj.id }}" {% if form.class_fk.value|stringformat:"s" == class_obj.id|stringformat:"s" %}selected{% endif %}>{{ class_obj.class_name }}</option>
+                {% endfor %}
+              </select>
+              <div class="invalid-feedback">Please select a class.</div>
+            </div>
+
+            <div class="sg-field">
+              <label for="ref_no">Reference No</label>
+              <input type="text" id="ref_no" name="ref_no" value="{{ form.ref_no.value|default:'' }}">
+            </div>
+
+            <div class="sg-field">
+              <label for="admission_date">Admission Date</label>
+              <input type="date" id="admission_date" name="admission_date" value="{{ form.admission_date.value|date:'Y-m-d' }}" required>
+              <div class="invalid-feedback">Please select admission date.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sg-panel">
+          <h2 class="sg-section-title">
+            <i class="fa fa-user-graduate"></i>
+            Student Details
+          </h2>
+          <div class="sg-grid">
+            <div class="sg-field">
+              <label for="name">Student Name</label>
+              <input type="text" id="name" name="name" value="{{ form.name.value|default:'' }}" required>
+              <div class="invalid-feedback">Please enter the student name.</div>
+            </div>
+
+            <div class="sg-field">
+              <label for="dob">Date of Birth</label>
+              <input type="date" id="dob" name="dob" value="{{ form.dob.value|date:'Y-m-d' }}" required>
+              <div class="invalid-feedback">Please select a date of birth.</div>
+            </div>
+
+            <div class="sg-field">
+              <label for="gender">Gender</label>
+              <select id="gender" name="gender" required>
+                <option value="" disabled {% if not form.gender.value %}selected{% endif %}>Select Gender</option>
+                <option value="male" {% if form.gender.value == "male" %}selected{% endif %}>Male</option>
+                <option value="female" {% if form.gender.value == "female" %}selected{% endif %}>Female</option>
+                <option value="other" {% if form.gender.value == "other" %}selected{% endif %}>Other</option>
+              </select>
+              <div class="invalid-feedback">Please select gender.</div>
+            </div>
+
+            <div class="sg-field">
+              <label for="email">Email</label>
+              <input type="email" id="email" name="email" value="{{ form.email.value|default:'' }}">
+            </div>
+
+            <div class="sg-field">
+              <label for="contact">Contact Number</label>
+              <input type="tel" id="contact" name="contact" value="{{ form.contact.value|default:'' }}" required>
+              <div class="invalid-feedback">Please enter a contact number.</div>
+            </div>
+
+            <div class="sg-field">
+              <label for="nationality">Nationality</label>
+              <input type="text" id="nationality" name="nationality" value="{{ form.nationality.value|default:'' }}" placeholder="e.g. Pakistani" required>
+              <div class="invalid-feedback">Please enter nationality.</div>
+            </div>
+
+            <div class="sg-field sg-field-full">
+              <label for="address">Address</label>
+              <textarea id="address" name="address" placeholder="Enter full address">{{ form.address.value|default:'' }}</textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="sg-panel">
+          <h2 class="sg-section-title">
+            <i class="fa fa-users"></i>
+            Parent Details
+          </h2>
+          <div class="sg-grid">
+            <div class="sg-field">
+              <label for="father_name">Father Name</label>
+              <input type="text" id="father_name" name="father_name" value="{{ form.father_name.value|default:'' }}" required>
+              <div class="invalid-feedback">Please enter father's name.</div>
+            </div>
+
+            <div class="sg-field">
+              <label for="mother_name">Mother Name</label>
+              <input type="text" id="mother_name" name="mother_name" value="{{ form.mother_name.value|default:'' }}" required>
+              <div class="invalid-feedback">Please enter mother's name.</div>
+            </div>
+
+            <div class="sg-field">
+              <label for="father_contact">Father Contact No</label>
+              <input type="tel" id="father_contact" name="father_contact" pattern="[0-9]{11}" placeholder="03XXXXXXXXX" value="{{ form.father_contact.value|default:'' }}" required>
+              <div class="invalid-feedback">Please enter a valid 11-digit number.</div>
+            </div>
+
+            <div class="sg-field">
+              <label for="father_email">Father Email</label>
+              <input type="email" id="father_email" name="father_email" placeholder="father@example.com" value="{{ form.father_email.value|default:'' }}" required>
+              <div class="invalid-feedback">Please enter a valid email address.</div>
+            </div>
+
+            <div class="sg-field">
+              <label for="father_occupation">Father Occupation</label>
+              <input type="text" id="father_occupation" name="father_occupation" placeholder="e.g. Engineer" value="{{ form.father_occupation.value|default:'' }}" required>
+              <div class="invalid-feedback">Please enter father's occupation.</div>
+            </div>
+
+            <div class="sg-field">
+              <label for="father_cnic">Father CNIC</label>
+              <input type="text" id="father_cnic" name="father_cnic" pattern="\d{5}-\d{7}-\d{1}" placeholder="12345-1234567-1" value="{{ form.father_cnic.value|default:'' }}" required>
+              <div class="invalid-feedback">Please enter a valid CNIC.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sg-panel">
+          <h2 class="sg-section-title">
+            <i class="fa fa-clipboard-check"></i>
+            Admission Status
+          </h2>
+          <div class="sg-grid sg-grid-2">
+            <div class="sg-field">
+              <label for="admission_status">Admission Status</label>
+              <select id="admission_status" name="admission_status" required>
+                <option value="pending" {% if not form.admission_status.value or form.admission_status.value == "pending" %}selected{% endif %}>Pending</option>
+              </select>
+              <div class="invalid-feedback">Please select admission status.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sg-actions">
+          <button type="submit" class="sg-btn sg-btn-primary">
+            <i class="fa fa-check"></i>
+            <span>Submit Admission</span>
+          </button>
+          <a href="{% url 'admission_list' %}" class="sg-btn sg-btn-secondary">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </section>
+</div>
+{% endblock %}

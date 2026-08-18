@@ -1,0 +1,65 @@
+{% extends "teacher_dashboard/bases.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2 class="mb-4">📘 Saved Lesson Plans</h2>
+
+  {% if lesson_requests %}
+    {% for req in lesson_requests %}
+      <div class="card mb-4 shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5>
+            {{ req.subject }} - {{ req.topic }} ({{ req.class_name }} {{ req.section }})
+          </h5>
+          <button class="btn btn-danger btn-sm" 
+                  onclick="deletePlan({{ req.id }})">
+            ❌ Delete Plan
+          </button>
+        </div>
+        <div class="card-body" dir="{{ req.language_dir }}">
+          {% for lesson in req.lessons.all %}
+            <div class="border rounded p-3 mb-3">
+              <h6 class="fw-bold">📅 {{ lesson.day }}</h6>
+              <p><b>Objective:</b> {{ lesson.objective }}</p>
+              <p><b>Activities:</b> {{ lesson.activities }}</p>
+              <p><b>Materials:</b> {{ lesson.materials }}</p>
+              <p><b>Assessment:</b> {{ lesson.assessment }}</p>
+              <p><b>Homework:</b> {{ lesson.homework }}</p>
+              <p><b>Worksheet:</b> {{ lesson.worksheet }}</p>
+              <p>
+                <b>Status:</b> {{ lesson.status }}
+                {% if lesson.rescheduled_date %}
+                  (Rescheduled: {{ lesson.rescheduled_date }})
+                {% endif %}
+              </p>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="alert alert-info">No lesson plans saved yet.</div>
+  {% endif %}
+</div>
+
+<script>
+  function deletePlan(planId) {
+    if (confirm("Are you sure you want to delete this plan?")) {
+      fetch(`/teacher/delete_plan/${planId}/`, {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": "{{ csrf_token }}"
+        }
+      }).then(response => response.json())
+        .then(data => {
+          if (data.status === "success") {
+            location.reload();
+          } else {
+            alert("Error deleting plan.");
+          }
+        });
+    }
+  }
+</script>
+{% endblock %}

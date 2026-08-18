@@ -1,0 +1,44 @@
+{% extends 'automation/base_automation.html' %}
+{% block page_title %}{% if is_edit %}Edit {{ label }}{% else %}Add {{ label }}{% endif %}{% endblock %}
+
+{% block extra_head %}
+<style>
+    .crud-form input[type="text"], .crud-form input[type="number"], .crud-form input[type="email"],
+    .crud-form input[type="date"], .crud-form input[type="time"], .crud-form select, .crud-form textarea {
+        width:100%; padding:9px 12px; border:1px solid #dcdcdc; border-radius:6px; font-size:13px;
+    }
+    .crud-form input[type="checkbox"] { width:auto; margin-right:8px; }
+    .crud-form label { display:block; margin-bottom:6px; font-weight:600; color:#1d3b3f; font-size:13px; }
+    .crud-form .field-wrap { margin-bottom:16px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width:640px;">
+    <h3>{% if is_edit %}Edit {{ label }}{% else %}Add New {{ label }}{% endif %}</h3>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="badge {% if message.tags == 'success' %}badge-green{% else %}badge-red{% endif %}" style="display:block; margin-bottom:16px; padding:10px 14px;">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <form method="post" class="crud-form">
+        {% csrf_token %}
+        {% for field in form %}
+        <div class="field-wrap">
+            <label>{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}
+                <div style="color:#c0392b; font-size:12px; margin-top:4px;">{{ field.errors }}</div>
+            {% endif %}
+        </div>
+        {% endfor %}
+
+        <button type="submit" class="btn-teal">{% if is_edit %}Update{% else %}Save{% endif %}</button>
+        <a href="{% url 'crud-list' model_name=model_name %}" style="margin-left:14px; color:#666; text-decoration:none; font-size:13px;">Cancel</a>
+    </form>
+</div>
+{% endblock %}

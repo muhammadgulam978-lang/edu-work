@@ -1,0 +1,197 @@
+{% extends "student_profile/bases.html" %}
+
+{% block title %}AI Tutor Progress{% endblock %}
+
+{% block content %}
+<style>
+  .ai-page {
+    --ai-primary: var(--primary, #88D0C5);
+    --ai-accent: var(--secondary, #8BC740);
+    --ai-muted: #6c757d;
+    --ai-border: #e9ecef;
+    margin: 18px;
+    color: #343a40;
+    font-weight: 400;
+  }
+  .ai-card {
+    background: #fff;
+    border: 1px solid var(--ai-border);
+    border-radius: 8px;
+    padding: 18px;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, .04);
+    margin-bottom: 16px;
+  }
+  .ai-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+  .ai-head h3, .ai-card h4 { margin: 0; color: #343a40; font-weight: 500; }
+  .ai-muted { color: var(--ai-muted); }
+  .ai-link-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .ai-pill {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    border-radius: 999px;
+    padding: 4px 10px;
+    background: rgba(136, 208, 197, .18);
+    color: #495057;
+    font-size: 12px;
+    font-weight: 500;
+    text-decoration: none;
+    border: 1px solid #dfe7ef;
+  }
+  .ai-stats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+  .ai-stat { background: #fff; border: 1px solid var(--ai-border); border-radius: 8px; padding: 14px; }
+  .ai-stat span { display: block; color: var(--ai-muted); font-size: 12px; }
+  .ai-stat strong { display: block; color: #343a40; font-size: 22px; font-weight: 500; margin-top: 4px; }
+  .ai-grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+  .ai-table { width: 100%; border-collapse: collapse; }
+  .ai-table th, .ai-table td { border-bottom: 1px solid #edf0f2; padding: 11px; text-align: left; vertical-align: top; }
+  .ai-table th { color: #6c757d; font-size: 12px; text-transform: uppercase; font-weight: 500; }
+  .ai-table td { color: #343a40; }
+  .ai-table-wrap { overflow-x: auto; }
+  .ai-topic-bar { height: 7px; border-radius: 999px; background: #e9eef4; overflow: hidden; min-width: 80px; }
+  .ai-topic-bar span { display: block; height: 100%; background: var(--ai-primary); }
+  .ai-action-list { display: grid; gap: 10px; margin-top: 12px; }
+  .ai-action-item { border: 1px solid var(--ai-border); border-radius: 8px; padding: 12px; background: #fbfdff; }
+  @media (max-width: 1050px) {
+    .ai-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .ai-grid-2 { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 640px) {
+    .ai-page { margin: 10px; }
+    .ai-stats { grid-template-columns: 1fr; }
+  }
+</style>
+
+<div class="ai-page">
+  <section class="ai-card">
+    <div class="ai-head">
+      <div>
+        <h3>My AI Tutor Progress</h3>
+        <p class="ai-muted" style="margin:4px 0 0;">Mastery, practice accuracy, weak topics, and next actions for {{ student.name }}.</p>
+      </div>
+      <div class="ai-link-row">
+        <a class="ai-pill" href="{% url 'ai_tutor_dashboard' %}">AI Home</a>
+        <a class="ai-pill" href="{% url 'ai_tutor_sessions' %}">Session History</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="ai-stats" aria-label="Progress summary">
+    <div class="ai-stat"><span>Tracked Topics</span><strong>{{ mastery|length }}</strong></div>
+    <div class="ai-stat"><span>Weak Topics</span><strong>{{ weak_topics|length }}</strong></div>
+    <div class="ai-stat"><span>Mastered Topics</span><strong>{{ mastered_topics|length }}</strong></div>
+    <div class="ai-stat"><span>Questions Solved</span><strong>{{ questions_solved }}</strong></div>
+    <div class="ai-stat"><span>Average Accuracy</span><strong>{{ average_accuracy }}%</strong></div>
+  </section>
+
+  <section class="ai-grid-2">
+    <div class="ai-card">
+      <div class="ai-head" style="margin-bottom:12px;"><h4>Weak Topics</h4><span class="ai-muted">Focus first</span></div>
+      <div class="ai-table-wrap">
+        <table class="ai-table">
+          <thead>
+            <tr><th>Subject</th><th>Topic</th><th>Accuracy</th><th>Action</th></tr>
+          </thead>
+          <tbody>
+            {% for item in weak_topics %}
+              <tr>
+                <td>{{ item.subject.name }}</td>
+                <td>{{ item.topic }}</td>
+                <td>
+                  <div>{{ item.accuracy_percentage }}%</div>
+                  <div class="ai-topic-bar"><span style="width: {{ item.accuracy_percentage|floatformat:0 }}%;"></span></div>
+                </td>
+                <td>{{ item.recommended_action|default:"Revise and complete a short practice set." }}</td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="4">No weak topics recorded yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="ai-card">
+      <div class="ai-head" style="margin-bottom:12px;"><h4>Recommended Next Actions</h4><span class="ai-muted">Based on mastery</span></div>
+      <div class="ai-action-list">
+        {% for item in recommended_actions %}
+          <div class="ai-action-item">
+            <span class="ai-pill">{{ item.subject.name }}</span>
+            <div style="margin-top:8px;">{{ item.topic }}: {{ item.recommended_action }}</div>
+          </div>
+        {% empty %}
+          <div class="ai-action-item">Complete a practice attempt to generate personalized recommendations.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <section class="ai-card">
+    <div class="ai-head" style="margin-bottom:12px;"><h4>Topic Mastery</h4><span class="ai-muted">All tracked topics</span></div>
+    <div class="ai-table-wrap">
+      <table class="ai-table">
+        <thead>
+          <tr>
+            <th>Subject</th>
+            <th>Topic</th>
+            <th>Mastery</th>
+            <th>Accuracy</th>
+            <th>Attempts</th>
+            <th>Last Practiced</th>
+            <th>Recommended Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in mastery %}
+            <tr>
+              <td>{{ item.subject.name }}</td>
+              <td>{{ item.topic }}</td>
+              <td><span class="ai-pill">{{ item.get_mastery_level_display }}</span></td>
+              <td>{{ item.accuracy_percentage }}%</td>
+              <td>{{ item.attempts }}</td>
+              <td>{{ item.last_practiced_at|date:"d M Y, h:i A"|default:"-" }}</td>
+              <td>{{ item.recommended_action|default:"Keep practicing." }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="7">No progress recorded yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="ai-card">
+    <div class="ai-head" style="margin-bottom:12px;"><h4>Practice Attempts</h4><span class="ai-muted">Recent answers and feedback</span></div>
+    <div class="ai-table-wrap">
+      <table class="ai-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Subject</th>
+            <th>Topic</th>
+            <th>Question</th>
+            <th>Score</th>
+            <th>Feedback</th>
+            <th>Session</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for attempt in attempts %}
+            <tr>
+              <td>{{ attempt.created_at|date:"d M Y, h:i A" }}</td>
+              <td>{{ attempt.subject.name|default:"General" }}</td>
+              <td>{{ attempt.topic|default:"-" }}</td>
+              <td>{{ attempt.question_text }}</td>
+              <td>{% if attempt.score != None %}{{ attempt.score }}%{% else %}-{% endif %}</td>
+              <td>{{ attempt.feedback|default:"Not checked yet" }}</td>
+              <td><a class="ai-pill" href="{% url 'ai_tutor_chat' attempt.session.id %}">Open</a></td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="7">No practice attempts yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+{% endblock %}

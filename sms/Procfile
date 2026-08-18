@@ -1,0 +1,1 @@
+web: gunicorn school_management_system02.wsgi --bind 0.0.0.0:$PORT

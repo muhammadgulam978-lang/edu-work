@@ -1,0 +1,34 @@
+{% extends "admin_panel/bases.html" %}
+{% load static %}
+
+{% block title %}Generate Paper{% endblock %}
+{% block content %}
+<div class="col-12">
+  <div class="card" style="background: #f8f9fa; margin-left:20px; margin-right:20px;">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h4 class="card-title mb-0">Generate Paper</h4>
+      <a href="{% url 'format_list' %}" class="btn btn-secondary">
+        <i class="fa fa-arrow-left me-2"></i>Back to Formats
+      </a>
+    </div>
+
+    <div class="card-body">
+      <div class="mb-3">
+        <p><strong>Format:</strong> {{ exam_format.format_name }}</p>
+        <p><strong>Class:</strong> {{ exam_format.class_obj.class_name }}</p>
+        <p><strong>Subject:</strong> {{ exam_format.subject.name }}</p>
+        <p><strong>MCQs:</strong> {{ exam_format.num_mcqs }} |
+           <strong>Short:</strong> {{ exam_format.num_short }} |
+           <strong>Long:</strong> {{ exam_format.num_long }}</p>
+      </div>
+
+      <form method="post" class="d-flex justify-content-end">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-success">
+          <i class="fa fa-check me-2"></i>Confirm & Generate PDF
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

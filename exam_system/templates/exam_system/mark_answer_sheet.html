@@ -1,0 +1,106 @@
+{% extends "teacher_dashboard/base.html" %}
+{% comment %}SAVE AS: exam_system/mark_answer_sheet.html{% endcomment %}
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex align-items-center mb-4">
+        <a href="{% url 'answer_sheet_list' sheet.schedule.id %}" class="btn btn-outline-secondary btn-sm mr-3">
+            <i class="fa fa-arrow-left"></i>
+        </a>
+        <div>
+            <h3 class="mb-1">Mark Answer Sheet</h3>
+            <p class="text-muted mb-0">
+                Student: <strong>{{ sheet.student.name }}</strong> (Roll: {{ sheet.student.roll_no }}) &nbsp;|&nbsp;
+                {{ sheet.schedule.subject.name }}
+            </p>
+        </div>
+    </div>
+
+    <form method="POST">
+        {% csrf_token %}
+        {% if questions %}
+            {% for question in questions %}
+            {% with score=scores_dict|default_if_none:'' %}
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="badge badge-info mr-2">{{ question.get_question_type_display }}</span>
+                        <span class="badge
+                            {% if question.difficulty == 'EASY' %}badge-success
+                            {% elif question.difficulty == 'MEDIUM' %}badge-warning
+                            {% else %}badge-danger{% endif %}">
+                            {{ question.difficulty }}
+                        </span>
+                        <span class="badge badge-secondary ml-1">{{ question.marks }} marks</span>
+                    </div>
+                    <small class="text-muted">Q{{ forloop.counter }}</small>
+                </div>
+                <div class="card-body">
+                    <p class="font-weight-bold mb-2">{{ question.text }}</p>
+
+                    {% if question.option_a %}
+                    <div class="row mb-2">
+                        <div class="col-md-6"><div class="border rounded p-2 bg-light">A. {{ question.option_a }}</div></div>
+                        <div class="col-md-6"><div class="border rounded p-2 bg-light">B. {{ question.option_b }}</div></div>
+                        <div class="col-md-6 mt-1"><div class="border rounded p-2 bg-light">C. {{ question.option_c }}</div></div>
+                        <div class="col-md-6 mt-1"><div class="border rounded p-2 bg-light">D. {{ question.option_d }}</div></div>
+                    </div>
+                    {% endif %}
+
+                    <div class="alert alert-light border-left border-success mt-2">
+                        <small><strong>Model Answer:</strong> {{ question.correct_answer }}</small>
+                    </div>
+
+                    {% with existing_score=scores_dict|default_if_none:'' %}
+                    <div class="row mt-3">
+                        <div class="col-md-3">
+                            <label class="small font-weight-bold">
+                                Score (out of {{ question.marks }})
+                                {% if scores_dict %}
+                                {% for qid, sc in scores_dict.items %}
+                                    {% if qid == question.id and sc.ai_score %}
+                                    <span class="text-info">(AI: {{ sc.ai_score }})</span>
+                                    {% endif %}
+                                {% endfor %}
+                                {% endif %}
+                            </label>
+                            <input type="number"
+                                   name="score_{{ question.id }}"
+                                   class="form-control form-control-sm"
+                                   min="0"
+                                   max="{{ question.marks }}"
+                                   step="0.5"
+                                   value="{% for qid, sc in scores_dict.items %}{% if qid == question.id %}{{ sc.teacher_score|default:'' }}{% endif %}{% endfor %}"
+                                   placeholder="0">
+                        </div>
+                        <div class="col-md-9">
+                            <label class="small font-weight-bold">Teacher Remarks (optional)</label>
+                            <input type="text"
+                                   name="remarks_{{ question.id }}"
+                                   class="form-control form-control-sm"
+                                   value="{% for qid, sc in scores_dict.items %}{% if qid == question.id %}{{ sc.teacher_remarks }}{% endif %}{% endfor %}"
+                                   placeholder="Optional feedback...">
+                        </div>
+                    </div>
+                    {% endwith %}
+                </div>
+            </div>
+            {% endwith %}
+            {% endfor %}
+
+            <div class="d-flex justify-content-end mt-3">
+                <a href="{% url 'answer_sheet_list' sheet.schedule.id %}" class="btn btn-outline-secondary mr-2">Cancel</a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fa fa-save mr-1"></i> Save Marks
+                </button>
+            </div>
+        {% else %}
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="fa fa-exclamation-circle fa-3x text-warning mb-3 d-block"></i>
+                <p>No paper assigned to this answer sheet. Please assign a generated paper first.</p>
+            </div>
+        </div>
+        {% endif %}
+    </form>
+</div>
+{% endblock %}

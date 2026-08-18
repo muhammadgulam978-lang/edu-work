@@ -1,0 +1,269 @@
+{% extends 'admin_panel/bases.html' %}
+{% load static %}
+
+{% block head %}
+    <link rel="stylesheet" href="{% static 'admin_panel/css/hr_admin.css' %}?v=hr-admin-2">
+{% endblock %}
+
+{% block content %}
+<div class="hr-page">
+
+  <div class="hr-hero d-flex justify-content-between align-items-start flex-wrap gap-3">
+    <div class="hr-title-wrap">
+      <span class="hr-icon green"><i class="fas fa-id-badge"></i></span>
+      <div>
+        <p class="hr-kicker">Employee Profile</p>
+        <h2>{{ employee.name }}</h2>
+        <p class="hr-subtitle">{{ employee.designation|default:"—" }} · {{ employee.department|default:"—" }}</p>
+      </div>
+    </div>
+
+    <div class="d-flex gap-2">
+      <a href="{% url 'employee_edit' employee.pk %}" class="btn btn-outline-primary">
+        <i class="fas fa-edit"></i> Edit
+      </a>
+      <a href="{% url 'employee_profile_pdf' employee.pk %}" class="btn btn-outline-success">
+        <i class="fas fa-file-pdf"></i> Download PDF
+      </a>
+    </div>
+  </div>
+
+  <div class="hr-panel">
+    <!-- ===================== Tabs ===================== -->
+    <ul class="nav nav-tabs px-3 pt-3" id="profileTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link {% if active_tab == 'overview' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#tab-overview" type="button">Overview</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link {% if active_tab == 'personal' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#tab-personal" type="button">Personal</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link {% if active_tab == 'employment' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#tab-employment" type="button">Employment</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link {% if active_tab == 'documents' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#tab-documents" type="button">Documents</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link {% if active_tab == 'leave' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#tab-leave" type="button">Leave</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link {% if active_tab == 'attendance' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#tab-attendance" type="button">Attendance</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link {% if active_tab == 'performance' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#tab-performance" type="button">Performance</button>
+      </li>
+    </ul>
+
+    <div class="tab-content p-4">
+
+      <!-- ===================== Overview ===================== -->
+      <div class="tab-pane fade {% if active_tab == 'overview' %}show active{% endif %}" id="tab-overview">
+        <div class="row g-4">
+          <div class="col-md-3 text-center">
+            {% if employee.photo %}
+              <img src="{{ employee.photo.url }}" class="rounded-circle mb-2" width="140" height="140" style="object-fit:cover;">
+            {% else %}
+              <img src="{% static 'admin_panel/images/dummy-profile.png' %}" class="rounded-circle mb-2" width="140" height="140">
+            {% endif %}
+            <h5 class="mb-0">{{ employee.name }}</h5>
+            <span class="badge {% if employee.is_active %}bg-success{% else %}bg-secondary{% endif %}">
+              {% if employee.is_active %}Active{% else %}Inactive{% endif %}
+            </span>
+          </div>
+
+          <div class="col-md-9">
+            <div class="hr-form-grid">
+              <div class="hr-field">
+                <label class="form-label">Department</label>
+                <p class="mb-0">{{ employee.department|default:"—" }}</p>
+              </div>
+              <div class="hr-field">
+                <label class="form-label">Designation</label>
+                <p class="mb-0">{{ employee.designation|default:"—" }}</p>
+              </div>
+              <div class="hr-field">
+                <label class="form-label">Job Type</label>
+                <p class="mb-0">{{ employee.job_type|default:"—" }}</p>
+              </div>
+              <div class="hr-field">
+                <label class="form-label">Status</label>
+                <p class="mb-0">{% if employee.is_active %}Active{% else %}Inactive{% endif %}</p>
+              </div>
+              <div class="hr-field">
+                <label class="form-label">Joining Date</label>
+                <p class="mb-0">{{ employee.joining_date|date:"d M Y" }}</p>
+              </div>
+              <div class="hr-field">
+                <label class="form-label">Reporting Manager</label>
+                <p class="mb-0">
+                  {% if employee.reporting_manager %}{{ employee.reporting_manager.name }}{% else %}—{% endif %}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================== Personal ===================== -->
+      <div class="tab-pane fade {% if active_tab == 'personal' %}show active{% endif %}" id="tab-personal">
+        <div class="hr-form-grid">
+          <div class="hr-field">
+            <label class="form-label">Email</label>
+            <p class="mb-0">{{ employee.email }}</p>
+          </div>
+          <div class="hr-field">
+            <label class="form-label">Phone</label>
+            <p class="mb-0">{{ employee.phone }}</p>
+          </div>
+          <div class="hr-field">
+            <label class="form-label">Staff Category</label>
+            <p class="mb-0">{{ employee.staff_category|default:"—" }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================== Employment ===================== -->
+      <div class="tab-pane fade {% if active_tab == 'employment' %}show active{% endif %}" id="tab-employment">
+        <div class="hr-form-grid">
+          <div class="hr-field">
+            <label class="form-label">Employee Type</label>
+            <p class="mb-0">{{ employee.get_employee_type_display }}</p>
+          </div>
+          <div class="hr-field">
+            <label class="form-label">Job Type</label>
+            <p class="mb-0">{{ employee.job_type|default:"—" }}</p>
+          </div>
+          <div class="hr-field">
+            <label class="form-label">Department</label>
+            <p class="mb-0">{{ employee.department|default:"—" }}</p>
+          </div>
+          <div class="hr-field">
+            <label class="form-label">Designation</label>
+            <p class="mb-0">{{ employee.designation|default:"—" }}</p>
+          </div>
+          <div class="hr-field">
+            <label class="form-label">Reporting Manager</label>
+            <p class="mb-0">
+              {% if employee.reporting_manager %}{{ employee.reporting_manager.name }}{% else %}—{% endif %}
+            </p>
+          </div>
+          <div class="hr-field">
+            <label class="form-label">Team Members</label>
+            <p class="mb-0">{{ employee.team_members.count }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================== Documents ===================== -->
+      <div class="tab-pane fade {% if active_tab == 'documents' %}show active{% endif %}" id="tab-documents">
+        <div class="hr-form-grid">
+          <div class="hr-field">
+            <label class="form-label">CNIC</label>
+            {% if employee.cnic_document %}
+              <p class="mb-0"><a href="{{ employee.cnic_document.url }}" target="_blank">View file</a></p>
+            {% else %}
+              <p class="mb-0 text-muted">Not uploaded</p>
+            {% endif %}
+          </div>
+          <div class="hr-field">
+            <label class="form-label">Resume</label>
+            {% if employee.resume %}
+              <p class="mb-0"><a href="{{ employee.resume.url }}" target="_blank">View file</a></p>
+            {% else %}
+              <p class="mb-0 text-muted">Not uploaded</p>
+            {% endif %}
+          </div>
+          <div class="hr-field">
+            <label class="form-label">Appointment Letter</label>
+            {% if employee.appointment_letter %}
+              <p class="mb-0"><a href="{{ employee.appointment_letter.url }}" target="_blank">View file</a></p>
+            {% else %}
+              <p class="mb-0 text-muted">Not uploaded</p>
+            {% endif %}
+          </div>
+        </div>
+
+        <h6 class="mt-4">Certificates</h6>
+        {% if certificates %}
+          <ul class="list-group mb-3">
+            {% for cert in certificates %}
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                <a href="{{ cert.file.url }}" target="_blank">{{ cert.title }}</a>
+                <span class="text-muted small">{{ cert.uploaded_at|date:"d M Y" }}</span>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="text-muted">No certificates uploaded yet.</p>
+        {% endif %}
+      </div>
+
+      <!-- ===================== Leave ===================== -->
+      <div class="tab-pane fade {% if active_tab == 'leave' %}show active{% endif %}" id="tab-leave">
+        {% if leaves %}
+          <div class="table-responsive">
+            <table class="table table-sm align-middle">
+              <thead>
+                <tr>
+                  <th>Leave Type</th>
+                  <th>Start</th>
+                  <th>End</th>
+                  <th>Status</th>
+                  <th>Applied On</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for leave in leaves %}
+                <tr>
+                  <td>{{ leave.leave_type|default:"—" }}</td>
+                  <td>{{ leave.start_date|date:"d M Y" }}</td>
+                  <td>{{ leave.end_date|date:"d M Y" }}</td>
+                  <td>
+                    <span class="badge
+                      {% if leave.status == 'approved' %}bg-success
+                      {% elif leave.status == 'rejected' %}bg-danger
+                      {% else %}bg-warning text-dark{% endif %}">
+                      {{ leave.get_status_display }}
+                    </span>
+                  </td>
+                  <td>{{ leave.applied_at|date:"d M Y" }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <p class="text-muted">No leave applications yet.</p>
+        {% endif %}
+      </div>
+
+      <!-- ===================== Attendance ===================== -->
+      <div class="tab-pane fade {% if active_tab == 'attendance' %}show active{% endif %}" id="tab-attendance">
+        {% if teacher %}
+          <div class="hr-form-grid">
+            <div class="hr-field">
+              <label class="form-label">Attendance Records Marked</label>
+              <p class="mb-0">{{ attendance_summary.marked|default:0 }}</p>
+            </div>
+          </div>
+        {% else %}
+          <p class="text-muted">Attendance tracking is available for teaching staff linked to a teacher profile.</p>
+        {% endif %}
+      </div>
+
+      <!-- ===================== Performance ===================== -->
+      <div class="tab-pane fade {% if active_tab == 'performance' %}show active{% endif %}" id="tab-performance">
+        {% if teacher %}
+          <p>
+            View full KPI/appraisal history from the
+            <a href="{% url 'admin_appraisal_list' %}">Appraisal module</a>.
+          </p>
+        {% else %}
+          <p class="text-muted">Performance appraisal is currently tracked for teaching staff only.</p>
+        {% endif %}
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends "admin_panel/bases.html" %}
+{% load static %}
+{% block title %}Schedule Admission Test{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{% static 'admin_panel/css/academics_gateway.css' %}">
+{% endblock %}
+{% block content %}
+<div class="academics-gateway">
+  {% if messages %}{% for message in messages %}<div class="ag-alert {% if message.tags == 'error' %}alert-danger{% endif %}">{{ message }}</div>{% endfor %}{% endif %}
+  <div class="ag-card">
+    <div class="ag-header">
+      <div>
+        <p class="ag-kicker">AI Admission Assessment</p>
+        <h4 class="ag-title">Schedule Admission Test</h4>
+        <p class="ag-subtitle">Only approved papers can be scheduled - an unreviewed AI paper never reaches a candidate.</p>
+      </div>
+    </div>
+    <div class="ag-body">
+      {% if not papers %}
+      <div class="ag-alert alert-danger">No approved papers yet. Generate a paper from a blueprint and advance it through review to "Approved" before scheduling.</div>
+      {% endif %}
+      <form method="post">
+        {% csrf_token %}
+        <div class="ag-grid">
+          <div class="ag-field">
+            <label class="ag-label">Candidate</label>
+            <select name="candidate" required>
+              {% for c in candidates %}<option value="{{ c.pk }}">{{ c }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="ag-field">
+            <label class="ag-label">Approved Paper</label>
+            <select name="paper" required>
+              {% for p in papers %}<option value="{{ p.pk }}">{{ p.blueprint.name }} - Paper {{ p.version_label }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="ag-field"><label class="ag-label">Test Date</label><input type="date" name="test_date" required></div>
+          <div class="ag-field"><label class="ag-label">Test Time</label><input type="time" name="test_time" required></div>
+          <div class="ag-field"><label class="ag-label">Campus</label><input type="text" name="campus"></div>
+          <div class="ag-field"><label class="ag-label">Room</label><input type="text" name="room"></div>
+          <div class="ag-field">
+            <label class="ag-label">Mode</label>
+            <select name="mode">
+              <option value="online">Online</option>
+              <option value="printed">Printed</option>
+            </select>
+          </div>
+        </div>
+        <div class="ag-form-actions">
+          <button type="submit" class="ag-btn ag-btn-primary"><i class="fa fa-calendar-check"></i> Schedule &amp; Notify Parent</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

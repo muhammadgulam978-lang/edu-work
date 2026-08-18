@@ -1,0 +1,148 @@
+/* =====================================================================
+   EduPilot Contrast Fix
+   Loaded LAST (after every other stylesheet) so it can safely correct:
+     1) Body/paragraph text that was rendering too light (washed-out gray)
+     2) Buttons whose label text was the same color as their background
+   Scoped to the page content area only — sidebar/header keep their own
+   already-correct theme and are intentionally left untouched.
+   ===================================================================== */
+
+/* ---------- 1) Darken default body copy inside the page content ---------- */
+.content-body,
+.main-content,
+.ag-body,
+.ag-card,
+.class-center,
+.academics-gateway,
+.ac-card {
+  color: #17302c;
+}
+
+.content-body p,
+.content-body span,
+.content-body td,
+.content-body th,
+.content-body li,
+.content-body label,
+.content-body small,
+.content-body h1,
+.content-body h2,
+.content-body h3,
+.content-body h4,
+.content-body h5,
+.content-body h6,
+.content-body div,
+.main-content p,
+.main-content span,
+.main-content td,
+.main-content th,
+.main-content li,
+.main-content label,
+.main-content div {
+  color: #1f2d2b;
+}
+
+/* Muted/secondary text should stay legible, just a shade lighter than body copy */
+.content-body .ac-muted,
+.content-body .title-subtext,
+.content-body .ag-subtitle,
+.content-body small,
+.main-content .text-muted {
+  color: #55635f !important;
+  opacity: 1 !important;
+}
+
+/* Never darken text that intentionally sits on a colored/dark background —
+   these already carry their own readable color and must stay untouched. */
+.content-body .status-chip,
+.content-body .ai-chip,
+.content-body .metric-pill,
+.content-body .rating-badge,
+.content-body .badge,
+.content-body .ag-badge,
+.content-body .fc-event,
+.content-body [style*="background"] .badge-dot,
+.content-body .alert-dot,
+.content-body .sidebar-section,
+.deznav *,
+.edu-portal-header * {
+  color: inherit;
+}
+
+/* Placeholder text was often near-invisible light gray */
+.content-body input::placeholder,
+.content-body textarea::placeholder,
+.main-content input::placeholder,
+.main-content textarea::placeholder {
+  color: #7c8b87 !important;
+  opacity: 1 !important;
+}
+
+/* ---------- 2) Guarantee every button label is readable ---------- */
+
+/* Baseline: plain/undecorated buttons (no color utility class) get dark
+   text on their light default background. */
+.content-body button,
+.content-body .btn,
+.content-body a.btn,
+.main-content button,
+.main-content .btn,
+.main-content a.btn,
+input[type="button"],
+input[type="submit"] {
+  color: #17302c;
+}
+
+/* Solid / colored / primary style buttons get white text so it never
+   disappears into the fill color. Matched by common naming conventions
+   used across this project's many button classes. */
+.content-body button[class*="primary"],
+.content-body a[class*="primary"],
+.content-body button[class*="danger"],
+.content-body a[class*="danger"],
+.content-body button[class*="success"],
+.content-body a[class*="success"],
+.content-body button[class*="submit"],
+.content-body a[class*="submit"],
+.content-body .btn-teal,
+.content-body .btn-green,
+.content-body .btn-custom,
+.content-body .ask-ai,
+.content-body .btn-upload,
+.content-body button.danger,
+.content-body .bulk-actions .danger,
+.main-content button[class*="primary"],
+.main-content a[class*="primary"],
+.main-content button[class*="danger"],
+.main-content a[class*="danger"],
+.main-content button[class*="success"],
+.main-content a[class*="success"] {
+  color: #ffffff !important;
+}
+
+/* Outline / light / secondary / cancel / ghost buttons: keep dark text on
+   their pale background instead of inheriting a light-on-light color. */
+.content-body button[class*="light"],
+.content-body a[class*="light"],
+.content-body button[class*="outline"],
+.content-body a[class*="outline"],
+.content-body button[class*="secondary"],
+.content-body a[class*="secondary"],
+.content-body button[class*="cancel"],
+.content-body a[class*="cancel"],
+.content-body button[class*="ghost"],
+.content-body a[class*="ghost"],
+.main-content button[class*="light"],
+.main-content a[class*="light"],
+.main-content button[class*="secondary"],
+.main-content a[class*="secondary"] {
+  color: #17302c !important;
+  background-color: #f2f6fa;
+}
+
+/* Icon-only buttons keep their icon color from the icon font, but make
+   sure any visible label text next to them is still dark. */
+.content-body .icon-btn,
+.content-body .ag-icon-btn {
+  color: #17302c;
+}

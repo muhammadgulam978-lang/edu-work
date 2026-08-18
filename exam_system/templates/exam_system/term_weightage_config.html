@@ -1,0 +1,67 @@
+{% extends "admin_panel/bases.html" %}
+{% block content %}
+
+<div class="container-fluid">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h3 class="mb-1">Annual Term Weightage</h3>
+            <p class="text-muted mb-0">{{ class_obj.class_name }} — {{ academic_year }}</p>
+        </div>
+        <span class="badge {% if is_valid %}badge-success{% else %}badge-warning{% endif %} p-2">
+            Total: {{ total_weightage }}% {% if not is_valid %}(should equal 100%){% endif %}
+        </span>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            {% if plan_rows %}
+            <form method="POST">
+                {% csrf_token %}
+                <div class="table-responsive">
+                    <table class="table table-bordered mb-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Exam Term</th>
+                                <th>Type</th>
+                                <th>Dates</th>
+                                <th style="width: 180px;">Weightage %</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in plan_rows %}
+                            <tr>
+                                <td><strong>{{ row.plan.title }}</strong></td>
+                                <td>{{ row.plan.get_exam_type_display }}</td>
+                                <td>{{ row.plan.start_date|date:"d M" }} – {{ row.plan.end_date|date:"d M Y" }}</td>
+                                <td>
+                                    <div class="input-group input-group-sm">
+                                        <input type="number" step="0.01" min="0" max="100"
+                                               name="weightage_{{ row.plan.id }}" class="form-control"
+                                               value="{{ row.weightage }}">
+                                        <div class="input-group-append">
+                                            <span class="input-group-text">%</span>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="d-flex justify-content-end mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa fa-save mr-1"></i> Save Weightage
+                    </button>
+                </div>
+            </form>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fa fa-calendar-times-o fa-3x text-muted mb-3"></i>
+                <p class="text-muted">No exam terms created for this class/year yet.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

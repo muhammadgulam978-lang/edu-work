@@ -1,0 +1,71 @@
+{% extends "teacher_dashboard/bases.html" %}
+{% block content %}
+
+<h3 class="mb-4">Lesson Plan – {{ chapter.title }}</h3>
+
+<a href="{% url 'lesson_select_topics' chapter.id %}"
+   class="btn btn-primary mb-4">
+   + Generate Lesson Plan
+</a>
+
+{% for plan in plans %}
+    <hr>
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h5 class="mb-0">Lesson Plan #{{ plan.id }}</h5>
+        <small class="text-muted">Total Periods: {{ plan.total_periods }}</small>
+    </div>
+
+    {% with days=plan.lessons.all %}
+        {% if days %}
+            {% for day in days %}
+                <div class="card mb-3 shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <strong>Day {{ day.day_number }}</strong>
+                    </div>
+                    <div class="card-body">
+                        {% if day.learning_objectives %}
+                        <p><strong>🎯 Objectives:</strong><br>
+                            {{ day.learning_objectives|linebreaksbr }}
+                        </p>
+                        {% endif %}
+
+                        {% if day.teaching_content %}
+                        <p><strong>📖 Teaching Content:</strong><br>
+                            {{ day.teaching_content|linebreaksbr }}
+                        </p>
+                        {% endif %}
+
+                        {% if day.practice_work %}
+                        <p><strong>✏️ Practice Work:</strong><br>
+                            {{ day.practice_work|linebreaksbr }}
+                        </p>
+                        {% endif %}
+
+                        {% if day.assessment_tasks %}
+                        <p><strong>📝 Assessment:</strong><br>
+                            {{ day.assessment_tasks|linebreaksbr }}
+                        </p>
+                        {% endif %}
+
+                        {% if day.homework_tasks %}
+                        <p><strong>🏠 Homework:</strong><br>
+                            {{ day.homework_tasks|linebreaksbr }}
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="alert alert-warning">
+                ⚠️ Is plan ke liye koi days generate nahi hue. Dobara generate karein.
+            </div>
+        {% endif %}
+    {% endwith %}
+
+{% empty %}
+    <div class="alert alert-info">
+        📋 Abhi tak koi lesson plan nahi banaya. <a href="{% url 'lesson_select_topics' chapter.id %}">Generate karein</a>.
+    </div>
+{% endfor %}
+
+{% endblock %}

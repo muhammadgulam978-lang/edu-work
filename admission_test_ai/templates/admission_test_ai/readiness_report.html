@@ -1,0 +1,39 @@
+{% extends "admin_panel/bases.html" %}
+{% load static %}
+{% block title %}Admission Readiness Report{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{% static 'admin_panel/css/academics_gateway.css' %}">
+{% endblock %}
+{% block content %}
+<div class="academics-gateway">
+  <div class="ag-card">
+    <div class="ag-header">
+      <div>
+        <p class="ag-kicker">AI Admission Assessment</p>
+        <h4 class="ag-title">{{ attempt.schedule.candidate }} - Readiness Report</h4>
+        <p class="ag-subtitle">Overall Score: <strong>{{ attempt.overall_score_pct }}%</strong></p>
+      </div>
+    </div>
+    <div class="ag-body">
+      {% if report.is_borderline %}
+      <div class="ag-alert alert-danger"><strong>Borderline Candidate.</strong> {{ report.borderline_note }}</div>
+      {% endif %}
+
+      <div class="ag-grid ag-grid-2">
+        <div class="ag-panel">
+          <p class="ag-section-title"><i class="fa fa-chart-bar"></i> Subject-wise Scores</p>
+          {% for subj, score in report.subject_scores.items %}
+            <p style="margin:0 0 6px;">{{ subj }}: <strong>{{ score }}%</strong></p>
+          {% endfor %}
+        </div>
+        <div class="ag-panel">
+          <p class="ag-section-title"><i class="fa fa-check-circle"></i> Strengths</p>
+          {% for s in report.strengths %}<span class="ag-badge ag-badge-active" style="margin:0 6px 6px 0;">{{ s }}</span>{% endfor %}
+          <p class="ag-section-title" style="margin-top:16px;"><i class="fa fa-exclamation-circle"></i> Areas for Support</p>
+          {% for a in report.areas_for_support %}<span class="ag-badge ag-badge-warning" style="margin:0 6px 6px 0;">{{ a }}</span>{% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,73 @@
+{% extends "teacher_dashboard/bases.html" %}
+{% load static %}
+
+{% block title %}Grade Predictor — {{ subject_obj.name }}{% endblock %}
+
+{% block extra_css %}
+<link href="{% static 'teacher_dashboard/css/style.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+  <div class="page-titles">
+    <h4>{{ class_obj.class_name }} - {{ section_obj.section_name }} · {{ subject_obj.name }}</h4>
+    <span class="text-muted">Grade Predictor</span>
+  </div>
+
+  <div class="alert alert-info">
+    <i class="fas fa-circle-info"></i>
+    Based on {{ sample_size }} student(s) who already have both Midterm and Final marks, this class moved
+    {% if avg_delta > 0 %}up {{ avg_delta }}{% elif avg_delta < 0 %}down {{ avg_delta }}{% else %}by 0{% endif %}
+    percentage point(s) on average from Midterm to Final. That trend is applied to students who only have a
+    Midterm result yet, to project their Final Term percentage.
+  </div>
+
+  <div class="col-lg-12">
+    <div class="card">
+      <div class="card-header"><h4 class="card-title">Predicted Final Term Results</h4></div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead class="thead-light">
+              <tr>
+                <th>Student</th>
+                <th>Midterm %</th>
+                <th>Predicted Final %</th>
+                <th>Trend</th>
+                <th>Flag</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in rows %}
+              <tr>
+                <td>{{ row.student.name }}</td>
+                <td>{{ row.midterm_pct }}%</td>
+                <td><strong>{{ row.predicted_final_pct }}%</strong></td>
+                <td>
+                  {% if row.trend == "Improving" %}
+                    <span class="badge badge-success light">Improving</span>
+                  {% elif row.trend == "Declining" %}
+                    <span class="badge badge-danger light">Declining</span>
+                  {% else %}
+                    <span class="badge badge-secondary light">Stable</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if row.at_risk %}
+                    <span class="badge badge-danger light">At risk</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="5" class="text-center text-muted">No Midterm-only students to predict — either no marks entered yet, or Final marks are already in for everyone.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <a href="{% url 'eresult_grade_predictor_hub' %}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back</a>
+</div>
+{% endblock %}

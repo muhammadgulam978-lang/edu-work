@@ -1,0 +1,73 @@
+{% extends "admin_panel/bases.html" %}
+{% load static %}
+{% block title %}New Admission Test Blueprint{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{% static 'admin_panel/css/academics_gateway.css' %}">
+{% endblock %}
+{% block content %}
+<div class="academics-gateway">
+  {% if messages %}{% for message in messages %}<div class="ag-alert {% if message.tags == 'error' %}alert-danger{% endif %}">{{ message }}</div>{% endfor %}{% endif %}
+  <div class="ag-card">
+    <div class="ag-header">
+      <div>
+        <p class="ag-kicker">AI Admission Assessment</p>
+        <h4 class="ag-title">New Test Blueprint</h4>
+        <p class="ag-subtitle">Define subjects, question counts, marks, time and difficulty split. This is saved and reused for every AI paper for this grade.</p>
+      </div>
+    </div>
+    <div class="ag-body">
+      <form method="post">
+        {% csrf_token %}
+        <p class="ag-section-title"><i class="fa fa-info-circle"></i> Blueprint Details</p>
+        <div class="ag-grid">
+          <div class="ag-field"><label class="ag-label">Blueprint Name</label><input type="text" name="name" placeholder="Grade 6 Admission Test" required></div>
+          <div class="ag-field">
+            <label class="ag-label">Applying Class</label>
+            <select name="applying_class" required>
+              {% for c in classes %}<option value="{{ c.pk }}">{{ c }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="ag-field"><label class="ag-label">Curriculum</label><input type="text" name="curriculum" value="School Standard"></div>
+          <div class="ag-field"><label class="ag-label">Passing %</label><input type="number" name="passing_percentage" value="60" min="1" max="100"></div>
+        </div>
+
+        <p class="ag-section-title" style="margin-top:22px;"><i class="fa fa-sliders-h"></i> Difficulty Distribution</p>
+        <div class="ag-grid">
+          <div class="ag-field"><label class="ag-label">Easy %</label><input type="number" name="difficulty_easy_pct" value="30"></div>
+          <div class="ag-field"><label class="ag-label">Age Appropriate %</label><input type="number" name="difficulty_age_appropriate_pct" value="40"></div>
+          <div class="ag-field"><label class="ag-label">Moderate %</label><input type="number" name="difficulty_moderate_pct" value="20"></div>
+          <div class="ag-field"><label class="ag-label">Advanced %</label><input type="number" name="difficulty_advanced_pct" value="10"></div>
+        </div>
+
+        <p class="ag-section-title" style="margin-top:22px;"><i class="fa fa-book"></i> Subjects</p>
+        <div class="ag-table-wrap">
+          <table class="display" style="width:100%;">
+            <thead><tr><th>Subject</th><th>Questions</th><th>Marks</th><th>Time (min)</th><th>Topics (optional)</th></tr></thead>
+            <tbody>
+              {% for i in "123456" %}
+              <tr>
+                <td>
+                  <select name="subject_id">
+                    <option value="">-- none --</option>
+                    {% for s in subjects %}<option value="{{ s.pk }}">{{ s }}</option>{% endfor %}
+                  </select>
+                </td>
+                <td><input type="number" name="num_questions" min="0" value="0"></td>
+                <td><input type="number" name="marks" min="0" value="0"></td>
+                <td><input type="number" name="time_minutes" min="0" value="0"></td>
+                <td><input type="text" name="topics" placeholder="e.g. Fractions, Decimals"></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <p class="ag-subtitle">Leave a subject row blank to skip it. You can add more subjects later from the blueprint page.</p>
+
+        <div class="ag-form-actions">
+          <button type="submit" class="ag-btn ag-btn-primary"><i class="fa fa-save"></i> Save Blueprint</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

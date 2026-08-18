@@ -1,0 +1,185 @@
+{% extends 'teacher_dashboard/bases.html' %}
+{% load widget_tweaks %}
+
+{% block content %}
+<div class="card" style="margin:20px;">
+  <div class="card-header">
+    <h4>Teacher Appraisal - {{ cycle.name }}</h4>
+  </div>
+
+  <div class="card-body">
+
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+
+    {% if form.errors or formset.errors %}
+      <div class="alert alert-danger">
+        <strong>Please fix the errors:</strong>
+        <ul style="margin-bottom:0;">
+          {% for field in form %}
+            {% for error in field.errors %}
+              <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+            {% endfor %}
+          {% endfor %}
+          {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+
+          {% for f in formset.forms %}
+            {% for error in f.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+            {% for field in f %}
+              {% for error in field.errors %}
+                <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+              {% endfor %}
+            {% endfor %}
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+
+    <h5>Auto: Assigned Classes / Sections / Subjects</h5>
+    <div class="table-responsive">
+      <table class="table table-bordered table-striped align-middle">
+        <thead class="table-light">
+          <tr>
+            <th style="width:60px;">#</th>
+            <th>Class</th>
+            <th>Section</th>
+            <th>Subject</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if assignments %}
+            {% for a in assignments %}
+              <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ a.class_fk.class_name }}</td>
+                <td>{{ a.section.section_name }}</td>
+                <td>{{ a.subject.name }}</td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr><td colspan="4" class="text-center">No assignments found.</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+
+    <h5>Auto: Results Summary</h5>
+    <p>
+      Total Results: <strong>{{ exam_summary.overall.total }}</strong> |
+      Pass Rate: <strong>{{ exam_summary.metrics.pass_rate }}%</strong> |
+      A+B Rate: <strong>{{ exam_summary.metrics.ab_rate }}%</strong> |
+      A Rate: <strong>{{ exam_summary.metrics.a_rate }}%</strong>
+    </p>
+
+    <div class="table-responsive">
+      <table class="table table-bordered table-striped align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Class-Section-Subject</th>
+            <th style="width:60px;">A</th>
+            <th style="width:60px;">B</th>
+            <th style="width:60px;">C</th>
+            <th style="width:60px;">D</th>
+            <th style="width:60px;">E</th>
+            <th style="width:60px;">F</th>
+            <th style="width:80px;">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for key, row in exam_summary.by_bucket.items %}
+            <tr>
+              <td>{{ key }}</td>
+              <td>{{ row.A }}</td>
+              <td>{{ row.B }}</td>
+              <td>{{ row.C }}</td>
+              <td>{{ row.D }}</td>
+              <td>{{ row.E }}</td>
+              <td>{{ row.F }}</td>
+              <td>{{ row.total }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="8">No exam results found in this cycle.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <h5>Auto: Fixtures Summary</h5>
+    <p>
+      Absent Fixtures: <strong>{{ fixtures.fixtures_absent }}</strong> |
+      Substitute Fixtures: <strong>{{ fixtures.fixtures_substitute }}</strong>
+    </p>
+
+    <hr>
+
+    <h5>Manual (Teacher)</h5>
+    <form method="post">
+      {% csrf_token %}
+
+      {# ✅ IMPORTANT: render hidden fields (safe) #}
+      {% for hf in form.hidden_fields %}
+        {{ hf }}
+      {% endfor %}
+
+      <div class="mb-3">
+        <label class="form-label">Achievements</label>
+        {{ form.achievements|add_class:"form-control" }}
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Challenges</label>
+        {{ form.challenges|add_class:"form-control" }}
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Improvement Plan</label>
+        {{ form.improvement_plan|add_class:"form-control" }}
+      </div>
+
+      <h5 class="mt-4">Activities / Trainings / Workshops</h5>
+      {{ formset.management_form }}
+
+      <div class="table-responsive">
+        <table class="table table-bordered table-striped align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Type</th>
+              <th>Title</th>
+              <th style="width:140px;">Date</th>
+              <th style="width:90px;">Hours</th>
+              <th>Notes</th>
+              <th style="width:90px;">Delete</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for f in formset.forms %}
+              <tr>
+                {# ✅ CRITICAL: hidden fields include the "id" field #}
+                {% for hf in f.hidden_fields %}
+                  {{ hf }}
+                {% endfor %}
+
+                <td>{{ f.activity_type }}</td>
+                <td>{{ f.title }}</td>
+                <td>{{ f.date }}</td>
+                <td>{{ f.hours }}</td>
+                <td>{{ f.notes }}</td>
+                <td class="text-center">{{ f.DELETE }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="text-center mt-3">
+        <button class="btn btn-secondary" type="submit" name="save_draft">Save Draft</button>
+        <button class="btn btn-primary" type="submit" name="submit_final">Submit Final</button>
+      </div>
+    </form>
+
+  </div>
+</div>
+{% endblock %}

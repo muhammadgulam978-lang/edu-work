@@ -1,0 +1,54 @@
+{% extends "admin_panel/bases.html" %}
+{% load static %}
+{% block title %}{{ case.case_number }}{% endblock %}
+{% block head %}<link rel="stylesheet" href="{% static 'health_management/css/health_theme.css' %}">{% endblock %}
+{% block content %}
+<div class="hlm-wrap">
+  <div class="hlm-page-header">
+    <div>
+      <h2>🚑 {{ case.case_number }}</h2>
+      <p>{{ case.profile.display_name|default:case.unknown_patient_note }} · {{ case.incident_type }} · <span class="hlm-badge hlm-badge-{{ case.status }}">{{ case.get_status_display }}</span></p>
+    </div>
+    <div class="hlm-header-actions"><a class="btn btn-teal" href="{% url 'health_management:emergency_case_list' %}">← All Emergencies</a></div>
+  </div>
+
+  <div class="hlm-grid-2">
+    <div class="hlm-panel">
+      <h3>Incident Details</h3>
+      <p><b>Date/Time:</b> {{ case.incident_datetime|date:"d M Y, H:i" }}</p>
+      <p><b>Location:</b> {{ case.location|default:"—" }}</p>
+      <p><b>Reported by:</b> {{ case.reported_by|default:"—" }}</p>
+      <p><b>Triage Level:</b> {{ case.get_triage_level_display }}</p>
+      <p><b>Initial Condition:</b> {{ case.initial_condition|default:"—" }}</p>
+      <p><b>Vitals:</b> Temp {{ case.vital_temperature_c|default:"—" }}°C · Pulse {{ case.vital_pulse|default:"—" }} · BP {{ case.vital_blood_pressure|default:"—" }} · SpO2 {{ case.vital_oxygen_saturation|default:"—" }}%</p>
+      <p><b>First Aid:</b> {{ case.first_aid_provided|default:"—" }}</p>
+      <p><b>Medicine Administered:</b> {{ case.medicine_administered|default:"—" }}</p>
+      <p>
+        <b>Parent Contacted:</b> {{ case.parent_contacted|yesno:"Yes,No" }} ·
+        <b>Principal Informed:</b> {{ case.principal_informed|yesno:"Yes,No" }} ·
+        <b>Ambulance:</b> {{ case.ambulance_contacted|yesno:"Yes,No" }}
+      </p>
+      {% if case.hospital_referred %}
+      <p><b>Hospital Referral:</b> {{ case.hospital_name }} — {{ case.referral_reason }}</p>
+      {% endif %}
+    </div>
+
+    <div class="hlm-panel">
+      <h3>Close Emergency Case</h3>
+      {% if case.status == "closed" %}
+        <p><b>Final Outcome:</b> {{ case.final_outcome }}</p>
+        <p><b>Follow-up date:</b> {{ case.follow_up_date|default:"—" }}</p>
+        <p><b>Closed at:</b> {{ case.closed_at|date:"d M Y, H:i" }}</p>
+      {% else %}
+        <form method="post">
+          {% csrf_token %}
+          {% include "health_management/_form_fields.html" with form=closure_form %}
+          <div class="hlm-form-actions">
+            <button type="submit" class="btn btn-teal">Close Case</button>
+          </div>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

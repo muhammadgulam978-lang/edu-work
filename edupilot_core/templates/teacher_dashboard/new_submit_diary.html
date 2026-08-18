@@ -1,0 +1,26 @@
+{% extends "teacher_dashboard/bases.html" %}
+{% load static %}
+
+{% block title %}Submit Diary{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h3>🗒 Submit Daily Diary</h3>
+    <p><strong>Teacher:</strong> {{ teacher.name }}</p>
+    <p><strong>Class:</strong> {{ class_obj.class_name }} — 
+       <strong>Section:</strong> {{ section_obj.section_name }}</p>
+    <p><strong>Subject:</strong> {{ subject_obj.name }}</p>
+    <hr>
+
+    <form method="POST">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="content" class="form-label"><strong>Write Diary Content:</strong></label>
+            <textarea class="form-control" name="content" id="content" rows="6"
+                      placeholder="Write your daily lesson summary here..." required></textarea>
+        </div>
+        <button type="submit" class="btn btn-success">💾 Save Diary</button>
+        <a href="{% url 'teacher_dashboard' %}" class="btn btn-secondary">⬅ Back</a>
+    </form>
+</div>
+{% endblock %}

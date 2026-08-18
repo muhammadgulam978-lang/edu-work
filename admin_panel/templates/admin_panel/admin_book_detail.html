@@ -1,0 +1,45 @@
+
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{{ book.title }}</h2>
+    <p><strong>Uploaded:</strong> {{ book.uploaded_at|date:"M d, Y, P" }}</p>
+    <p><strong>Uploaded By:</strong> {{ book.uploaded_by }}</p>
+
+    <h3 class="mt-4">Chapters</h3>
+    {% if chapters %}
+        <table class="table table-bordered table-striped">
+            <thead class="table-dark">
+                <tr>
+                    <th>#</th>
+                    <th>Title</th>
+                    <th>Start Page</th>
+                    <th>Topics</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ch in chapters %}
+                <tr>
+                    <td>{{ ch.number }}</td>
+                    <td>{{ ch.title }}</td>
+                    <td>{{ ch.start_page }}</td>
+                    <td>
+                        {% if ch.topics.all %}
+                            <ul>
+                                {% for t in ch.topics.all %}
+                                    <li>{{ t.title }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <em>No topics extracted</em>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p><em>No chapters extracted.</em></p>
+    {% endif %}
+</div>
+{% endblock %}

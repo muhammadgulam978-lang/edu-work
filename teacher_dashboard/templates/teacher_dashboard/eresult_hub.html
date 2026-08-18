@@ -1,0 +1,119 @@
+{% extends "teacher_dashboard/bases.html" %}
+{% load static %}
+
+{% block title %}E+ Result{% endblock %}
+
+{% block extra_css %}
+<link href="{% static 'teacher_dashboard/css/style.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+  <div class="page-titles">
+    <h4>E+ Result</h4>
+    <span class="text-muted">Marks entry, validation, class analysis and report cards — {{ term|title }} Term</span>
+  </div>
+
+  <div class="row mb-3">
+    <div class="col-lg-12">
+      <form method="get" class="form-inline">
+        <label for="term" class="mr-2"><strong>Term:</strong></label>
+        <select name="term" id="term" class="form-control w-auto" onchange="this.form.submit()">
+          <option value="midterm" {% if term == "midterm" %}selected{% endif %}>Midterm</option>
+          <option value="final" {% if term == "final" %}selected{% endif %}>Final Term</option>
+        </select>
+      </form>
+    </div>
+  </div>
+
+  <div class="col-lg-12">
+    <div class="card">
+      <div class="card-header">
+        <h4 class="card-title">My Classes — Marks Status</h4>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-hover table-responsive-sm">
+            <thead class="thead-light">
+              <tr>
+                <th>#</th>
+                <th>Class</th>
+                <th>Section</th>
+                <th>Subject</th>
+                <th>Entered</th>
+                <th>Missing</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in rows %}
+              <tr>
+                <th>{{ forloop.counter }}</th>
+                <td>{{ row.class_fk__class_name }}</td>
+                <td>{{ row.section__section_name }}</td>
+                <td>{{ row.subject__name }}</td>
+                <td>{{ row.summary.entered }} / {{ row.summary.total_students }}</td>
+                <td>
+                  {% if row.summary.missing > 0 %}
+                    <span class="badge badge-warning light">{{ row.summary.missing }} missing</span>
+                  {% else %}
+                    <span class="text-muted">0</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if row.status == "Verified" %}
+                    <span class="badge badge-success light">Verified</span>
+                  {% elif row.status == "Draft" %}
+                    <span class="badge badge-warning light">Draft</span>
+                  {% elif row.status == "Not Started" %}
+                    <span class="badge badge-danger light">Not Started</span>
+                  {% else %}
+                    <span class="badge badge-secondary light">{{ row.status }}</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <a href="{% url 'upload_result' row.class_fk__id row.section__id row.subject__id %}?term={{ term }}" class="btn btn-sm btn-primary">Marks Entry</a>
+                  <a href="{% url 'eresult_class_analysis' row.class_fk__id row.section__id row.subject__id %}?term={{ term }}" class="btn btn-sm btn-outline-primary">Analysis</a>
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="8" class="text-center text-muted">No assigned classes found.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% if class_teacher_sections %}
+  <div class="col-lg-12">
+    <div class="card">
+      <div class="card-header">
+        <h4 class="card-title">Class Result &amp; Report Cards</h4>
+        <span class="text-muted">You are the class teacher for these sections</span>
+      </div>
+      <div class="card-body">
+        {% for ct in class_teacher_sections %}
+        <a href="{% url 'merge_result' ct.class_fk_id ct.section_id %}?term={{ term }}" class="btn btn-outline-secondary mr-2 mb-2">
+          <i class="fas fa-file-alt"></i> {{ ct.class_fk.class_name }} - {{ ct.section.section_name }}
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="col-lg-12">
+    <div class="card">
+      <div class="card-body d-flex flex-wrap" style="gap:10px;">
+        <a href="{% url 'analytics_dashboard' %}" class="btn btn-outline-primary"><i class="fas fa-chart-pie"></i> Results &amp; Analytics</a>
+        <a href="{% url 'eresult_grade_predictor_hub' %}" class="btn btn-outline-primary"><i class="fas fa-chart-line"></i> Grade Predictor</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

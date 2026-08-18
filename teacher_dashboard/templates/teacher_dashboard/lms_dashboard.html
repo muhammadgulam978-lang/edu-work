@@ -1,0 +1,74 @@
+{% extends "teacher_dashboard/lms_base.html" %}
+{% load static %}
+
+{% block title %}Assigned Periods - LMS Dashboard{% endblock %}
+
+{% block extra_css %}
+<link href="{% static 'teacher_dashboard/vendor/bootstrap-select/dist/css/bootstrap-select.min.css' %}" rel="stylesheet">
+<link href="{% static 'teacher_dashboard/css/style.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="page-titles">
+        <h4>Assigned Periods</h4>
+        <span class="text-muted">Class-wise, Section-wise Period Assignments</span>
+    </div>
+
+    <div class="col-lg-12">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="card-title">Assigned Periods Overview</h4>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover table-responsive-sm">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Class</th>
+                                <th>Section</th>
+                                <th>Subject</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for period in assigned_periods %}
+                            <tr>
+                                <th>{{ forloop.counter }}</th>
+                                <td>{{ period.class_fk__class_name }}</td>
+                                <td>{{ period.section__section_name }}</td>
+                                <td>
+                                     <a href="{% url 'lms_actions_menu' period.class_fk__id period.section__id period.subject__id %}?stream={{ period.subject__stream__id }}" 
+       class="text-primary fw-bold">
+        {{ period.subject__name }}
+        {% if period.subject__stream__stream_name %} 
+            ({{ period.subject__stream__stream_name }}) 
+        {% endif %}
+        
+    </a>
+                                </td>
+                                <td><span class="badge badge-success light">Active</span></td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center text-muted">No assigned periods found.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'teacher_dashboard/vendor/global/global.min.js' %}"></script>
+<script src="{% static 'teacher_dashboard/vendor/bootstrap-select/dist/js/bootstrap-select.min.js' %}"></script>
+<script src="{% static 'teacher_dashboard/js/custom.min.js' %}"></script>
+<script src="{% static 'teacher_dashboard/js/deznav-init.js' %}"></script>
+<script src="{% static 'teacher_dashboard/js/demo.js' %}"></script>
+<script src="{% static 'teacher_dashboard/js/styleSwitcher.js' %}"></script>
+{% endblock %}

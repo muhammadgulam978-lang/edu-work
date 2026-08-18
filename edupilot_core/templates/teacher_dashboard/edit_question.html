@@ -1,0 +1,69 @@
+{% extends "teacher_dashboard/lms_action_base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h3>Edit Question</h3>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <!-- Question Text -->
+        <div class="mb-3">
+            <label for="{{ form.question_text.id_for_label }}" class="form-label">{{ form.question_text.label }}</label>
+            {{ form.question_text }}
+        </div>
+
+        <!-- MCQ Options (agar form me hain) -->
+        {% if form.mcq_option1 %}
+        <div class="mb-3">
+            <label for="{{ form.mcq_option1.id_for_label }}" class="form-label">{{ form.mcq_option1.label }}</label>
+            {{ form.mcq_option1 }}
+        </div>
+        <div class="mb-3">
+            <label for="{{ form.mcq_option2.id_for_label }}" class="form-label">{{ form.mcq_option2.label }}</label>
+            {{ form.mcq_option2 }}
+        </div>
+        <div class="mb-3">
+            <label for="{{ form.mcq_option3.id_for_label }}" class="form-label">{{ form.mcq_option3.label }}</label>
+            {{ form.mcq_option3 }}
+        </div>
+        <div class="mb-3">
+            <label for="{{ form.mcq_option4.id_for_label }}" class="form-label">{{ form.mcq_option4.label }}</label>
+            {{ form.mcq_option4 }}
+        </div>
+        {% endif %}
+
+        <!-- Answer Field -->
+        <div class="mb-3">
+            <label for="{{ form.answer.id_for_label }}" class="form-label">{{ form.answer.label }}</label>
+            {{ form.answer }}
+        </div>
+
+        <!-- Buttons -->
+        <button type="submit" class="btn btn-primary">Update Question</button>
+
+        {% comment %}
+        Cancel button ke liye ensure karo ke class_id, section_id, subject_id aur format_id available hain.
+        {% endcomment %}
+        {% if question.class_obj and question.section and question.subject %}
+        <a href="{% url 'add_questions' 
+            question.class_obj.id 
+            question.section.id 
+            question.subject.id 
+            question.exam_format.id if question.exam_format else 0 %}" 
+           class="btn btn-secondary">Cancel</a>
+        {% endif %}
+
+        {% comment %}
+        Agar Select Format button chahiye to safely generate:
+        {% endcomment %}
+        {% if question.class_obj and question.section and question.subject %}
+        <a href="{% url 'select_format' 
+            question.class_obj.id 
+            question.section.id 
+            question.subject.id %}" 
+           class="btn btn-info">Select Format</a>
+        {% endif %}
+
+    </form>
+</div>
+{% endblock %}

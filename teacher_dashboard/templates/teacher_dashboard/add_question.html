@@ -1,0 +1,86 @@
+{% extends "teacher_dashboard/lms_action_base.html" %}
+{% load static %}
+
+{% block title %}Add Question{% endblock %}
+
+{% block content %}
+<div class="card" style="background: #f8f9fa; margin-left: 20px; margin-right: 20px;">
+  <div class="card-header">
+    <h4 class="card-title">➕ Add Question to {{ exam_format.format_name }} ({{ section.section_name }})</h4>
+  </div>
+
+  <div class="card-body">
+    <form method="POST" action="{% url 'add_question' class_obj.id subject_obj.id exam_format.id section.id %}" class="needs-validation" novalidate>
+      {% csrf_token %}
+
+      <!-- Question Type -->
+      <div class="mb-3 row">
+        <label class="col-lg-3 col-form-label">Question Type:</label>
+        <div class="col-lg-6">
+          <select id="questionType" name="question_type" class="form-select" required>
+            <option value="">-- Select Type --</option>
+            <option value="MCQ">MCQ</option>
+            <option value="SHORT">Short</option>
+            <option value="LONG">Long</option>
+          </select>
+          <div class="invalid-feedback">Please select question type.</div>
+        </div>
+      </div>
+
+      <!-- Question Text -->
+      <div class="mb-3 row">
+        <label class="col-lg-3 col-form-label">Question:</label>
+        <div class="col-lg-6">
+          <textarea name="text" class="form-control" placeholder="Write your question" rows="4" required></textarea>
+          <div class="invalid-feedback">Please enter question text.</div>
+        </div>
+      </div>
+
+      <!-- MCQ Options (hidden by default, visible if MCQ selected) -->
+      <div id="mcqOptions" style="display: none;">
+        <div class="mb-3 row">
+          <label class="col-lg-3 col-form-label">Option A:</label>
+          <div class="col-lg-6">
+            <input type="text" name="option_a" class="form-control">
+          </div>
+        </div>
+        <div class="mb-3 row">
+          <label class="col-lg-3 col-form-label">Option B:</label>
+          <div class="col-lg-6">
+            <input type="text" name="option_b" class="form-control">
+          </div>
+        </div>
+        <div class="mb-3 row">
+          <label class="col-lg-3 col-form-label">Option C:</label>
+          <div class="col-lg-6">
+            <input type="text" name="option_c" class="form-control">
+          </div>
+        </div>
+        <div class="mb-3 row">
+          <label class="col-lg-3 col-form-label">Option D:</label>
+          <div class="col-lg-6">
+            <input type="text" name="option_d" class="form-control">
+          </div>
+        </div>
+      </div>
+
+      <!-- Submit -->
+      <div class="text-center">
+        <button type="submit" class="btn btn-success">💾 Save Question</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- JS to toggle MCQ options -->
+<script>
+document.getElementById("questionType").addEventListener("change", function () {
+  var mcqOptions = document.getElementById("mcqOptions");
+  if (this.value === "MCQ") {
+    mcqOptions.style.display = "block";
+  } else {
+    mcqOptions.style.display = "none";
+  }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,90 @@
+{% extends "teacher_dashboard/bases.html" %}
+{% load result_filters %}
+{% load static %}
+
+{% block title %}Merge Results - {{ term|title }}{% endblock %}
+
+{% block extra_css %}
+<link href="{% static 'teacher_dashboard/vendor/datatables/css/jquery.dataTables.min.css' %}" rel="stylesheet">
+<link href="{% static 'teacher_dashboard/vendor/bootstrap-select/dist/css/bootstrap-select.min.css' %}" rel="stylesheet">
+<link href="{% static 'teacher_dashboard/css/style.css' %}" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+  <div class="row">
+    <div class="col-lg-12 mb-4">
+      <div class="card">
+        <div class="card-header">
+          <h4 class="card-title text-blue-600">Merged Results - {{ term|title }}</h4>
+        </div>
+
+        <div class="card-body">
+          <!-- Term Filter Form -->
+          <form method="get" class="form-inline mb-4">
+            <label for="term" class="mr-2"><strong>Select Term:</strong></label>
+            <select name="term" id="term" class="form-control w-auto mr-2" onchange="changeTerm()">
+              <option value="midterm" {% if term == 'midterm' %}selected{% endif %}>Midterm</option>
+              <option value="final" {% if term == 'final' %}selected{% endif %}>Final Term</option>
+            </select>
+          </form>
+
+          <!-- Result Form and Table -->
+          <form method="post">
+            {% csrf_token %}
+            <div class="table-responsive">
+              <table class="table primary-table-bordered text-sm">
+                <thead class="thead-primary">
+                  <tr>
+                    <th class="border p-2">Student Name</th>
+                    {% for subject in subjects %}
+                    <th class="border p-2 text-center">{{ subject.name }}</th>
+                    {% endfor %}
+                    <th class="border p-2">Remarks</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for row in result_data %}
+                  <tr>
+                    <td class="border p-2 font-weight-bold">{{ row.student.name }}</td>
+                    {% for subject in subjects %}
+                    <td class="border p-2 text-center">{{ row.marks|get_item:subject.name }}</td>
+                    {% endfor %}
+                    <td class="border p-2">
+                      <textarea name="remarks_{{ row.student.id }}" rows="2" class="form-control"
+                                placeholder="Enter remarks...">{{ row.remarks }}</textarea>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+
+            <div class="text-end mt-4">
+              <button type="submit" class="btn btn-success">Save Remarks</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- JS to trigger term change -->
+<script>
+  function changeTerm() {
+    const selectedTerm = document.querySelector('select[name="term"]').value;
+    window.location.href = window.location.pathname + '?term=' + selectedTerm;
+  }
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'teacher_dashboard/vendor/global/global.min.js' %}"></script>
+<script src="{% static 'teacher_dashboard/vendor/bootstrap-select/dist/js/bootstrap-select.min.js' %}"></script>
+<script src="{% static 'teacher_dashboard/js/custom.min.js' %}"></script>
+<script src="{% static 'teacher_dashboard/js/deznav-init.js' %}"></script>
+<script src="{% static 'teacher_dashboard/js/demo.js' %}"></script>
+<script src="{% static 'teacher_dashboard/js/styleSwitcher.js' %}"></script>
+{% endblock %}

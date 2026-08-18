@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>{% block title %}School Management System{% endblock %}</title>
+
+    <link rel="stylesheet" href="{% static 'admin_panel/css/base.css' %}">
+    <link rel="stylesheet" href="{% static 'admin_panel/css/lms_admin.css' %}">
+
+    <!-- ▼▼▼ ADDED: deznav sidebar theme (matches Image 2 look) ▼▼▼ -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'admin_panel/css/deznav-sidebar.css' %}">
+    <!-- ▲▲▲ END ADDED ▲▲▲ -->
+
+    {% block head %}{% endblock %}
+    <link rel="stylesheet" href="{% static 'admin_panel/css/admin-inner-theme.css' %}?v=admin-sidebar-color-icons-2">
+    <link rel="stylesheet" href="{% static 'admin_panel/css/reference-sidebar.css' %}?v=unified-sidebar-1">
+    <link rel="stylesheet" href="{% static 'admin_panel/css/portal-header.css' %}?v=neutral-header-1">
+<link rel="stylesheet" href="{% static 'admin_panel/css/edupilot-buttons.css' %}?v=unified-buttons-4">
+<link rel="stylesheet" href="{% static 'admin_panel/css/edupilot-surfaces.css' %}?v=neutral-surfaces-4">
+<link rel="stylesheet" href="{% static 'admin_panel/css/parent-help-support.css' %}?v=help-support-portals-1">
+<link rel="stylesheet" href="{% static 'admin_panel/css/help-support-layout-fix.css' %}?v=4">
+<link rel="stylesheet" href="{% static 'admin_panel/css/ai-admin-design.css' %}?v=ai-admin-design-5">
+
+    <script src="{% static 'admin_panel/vendor/chart.js/Chart.bundle.min.js' %}"></script>
+</head>
+
+<body class="edu-button-theme edu-neutral-surfaces {% block body_class %}{% endblock %}">
+    {% block navbar %}
+    {% include 'shared/header/portal_header.html' with portal_kind='admin' %}
+    {% endblock navbar %}
+
+    {% block sidebar %}
+    {% include 'shared/sidebar/shell.html' with sidebar_portal='admin' sidebar_menu_template='admin_panel/sidebar.html' %}
+    {% endblock sidebar %}
+
+    <div class="main-content">
+        {% block content %}{% endblock %}
+    </div>
+
+    <script src="{% static 'admin_panel/js/base.js' %}"></script>
+    <script src="{% static 'admin_panel/js/admin-header-live.js' %}?v=header-live-solid-1"></script>
+    <script src="{% static 'admin_panel/js/portal-header.js' %}?v=global-header-1"></script>
+    <!-- ▼▼▼ ADDED: deznav sidebar collapse/expand behaviour ▼▼▼ -->
+    <script src="{% static 'admin_panel/js/deznav-sidebar.js' %}?v=direct-parent-1"></script>
+    <!-- ▲▲▲ END ADDED ▲▲▲ -->
+    {% include 'admin_panel/includes/admin_ai_fab.html' %}
+</body>
+</html>

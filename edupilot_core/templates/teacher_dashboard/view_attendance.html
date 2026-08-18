@@ -1,0 +1,71 @@
+{% extends "teacher_dashboard/bases.html" %}
+{% load static %}
+
+{% block title %}Attendance Records{% endblock %}
+
+{% block extra_css %}
+<link href="{% static 'vendor/datatables/css/jquery.dataTables.min.css' %}" rel="stylesheet">
+<link href="{% static 'vendor/bootstrap-select/dist/css/bootstrap-select.min.css' %}" rel="stylesheet">
+<link href="{% static 'css/style.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="col-lg-12 mt-4">
+  <div class="card">
+    <div class="card-header">
+      <h4 class="card-title">
+        Attendance for {{ assigned_period.subject.subject_name }} - {{ assigned_period.period.period_name }}
+      </h4>
+    </div>
+    <div class="card-body">
+    
+      <!-- Filter Form -->
+      <form method="get" class="form-inline mb-3">
+        <label for="date" class="mr-2"><strong>Filter by Date:</strong></label>
+        <input type="date" name="date" id="date" class="form-control mr-2"
+               value="{{ filter_date|date:'Y-m-d' }}">
+        <button type="submit" class="btn btn-primary">Filter</button>
+        <a href="?date=" class="btn btn-secondary ml-2">Reset</a>
+      </form>
+
+      <!-- Attendance Table -->
+      <div class="table-responsive">
+        <table class="table table-responsive-sm">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Student</th>
+              <th>Date</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for record in attendance_records %}
+            <tr>
+              <th>{{ forloop.counter }}</th>
+              <td>{{ record.student.name }}</td>
+              <td>{{ record.date }}</td>
+              <td>
+                {% if record.status == 'present' %}
+                  <span class="badge badge-success">Present</span>
+                {% elif record.status == 'absent' %}
+                  <span class="badge badge-danger">Absent</span>
+                {% elif record.status == 'leave' %}
+                  <span class="badge badge-warning">Leave</span>
+                {% else %}
+                  <span class="badge badge-secondary">{{ record.status|title }}</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="4" class="text-center text-muted">No attendance records found for this date.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,34 @@
+{% extends "admin_panel/bases.html" %}
+{% load static %}
+{% block title %}Monthly Health Checkups{% endblock %}
+{% block head %}<link rel="stylesheet" href="{% static 'health_management/css/health_theme.css' %}">{% endblock %}
+{% block content %}
+<div class="hlm-wrap">
+  <div class="hlm-page-header">
+    <div><h2>📅 Monthly Health Checkups</h2><p>Create and manage checkup cycles for students and staff.</p></div>
+    <div class="hlm-header-actions">
+      <a class="btn btn-teal" href="{% url 'health_management:checkup_cycle_create' %}">+ New Checkup Cycle</a>
+    </div>
+  </div>
+  <div class="hlm-panel">
+    <table class="hlm-table">
+      <thead><tr><th>Title</th><th>Type</th><th>Campus</th><th>Start</th><th>End</th><th>Records</th><th></th></tr></thead>
+      <tbody>
+        {% for cycle in cycles %}
+        <tr>
+          <td>{{ cycle.title }}</td>
+          <td>{{ cycle.get_checkup_type_display }}</td>
+          <td>{{ cycle.campus|default:"—" }}</td>
+          <td>{{ cycle.start_date }}</td>
+          <td>{{ cycle.end_date }}</td>
+          <td>{{ cycle.records.count }}</td>
+          <td><a class="btn btn-teal" href="{% url 'health_management:checkup_register' cycle.id %}">Open Register</a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="hlm-empty">No checkup cycles yet — create the first one.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

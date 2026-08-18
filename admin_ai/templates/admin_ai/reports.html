@@ -1,0 +1,47 @@
+{% extends "admin_panel/bases.html" %}
+{% block title %}AI Analytics Reports{% endblock %}
+{% block page_title %}AI Analytics Reports{% endblock %}
+{% block content %}
+<div class="ai-report">
+  <section class="ai-report-card">
+    <h2>AI Analytics Report Center</h2>
+    <p>Generate saved snapshots, download PDF/Excel, and share secure report links.</p>
+  </section>
+  <section class="ai-report-card">
+    <h3>Build Report</h3>
+    <form method="post" action="{% url 'ai_analytics_report_generate' %}">
+      {% csrf_token %}
+      <div class="ai-grid">
+        <input type="text" name="title" placeholder="Report title">
+        <select name="report_type">{% for key,label in report_types %}<option value="{{ key }}">{{ label }}</option>{% endfor %}</select>
+        <select name="period">{% for key,label in period_options %}<option value="{{ key }}">{{ label }}</option>{% endfor %}</select>
+        <select name="class_id"><option value="">All Classes</option>{% for class in classes %}<option value="{{ class.id }}">{{ class.class_name }}</option>{% endfor %}</select>
+        <input type="date" name="start_date">
+        <input type="date" name="end_date">
+      </div>
+      <div class="ai-checks">
+        {% for key,label in report_sections %}
+          <label><input type="checkbox" name="sections" value="{{ key }}" checked> {{ label }}</label>
+        {% endfor %}
+      </div>
+      <button class="ai-btn" type="submit"><i class="fas fa-file-alt"></i> Generate Report</button>
+    </form>
+  </section>
+  <section class="ai-report-card">
+    <h3>Recent Reports</h3>
+    <table class="ai-table">
+      <thead><tr><th>Title</th><th>Type</th><th>Created</th><th>Share</th><th>Actions</th></tr></thead>
+      <tbody>
+        {% for report in recent_reports %}
+          <tr>
+            <td>{{ report.title }}</td><td>{{ report.get_report_type_display }}</td><td>{{ report.created_at }}</td><td>{{ report.get_share_status_display }}</td>
+            <td><span class="ai-table-actions"><a href="{% url 'ai_analytics_report_detail' report.uuid %}"><i class="fas fa-eye"></i> Preview</a><a href="{% url 'ai_analytics_report_pdf' report.uuid %}"><i class="fas fa-file-pdf"></i> PDF</a><a href="{% url 'ai_analytics_report_excel' report.uuid %}"><i class="fas fa-file-excel"></i> Excel</a></span></td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="5">No reports generated yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+</div>
+{% endblock %}

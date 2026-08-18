@@ -1,0 +1,144 @@
+{# Teacher menu items — trimmed to the Recommended Main Navigation from the Teacher Dashboard workflow. #}
+{# Wrapper and brand live in shared/sidebar/shell.html. #}
+
+<li style="--sidebar-icon-color:#0d9488; --sidebar-icon-bg:#dbf7f4;">
+    <a href="{% url 'teacher_dashboard' %}" class="ai-icon" aria-expanded="false">
+        <i class="fas fa-home"></i>
+        <span class="nav-text">Teacher Dashboard</span>
+    </a>
+</li>
+
+<li style="--sidebar-icon-color:#0d9488; --sidebar-icon-bg:#dbf7f4;">
+    <a href="{% url 'teacher_timetable' %}" class="ai-icon" aria-expanded="false">
+        <i class="fas fa-calendar-days"></i>
+        <span class="nav-text">My Timetable</span>
+    </a>
+</li>
+
+<li class="sidebar-section">Lesson Planning</li>
+
+<li class="has-menu" style="--sidebar-icon-color:#0f766e; --sidebar-icon-bg:#dff8f3;">
+    <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
+        <i class="fas fa-book-open"></i>
+        <span class="nav-text">Lesson Planning</span>
+    </a>
+    <ul aria-expanded="false">
+        <li><a href="{% url 'lesson_plans_list' %}"><i class="fas fa-list"></i> My Lesson Plans</a></li>
+        <li><a href="{% url 'lesson_upload_chapter' %}"><i class="fas fa-robot"></i> AI Teacher Assistant</a></li>
+    </ul>
+</li>
+
+<li style="--sidebar-icon-color:#0d9488; --sidebar-icon-bg:#dbf7f4;">
+    <a href="{% url 'lms_dashboard' %}" class="ai-icon" aria-expanded="false">
+        <i class="fas fa-chalkboard"></i>
+        <span class="nav-text">Learning Resources</span>
+    </a>
+</li>
+
+{% if class_obj and section_obj and subject_obj %}
+<li class="sidebar-section">Current Subject</li>
+
+<li class="has-menu" style="--sidebar-icon-color:#0f766e; --sidebar-icon-bg:#dff8f3;">
+    <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
+        <i class="fas fa-book-reader"></i>
+        <span class="nav-text">Assignments</span>
+    </a>
+    <ul aria-expanded="false">
+        <li><a href="{% url 'lms_books_list' class_obj.id section_obj.id subject_obj.id %}"><i class="fas fa-book"></i> Books &amp; Lesson Plans</a></li>
+        <li><a href="{% url 'upload_lecture_note' class_obj.id section_obj.id subject_obj.id %}"><i class="fas fa-file-upload"></i> Upload Lecture Notes</a></li>
+        <li><a href="{% url 'upload_assignment' class_obj.id section_obj.id subject_obj.id %}"><i class="fas fa-clipboard-list"></i> Upload Assignment</a></li>
+        <li><a href="{% url 'view_assignments' class_obj.id section_obj.id subject_obj.id %}"><i class="fas fa-folder-open"></i> Assignment Submissions</a></li>
+        <li><a href="{% url 'upload_quiz' class_obj.id section_obj.id subject_obj.id %}"><i class="fas fa-question-circle"></i> Upload Quiz</a></li>
+        <li><a href="{% url 'view_quiz_submissions' class_obj.id section_obj.id subject_obj.id %}"><i class="fas fa-tasks"></i> Quiz Submissions</a></li>
+        <li><a href="{% url 'submit_diary' class_obj.id section_obj.id subject_obj.id %}"><i class="fas fa-pen"></i> Assign Diary</a></li>
+        <li><a href="{% url 'view_diary_student' class_obj.id section_obj.id subject_obj.id %}"><i class="fas fa-book-open"></i> View Diary</a></li>
+    </ul>
+</li>
+{% endif %}
+
+<li class="sidebar-section">Assessments and Exams</li>
+
+<li class="has-menu" style="--sidebar-icon-color:#0d9488; --sidebar-icon-bg:#dbf7f4;">
+    <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
+        <i class="fas fa-question-circle"></i>
+        <span class="nav-text">Question Bank</span>
+    </a>
+    <ul aria-expanded="false">
+        <li><a href="{% url 'question_bank_list' %}"><i class="fas fa-list"></i> All Question Banks</a></li>
+        <li><a href="{% url 'question_bank_list' %}?pending=1"><i class="fas fa-clock"></i> Pending Approval</a></li>
+    </ul>
+</li>
+
+<li class="has-menu" style="--sidebar-icon-color:#0d9488; --sidebar-icon-bg:#dbf7f4;">
+    <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
+        <i class="fas fa-clipboard-check"></i>
+        <span class="nav-text">Exam Plans</span>
+    </a>
+    <ul aria-expanded="false">
+        <li><a href="{% url 'exam_plan_list' %}"><i class="fas fa-tasks"></i> All Exam Plans</a></li>
+        <li><a href="{% url 'create_exam_plan' %}"><i class="fas fa-plus"></i> Create New Plan</a></li>
+    </ul>
+</li>
+
+<li style="--sidebar-icon-color:#0d9488; --sidebar-icon-bg:#dbf7f4;">
+    <a href="{% url 'analytics_dashboard' %}" class="ai-icon" aria-expanded="false">
+        <i class="fas fa-chart-pie"></i>
+        <span class="nav-text">Results &amp; Analytics</span>
+    </a>
+</li>
+
+<li class="sidebar-section">E+ Result</li>
+
+<li class="has-menu" style="--sidebar-icon-color:#0d9488; --sidebar-icon-bg:#dbf7f4;">
+    <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
+        <i class="fas fa-award"></i>
+        <span class="nav-text">E+ Result</span>
+    </a>
+    <ul aria-expanded="false">
+        <li><a href="{% url 'eresult_hub' %}"><i class="fas fa-list-check"></i> Marks Entry &amp; Status</a></li>
+        <li><a href="{% url 'eresult_grade_predictor_hub' %}"><i class="fas fa-chart-line"></i> Grade Predictor</a></li>
+    </ul>
+</li>
+
+<li class="sidebar-section">Communication</li>
+<li style="--sidebar-icon-color:#0d9488; --sidebar-icon-bg:#dbf7f4;">
+    <a href="{% url 'communication:inbox' %}" class="ai-icon" aria-expanded="false">
+        <i class="fas fa-comments"></i>
+        <span class="nav-text">Messages</span>
+    </a>
+</li>
+<li style="--sidebar-icon-color:#0f766e; --sidebar-icon-bg:#dff8f3;">
+    <a href="{% url 'teacher_announcements' %}" class="ai-icon" aria-expanded="false">
+        <i class="fas fa-bullhorn"></i>
+        <span class="nav-text">Announcements</span>
+    </a>
+</li>
+
+<li class="sidebar-section">Appraisal and Training</li>
+<li style="--sidebar-icon-color:#0d9488; --sidebar-icon-bg:#dbf7f4;">
+    <a href="{% url 'teacher_appraisal_submit' %}" class="ai-icon" aria-expanded="false">
+        <i class="fas fa-star"></i>
+        <span class="nav-text">My Appraisal</span>
+    </a>
+</li>
+
+<li class="sidebar-section">Leave and HR Services</li>
+<li style="--sidebar-icon-color:#0f766e; --sidebar-icon-bg:#dff8f3;">
+    <a href="{% url 'teacher_report_issue' %}" class="ai-icon" aria-expanded="false">
+        <i class="fas fa-triangle-exclamation"></i>
+        <span class="nav-text">Report an Issue</span>
+    </a>
+</li>
+
+<li class="sidebar-section">Reports</li>
+<li class="has-menu" style="--sidebar-icon-color:#0d9488; --sidebar-icon-bg:#dbf7f4;">
+    <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
+        <i class="fas fa-clipboard-list"></i>
+        <span class="nav-text">Reports</span>
+    </a>
+    <ul aria-expanded="false">
+        <li><a href="{% url 'teacher_requested_reports' %}"><i class="fas fa-file-alt"></i> Requested Reports</a></li>
+        <li><a href="{% url 'teacher_suggestion_bucket' %}"><i class="far fa-lightbulb"></i> Suggestion Bucket</a></li>
+        <li><a href="{% url 'teacher_my_suggestions' %}"><i class="fas fa-list-check"></i> My Suggestions</a></li>
+    </ul>
+</li>

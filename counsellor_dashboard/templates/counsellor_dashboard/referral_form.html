@@ -1,0 +1,20 @@
+{% extends "admin_panel/bases.html" %}
+{% load static %}
+{% block title %}New Referral{% endblock %}
+{% block head %}<link rel="stylesheet" href="{% static 'counsellor_dashboard/css/counsellor_theme.css' %}">{% endblock %}
+{% block content %}
+<div class="cns-wrap">
+  <div class="cns-form-card">
+    <h2>📋 New Counselling Referral</h2>
+    <div class="cns-notice">This form isn't an emergency service. For an immediate safety concern, use the Safeguarding workflow instead.</div>
+    <form method="post">
+      {% csrf_token %}
+      {% include "counsellor_dashboard/_form_fields.html" %}
+      <div class="cns-form-actions">
+        <button type="submit" class="btn btn-teal">Submit Referral</button>
+        <a class="btn btn-cancel" href="{% url 'counsellor_dashboard:referral_list' %}">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

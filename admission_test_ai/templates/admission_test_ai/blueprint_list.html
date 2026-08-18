@@ -1,0 +1,44 @@
+{% extends "admin_panel/bases.html" %}
+{% load static %}
+{% block title %}Admission Test Blueprints{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{% static 'admin_panel/css/academics_gateway.css' %}">
+{% endblock %}
+{% block content %}
+<div class="academics-gateway">
+  {% if messages %}{% for message in messages %}<div class="ag-alert {% if message.tags == 'error' %}alert-danger{% endif %}">{{ message }}</div>{% endfor %}{% endif %}
+  <div class="ag-card">
+    <div class="ag-header">
+      <div>
+        <p class="ag-kicker">AI Admission Assessment</p>
+        <h4 class="ag-title">Test Blueprints</h4>
+        <p class="ag-subtitle">Save a blueprint once per grade - AI reuses it for every future admission paper.</p>
+      </div>
+      <div class="ag-actions">
+        <a href="{% url 'admission_blueprint_create' %}" class="ag-btn ag-btn-primary"><i class="fa fa-plus"></i> New Blueprint</a>
+      </div>
+    </div>
+    <div class="ag-body">
+      <div class="ag-table-wrap">
+        <table class="display" style="width:100%;">
+          <thead><tr><th>Name</th><th>Class</th><th>Subjects</th><th>Total Marks</th><th>Total Time</th><th>Actions</th></tr></thead>
+          <tbody>
+            {% for bp in blueprints %}
+            <tr>
+              <td><a href="{% url 'admission_blueprint_detail' pk=bp.pk %}">{{ bp.name }}</a></td>
+              <td>{{ bp.applying_class }}</td>
+              <td>{{ bp.subjects.count }}</td>
+              <td>{{ bp.total_marks }}</td>
+              <td>{{ bp.total_time_minutes }} min</td>
+              <td><div class="ag-inline-actions"><a href="{% url 'admission_blueprint_detail' pk=bp.pk %}" class="ag-btn ag-icon-btn ag-btn-primary" title="Open"><i class="fa fa-eye"></i></a></div></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6" class="ag-empty">No blueprints yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

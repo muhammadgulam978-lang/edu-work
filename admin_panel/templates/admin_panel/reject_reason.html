@@ -1,0 +1,52 @@
+{% extends "admin_panel/bases.html" %}
+{% load static %}
+
+{% block title %}Reject Admission{% endblock %}
+
+{% block head %}
+  <link rel="stylesheet" href="{% static 'admin_panel/css/student_gateway.css' %}?v=student-gateway-1">
+{% endblock %}
+
+{% block content %}
+<div class="student-gateway">
+  <section class="sg-card">
+    <div class="sg-header">
+      <div>
+        <p class="sg-kicker">Student Management</p>
+        <h1 class="sg-title">Reject Admission</h1>
+        <p class="sg-subtitle">Provide a clear rejection reason for {{ admission.name }}.</p>
+      </div>
+      <div class="sg-actions">
+        <a href="{% url 'admission_list' %}" class="sg-btn sg-btn-secondary">
+          <i class="fa fa-arrow-left"></i>
+          <span>Back to List</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="sg-body">
+      <form method="post">
+        {% csrf_token %}
+        <div class="sg-panel">
+          <h2 class="sg-section-title">
+            <i class="fa fa-comment-dots"></i>
+            Rejection Reason
+          </h2>
+          <div class="sg-field">
+            <label for="comment">Reason</label>
+            <textarea id="comment" name="reason" rows="5" required></textarea>
+          </div>
+        </div>
+
+        <div class="sg-actions">
+          <button type="submit" class="sg-btn sg-btn-danger">
+            <i class="fa fa-times-circle"></i>
+            <span>Submit Rejection</span>
+          </button>
+          <a href="{% url 'admission_list' %}" class="sg-btn sg-btn-secondary">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </section>
+</div>
+{% endblock %}

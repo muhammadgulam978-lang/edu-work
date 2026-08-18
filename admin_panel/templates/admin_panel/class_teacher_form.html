@@ -1,0 +1,131 @@
+{% extends 'admin_panel/bases.html' %}
+{% load static %}
+
+{% block title %}Assign Class Teacher{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'admin_panel/css/academics_gateway.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="academics-gateway">
+  <div class="ag-card">
+    <div class="ag-header">
+      <div>
+        <p class="ag-kicker">Academics</p>
+        <h4 class="ag-title">Assign Class Teacher</h4>
+        <p class="ag-subtitle">Choose a year, class, section, and available teacher for this assignment.</p>
+      </div>
+      <a href="{% url 'class_teacher_list' %}" class="ag-btn ag-btn-secondary"><i class="fa fa-arrow-left"></i> Back to Assignments</a>
+    </div>
+
+    <div class="ag-body">
+      <form method="post">
+        {% csrf_token %}
+
+        {% if error %}
+          <div class="alert alert-danger">{{ error }}</div>
+        {% endif %}
+
+        <div class="ag-panel">
+          <h5 class="ag-section-title"><i class="fa fa-chalkboard-user"></i> Assignment Details</h5>
+          <div class="ag-grid ag-grid-2">
+            <div class="ag-field">
+              <label for="id_academic_year">Academic Year</label>
+              <select name="academic_year" id="id_academic_year" class="form-select">
+                <option value="">Select Academic Year</option>
+                {% for year in academic_years %}
+                  <option value="{{ year.id }}" {% if assignment and assignment.academic_year_id == year.id %}selected{% endif %}>{{ year.year }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="ag-field">
+              <label for="id_class">Class</label>
+              <select name="class_fk" id="id_class" class="form-select">
+                <option value="">Select Class</option>
+                {% for cls in classes %}
+                  <option value="{{ cls.id }}" {% if assignment and assignment.class_fk_id == cls.id %}selected{% endif %}>{{ cls.class_name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="ag-field">
+              <label for="id_section">Section</label>
+              <select name="section" id="id_section" class="form-select">
+                <option value="">Select Section</option>
+                {% if assignment %}
+                  {% for section in sections %}
+                    <option value="{{ section.id }}" {% if assignment.section_id == section.id %}selected{% endif %}>{{ section.section_name }}</option>
+                  {% endfor %}
+                {% endif %}
+              </select>
+            </div>
+            <div class="ag-field">
+              <label for="id_teacher">Teacher</label>
+              <select name="teacher" id="id_teacher" class="form-select">
+                <option value="">Select Teacher</option>
+                {% if assignment %}
+                  {% for teacher in teachers %}
+                    <option value="{{ teacher.id }}" {% if assignment.teacher_id == teacher.id %}selected{% endif %}>{{ teacher.name }}</option>
+                  {% endfor %}
+                {% endif %}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="ag-form-actions">
+          <button type="submit" class="ag-btn ag-btn-primary"><i class="fa fa-save"></i> Save Assignment</button>
+          <a href="{% url 'class_teacher_list' %}" class="ag-btn ag-btn-secondary">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const classSelect = document.getElementById("id_class");
+  const sectionSelect = document.getElementById("id_section");
+  const teacherSelect = document.getElementById("id_teacher");
+
+  function resetOptions(select, label) {
+    select.innerHTML = `<option value="">${label}</option>`;
+  }
+
+  classSelect.addEventListener("change", function () {
+    const classId = this.value;
+    resetOptions(sectionSelect, "Select Section");
+    resetOptions(teacherSelect, "Select Teacher");
+
+    if (!classId) return;
+
+    fetch("{% url 'ajax_load_sections' %}?class_id=" + encodeURIComponent(classId))
+      .then(response => response.json())
+      .then(data => {
+        resetOptions(sectionSelect, "Select Section");
+        data.sections.forEach(sec => {
+          sectionSelect.insertAdjacentHTML("beforeend", `<option value="${sec.id}">${sec.section_name}</option>`);
+        });
+      });
+  });
+
+  sectionSelect.addEventListener("change", function () {
+    const classId = classSelect.value;
+    const sectionId = this.value;
+    resetOptions(teacherSelect, "Select Teacher");
+
+    if (!classId || !sectionId) return;
+
+    const query = `?class_id=${encodeURIComponent(classId)}&section_id=${encodeURIComponent(sectionId)}`;
+    fetch("{% url 'ajax_load_teachers_by_class' %}" + query)
+      .then(response => response.json())
+      .then(data => {
+        resetOptions(teacherSelect, "Select Teacher");
+        data.teachers.forEach(teacher => {
+          teacherSelect.insertAdjacentHTML("beforeend", `<option value="${teacher.id}">${teacher.name}</option>`);
+        });
+      });
+  });
+});
+</script>
+{% endblock %}

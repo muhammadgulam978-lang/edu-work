@@ -1,0 +1,24 @@
+{% extends "teacher_dashboard/bases.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h2>✨ Lesson Plan Preview</h2>
+
+  {% if lesson_details %}
+    {% for lesson in lesson_details %}
+      <div class="card mb-3 shadow">
+        <div class="card-body">
+          <h5>{{ lesson.day }}</h5>
+          <p><b>Objective:</b> {{ lesson.objective }}</p>
+          <p><b>Activities:</b> {{ lesson.activities }}</p>
+          <p><b>Materials:</b> {{ lesson.materials }}</p>
+          <p><b>Assessment:</b> {{ lesson.assessment }}</p>
+          <p><b>Homework:</b> {{ lesson.homework }}</p>
+          <p><b>Worksheet:</b> {{ lesson.worksheet }}</p>
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="alert alert-warning">⚠️ No details available.</div>
+  {% endif %}
+</div>
+{% endblock %}

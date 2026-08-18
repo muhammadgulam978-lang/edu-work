@@ -1,0 +1,95 @@
+<!-- admin_panel/timetable_pdf.html -->
+{% load custom_filters %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Timetable PDF</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            color: #212529;
+        }
+        h2 {
+            color: #0d6efd;
+            margin-bottom: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th {
+            background-color: #0d6efd;
+            color: white;
+            padding: 8px;
+            text-align: center;
+            border: 1px solid #dee2e6;
+            font-weight: bold;
+        }
+        td {
+            border: 1px solid #dee2e6;
+            padding: 8px;
+            vertical-align: middle;
+            text-align: center;
+            min-height: 60px;
+        }
+        .day-column {
+            background-color: #e9ecef;
+            font-weight: bold;
+            width: 120px;
+        }
+        .assigned-slot {
+            background-color: #d1e7dd;
+            color: #0f5132;
+            font-weight: 500;
+        }
+        .empty-slot {
+            background-color: #fff;
+            color: #6c757d;
+        }
+        p.teacher {
+            margin-top: 20px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <h2>Class: {{ class_info.class_name }}, Section: {{ section_info.section_name }}</h2>
+    <p class="teacher">
+        Class Teacher: 
+        {% if teacher_name %}
+            {{ teacher_name }}
+        {% else %}
+            <em>Not Assigned</em>
+        {% endif %}
+    </p>
+
+    <table>
+        <thead>
+            <tr>
+                <th class="day-column">Day</th>
+                {% for pname in period_order %}
+                    <th>{{ pname }}</th>  
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for day in days %}
+                <tr>
+                    <td class="day-column">{{ day }}</td>
+                    {% for pname in period_order %}
+                        {% with slot=slots|dict_get:day|dict_get:pname %}
+                            <td class="{% if slot != '---' %}assigned-slot{% else %}empty-slot{% endif %}">
+                                {{ slot|safe }}
+                            </td>
+                        {% endwith %}
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

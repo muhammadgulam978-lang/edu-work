@@ -1,0 +1,93 @@
+<form style="display:none">{% csrf_token %}</form>
+<div class="ai-report-popup-backdrop" data-ai-report-modal>
+  <div class="ai-report-popup" role="dialog" aria-modal="true" aria-labelledby="ai-report-popup-title">
+    <button class="ai-report-popup-close" type="button" data-ai-report-close aria-label="Close">&times;</button>
+    <div class="ai-report-popup-ticket"><i class="fas fa-file-pdf"></i><span data-ai-report-ticket>Generating report</span></div>
+    <div class="ai-report-popup-spinner" data-ai-report-spinner></div>
+    <h3 id="ai-report-popup-title" data-ai-report-title>Please wait</h3>
+    <p data-ai-report-message>EduPilot is preparing your report from live ERP data.</p>
+    <div class="ai-report-popup-status" data-ai-report-status></div>
+    <div class="ai-report-popup-actions" data-ai-report-actions style="display:none">
+      <a class="ai-report-popup-btn success" data-ai-report-download href="#"><i class="fas fa-download"></i> Download PDF</a>
+      <a class="ai-report-popup-btn primary" data-ai-report-view href="#"><i class="fas fa-eye"></i> View</a>
+      <a class="ai-report-popup-btn" data-ai-report-share href="#"><i class="fas fa-share-alt"></i> Share</a>
+      <button class="ai-report-popup-btn dark" type="button" data-ai-report-close>Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  if(window.EduPilotAutoReportInitialized)return;
+  window.EduPilotAutoReportInitialized=true;
+  const endpoint="{% url 'ai_analytics_report_auto_generate' %}";
+
+  function token(){
+    const input=document.querySelector('[name=csrfmiddlewaretoken]');
+    if(input&&input.value)return input.value;
+    const match=document.cookie.match(/(?:^|; )csrftoken=([^;]+)/);
+    return match?decodeURIComponent(match[1]):'';
+  }
+  function modal(){return document.querySelector('[data-ai-report-modal]');}
+  function setState(state,title,message){
+    const root=modal();
+    if(!root)return;
+    root.classList.add('is-open');
+    root.querySelector('.ai-report-popup').classList.remove('ai-report-popup-ready','ai-report-popup-error');
+    if(state==='ready')root.querySelector('.ai-report-popup').classList.add('ai-report-popup-ready');
+    if(state==='error')root.querySelector('.ai-report-popup').classList.add('ai-report-popup-error');
+    root.querySelector('[data-ai-report-ticket]').textContent=state==='ready'?'Report ready':state==='error'?'Report failed':'Generating report';
+    root.querySelector('[data-ai-report-title]').textContent=title;
+    root.querySelector('[data-ai-report-message]').textContent=message;
+    root.querySelector('[data-ai-report-status]').textContent=state==='loading'?'This may take a few seconds.':'';
+    root.querySelector('[data-ai-report-actions]').style.display=state==='ready'?'grid':'none';
+  }
+  function close(){
+    const root=modal();
+    if(root)root.classList.remove('is-open');
+  }
+  function payloadFrom(el){
+    const data=el.dataset||{};
+    return {
+      report_type:data.reportType||'full',
+      period:data.period||'today',
+      title:data.reportTitle||'',
+      class_id:data.classId||'',
+      section_id:data.sectionId||'',
+      start_date:data.startDate||'',
+      end_date:data.endDate||'',
+      source:data.source||'auto_report_button'
+    };
+  }
+  async function generate(payload){
+    setState('loading','Preparing your report','EduPilot is selecting the right report data and generating a PDF-ready snapshot.');
+    const body=new URLSearchParams();
+    Object.keys(payload||{}).forEach(key=>{if(payload[key]!==undefined&&payload[key]!==null)body.append(key,payload[key]);});
+    try{
+      const response=await fetch(endpoint,{
+        method:'POST',
+        body,
+        headers:{'X-CSRFToken':token(),'X-Requested-With':'XMLHttpRequest'}
+      });
+      const data=await response.json();
+      if(!response.ok||!data.success)throw new Error(data.message||'Report could not be generated.');
+      const root=modal();
+      root.querySelector('[data-ai-report-download]').href=data.pdf_url;
+      root.querySelector('[data-ai-report-view]').href=data.report_url;
+      root.querySelector('[data-ai-report-share]').href=data.share_url||data.report_url;
+      setState('ready',data.title||'Report ready',data.message||'Your report is ready.');
+    }catch(error){
+      setState('error','Report could not be generated',error.message||'Please try again.');
+    }
+  }
+  document.addEventListener('click',function(event){
+    const closeBtn=event.target.closest('[data-ai-report-close]');
+    if(closeBtn){event.preventDefault();close();return;}
+    const trigger=event.target.closest('[data-auto-report]');
+    if(!trigger)return;
+    event.preventDefault();
+    generate(payloadFrom(trigger));
+  });
+  window.EduPilotAutoReport={generate};
+})();
+</script>

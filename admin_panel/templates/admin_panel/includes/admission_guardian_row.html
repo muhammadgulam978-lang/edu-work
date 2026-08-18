@@ -1,0 +1,19 @@
+<article class="guardian-row">
+  <input type="hidden" name="guardian_id" value="{{ guardian.pk|default:'' }}">
+  <div class="guardian-head"><h3><i class="fas fa-user-shield"></i> Guardian</h3><button type="button" class="remove-guardian" title="Remove guardian"><i class="fas fa-trash"></i></button></div>
+  <div class="ad-form-grid">
+    <label class="span-2">Link Existing Parent<select name="guardian_existing_parent"><option value="">Create a new parent</option>{% for parent in parents %}<option value="{{ parent.pk }}" {% if guardian.existing_parent_id == parent.pk %}selected{% endif %}>{{ parent.full_name }}{% if parent.email %} - {{ parent.email }}{% endif %}</option>{% endfor %}</select></label>
+    <label>Full Name *<input name="guardian_full_name" value="{{ guardian.full_name }}"></label>
+    <label>Relationship *<select name="guardian_relationship"><option value="Father" {% if guardian.relationship == 'Father' %}selected{% endif %}>Father</option><option value="Mother" {% if guardian.relationship == 'Mother' %}selected{% endif %}>Mother</option><option value="Guardian" {% if guardian.relationship == 'Guardian' %}selected{% endif %}>Guardian</option></select></label>
+    <label>CNIC<input name="guardian_cnic" value="{{ guardian.cnic }}"></label>
+    <label>Email<input type="email" name="guardian_email" value="{{ guardian.email }}"></label>
+    <label>Phone<input name="guardian_phone" value="{{ guardian.phone }}"></label>
+    <label>Occupation<input name="guardian_occupation" value="{{ guardian.occupation }}"></label>
+    <label class="span-2">Address<textarea name="guardian_address">{{ guardian.address }}</textarea></label>
+    <label>Primary Guardian<select name="guardian_primary"><option value="1" {% if guardian.is_primary or not guardian %}selected{% endif %}>Yes</option><option value="0" {% if guardian and not guardian.is_primary %}selected{% endif %}>No</option></select></label>
+    <label>Portal Access<select name="guardian_portal_access"><option value="1" {% if guardian.portal_access or not guardian %}selected{% endif %}>Enabled</option><option value="0" {% if guardian and not guardian.portal_access %}selected{% endif %}>Disabled</option></select></label>
+    <label>Notifications<select name="guardian_notifications"><option value="1" {% if guardian.notifications_enabled or not guardian %}selected{% endif %}>Enabled</option><option value="0" {% if guardian and not guardian.notifications_enabled %}selected{% endif %}>Disabled</option></select></label>
+    <label>Username<input name="guardian_username" value="{{ guardian.username }}" autocomplete="off"></label>
+    <label>New Password {% if guardian.password_hash %}<small>(secured)</small>{% endif %}<input type="password" name="guardian_password" autocomplete="new-password"></label>
+  </div>
+</article>

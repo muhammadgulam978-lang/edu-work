@@ -1,0 +1,34 @@
+
+{% block content %}
+<h2>{{ book.title }}</h2>
+<form id="lp-form">
+  {% csrf_token %}
+  <div>
+  {% for ch in chapters %}
+    <h4>{{ ch.number }}. {{ ch.title }}</h4>
+    <ul>
+      {% for t in ch.topics.all %}
+        <li>
+          <input type="checkbox" class="topic-cb" value="{{ t.id }}"> {{ t.title }}
+          <input type="number" min="1" max="10" class="periods" data-topic="{{ t.id }}" value="1"> periods
+        </li>
+      {% endfor %}
+    </ul>
+  {% endfor %}
+  </div>
+  <button type="button" id="create-lp" class="btn btn-success">Create Lesson Plans</button>
+</form>
+<script>
+document.getElementById('create-lp').addEventListener('click', async ()=>{
+  const checked = Array.from(document.querySelectorAll('.topic-cb:checked')).map(cb=>cb.value);
+  if(!checked.length){ alert('Select topics'); return; }
+  const selections = checked.map(id=>({topic_id:id, periods: parseInt(document.querySelector('.periods[data-topic=\"'+id+'\"]').value||1)}));
+  const resp = await fetch(window.location.pathname + 'create-lessonplan/', {
+    method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':document.querySelector('[name=csrfmiddlewaretoken]').value},
+    body: JSON.stringify({selections: selections, section: 'A'})
+  });
+  const j = await resp.json();
+  if(j.status==='ok') location.reload(); else alert('Error');
+});
+</script>
+{% endblock %}

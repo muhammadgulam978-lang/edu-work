@@ -1,0 +1,90 @@
+            {# Student menu items. Wrapper and brand live in shared/sidebar/shell.html. #}
+            <li style="--sidebar-icon-color:#0ea5e9; --sidebar-icon-bg:#dff6ff;">
+                <a href="{% url 'student_dashboard' %}" class="ai-icon" aria-expanded="false">
+                    <i class="fas fa-home"></i>
+                    <span class="nav-text">Student Dashboard</span>
+                </a>
+            </li>
+
+            <li class="sidebar-section">Communication</li>
+            <li style="--sidebar-icon-color:#1677d2; --sidebar-icon-bg:#e4f2ff;">
+                <a href="{% url 'communication:inbox' %}" class="ai-icon" aria-expanded="false">
+                    <i class="fas fa-comments"></i>
+                    <span class="nav-text">Messages</span>
+                </a>
+            </li>
+            <li style="--sidebar-icon-color:#0f766e; --sidebar-icon-bg:#dff8f3;">
+                <a href="{% url 'student_announcements' %}" class="ai-icon" aria-expanded="false">
+                    <i class="fas fa-bullhorn"></i>
+                    <span class="nav-text">Announcements</span>
+                </a>
+            </li>
+
+            <li class="sidebar-section">Academics</li>
+
+            <li class="has-menu" style="--sidebar-icon-color:#0f766e; --sidebar-icon-bg:#dff8f3;">
+                <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
+                    <i class="fas fa-graduation-cap"></i>
+                    <span class="nav-text">Courses</span>
+                </a>
+                <ul aria-expanded="false">
+                    <li><a href="{% url 'student_attendance' %}"><i class="fas fa-calendar-check"></i> Attendance</a></li>
+                    <li><a href="{% url 'student_result' %}"><i class="fas fa-poll"></i> Result</a></li>
+                    <li><a href="{% url 'student_assignments' %}"><i class="fas fa-clipboard-list"></i> Assignments</a></li>
+                    <li><a href="{% url 'student_quizzes' %}"><i class="fas fa-question-circle"></i> Quizzes</a></li>
+                    <li><a href="{% url 'student_diary' %}"><i class="fas fa-book-open"></i> Diary</a></li>
+                    <li><a href="{% url 'student_timetable' %}"><i class="fas fa-calendar-days"></i> Timetable</a></li>
+                </ul>
+            </li>
+
+            <li class="sidebar-section">E+ Result</li>
+
+            <li class="has-menu" style="--sidebar-icon-color:#0d9488; --sidebar-icon-bg:#dbf7f4;">
+                <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
+                    <i class="fas fa-award"></i>
+                    <span class="nav-text">E+ Result</span>
+                </a>
+                <ul aria-expanded="false">
+                    <li><a href="{% url 'student_result' %}"><i class="fas fa-poll"></i> My Result</a></li>
+                    <li><a href="{% url 'student_grade_predictor' %}"><i class="fas fa-chart-line"></i> Grade Predictor</a></li>
+                </ul>
+            </li>
+
+            <li class="sidebar-section">AI Learning</li>
+
+            <li class="has-menu" style="--sidebar-icon-color:#7c3aed; --sidebar-icon-bg:#ede9fe;">
+                <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
+                    <i class="fas fa-brain"></i>
+                    <span class="nav-text">AI Tutor</span>
+                </a>
+                <ul aria-expanded="false">
+                    <li><a href="{% url 'ai_tutor_dashboard' %}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                    <li><a href="{% url 'ai_tutor_sessions' %}"><i class="fas fa-clock-rotate-left"></i> Session History</a></li>
+                    <li><a href="{% url 'ai_tutor_progress' %}"><i class="fas fa-chart-line"></i> My Progress</a></li>
+                </ul>
+            </li>
+
+            <li class="sidebar-section">Finance</li>
+
+            <li class="has-menu" style="--sidebar-icon-color:#16a34a; --sidebar-icon-bg:#dcfce7;">
+                <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
+                    <i class="fas fa-receipt"></i>
+                    <span class="nav-text">Fees Voucher</span>
+                </a>
+                <ul aria-expanded="false">
+                    <li><a href="{% url 'student_vouchers' %}"><i class="fas fa-file-invoice-dollar"></i> My Vouchers</a></li>
+                </ul>
+            </li>
+
+            <li class="sidebar-section">Support</li>
+            <li class="has-menu" style="--sidebar-icon-color:#7c3aed; --sidebar-icon-bg:#f1e9ff;">
+                <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
+                    <i class="fas fa-life-ring"></i><span class="nav-text">Help &amp; Support</span>
+                </a>
+                <ul aria-expanded="false">
+                    <li><a href="{% url 'student_report_issue' %}"><i class="fas fa-triangle-exclamation"></i> Report an Issue</a></li>
+                    <li><a href="{% url 'student_requested_reports' %}"><i class="fas fa-clipboard-list"></i> Requested Reports</a></li>
+                    <li><a href="{% url 'student_suggestion_bucket' %}"><i class="far fa-lightbulb"></i> Suggestion Bucket</a></li>
+                    <li><a href="{% url 'student_my_suggestions' %}"><i class="fas fa-list-check"></i> My Suggestions</a></li>
+                </ul>
+            </li>

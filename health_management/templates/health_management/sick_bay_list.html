@@ -1,0 +1,30 @@
+{% extends "admin_panel/bases.html" %}
+{% load static %}
+{% block title %}Sick Bay{% endblock %}
+{% block head %}<link rel="stylesheet" href="{% static 'health_management/css/health_theme.css' %}">{% endblock %}
+{% block content %}
+<div class="hlm-wrap">
+  <div class="hlm-page-header">
+    <div><h2>🛏 Sick Bay</h2><p>Who's resting, since when, and current status.</p></div>
+    <div class="hlm-header-actions"><a class="btn btn-teal" href="{% url 'health_management:sick_bay_create' %}">+ New Admission</a></div>
+  </div>
+  <div class="hlm-panel">
+    <table class="hlm-table">
+      <thead><tr><th>Patient</th><th>Reason</th><th>Admitted</th><th>Bed</th><th>Parent Informed</th><th>Status</th></tr></thead>
+      <tbody>
+        {% for a in admissions %}
+        <tr>
+          <td>{{ a.profile.display_name }}</td>
+          <td>{{ a.reason }}</td>
+          <td>{{ a.admission_time|date:"d M, H:i" }}</td>
+          <td>{{ a.bed_number|default:"—" }}</td>
+          <td>{{ a.parent_informed|yesno:"Yes,No" }}</td>
+          <td><span class="hlm-badge">{{ a.get_status_display }}</span></td>
+        </tr>
+        {% empty %}<tr><td colspan="6" class="hlm-empty">Sick bay is empty.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

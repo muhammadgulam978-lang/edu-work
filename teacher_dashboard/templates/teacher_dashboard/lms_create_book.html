@@ -1,0 +1,57 @@
+{% extends "teacher_dashboard/bases.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+
+  <!-- ================= HEADER ================= -->
+  <div class="mb-4">
+    <h3>Create Book</h3>
+    <p class="text-muted mb-0">
+      Create a book first, then upload chapters (PDF) inside this book
+    </p>
+  </div>
+
+  <!-- ================= FORM ================= -->
+  <div class="card">
+    <div class="card-body">
+
+      <form method="post">
+        {% csrf_token %}
+
+        <!-- Book Title -->
+        <div class="mb-3">
+          <label class="form-label">Book Name</label>
+          <input
+            type="text"
+            name="title"
+            class="form-control"
+            placeholder="e.g. Computer Science – Data Transmission"
+            required
+          >
+        </div>
+
+        <!-- Hidden Context (class / section / subject already in URL) -->
+        <input type="hidden" name="class_id" value="{{ class_id }}">
+        <input type="hidden" name="section_id" value="{{ section_id }}">
+        <input type="hidden" name="subject_id" value="{{ subject_id }}">
+
+        <!-- Buttons -->
+        <div class="d-flex justify-content-between">
+          <a href="{% url 'lms_books_list' class_id section_id subject_id %}"
+             class="btn btn-outline-secondary">
+            Cancel
+          </a>
+
+          <button type="submit" class="btn btn-primary">
+            Create Book
+          </button>
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}

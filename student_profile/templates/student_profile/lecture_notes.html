@@ -1,0 +1,59 @@
+{% extends 'student_profile/base.html' %}
+{% block title %}Lecture Notes{% endblock %}
+
+{% block content %}
+<div class="sp-page-header">
+  <div class="sp-page-header__icon">
+    <i class="ti ti-notes" aria-hidden="true"></i>
+  </div>
+  <div>
+    <h1 class="sp-page-header__title">Lecture Notes</h1>
+    <p class="sp-page-header__sub">Study material uploaded by your teachers</p>
+  </div>
+</div>
+
+{% if lecture_notes %}
+  <div class="sp-card-grid">
+    {% for note in lecture_notes %}
+    <div class="sp-card sp-card--note">
+      <div class="sp-card__top">
+        <div class="sp-card__icon-wrap sp-card__icon-wrap--blue">
+          <i class="ti ti-file-description" aria-hidden="true"></i>
+        </div>
+      </div>
+
+      <h2 class="sp-card__title">{{ note.title }}</h2>
+
+      {% if note.description %}
+        <p class="sp-card__desc">{{ note.description }}</p>
+      {% endif %}
+
+      <div class="sp-card__footer">
+        <span class="sp-card__teacher">
+          <i class="ti ti-user" aria-hidden="true"></i>
+          {{ note.teacher.name|default:"Teacher" }}
+        </span>
+        <span class="sp-card__subject">
+          <i class="ti ti-book" aria-hidden="true"></i>
+          {{ note.subject.name|default:"" }}
+        </span>
+      </div>
+
+      <div class="sp-card__actions">
+        {% if note.file %}
+          <a href="{{ note.file.url }}" class="sp-btn sp-btn--primary" download>
+            <i class="ti ti-download" aria-hidden="true"></i> Download Notes
+          </a>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+{% else %}
+  <div class="sp-empty">
+    <i class="ti ti-notes-off sp-empty__icon" aria-hidden="true"></i>
+    <p class="sp-empty__text">No lecture notes uploaded yet.</p>
+  </div>
+{% endif %}
+{% endblock %}

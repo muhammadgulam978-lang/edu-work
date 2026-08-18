@@ -1,0 +1,92 @@
+{% extends "admin_panel/bases.html" %}
+{% load static %}
+{% block title %}Counsellor Dashboard{% endblock %}
+{% block head %}<link rel="stylesheet" href="{% static 'counsellor_dashboard/css/counsellor_theme.css' %}">{% endblock %}
+{% block content %}
+<div class="cns-wrap">
+  <div class="cns-page-header">
+    <div>
+      <h2>🧠 Student Counselling &amp; Wellbeing</h2>
+      <p>Referrals, cases, appointments, and safeguarding — in one confidential place.</p>
+    </div>
+    <div class="cns-header-actions">
+      <a class="btn btn-teal" href="{% url 'counsellor_dashboard:referral_create' %}">+ New Referral</a>
+      <a class="btn btn-red" href="{% url 'counsellor_dashboard:safeguarding_create' %}">🛡 Raise Safeguarding Concern</a>
+    </div>
+  </div>
+
+  <div class="cns-notice">This dashboard is not an emergency service. For an immediate safety concern, use the Safeguarding workflow above — it goes straight to a trained staff member.</div>
+
+  <div class="cns-stats-grid">
+    <div class="cns-stat-card cns-purple"><span class="cns-stat-label">New Referrals</span><span class="cns-stat-value">{{ new_referrals_count }}</span></div>
+    <div class="cns-stat-card cns-teal"><span class="cns-stat-label">Open Cases</span><span class="cns-stat-value">{{ open_cases_count }}</span></div>
+    <div class="cns-stat-card cns-amber"><span class="cns-stat-label">Follow-Ups Due</span><span class="cns-stat-value">{{ follow_up_count }}</span></div>
+    <div class="cns-stat-card cns-blue"><span class="cns-stat-label">Today's Appointments</span><span class="cns-stat-value">{{ todays_appointments|length }}</span></div>
+    <div class="cns-stat-card cns-red"><span class="cns-stat-label">High Priority Cases</span><span class="cns-stat-value">{{ high_priority_count }}</span></div>
+    <div class="cns-stat-card cns-red"><span class="cns-stat-label">Open Safeguarding Concerns</span><span class="cns-stat-value">{{ open_safeguarding_count }}</span></div>
+  </div>
+
+  <div class="cns-quick-links">
+    <a href="{% url 'counsellor_dashboard:referral_list' %}">📋 Referrals</a>
+    <a href="{% url 'counsellor_dashboard:case_list' %}">📁 Cases</a>
+    <a href="{% url 'counsellor_dashboard:appointment_list' %}">📆 Appointments</a>
+    <a href="{% url 'counsellor_dashboard:safeguarding_list' %}">🛡 Safeguarding</a>
+  </div>
+
+  <div class="cns-grid-2">
+    <div class="cns-panel">
+      <h3>New Referrals</h3>
+      <table class="cns-table">
+        <thead><tr><th>Student</th><th>Category</th><th>Priority</th><th></th></tr></thead>
+        <tbody>
+          {% for r in new_referrals %}
+          <tr>
+            <td>{{ r.student.full_name }}</td>
+            <td>{{ r.get_category_display }}</td>
+            <td><span class="cns-priority-{{ r.priority }}">{{ r.get_priority_display }}</span></td>
+            <td><a class="btn btn-teal" href="{% url 'counsellor_dashboard:referral_accept' r.id %}">Accept → Open Case</a></td>
+          </tr>
+          {% empty %}<tr><td colspan="4" class="cns-empty">No new referrals.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="cns-panel">
+      <h3>Today's Appointments</h3>
+      <table class="cns-table">
+        <thead><tr><th>Student</th><th>Time</th><th>Mode</th><th>Status</th></tr></thead>
+        <tbody>
+          {% for a in todays_appointments %}
+          <tr>
+            <td>{{ a.student.full_name }}</td>
+            <td>{{ a.scheduled_datetime|date:"H:i" }}</td>
+            <td>{{ a.get_mode_display }}</td>
+            <td><span class="cns-badge">{{ a.get_status_display }}</span></td>
+          </tr>
+          {% empty %}<tr><td colspan="4" class="cns-empty">No appointments today.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="cns-panel" style="margin-top:20px;border-color:#f0656b;">
+    <h3>🛡 Open Safeguarding Concerns</h3>
+    <table class="cns-table">
+      <thead><tr><th>Student</th><th>Type</th><th>Risk</th><th>Status</th></tr></thead>
+      <tbody>
+        {% for c in open_safeguarding %}
+        <tr>
+          <td>{{ c.student.full_name }}</td>
+          <td>{{ c.get_concern_type_display }}</td>
+          <td><span class="cns-priority-{{ c.risk_level }}">{{ c.get_risk_level_display }}</span></td>
+          <td><span class="cns-badge">{{ c.get_status_display }}</span></td>
+        </tr>
+        {% empty %}<tr><td colspan="4" class="cns-empty">No open safeguarding concerns.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

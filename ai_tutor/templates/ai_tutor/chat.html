@@ -1,0 +1,406 @@
+{% extends "student_profile/bases.html" %}
+
+{% block title %}AI Tutor Chat{% endblock %}
+
+{% block content %}
+<style>
+  .ai-session {
+    --ai-primary: var(--primary, #88D0C5);
+    --ai-accent: var(--secondary, #8BC740);
+    --ai-success: var(--secondary, #8BC740);
+    --ai-bg: #F5F5FD;
+    --ai-soft: #bab4e21f;
+    --ai-muted: #6c757d;
+    --ai-border: #e9ecef;
+    --ai-white: #ffffff;
+    color: #343a40;
+    margin: 18px;
+    font-weight: 400;
+  }
+  .ai-session-top, .ai-session-tabs, .ai-panel-card, .ai-stat, .ai-message-card {
+    background: var(--ai-white);
+    border: 1px solid var(--ai-border);
+    border-radius: 8px;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, .04);
+  }
+  .ai-session-top {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 18px;
+    align-items: center;
+    padding: 18px;
+    margin-bottom: 14px;
+  }
+  .ai-title-wrap { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .ai-bot-icon, .ai-icon-box {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    background: rgba(136, 208, 197, .18);
+    color: #495057;
+    font-weight: 500;
+    border: 1px solid var(--ai-border);
+  }
+  .ai-session h2, .ai-session h3, .ai-session h4 { margin: 0; color: #343a40; font-weight: 500; }
+  .ai-session strong { font-weight: 500; }
+  .ai-muted { color: var(--ai-muted); }
+  .ai-subtitle { margin: 4px 0 0; color: var(--ai-muted); font-size: 13px; }
+  .ai-status-strip { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+  .ai-pill {
+    display: inline-flex;
+    align-items: center;
+    min-height: 27px;
+    border-radius: 999px;
+    padding: 4px 10px;
+    background: rgba(136, 208, 197, .18);
+    color: #495057;
+    font-size: 12px;
+    font-weight: 500;
+    text-decoration: none;
+  }
+  .ai-session-tabs {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 10px;
+    margin-bottom: 16px;
+  }
+  .ai-tab {
+    border: 1px solid transparent;
+    background: transparent;
+    color: #495057;
+    border-radius: 8px;
+    padding: 11px 14px;
+    white-space: nowrap;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  .ai-tab.active, .ai-tab:hover {
+    background: rgba(136, 208, 197, .18);
+    border-color: #dfe7ef;
+    color: #343a40;
+  }
+  .ai-panel { display: none; }
+  .ai-panel.active { display: block; }
+  .ai-chat-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 310px;
+    gap: 18px;
+    align-items: start;
+  }
+  .ai-message-card, .ai-panel-card { padding: 18px; }
+  .message-list {
+    min-height: 410px;
+    max-height: 610px;
+    overflow-y: auto;
+    border: 1px solid #edf0f2;
+    border-radius: 8px;
+    padding: 14px;
+    background: #fbfdff;
+  }
+  .msg {
+    margin-bottom: 14px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    border: 1px solid #e6edf3;
+    line-height: 1.55;
+  }
+  .msg-student {
+    background: #f8f9fa;
+    margin-left: 9%;
+  }
+  .msg-assistant {
+    background: rgba(136, 208, 197, .14);
+    margin-right: 9%;
+  }
+  .chat-input {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    margin-top: 12px;
+  }
+  .chat-input textarea, #practice-answer {
+    min-height: 66px;
+    border: 1px solid #d8dde3;
+    border-radius: 8px;
+    padding: 10px;
+    resize: vertical;
+    width: 100%;
+  }
+  .ai-button {
+    background: var(--ai-primary);
+    color: #fff;
+    border: 0;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .ai-button:hover { background: var(--ai-accent); color: #fff; }
+  .quick-actions { display: grid; gap: 9px; margin-top: 14px; }
+  .quick-actions button {
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+    border: 1px solid #dfe7ef;
+    background: #fbfdff;
+    border-radius: 8px;
+    padding: 10px;
+    text-align: left;
+    cursor: pointer;
+    color: #343a40;
+    font-weight: 500;
+  }
+  .quick-actions button span {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(136, 208, 197, .18);
+    color: #6c757d;
+    font-size: 12px;
+  }
+  .quick-actions button:hover { border-color: var(--ai-accent); }
+  .ai-stat-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .ai-stat { padding: 16px; }
+  .ai-stat strong { display: block; font-size: 24px; color: #343a40; line-height: 1.1; font-weight: 500; }
+  .ai-table { width: 100%; border-collapse: collapse; }
+  .ai-table th, .ai-table td {
+    border-bottom: 1px solid #edf0f2;
+    padding: 11px;
+    text-align: left;
+    vertical-align: top;
+  }
+  .ai-table th { color: #6c757d; font-size: 12px; text-transform: uppercase; font-weight: 500; }
+  .ai-table td { color: #343a40; }
+  .ai-safety-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+  .ai-safety-item {
+    border: 1px solid #e3e9ef;
+    border-radius: 8px;
+    padding: 14px;
+    background: #fbfdff;
+  }
+  #practice-box {
+    border: 1px dashed #cbd6e2;
+    border-radius: 8px;
+    padding: 14px;
+    margin-top: 14px;
+    background: #fbfdff;
+  }
+  @media (max-width: 1050px) {
+    .ai-session-top, .ai-chat-layout { grid-template-columns: 1fr; }
+    .ai-status-strip { justify-content: flex-start; }
+    .ai-stat-grid, .ai-safety-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 640px) {
+    .ai-session { margin: 10px; }
+    .ai-stat-grid, .ai-safety-grid, .chat-input { grid-template-columns: 1fr; }
+    .msg-student, .msg-assistant { margin-left: 0; margin-right: 0; }
+  }
+</style>
+
+<div class="ai-session">
+  <section class="ai-session-top">
+    <div class="ai-title-wrap">
+      <div class="ai-bot-icon">AI</div>
+      <div>
+        <h2>AI Tutor</h2>
+        <p class="ai-subtitle">
+          {{ session.subject.name|default:"General" }}{% if session.topic %}: {{ session.topic }}{% endif %}
+        </p>
+      </div>
+    </div>
+    <div class="ai-status-strip">
+      <span class="ai-pill">Mode: {{ session.get_session_type_display }}</span>
+      <span class="ai-pill">Language: {{ session.language }}</span>
+      <span class="ai-pill">GPT-5.6 Terra with fallback</span>
+      <a class="ai-pill" href="{% url 'ai_tutor_dashboard' %}">AI Home</a>
+      <a class="ai-pill" href="{% url 'ai_tutor_progress' %}">My Progress</a>
+      <a class="ai-pill" href="{% url 'ai_tutor_sessions' %}">Session History</a>
+    </div>
+  </section>
+
+  <nav class="ai-session-tabs" aria-label="AI Tutor session tabs">
+    <button class="ai-tab active" type="button" data-tab="chat-panel">AI Chat</button>
+    <button class="ai-tab" type="button" data-tab="practice-panel">Practice</button>
+    <button class="ai-tab" type="button" data-tab="status-panel">Safety & Model</button>
+  </nav>
+
+  <div id="chat-panel" class="ai-panel active">
+    <div class="ai-chat-layout">
+      <section class="ai-message-card">
+        <div class="ai-title-wrap" style="justify-content:space-between;margin-bottom:14px;">
+          <div>
+            <h4>Ask AI Tutor</h4>
+            <p class="ai-subtitle">Ask for explanations, examples, revision, Urdu translation, homework hints, or exam prep.</p>
+          </div>
+          <span class="ai-pill">{{ session.total_messages }} messages</span>
+        </div>
+
+        <div id="message-list" class="message-list">
+          {% for message in messages %}
+            {% if message.sender_type == "student" %}
+              <div class="msg msg-student"><strong>You</strong><br>{{ message.message_text|linebreaksbr }}</div>
+            {% elif message.sender_type == "assistant" %}
+              <div class="msg msg-assistant"><strong>AI Tutor</strong><br>{{ message.response_text|linebreaksbr }}</div>
+            {% endif %}
+          {% empty %}
+            <p class="ai-muted">Ask your first question. I can explain, revise, create practice, or help with homework safely.</p>
+          {% endfor %}
+        </div>
+
+        <form id="chat-form" class="chat-input">
+          {% csrf_token %}
+          <textarea id="message" name="message" placeholder="What would you like help with today?"></textarea>
+          <button class="ai-button" type="submit">Send</button>
+        </form>
+      </section>
+
+      <aside class="ai-panel-card">
+        <h4>Quick Actions</h4>
+        <p class="ai-subtitle">Send a focused tutor command.</p>
+        <div class="quick-actions">
+          <button type="button" data-prompt="Explain this simply."><span>EX</span>Explain Simply</button>
+          <button type="button" data-prompt="Explain this step by step."><span>ST</span>Explain Step by Step</button>
+          <button type="button" data-prompt="Give me a real-life example."><span>EG</span>Give Example</button>
+          <button type="button" data-prompt="Translate this explanation to Urdu."><span>UR</span>Translate to Urdu</button>
+          <button type="button" data-prompt="Create five practice questions, but do not show answers yet."><span>PR</span>Create Practice</button>
+          <button type="button" data-prompt="Test me with one question."><span>TM</span>Test Me</button>
+          <button type="button" data-prompt="Show the key points."><span>KP</span>Show Key Points</button>
+          <button type="button" data-prompt="Make flashcards for this topic."><span>FC</span>Make Flashcards</button>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <div id="practice-panel" class="ai-panel">
+    <section class="ai-panel-card">
+      <div class="ai-title-wrap" style="justify-content:space-between;margin-bottom:14px;">
+        <div>
+          <h4>Practice</h4>
+          <p class="ai-subtitle">Create a short practice attempt, submit an answer, and AI Tutor will score it.</p>
+        </div>
+        <button id="practice-button" class="ai-button" type="button">Create Practice Attempt</button>
+      </div>
+      <div id="practice-box" class="ai-muted">Your generated question will appear here.</div>
+
+      <h4 style="margin-top:22px;">Recent Practice Attempts</h4>
+      <table class="ai-table">
+        <thead>
+          <tr><th>Question</th><th>Answer</th><th>Score</th><th>Feedback</th></tr>
+        </thead>
+        <tbody>
+          {% for attempt in practice_attempts %}
+            <tr>
+              <td>{{ attempt.question_text }}</td>
+              <td>{{ attempt.student_answer|default:"Not answered yet" }}</td>
+              <td>{% if attempt.score != None %}{{ attempt.score }}%{% else %}-{% endif %}</td>
+              <td>{{ attempt.feedback|default:"-" }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="4">No practice attempts yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+  </div>
+
+  <div id="status-panel" class="ai-panel">
+    <section class="ai-panel-card">
+      <h4>Safety & Model Status</h4>
+      <div class="ai-safety-grid" style="margin-top:14px;">
+        <div class="ai-safety-item"><span class="ai-pill">Privacy</span><p>Student data is loaded from the logged-in user only.</p></div>
+        <div class="ai-safety-item"><span class="ai-pill">Homework</span><p>Homework help gives hints and explanations, not final graded work.</p></div>
+        <div class="ai-safety-item"><span class="ai-pill">Exam Safety</span><p>Active exam or quiz answer requests are blocked.</p></div>
+        <div class="ai-safety-item"><span class="ai-pill">Model</span><p>GPT-5.6 Terra is configured, with automatic fallback if provider access fails.</p></div>
+        <div class="ai-safety-item"><span class="ai-pill">Audit</span><p>AI messages, safety flags, retrieved sources, and model used are logged.</p></div>
+        <div class="ai-safety-item"><span class="ai-pill">Curriculum</span><p>Responses are grounded in approved student-accessible school content when available.</p></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+  const form = document.getElementById("chat-form");
+  const input = document.getElementById("message");
+  const list = document.getElementById("message-list");
+  const csrf = document.querySelector("[name=csrfmiddlewaretoken]").value;
+
+  function appendMessage(label, text, cssClass) {
+    const div = document.createElement("div");
+    div.className = "msg " + cssClass;
+    div.innerHTML = "<strong>" + label + "</strong><br>" + String(text).replaceAll("\n", "<br>");
+    list.appendChild(div);
+    list.scrollTop = list.scrollHeight;
+  }
+
+  async function sendMessage(text) {
+    appendMessage("You", text, "msg-student");
+    input.value = "";
+    const response = await fetch("{% url 'ai_tutor_send_message' session.id %}", {
+      method: "POST",
+      headers: {"Content-Type": "application/json", "X-CSRFToken": csrf},
+      body: JSON.stringify({message: text})
+    });
+    const data = await response.json();
+    appendMessage("AI Tutor", data.reply || data.error || "No response.", "msg-assistant");
+  }
+
+  form.addEventListener("submit", function(event) {
+    event.preventDefault();
+    const text = input.value.trim();
+    if (text) sendMessage(text);
+  });
+
+  document.querySelectorAll("[data-prompt]").forEach(function(button) {
+    button.addEventListener("click", function() {
+      sendMessage(button.dataset.prompt);
+    });
+  });
+
+  document.getElementById("practice-button").addEventListener("click", async function() {
+    const response = await fetch("{% url 'ai_tutor_create_practice' session.id %}", {
+      method: "POST",
+      headers: {"X-CSRFToken": csrf}
+    });
+    const data = await response.json();
+    document.getElementById("practice-box").classList.remove("ai-muted");
+    document.getElementById("practice-box").innerHTML =
+      "<p><strong>Question:</strong> " + data.question + "</p>" +
+      "<textarea id='practice-answer' placeholder='Type your answer here...'></textarea>" +
+      "<button class='ai-button' type='button' id='submit-practice' style='margin-top:10px;'>Check Answer</button>" +
+      "<div id='practice-feedback' style='margin-top:10px;'></div>";
+    document.getElementById("submit-practice").addEventListener("click", async function() {
+      const answer = document.getElementById("practice-answer").value;
+      const check = await fetch("/student/ai-tutor/practice/" + data.attempt_id + "/answer/", {
+        method: "POST",
+        headers: {"Content-Type": "application/json", "X-CSRFToken": csrf},
+        body: JSON.stringify({answer: answer})
+      });
+      const result = await check.json();
+      document.getElementById("practice-feedback").innerText =
+        "Score: " + result.score + "%. " + result.feedback;
+    });
+  });
+
+  document.querySelectorAll(".ai-tab").forEach(function(button) {
+    button.addEventListener("click", function() {
+      document.querySelectorAll(".ai-tab").forEach(function(tab) { tab.classList.remove("active"); });
+      document.querySelectorAll(".ai-panel").forEach(function(panel) { panel.classList.remove("active"); });
+      button.classList.add("active");
+      document.getElementById(button.dataset.tab).classList.add("active");
+    });
+  });
+</script>
+{% endblock %}

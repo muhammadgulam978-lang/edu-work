@@ -1,0 +1,148 @@
+{% extends 'admin_panel/bases.html' %}
+{% load static %}
+
+{% block title %}Teacher Duty Roster{% endblock %}
+
+
+{% block content %}
+<style>
+  .duty-page{
+    width:100%;max-width:1600px;margin:0 auto;padding:28px 30px 60px;
+    box-sizing:border-box;min-width:0;
+  }
+  .duty-page-head{
+    display:flex;justify-content:space-between;align-items:flex-start;
+    background:#E6F5F0;padding:18px 22px;border-radius:14px;margin-bottom:22px;
+  }
+  .duty-page-head h1{margin:0 0 4px;font-size:24px;}
+  .duty-page-head p{margin:0;color:#6B7A77;font-size:14px;}
+  .duty-btn{
+    border:none;padding:11px 20px;border-radius:22px;font-size:14px;font-weight:600;
+    cursor:pointer;background:#4FB89D;color:#fff;text-decoration:none;display:inline-block;
+  }
+  .duty-btn:hover{background:#2E8A72;color:#fff;}
+  .duty-card{
+    width:100%;box-sizing:border-box;background:#fff;;border-radius:14px;border:1px solid #DCEAE6;padding:22px 24px;margin-bottom:22px;
+  }
+  .duty-card h3{margin:0 0 16px;font-size:17px;}
+  .duty-form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px; align-items:end;}
+  .duty-field label{display:block;font-size:12.5px;color:#6B7A77;margin-bottom:6px;font-weight:600;}
+  .duty-field select, .duty-field input{
+    width:100%;padding:10px 12px;border:1px solid #DCEAE6;border-radius:8px;font-size:14px;background:#F9FBFA;
+  }
+  .duty-table{width:100%;border-collapse:collapse;}
+  .duty-table thead th{
+    background:#EEF6F3;text-align:left;padding:12px 14px;font-size:13px;color:#6B7A77;
+    border-bottom:1px solid #DCEAE6;
+  }
+  .duty-table tbody td{padding:13px 14px;font-size:14px;border-bottom:1px solid #DCEAE6;}
+  .duty-pill{background:#E6F5F0;color:#2E8A72;padding:4px 12px;border-radius:14px;font-size:12.5px;font-weight:600;}
+  .duty-del{background:none;border:none;color:#C0392B;cursor:pointer;font-size:13px;font-weight:600;}
+  .duty-empty{text-align:center;color:#6B7A77;padding:30px;font-size:14px;}
+  .duty-table-wrap{width:100%;overflow-x:auto;}
+  @media (max-width:1200px){
+    .duty-form-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+  }
+  @media (max-width:767px){
+    .duty-page{padding:20px 16px 48px;}
+    .duty-page-head{flex-direction:column;gap:16px;}
+    .duty-form-grid{grid-template-columns:1fr;}
+    .duty-table{min-width:680px;}
+  }
+</style>
+
+<div class="duty-page">
+<div class="duty-page-head">
+  <div>
+    <h1>Break Time Duty Roster</h1>
+    <p>Assign teachers to duty areas with timing, then generate a printable PDF report.</p>
+  </div>
+  <a class="duty-btn" href="{% url 'teacher_duty_roster_report' %}">+ Generate PDF Report</a>
+</div>
+
+{% if messages %}
+  {% for message in messages %}
+    <div style="padding:10px 16px;border-radius:8px;margin-bottom:14px;
+                background:{% if message.tags == 'error' %}#FCEBEB{% else %}#EAF3DE{% endif %};
+                color:{% if message.tags == 'error' %}#791F1F{% else %}#27500A{% endif %};">
+      {{ message }}
+    </div>
+  {% endfor %}
+{% endif %}
+
+<div class="duty-card">
+  <h3>Assign New Duty</h3>
+  <form method="post" action="{% url 'add_teacher_duty' %}">
+    {% csrf_token %}
+    <div class="duty-form-grid">
+      <div class="duty-field">
+        <label>Date</label>
+        <input type="date" name="date" required>
+      </div>
+      <div class="duty-field">
+        <label>Timing</label>
+        <input type="text" name="timing" placeholder="e.g. 11:00 - 11:20" required>
+      </div>
+      <div class="duty-field">
+        <label>Duty Area</label>
+        <input type="text" name="area" placeholder="e.g. Football Ground" required>
+      </div>
+      <div class="duty-field">
+        <label>Teacher</label>
+        <select name="teacher" required>
+          <option value="">Select teacher</option>
+          {% for teacher in teachers %}
+            <option value="{{ teacher.pk }}" {% if teacher.pk in recent_teacher_ids %}style="color:#B4740E;"{% endif %}>
+              {{ teacher.name }}{% if teacher.pk in recent_teacher_ids %} — on duty last week{% endif %}
+            </option>
+          {% endfor %}
+        </select>
+        {% if recent_teacher_ids %}
+          <div style="font-size:12px;color:#B4740E;margin-top:6px;">⚠ Teachers marked "on duty last week" were assigned recently — picking them will be blocked to keep rotation fair.</div>
+        {% endif %}
+      </div>
+      <div class="duty-field">
+        <button type="submit" class="duty-btn" style="width:100%;">+ Add Duty</button>
+      </div>
+    </div>
+  </form>
+</div>
+
+<div class="duty-card" style="padding:0;overflow:hidden;">
+  <div style="padding:20px 24px 0;">
+    <h3>Assigned Duties</h3>
+  </div>
+  <div class="duty-table-wrap">
+  <table class="duty-table">
+    <thead>
+      <tr>
+        <th>Teacher</th>
+        <th>Duty Area</th>
+        <th>Timing</th>
+        <th>Date</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for duty in duties %}
+        <tr>
+          <td><strong>{{ duty.teacher.name }}</strong></td>
+          <td><span class="duty-pill">{{ duty.area }}</span></td>
+          <td>{{ duty.timing }}</td>
+          <td>{{ duty.date|date:"d M Y" }}</td>
+          <td>
+            <form method="post" action="{% url 'delete_teacher_duty' duty.pk %}" style="display:inline;">
+              {% csrf_token %}
+              <button type="submit" class="duty-del">Remove</button>
+            </form>
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="5" class="duty-empty">No duties assigned yet. Use the form above to add one.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+</div>
+{% endblock %}

@@ -1,0 +1,205 @@
+{% extends 'admin_panel/bases.html' %}
+{% load static %}
+
+{% block title %}Fixture Management{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'admin_panel/css/academics_gateway.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="academics-gateway">
+  <div class="ag-card">
+    <div class="ag-header">
+      <div>
+        <p class="ag-kicker">Timetable Automation</p>
+        <h4 class="ag-title">Fixture Management</h4>
+        <p class="ag-subtitle">Assign substitute teachers when someone is absent with smart availability checks.</p>
+      </div>
+    </div>
+
+    <div class="ag-body">
+      <div class="fixture-summary-grid">
+        <div class="fixture-summary-card">
+          <div class="fixture-summary-label">Total Fixtures</div>
+          <div class="fixture-summary-value">{{ fixture_summary.total }}</div>
+          <div class="fixture-summary-note">All assigned fixture records</div>
+        </div>
+        <div class="fixture-summary-card">
+          <div class="fixture-summary-label">Today's Fixtures</div>
+          <div class="fixture-summary-value">{{ fixture_summary.today }}</div>
+          <div class="fixture-summary-note">Created today</div>
+        </div>
+        <div class="fixture-summary-card">
+          <div class="fixture-summary-label">Workload Limit</div>
+          <div class="fixture-summary-value">{{ fixture_summary.workload_limit }}/day</div>
+          <div class="fixture-summary-note">Max substitute fixtures</div>
+        </div>
+        <div class="fixture-summary-card">
+          <div class="fixture-summary-label">Available Teachers</div>
+          <div class="fixture-summary-value" id="availableTeacherCount">-</div>
+          <div class="fixture-summary-note">After day, period, and subject selection</div>
+        </div>
+      </div>
+
+      <div class="ag-panel">
+        <h5 class="ag-section-title"><i class="fa fa-user-clock"></i> Assign Fixture</h5>
+        <form method="POST" id="fixtureForm">
+          {% csrf_token %}
+          <div class="ag-grid">
+            <div class="ag-field">
+              <label for="class_id">Class</label>
+              <select name="class_fk" id="class_id">
+                <option value="">Select Class</option>
+                {% for c in classes %}
+                  <option value="{{ c.id }}">{{ c.class_name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="ag-field">
+              <label for="section_id">Section</label>
+              <select name="section" id="section_id">
+                <option value="">Select Section</option>
+                {% for s in sections %}
+                  <option value="{{ s.id }}">{{ s.section_name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="ag-field">
+              <label for="subject_id">Subject</label>
+              <select name="subject" id="subject_id">
+                <option value="">Optional</option>
+                {% for subj in subjects %}
+                  <option value="{{ subj.id }}">{{ subj.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="ag-field">
+              <label for="day_id">Day</label>
+              <select name="day" id="day_id">
+                <option value="">Select Day</option>
+                <option>Monday</option>
+                <option>Tuesday</option>
+                <option>Wednesday</option>
+                <option>Thursday</option>
+                <option>Friday</option>
+                <option>Saturday</option>
+              </select>
+            </div>
+            <div class="ag-field">
+              <label for="fixture_date">Fixture Date</label>
+              <input type="date" name="fixture_date" id="fixture_date">
+            </div>
+            <div class="ag-field">
+              <label for="period_id">Period</label>
+              <select name="period" id="period_id">
+                <option value="">Select Period</option>
+                {% for p in periods %}
+                  <option value="{{ p.id }}">{{ p.period_name }} ({{ p.start_time }} - {{ p.end_time }})</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="ag-field">
+              <label for="absent_teacher_id">Absent Teacher</label>
+              <select name="absent_teacher" id="absent_teacher_id">
+                <option value="">Select Absent Teacher</option>
+                {% for t in teachers %}
+                  <option value="{{ t.id }}">{{ t.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="ag-field">
+              <label for="free_teachers">Free Teachers</label>
+              <select name="substitute_teacher" id="free_teachers">
+                <option value="">Select Available Teacher</option>
+              </select>
+            </div>
+          </div>
+          <div class="ag-form-actions">
+            <button type="submit" class="ag-btn ag-btn-primary"><i class="fa fa-user-check"></i> Assign Fixture</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="ag-panel">
+        <h5 class="ag-section-title"><i class="fa fa-list-check"></i> Assigned Fixtures</h5>
+        <div class="ag-table-wrap">
+          <table class="table table-responsive-md">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Date</th>
+                <th>Day</th>
+                <th>Period</th>
+                <th>Class</th>
+                <th>Section</th>
+                <th>Subject</th>
+                <th>Absent</th>
+                <th>Substitute</th>
+                <th>Source</th>
+                <th>Status</th>
+                <th>Notification</th>
+                <th>Selection</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for f in fixtures %}
+              <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ f.fixture_date }}</td>
+                <td>{{ f.day }}</td>
+                <td>{{ f.period.period_name }}</td>
+                <td>{{ f.class_fk.class_name }}</td>
+                <td>{{ f.section.section_name }}</td>
+                <td>{% if f.subject %}{{ f.subject.name }}{% else %}Optional{% endif %}</td>
+                <td>{{ f.absent_teacher.name }}</td>
+                <td>{{ f.substitute_teacher.name }}</td>
+                <td>{{ f.get_source_display }}</td>
+                <td><span class="ag-badge ag-badge-info">{{ f.get_fixture_status_display }}</span></td>
+                <td>{{ f.get_automation_status_display }}</td>
+                <td>{% if f.selection_reason %}{{ f.selection_score }} - {{ f.selection_reason }}{% else %}Manual fixture{% endif %}</td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="13" class="ag-empty">No fixtures assigned.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function loadFreeTeachers() {
+  const day = document.getElementById("day_id").value;
+  const periodID = document.getElementById("period_id").value;
+  const subjectID = document.getElementById("subject_id").value;
+  const fixtureDate = document.getElementById("fixture_date").value;
+
+  if (!day || !periodID) return;
+
+  fetch(`{% url 'get_free_teachers' %}?day=${day}&period_id=${periodID}&subject_id=${subjectID}&fixture_date=${fixtureDate}`)
+    .then(resp => resp.json())
+    .then(data => {
+      const select = document.getElementById("free_teachers");
+      const countBox = document.getElementById("availableTeacherCount");
+      select.innerHTML = "<option value=''>Select Available Teacher</option>";
+
+      if (Array.isArray(data)) {
+        countBox.textContent = data.length;
+        data.forEach(t => {
+          select.insertAdjacentHTML("beforeend", `<option value="${t.id}">${t.name}</option>`);
+        });
+      } else {
+        countBox.textContent = "0";
+      }
+    });
+}
+
+document.getElementById("period_id").addEventListener("change", loadFreeTeachers);
+document.getElementById("day_id").addEventListener("change", loadFreeTeachers);
+document.getElementById("subject_id").addEventListener("change", loadFreeTeachers);
+document.getElementById("fixture_date").addEventListener("change", loadFreeTeachers);
+</script>
+{% endblock %}

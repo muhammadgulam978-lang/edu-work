@@ -1,0 +1,106 @@
+{% extends 'admin_panel/bases.html' %}
+{% load static %}
+
+{% block title %}Duty Events{% endblock %}
+
+{% block content %}
+<style>
+  .ev-page{
+    width:100%;max-width:1600px;margin:0 auto;padding:28px 30px 60px;
+    box-sizing:border-box;min-width:0;
+  }
+  .ev-head{
+    display:flex;justify-content:space-between;align-items:flex-start;
+    background:#E6F5F0;padding:18px 22px;border-radius:14px;margin-bottom:22px;
+  }
+  .ev-head h1{margin:0 0 4px;font-size:24px;}
+  .ev-head p{margin:0;color:#6B7A77;font-size:14px;}
+  .ev-btn{
+    border:none;padding:11px 20px;border-radius:22px;font-size:14px;font-weight:600;
+    cursor:pointer;background:#4FB89D;color:#fff;text-decoration:none;display:inline-block;
+  }
+  .ev-btn:hover{background:#2E8A72;color:#fff;}
+  .ev-card{background:#fff;border-radius:14px;border:1px solid #DCEAE6;padding:22px 24px;margin-bottom:22px;}
+  .ev-card h3{margin:0 0 16px;font-size:17px;}
+  .ev-form-grid{display:grid;grid-template-columns:2fr 1fr 2fr auto;gap:14px;align-items:end;}
+  .ev-field label{display:block;font-size:12.5px;color:#6B7A77;margin-bottom:6px;font-weight:600;}
+  .ev-field input{width:100%;padding:10px 12px;border:1px solid #DCEAE6;border-radius:8px;font-size:14px;background:#F9FBFA;}
+
+  .ev-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;}
+  .ev-tile{
+    background:#fff;border:1px solid #DCEAE6;border-radius:14px;padding:18px 20px;
+    text-decoration:none;color:inherit;display:block;
+  }
+  .ev-tile:hover{border-color:#4FB89D;}
+  .ev-tile h4{margin:0 0 6px;font-size:16px;color:#1E2A28;}
+  .ev-tile .ev-date{font-size:13px;color:#2E8A72;font-weight:600;margin-bottom:8px;}
+  .ev-tile .ev-count{font-size:12.5px;color:#6B7A77;}
+  .ev-empty{text-align:center;color:#6B7A77;padding:30px;font-size:14px;}
+  @media (max-width:1100px){
+    .ev-form-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+  }
+  @media (max-width:767px){
+    .ev-page{padding:20px 16px 48px;}
+    .ev-head{flex-direction:column;gap:16px;}
+    .ev-form-grid{grid-template-columns:1fr;}
+  }
+</style>
+
+<div class="ev-page">
+<div class="ev-head">
+  <div>
+    <h1>Special Event Duties</h1>
+    <p>Create a one-off event (e.g. 14th August, Eid Milad-un-Nabi) and assign teacher duties for it.</p>
+  </div>
+</div>
+
+{% if messages %}
+  {% for message in messages %}
+    <div style="padding:10px 16px;border-radius:8px;margin-bottom:14px;
+                background:{% if message.tags == 'error' %}#FCEBEB{% else %}#EAF3DE{% endif %};
+                color:{% if message.tags == 'error' %}#791F1F{% else %}#27500A{% endif %};">
+      {{ message }}
+    </div>
+  {% endfor %}
+{% endif %}
+
+<div class="ev-card">
+  <h3>Create New Event</h3>
+  <form method="post" action="{% url 'create_event' %}">
+    {% csrf_token %}
+    <div class="ev-form-grid">
+      <div class="ev-field">
+        <label>Event Name</label>
+        <input type="text" name="name" placeholder="e.g. Eid Milad-un-Nabi" required>
+      </div>
+      <div class="ev-field">
+        <label>Date</label>
+        <input type="date" name="date" required>
+      </div>
+      <div class="ev-field">
+        <label>Description (optional)</label>
+        <input type="text" name="description" placeholder="Any notes about this event">
+      </div>
+      <div class="ev-field">
+        <button type="submit" class="ev-btn" style="width:100%;">+ Create Event</button>
+      </div>
+    </div>
+  </form>
+</div>
+
+<div class="ev-card">
+  <h3>All Events</h3>
+  <div class="ev-grid">
+    {% for event in events %}
+      <a class="ev-tile" href="{% url 'event_detail' event.pk %}">
+        <h4>{{ event.name }}</h4>
+        <div class="ev-date">{{ event.date|date:"d M Y" }}</div>
+        <div class="ev-count">{{ event.duties.count }} duty(s) assigned</div>
+      </a>
+    {% empty %}
+      <div class="ev-empty">No events yet. Create one above.</div>
+    {% endfor %}
+  </div>
+</div>
+</div>
+{% endblock %}

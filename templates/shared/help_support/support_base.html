@@ -1,0 +1,18 @@
+{% extends portal_base %}
+
+{% block title %}{% block support_title %}Help & Support{% endblock %} | {{ portal_label }} Portal{% endblock %}
+{% block body_class %}help-support-page{% endblock %}
+
+{% block content %}
+<main class="phs-page">
+    <header class="phs-page-header">
+        <div>
+            <p class="phs-eyebrow"><i class="fas fa-life-ring"></i> Help &amp; Support</p>
+            <h1>{% block support_heading %}{% endblock %}</h1>
+            <p class="phs-lead">{% block support_intro %}{% endblock %}</p>
+        </div>
+        {% block support_header_action %}{% endblock %}
+    </header>
+    {% block support_content %}{% endblock %}
+</main>
+{% endblock %}

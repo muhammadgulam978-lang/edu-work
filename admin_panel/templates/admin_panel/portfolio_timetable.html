@@ -1,0 +1,144 @@
+{% extends "admin_panel/bases.html" %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Preview & Generate Timetable{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'admin_panel/css/academics_gateway.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="academics-gateway">
+  <div class="ag-card">
+    <div class="ag-header">
+      <div>
+        <p class="ag-kicker">Academics</p>
+        <h4 class="ag-title">PDF Generate Classwise</h4>
+        <p class="ag-subtitle">Preview a class timetable and generate a clean PDF for sharing or printing.</p>
+      </div>
+    </div>
+
+    <div class="ag-body">
+      <form method="get" action="." class="ag-panel needs-validation" novalidate>
+        <h5 class="ag-section-title"><i class="fa fa-file-pdf"></i> Timetable Preview</h5>
+        <div class="ag-grid">
+          <div class="ag-field">
+            <label for="id_class">Class</label>
+            <select name="class_id" id="id_class" class="form-control">
+              <option value="">Select Class</option>
+              {% for cls in classes %}
+                <option value="{{ cls.id }}" {% if class_info and cls.id == class_info.id %}selected{% endif %}>{{ cls.class_name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="ag-field">
+            <label for="id_section">Section</label>
+            <select name="section_id" id="id_section" class="form-control">
+              <option value="">Select Section</option>
+              {% if section_info %}
+                <option value="{{ section_info.id }}" selected>{{ section_info.section_name }}</option>
+              {% endif %}
+            </select>
+          </div>
+          <div class="ag-field">
+            <label>&nbsp;</label>
+            <button type="submit" class="ag-btn ag-btn-primary"><i class="fa fa-eye"></i> Preview Timetable</button>
+          </div>
+          {% if timetable_data %}
+          <div class="ag-field">
+            <label>&nbsp;</label>
+            <a href="{% url 'timetable_pdf' %}?class_id={{ class_info.id }}&section_id={{ section_info.id }}" class="ag-btn ag-btn-secondary"><i class="fa fa-download"></i> Generate PDF</a>
+          </div>
+          {% endif %}
+        </div>
+      </form>
+
+      {% if timetable_data %}
+        <div class="portfolio-summary-grid">
+          <div class="portfolio-summary-card">
+            <div class="portfolio-summary-label">Class</div>
+            <div class="portfolio-summary-value">{{ timetable_summary.class_name }}</div>
+          </div>
+          <div class="portfolio-summary-card">
+            <div class="portfolio-summary-label">Section</div>
+            <div class="portfolio-summary-value">{{ timetable_summary.section_name }}</div>
+          </div>
+          <div class="portfolio-summary-card">
+            <div class="portfolio-summary-label">Class Teacher</div>
+            <div class="portfolio-summary-value">{{ timetable_summary.class_teacher }}</div>
+          </div>
+          <div class="portfolio-summary-card">
+            <div class="portfolio-summary-label">Assigned Periods</div>
+            <div class="portfolio-summary-value">{{ timetable_summary.assigned_periods }}</div>
+          </div>
+          <div class="portfolio-summary-card">
+            <div class="portfolio-summary-label">Empty Periods</div>
+            <div class="portfolio-summary-value">{{ timetable_summary.empty_periods }}</div>
+          </div>
+        </div>
+
+        <div class="timetable-container">
+          <h5 class="ag-section-title"><i class="fa fa-table"></i> {{ class_info.class_name }} - {{ section_info.section_name }}</h5>
+          <p class="ag-subtitle">
+            Class Teacher:
+            {% if teacher_name %}
+              <span class="ag-badge ag-badge-active">{{ teacher_name }}</span>
+            {% else %}
+              <span class="ag-badge ag-badge-danger">Not Assigned</span>
+            {% endif %}
+          </p>
+          <div class="ag-table-wrap">
+            <table class="table timetable-table">
+              <thead>
+                <tr class="header-row">
+                  <th class="day-column">Day</th>
+                  {% for pname in timetable_data.period_order %}
+                    <th>{{ pname }}</th>
+                  {% endfor %}
+                </tr>
+              </thead>
+              <tbody>
+                {% for day in timetable_data.days %}
+                  <tr>
+                    <td class="day-column">{{ day }}</td>
+                    {% for pname in timetable_data.period_order %}
+                      {% with slot=timetable_data.slots|dict_get:day|dict_get:pname %}
+                        <td class="{% if slot != '---' %}assigned-slot{% else %}empty-slot{% endif %}">
+                          {{ slot|safe }}
+                        </td>
+                      {% endwith %}
+                    {% endfor %}
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      {% else %}
+        <div class="ag-empty">Please select a class and section to preview the timetable.</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById("id_class").addEventListener("change", function () {
+  const classId = this.value;
+  const sectionSelect = document.getElementById("id_section");
+  if (!classId) {
+    sectionSelect.innerHTML = '<option value="">Select Section</option>';
+    return;
+  }
+
+  fetch("{% url 'get_sections' %}?class_id=" + encodeURIComponent(classId))
+    .then(response => response.json())
+    .then(data => {
+      sectionSelect.innerHTML = '<option value="">Select Section</option>';
+      data.sections.forEach(sec => {
+        sectionSelect.insertAdjacentHTML("beforeend", `<option value="${sec.id}">${sec.section_name}</option>`);
+      });
+    });
+});
+</script>
+{% endblock %}

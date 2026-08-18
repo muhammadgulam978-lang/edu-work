@@ -1,0 +1,466 @@
+{% extends "admin_panel/bases.html" %}
+{% load static %}
+
+{% block title %}Teacher Profile{% endblock %}
+{% block content %}
+
+<style>
+  .teacher-profile-page {
+    --edu-teal: #88D0C5;
+    --edu-green: #8BC740;
+    --edu-bg: #F5F5FD;
+    --edu-border: #e9ecef;
+    --edu-muted: #6c757d;
+    margin: 0 20px 30px;
+    color: #111;
+  }
+  .tp-shell {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 360px;
+    gap: 24px;
+  }
+  .tp-card {
+    border: 1px solid var(--edu-border);
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, .05);
+  }
+  .tp-hero {
+    margin-bottom: 24px;
+    padding: 28px;
+    background: linear-gradient(120deg, rgba(136, 208, 197, .28), rgba(245, 245, 253, .95));
+  }
+  .tp-hero-inner {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 24px;
+  }
+  .tp-avatar {
+    width: 118px;
+    height: 118px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 6px solid rgba(255, 255, 255, .9);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, .08);
+    background: #fff;
+  }
+  .tp-name {
+    margin: 0;
+    font-size: 32px;
+    font-weight: 500;
+  }
+  .tp-subtitle {
+    margin: 8px 0 0;
+    color: var(--edu-muted);
+    font-size: 15px;
+    font-weight: 400;
+  }
+  .tp-pill-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 16px;
+  }
+  .tp-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(136, 208, 197, .45);
+    background: rgba(255, 255, 255, .7);
+    color: #111;
+    font-size: 13px;
+    font-weight: 400;
+  }
+  .tp-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 170px;
+  }
+  .tp-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 10px 18px;
+    border-radius: 999px;
+    border: 1px solid rgba(136, 208, 197, .65);
+    background: var(--edu-teal);
+    color: #111;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    box-shadow: 0 8px 18px rgba(136, 208, 197, .22);
+  }
+  .tp-btn:hover {
+    color: #111;
+    text-decoration: none;
+  }
+  .tp-btn.secondary {
+    background: #fff;
+    box-shadow: none;
+  }
+  .tp-btn.danger {
+    background: #FFEDEA;
+    border-color: rgba(255, 77, 61, .25);
+  }
+  .tp-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0 0 20px;
+    padding: 8px;
+    border: 1px solid var(--edu-border);
+    border-radius: 14px;
+    background: #fff;
+  }
+  .tp-tab {
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: #111;
+    padding: 10px 18px;
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .tp-tab.active {
+    background: var(--edu-teal);
+  }
+  .tp-panel {
+    display: none;
+  }
+  .tp-panel.active {
+    display: block;
+  }
+  .tp-section {
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+  .tp-section h4 {
+    margin: 0 0 14px;
+    font-size: 20px;
+    font-weight: 500;
+  }
+  .tp-muted {
+    color: var(--edu-muted);
+    font-weight: 400;
+  }
+  .tp-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+  .tp-detail {
+    padding: 14px;
+    border: 1px solid var(--edu-border);
+    border-radius: 12px;
+    background: #FAFAFF;
+  }
+  .tp-label {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--edu-muted);
+    font-size: 12px;
+    font-weight: 400;
+  }
+  .tp-value {
+    color: #111;
+    font-size: 15px;
+    font-weight: 500;
+  }
+  .tp-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .tp-stat {
+    padding: 16px;
+    border: 1px solid rgba(136, 208, 197, .35);
+    border-radius: 14px;
+    background: rgba(136, 208, 197, .16);
+  }
+  .tp-stat:nth-child(2n) {
+    border-color: rgba(139, 199, 64, .35);
+    background: rgba(139, 199, 64, .12);
+  }
+  .tp-stat strong {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 26px;
+    font-weight: 500;
+  }
+  .tp-stat span {
+    color: var(--edu-muted);
+    font-size: 13px;
+    font-weight: 400;
+  }
+  .tp-badge {
+    display: inline-flex;
+    align-items: center;
+    margin: 4px 6px 4px 0;
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: rgba(136, 208, 197, .2);
+    color: #111;
+    font-size: 13px;
+    font-weight: 400;
+  }
+  .tp-badge.green {
+    background: rgba(139, 199, 64, .16);
+  }
+  .tp-list {
+    display: grid;
+    gap: 10px;
+  }
+  .tp-list-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+    padding: 14px;
+    border: 1px solid var(--edu-border);
+    border-radius: 12px;
+    background: #fff;
+  }
+  .tp-list-item h5 {
+    margin: 0 0 4px;
+    font-size: 15px;
+    font-weight: 500;
+  }
+  .tp-list-item p {
+    margin: 0;
+    color: var(--edu-muted);
+    font-size: 13px;
+    font-weight: 400;
+  }
+  .tp-side {
+    display: grid;
+    gap: 20px;
+    align-content: start;
+  }
+  .tp-empty {
+    padding: 18px;
+    border: 1px dashed var(--edu-border);
+    border-radius: 12px;
+    color: var(--edu-muted);
+    background: #fff;
+  }
+  @media (max-width: 1100px) {
+    .tp-shell {
+      grid-template-columns: 1fr;
+    }
+    .tp-hero-inner {
+      grid-template-columns: auto 1fr;
+    }
+    .tp-actions {
+      grid-column: 1 / -1;
+      flex-direction: row;
+      flex-wrap: wrap;
+    }
+  }
+  @media (max-width: 680px) {
+    .teacher-profile-page {
+      margin: 0 12px 24px;
+    }
+    .tp-hero-inner,
+    .tp-detail-grid,
+    .tp-stat-grid {
+      grid-template-columns: 1fr;
+    }
+    .tp-avatar {
+      width: 100px;
+      height: 100px;
+    }
+    .tp-name {
+      font-size: 26px;
+    }
+    .tp-btn {
+      width: 100%;
+    }
+  }
+</style>
+
+<div class="teacher-profile-page">
+  <div class="tp-card tp-hero">
+    <div class="tp-hero-inner">
+      {% if teacher.image %}
+        <img class="tp-avatar" src="{{ teacher.image.url }}" alt="{{ teacher.name }}">
+      {% else %}
+        <img class="tp-avatar" src="{% static 'admin_panel/images/dummy-profile.png' %}" alt="Teacher avatar">
+      {% endif %}
+      <div>
+        <h2 class="tp-name">{{ teacher.name }}</h2>
+        <p class="tp-subtitle">
+          {{ teacher.qualification }}{% if teacher.department %} · {{ teacher.department }}{% endif %}
+          {% if teacher.experience %} · {{ teacher.experience }} years experience{% endif %}
+        </p>
+        <div class="tp-pill-row">
+          <span class="tp-pill"><i class="fa fa-circle"></i>{{ teacher.status|title }}</span>
+          <span class="tp-pill"><i class="fa fa-envelope"></i>{{ teacher.email }}</span>
+          <span class="tp-pill"><i class="fa fa-user"></i>{% if teacher.user %}{{ teacher.user.username }}{% else %}Not Linked{% endif %}</span>
+        </div>
+      </div>
+      <div class="tp-actions">
+        <a href="{% url 'teacher_edit' teacher.pk %}" class="tp-btn"><i class="fas fa-pencil-alt"></i>Edit Teacher</a>
+        <a href="{% url 'teacher_list' %}" class="tp-btn secondary"><i class="fa fa-arrow-left"></i>Back to Teacher List</a>
+        <a href="{% url 'teacher_delete' teacher.pk %}" class="tp-btn danger"><i class="fa fa-trash"></i>Delete</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="tp-shell">
+    <main>
+      <div class="tp-tabs" role="tablist">
+        <button type="button" class="tp-tab active" data-tab="overview">Overview</button>
+        <button type="button" class="tp-tab" data-tab="subjects">Subjects</button>
+        <button type="button" class="tp-tab" data-tab="timetable">Timetable</button>
+        <button type="button" class="tp-tab" data-tab="performance">Performance</button>
+      </div>
+
+      <section class="tp-panel active" id="tp-overview">
+        <div class="tp-card tp-section">
+          <h4>Profile Overview</h4>
+          <div class="tp-detail-grid">
+            <div class="tp-detail"><span class="tp-label">Phone</span><span class="tp-value">{{ teacher.phone|default:"None" }}</span></div>
+            <div class="tp-detail"><span class="tp-label">Gender</span><span class="tp-value">{{ teacher.gender|default:"None" }}</span></div>
+            <div class="tp-detail"><span class="tp-label">Date of Birth</span><span class="tp-value">{{ teacher.date_of_birth|default:"None" }}</span></div>
+            <div class="tp-detail"><span class="tp-label">Joining Date</span><span class="tp-value">{{ teacher.joining_date|default:"None" }}</span></div>
+            <div class="tp-detail"><span class="tp-label">Address</span><span class="tp-value">{{ teacher.Address|default:"None" }}</span></div>
+            <div class="tp-detail"><span class="tp-label">Employee Link</span><span class="tp-value">{% if stats.employee_linked %}Linked{% else %}Not Linked{% endif %}</span></div>
+          </div>
+        </div>
+        <div class="tp-card tp-section">
+          <h4>Faculty Groups</h4>
+          {% for faculty in teacher.faculty_group %}
+            <span class="tp-badge">{{ faculty }}</span>
+          {% empty %}
+            <div class="tp-empty">No faculty group assigned.</div>
+          {% endfor %}
+        </div>
+      </section>
+
+      <section class="tp-panel" id="tp-subjects">
+        <div class="tp-card tp-section">
+          <h4>Teaching Subjects</h4>
+          {% for subject in teacher.subjects.all %}
+            <span class="tp-badge green">{{ subject.name }}</span>
+          {% empty %}
+            <div class="tp-empty">No subjects assigned.</div>
+          {% endfor %}
+        </div>
+        <div class="tp-card tp-section">
+          <h4>Class Teacher Assignments</h4>
+          <div class="tp-list">
+            {% for item in class_teacher_assignments %}
+              <div class="tp-list-item">
+                <div>
+                  <h5>{{ item.class_fk.class_name }} - {{ item.section.section_name }}</h5>
+                  <p>{{ item.academic_year }} · assigned {{ item.assigned_date }}</p>
+                </div>
+              </div>
+            {% empty %}
+              <div class="tp-empty">No class teacher assignment found.</div>
+            {% endfor %}
+          </div>
+        </div>
+      </section>
+
+      <section class="tp-panel" id="tp-timetable">
+        <div class="tp-card tp-section">
+          <h4>Assigned Periods</h4>
+          <div class="tp-list">
+            {% for period in assigned_periods %}
+              <div class="tp-list-item">
+                <div>
+                  <h5>{{ period.day }} · {{ period.period.period_name }}</h5>
+                  <p>{{ period.class_fk.class_name }} - {{ period.section.section_name }} · {{ period.subject.name }}</p>
+                </div>
+                <span class="tp-badge">{{ period.period.start_time|default:"" }}</span>
+              </div>
+            {% empty %}
+              <div class="tp-empty">No assigned periods found.</div>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="tp-card tp-section">
+          <h4>Recent Substitute Duties</h4>
+          <div class="tp-list">
+            {% for fixture in substitute_fixtures %}
+              <div class="tp-list-item">
+                <div>
+                  <h5>{{ fixture.fixture_date }} · {{ fixture.period.period_name }}</h5>
+                  <p>{{ fixture.class_fk.class_name }} - {{ fixture.section.section_name }}{% if fixture.subject %} · {{ fixture.subject.name }}{% endif %}</p>
+                </div>
+                <span class="tp-badge">{{ fixture.fixture_status|title }}</span>
+              </div>
+            {% empty %}
+              <div class="tp-empty">No substitute duties found.</div>
+            {% endfor %}
+          </div>
+        </div>
+      </section>
+
+      <section class="tp-panel" id="tp-performance">
+        <div class="tp-card tp-section">
+          <h4>Performance Snapshot</h4>
+          <div class="tp-detail-grid">
+            <div class="tp-detail"><span class="tp-label">Attendance Marked</span><span class="tp-value">{{ stats.attendance_marked_count }}</span></div>
+            <div class="tp-detail"><span class="tp-label">Appraisal Submissions</span><span class="tp-value">{{ stats.appraisal_submissions_count }}</span></div>
+            <div class="tp-detail"><span class="tp-label">Absent Fixtures</span><span class="tp-value">{{ stats.absent_fixture_count }}</span></div>
+            <div class="tp-detail"><span class="tp-label">Merge Class</span><span class="tp-value">{{ teacher.is_merge }}</span></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <aside class="tp-side">
+      <div class="tp-card tp-section">
+        <h4>Community Statistics</h4>
+        <div class="tp-stat-grid">
+          <div class="tp-stat"><strong>{{ stats.subjects_count }}</strong><span>Subjects</span></div>
+          <div class="tp-stat"><strong>{{ stats.assigned_periods_count }}</strong><span>Assigned Periods</span></div>
+          <div class="tp-stat"><strong>{{ stats.substitute_duties_count }}</strong><span>Substitute Duties</span></div>
+          <div class="tp-stat"><strong>{{ stats.class_teacher_count }}</strong><span>Class Teacher</span></div>
+        </div>
+      </div>
+      <div class="tp-card tp-section">
+        <h4>Account Status</h4>
+        <div class="tp-list">
+          <div class="tp-list-item">
+            <div>
+              <h5>Portal User</h5>
+              <p>{% if teacher.user %}{{ teacher.user.username }}{% else %}Not linked{% endif %}</p>
+            </div>
+            <span class="tp-badge">{% if teacher.user %}Ready{% else %}Missing{% endif %}</span>
+          </div>
+          <div class="tp-list-item">
+            <div>
+              <h5>Employee Link</h5>
+              <p>{% if stats.employee_linked %}Connected to HR employee record{% else %}No employee record linked{% endif %}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll('.tp-tab').forEach(function (button) {
+    button.addEventListener('click', function () {
+      var target = button.getAttribute('data-tab');
+      document.querySelectorAll('.tp-tab').forEach(function (tab) {
+        tab.classList.toggle('active', tab === button);
+      });
+      document.querySelectorAll('.tp-panel').forEach(function (panel) {
+        panel.classList.toggle('active', panel.id === 'tp-' + target);
+      });
+    });
+  });
+</script>
+
+{% endblock %}

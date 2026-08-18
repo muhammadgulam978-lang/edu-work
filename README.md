@@ -1,0 +1,543 @@
+# 🎓 EduPilot - School Management System
+
+**Automated Accounts & Fee Management Module**
+
+---
+
+## 📋 Project Overview
+
+EduPilot is a comprehensive Django-based school management system with automated fee collection, salary processing, and timetable management. Built for educational institutions to streamline administrative operations.
+
+**Tech Stack:** Django | PostgreSQL | Bootstrap | Chart.js | Python 3.14
+
+---
+
+## ✨ Key Features
+
+### 1. **Fee Automation** 💰
+- Automated monthly fee voucher generation
+- Configurable generation schedule (Day/Time)
+- Real-time fee collection tracking
+- Collection rate analytics
+- Manual fee generation triggers
+
+### 2. **Salary Automation** 💵
+- Automated salary voucher generation
+- Multiple salary components (Basic, House, Medical, Transport, Utility, Special)
+- Payslip management
+- Salary payment tracking
+- Monthly payroll processing
+
+### 3. **Timetable Management** 📅
+- Period creation and scheduling
+- Teacher assignment to classes
+- Subject allocation
+- Weekly schedule management
+- Day-wise period tracking
+
+### 4. **Fixture Automation** 🔄
+- Automatic replacement teacher assignment
+- Emergency coverage when teacher absent
+- Smart matching (same subject, free period)
+- Auto-notification to replacement teacher
+- Fixture status tracking (PENDING → COMPLETED)
+
+### 5. **Notification System** 📬
+- SMS/Email queue management
+- Automated notifications for:
+  - Fee voucher generation
+  - Salary voucher generation
+  - Teacher absence coverage
+  - Collection reminders
+- Notification status tracking
+- Manual send trigger
+
+### 6. **Automation Logs** 📊
+- Complete job execution history
+- Success/Failed tracking
+- Processed counts per job
+- Timestamp logging
+- Success rate calculation
+
+### 7. **Role-Based Dashboards** 👥
+
+**Admin Dashboard:**
+- System overview stats
+- Automation status monitoring
+- Fee collection overview
+- Recent automation jobs
+- Manual trigger controls
+
+**Student Portal:**
+- Fee voucher history
+- Outstanding balance
+- Payment status
+- Notifications
+- Automation alerts
+
+**Teacher Portal:**
+- Salary voucher details
+- My class schedule
+- Assigned fixtures (coverage)
+- Notifications
+- Absent day tracking
+
+**Parent Dashboard:**
+- Child information
+- Fee vouchers
+- Payment history
+- Notifications
+
+---
+
+## 🏗️ System Architecture
+
+```
+┌─────────────────────────────────────────────────┐
+│         EDUPILOT SCHOOL MANAGEMENT SYSTEM       │
+└─────────────────────────────────────────────────┘
+                        │
+        ┌───────────────┼───────────────┐
+        │               │               │
+    ┌───▼────┐      ┌───▼────┐     ┌───▼────┐
+    │  Admin │      │ Student│     │Teacher │
+    │ Panel  │      │ Portal │     │ Portal │
+    └───┬────┘      └───┬────┘     └───┬────┘
+        │               │               │
+        └───────────────┼───────────────┘
+                        │
+        ┌───────────────┼───────────────┐
+        │               │               │
+    ┌───▼────────┐  ┌───▼────────┐ ┌──▼────────┐
+    │ Fee        │  │ Salary     │ │Timetable  │
+    │ Automation │  │ Automation │ │ Automation│
+    └───┬────────┘  └───┬────────┘ └──┬────────┘
+        │               │             │
+        └───────────────┼─────────────┘
+                        │
+            ┌───────────┴───────────┐
+            │                       │
+        ┌───▼──────┐        ┌──────▼───┐
+        │Automation│        │Notification
+        │  Logs    │        │  Queue   │
+        └──────────┘        └──────────┘
+                        │
+            ┌───────────▼───────────┐
+            │   PostgreSQL Database │
+            │   (44 Models)         │
+            └───────────────────────┘
+```
+
+---
+
+## 🔄 Fee Generation Workflow
+
+```
+┌─────────────────────────────────────────────────────┐
+│ SCHEDULED DAY (e.g., 30th of each month at 09:00)   │
+└────────────────────┬────────────────────────────────┘
+                     │
+            ┌────────▼────────┐
+            │  Fee Automation │
+            │  Service Start  │
+            └────────┬────────┘
+                     │
+        ┌────────────▼────────────┐
+        │ Fetch All Active        │
+        │ Students with Fee Plans │
+        └────────────┬────────────┘
+                     │
+        ┌────────────▼────────────┐
+        │ Get Fee Plan Amount     │
+        │ for Each Student        │
+        └────────────┬────────────┘
+                     │
+        ┌────────────▼────────────┐
+        │ Create FeeVoucher       │
+        │ - Voucher Number        │
+        │ - Amount                │
+        │ - Student ID            │
+        │ - Month/Year            │
+        │ - Status: UNPAID        │
+        └────────────┬────────────┘
+                     │
+        ┌────────────▼────────────┐
+        │ Create StudentBalance   │
+        │ Update Outstanding Amt  │
+        └────────────┬────────────┘
+                     │
+        ┌────────────▼────────────┐
+        │ Send Notifications      │
+        │ SMS/Email to Parents    │
+        └────────────┬────────────┘
+                     │
+        ┌────────────▼────────────┐
+        │ Log Job in              │
+        │ AutomationJob           │
+        │ Status: COMPLETED       │
+        └────────────┬────────────┘
+                     │
+        ┌────────────▼────────────┐
+        │ Update Dashboard Stats  │
+        │ - Processed Count       │
+        │ - Success Count         │
+        │ - Collection Rate       │
+        └────────────────────────┘
+```
+
+---
+
+## 📊 Salary Generation Workflow
+
+```
+MONTHLY PAYROLL CYCLE
+├── Trigger: Scheduled (30th month, 18:00)
+├── OR Manual: Admin clicks "Generate Salaries"
+│
+├─ Fetch all active teachers
+├─ Calculate salary components:
+│  ├─ Basic Salary
+│  ├─ House Allowance
+│  ├─ Medical Allowance
+│  ├─ Transport Allowance
+│  ├─ Utility Allowance
+│  ├─ Special Allowance
+│  └─ Overtime (if any)
+│
+├─ Create SalaryVoucher
+├─ Store in database
+├─ Send notification to teacher
+├─ Log in AutomationJob
+└─ Update Dashboard
+```
+
+---
+
+## 🔄 Timetable & Fixture Automation
+
+```
+TEACHER ABSENCE WORKFLOW
+│
+├─ Admin marks teacher ABSENT
+│  ├─ Teacher: Muhammad Hassan
+│  ├─ Date: 2026-07-06
+│  └─ Period: 2 (English, Class 1-A)
+│
+├─ Absence record created
+│
+├─ Automation triggered:
+│  ├─ Find replacement teacher
+│  │  ├─ Same subject (English)
+│  │  ├─ Free at Period 2
+│  │  └─ Active status
+│  │
+│  ├─ Found: Ayesha Khan
+│  │
+│  ├─ Create Fixture:
+│  │  ├─ Absent: Muhammad Hassan
+│  │  ├─ Replacement: Ayesha Khan
+│  │  ├─ Status: PENDING
+│  │  └─ Date: 2026-07-06
+│  │
+│  └─ Send Notification:
+│     └─ "Cover Class 1-A, Period 2, English"
+│
+└─ Mark as COMPLETED after class
+```
+
+---
+
+## 📈 Database Schema (44 Models)
+
+### Core Models
+```
+Student
+├─ admission_number (PK)
+├─ full_name
+├─ current_class
+├─ campus
+├─ is_active
+
+Teacher
+├─ teacher_id (PK)
+├─ name
+├─ basic_salary
+├─ house_allowance
+├─ medical_allowance
+└─ is_active
+
+Period
+├─ class_name
+├─ section
+├─ subject
+├─ teacher (FK)
+├─ day (Monday-Friday)
+├─ period_number
+├─ start_time
+└─ end_time
+
+Absence
+├─ teacher (FK)
+├─ absence_date
+└─ period (FK)
+
+Fixture
+├─ absent_teacher (FK)
+├─ replacement_teacher (FK)
+├─ period (FK)
+├─ fixture_date
+└─ status (PENDING/COMPLETED)
+```
+
+### Financial Models
+```
+FeePlan
+├─ fee_plan_name
+└─ amount
+
+StudentFeeAssignment
+├─ student (FK)
+└─ fee_plan (FK)
+
+FeeVoucher
+├─ voucher_no
+├─ student (FK)
+├─ month
+├─ year
+├─ net_amount
+└─ status (UNPAID/PAID/PARTIAL)
+
+SalaryVoucher
+├─ teacher (FK)
+├─ month
+├─ year
+├─ net_salary
+└─ status
+```
+
+### Automation Models
+```
+AutomationJob
+├─ job_type (FEE_GENERATION/SALARY_GENERATION)
+├─ status (PENDING/RUNNING/COMPLETED/FAILED)
+├─ started_at
+├─ completed_at
+├─ processed_count
+├─ success_count
+└─ failed_count
+
+NotificationQueue
+├─ student/teacher (FK)
+├─ notification_type (SMS/EMAIL)
+├─ content
+├─ status (PENDING/SENT/FAILED)
+└─ created_at
+
+FeeGenerationSettings
+├─ auto_enabled
+├─ generation_day (1-31)
+├─ generation_time
+└─ send_notifications
+
+SalaryAutomationSettings
+├─ auto_enabled
+├─ generation_day
+├─ generation_time
+└─ send_notifications
+```
+
+---
+
+## 🚀 Installation & Setup
+
+### Prerequisites
+```
+- Python 3.8+
+- PostgreSQL 12+
+- pip/virtualenv
+```
+
+### Steps
+
+```bash
+# 1. Clone Repository
+git clone https://github.com/yourusername/edupilot.git
+cd edupilot
+
+# 2. Create Virtual Environment
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+venv\Scripts\activate      # Windows
+
+# 3. Install Dependencies
+pip install -r requirements.txt
+
+# 4. Database Setup
+python manage.py makemigrations
+python manage.py migrate
+
+# 5. Create Superuser
+python manage.py createsuperuser
+
+# 6. Run Server
+python manage.py runserver
+```
+
+---
+
+## 📍 URL Routes
+
+```
+AUTHENTICATION
+├─ /login/                      → Login Page
+└─ /logout/                     → Logout
+
+ADMIN PANEL
+├─ /admin-dashboard/            → Main Dashboard
+├─ /automation/                 → Automation Home
+├─ /automation/fee/             → Fee Automation
+├─ /automation/salary/          → Salary Automation
+├─ /automation/vouchers/        → Voucher Management
+├─ /automation/notifications/   → Notification Queue
+├─ /automation/logs/            → Automation Logs
+└─ /automation/settings/        → Settings
+
+TIMETABLE
+├─ /automation/timetable/       → View Timetable
+├─ /automation/periods/         → Manage Periods
+├─ /automation/absence/         → Mark Absence
+└─ /automation/fixtures/        → View Fixtures
+
+PORTALS
+├─ /student/dashboard/          → Student Portal
+├─ /teacher/dashboard/          → Teacher Portal
+├─ /teacher/schedule/           → My Schedule
+└─ /parent/dashboard/           → Parent Portal
+```
+
+---
+
+## 📊 Performance Metrics
+
+| Metric | Value |
+|--------|-------|
+| Total Models | 44 |
+| API Endpoints | 20+ |
+| Automation Jobs | 3 (Fee, Salary, Notification) |
+| Supported Roles | 4 (Admin, Student, Teacher, Parent) |
+| Database Tables | 50+ |
+| Response Time | < 500ms |
+
+---
+
+## 🔐 Security Features
+
+✅ Role-based access control (RBAC)
+✅ CSRF protection
+✅ SQL injection prevention
+✅ Password hashing
+✅ Admin-only operations
+✅ Session management
+✅ User authentication
+
+---
+
+## 📝 Testing
+
+```bash
+# Run Tests
+python manage.py test
+
+# Create Test Data
+python manage.py shell < test_data.py
+
+# Check Automation
+python manage.py shell
+>>> from edupilot_core.models import *
+>>> Period.objects.count()
+>>> Fixture.objects.count()
+```
+
+---
+
+## 📱 Screenshots
+
+### Admin Dashboard
+- Automation Status Cards
+- Fee Collection Chart
+- Recent Jobs Table
+- Quick Action Buttons
+
+### Student Portal
+- Fee Vouchers List
+- Outstanding Balance
+- Payment Status
+- Notifications
+
+### Teacher Portal
+- Salary Vouchers
+- Class Schedule
+- Assigned Fixtures
+- Absence Records
+
+---
+
+## 🛠️ Technology Stack
+
+| Component | Technology |
+|-----------|-----------|
+| Backend | Django 4.2 |
+| Database | PostgreSQL 12+ |
+| Frontend | Bootstrap 5.3 |
+| Charts | Chart.js |
+| Authentication | Django Auth |
+| Task Queue | APScheduler |
+| API | Django REST |
+
+---
+
+## 📞 Support & Contact
+
+**Developer:** Your Name  
+**Email:** your.email@example.com  
+**GitHub:** https://github.com/yourusername  
+
+---
+
+## 📄 License
+
+MIT License - See LICENSE file for details
+
+---
+
+## 🎯 Future Enhancements
+
+- [ ] Mobile App (iOS/Android)
+- [ ] SMS Gateway Integration (Twilio)
+- [ ] Email Service (SendGrid)
+- [ ] Payment Gateway (Stripe/PayPal)
+- [ ] Advanced Analytics Dashboard
+- [ ] Student Attendance Tracking
+- [ ] Online Exam System
+- [ ] Parent-Teacher Communication Portal
+
+---
+
+## 📊 Project Statistics
+
+```
+Lines of Code: 10,000+
+Database Tables: 50+
+API Endpoints: 20+
+Views: 25+
+Models: 44
+Templates: 30+
+CSS Files: 5+
+JavaScript Files: 3+
+```
+
+---
+
+**Made with ❤️ for Educational Excellence**
+
+Last Updated: July 2026

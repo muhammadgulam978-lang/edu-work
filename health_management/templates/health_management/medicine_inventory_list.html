@@ -1,0 +1,39 @@
+{% extends "admin_panel/bases.html" %}
+{% load static %}
+{% block title %}Medicine Inventory{% endblock %}
+{% block head %}<link rel="stylesheet" href="{% static 'health_management/css/health_theme.css' %}">{% endblock %}
+{% block content %}
+<div class="hlm-wrap">
+  <div class="hlm-page-header">
+    <div><h2>💊 Medicine Inventory</h2><p>Stock, batches, expiry, and reorder levels.</p></div>
+    <div class="hlm-header-actions">
+      <a class="btn btn-teal" href="{% url 'health_management:medicine_create' %}">+ New Medicine</a>
+      <a class="btn btn-teal" href="{% url 'health_management:medicine_batch_create' %}">+ Add Stock Batch</a>
+    </div>
+  </div>
+  <div class="hlm-panel">
+    <table class="hlm-table">
+      <thead><tr><th>Medicine</th><th>Category</th><th>Form</th><th>Balance</th><th>Reorder Level</th><th>Status</th></tr></thead>
+      <tbody>
+        {% for m in medicines %}
+        <tr>
+          <td>{{ m.name }}</td>
+          <td>{{ m.category|default:"—" }}</td>
+          <td>{{ m.form|default:"—" }}</td>
+          <td>{{ m.current_balance }}</td>
+          <td>{{ m.reorder_level }}</td>
+          <td>
+            {% if m.current_balance <= m.reorder_level %}
+              <span class="hlm-badge hlm-badge-open">Low Stock</span>
+            {% else %}
+              <span class="hlm-badge hlm-badge-closed">OK</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}<tr><td colspan="6" class="hlm-empty">No medicines in inventory yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

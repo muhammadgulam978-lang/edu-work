@@ -1,0 +1,48 @@
+{% extends 'parent_dashboard/base.html' %}
+{% block title %}Daily Diary{% endblock %}
+
+{% block content %}
+<div class="sp-page-header">
+  <div class="sp-page-header__icon">
+    <i class="ti ti-notebook" aria-hidden="true"></i>
+  </div>
+  <div>
+    <h1 class="sp-page-header__title">Daily Diary</h1>
+    <p class="sp-page-header__sub">Homework and notes from your teachers</p>
+  </div>
+</div>
+
+{% if diaries %}
+  <div class="sp-diary-list">
+    {% for diary in diaries %}
+    <div class="sp-diary-entry">
+      <div class="sp-diary-entry__date-col">
+        <span class="sp-diary-entry__day">{{ diary.date|date:"d" }}</span>
+        <span class="sp-diary-entry__month">{{ diary.date|date:"M" }}</span>
+        <span class="sp-diary-entry__year">{{ diary.date|date:"Y" }}</span>
+      </div>
+
+      <div class="sp-diary-entry__body">
+        <div class="sp-diary-entry__header">
+          <span class="sp-diary-entry__subject">
+            <i class="ti ti-book" aria-hidden="true"></i>
+            {{ diary.subject.name|default:"General" }}
+          </span>
+          <span class="sp-diary-entry__teacher">
+            <i class="ti ti-user" aria-hidden="true"></i>
+            {{ diary.teacher.name|default:"Teacher" }}
+          </span>
+        </div>
+        <p class="sp-diary-entry__content">{{ diary.content }}</p>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+{% else %}
+  <div class="sp-empty">
+    <i class="ti ti-notebook-off sp-empty__icon" aria-hidden="true"></i>
+    <p class="sp-empty__text">No diary entries yet.</p>
+  </div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,82 @@
+{% extends "teacher_dashboard/base.html" %}
+{% comment %}SAVE AS: exam_system/mark_exam_attendance.html{% endcomment %}
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex align-items-center mb-4">
+        <a href="{% url 'exam_conduct_dashboard' schedule.id %}" class="btn btn-outline-secondary btn-sm mr-3">
+            <i class="fa fa-arrow-left"></i>
+        </a>
+        <div>
+            <h3 class="mb-1">Mark Exam Attendance</h3>
+            <p class="text-muted mb-0">{{ schedule.subject.name }} — {{ schedule.exam_date|date:"d M Y" }}</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header d-flex justify-content-between">
+            <h5 class="mb-0">Students ({{ students.count }})</h5>
+            <div>
+                <button type="button" class="btn btn-xs btn-success mr-1" onclick="markAll('PRESENT')">All Present</button>
+                <button type="button" class="btn btn-xs btn-danger" onclick="markAll('ABSENT')">All Absent</button>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <form method="POST" id="attendanceForm">
+                {% csrf_token %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Roll No</th>
+                                <th>Student Name</th>
+                                <th>Present</th>
+                                <th>Absent</th>
+                                <th>Late</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for student in students %}
+                            <tr>
+                                <td>{{ student.roll_no }}</td>
+                                <td><strong>{{ student.name }}</strong></td>
+                                <td>
+                                    <input type="radio" name="status_{{ student.id }}" value="PRESENT"
+                                           class="attendance-radio"
+                                           {% if existing|default_if_none:""|dictsort:student.id == 'PRESENT' %}checked{% endif %}
+                                           {% if existing.student.id == 'PRESENT' %}checked{% endif %}>
+                                </td>
+                                <td>
+                                    <input type="radio" name="status_{{ student.id }}" value="ABSENT"
+                                           class="attendance-radio" checked>
+                                </td>
+                                <td>
+                                    <input type="radio" name="status_{{ student.id }}" value="LATE"
+                                           class="attendance-radio">
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="card-footer text-right">
+                    <a href="{% url 'exam_conduct_dashboard' schedule.id %}" class="btn btn-outline-secondary mr-2">Cancel</a>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fa fa-save mr-1"></i> Save Attendance
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+function markAll(status) {
+    document.querySelectorAll(`input[value="${status}"]`).forEach(r => r.checked = true);
+}
+// Pre-fill existing attendance
+const existing = {{ existing|safe }};
+Object.keys(existing).forEach(sid => {
+    const radio = document.querySelector(`input[name="status_${sid}"][value="${existing[sid]}"]`);
+    if (radio) radio.checked = true;
+});
+</script>
+{% endblock %}

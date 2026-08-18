@@ -1,0 +1,23 @@
+{% extends "teacher_dashboard/bases.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h2>🔍 Teaching Guides</h2>
+
+  <form method="get">
+    <input type="text" name="query" placeholder="Enter subject..." class="form-control mb-3" />
+    <button type="submit" class="btn btn-primary">Search</button>
+  </form>
+
+  {% if guides %}
+    <ul class="list-group mt-3">
+      {% for guide in guides %}
+        <li class="list-group-item">
+          <a href="{{ guide }}" target="_blank">{{ guide }}</a>
+        </li>
+      {% endfor %}
+    </ul>
+  {% elif query %}
+    <div class="alert alert-danger">❌ No guides found for "{{ query }}"</div>
+  {% endif %}
+</div>
+{% endblock %}

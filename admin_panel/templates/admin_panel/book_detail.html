@@ -1,0 +1,40 @@
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{{ book.title }}</h2>
+    <p><strong>Class:</strong> {{ book.class_for }} | <strong>Subject:</strong> {{ book.subject }}</p>
+    <hr>
+
+    {% if book.chapter_set.all %}
+        {% for chapter in book.chapter_set.all %}
+            <div class="card mb-3 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <strong>{{ chapter.title }}</strong>
+                </div>
+                <div class="card-body">
+                    {% if chapter.topic_set.all %}
+                        <ul>
+                            {% for topic in chapter.topic_set.all %}
+                                <li>
+                                    <strong>{{ topic.title }}</strong>
+                                    {% if topic.subtopic_set.all %}
+                                        <ul>
+                                            {% for subtopic in topic.subtopic_set.all %}
+                                                <li>{{ subtopic.title }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                    {% endif %}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>No topics found.</p>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No chapters found for this book.</p>
+    {% endif %}
+</div>
+{% endblock %}

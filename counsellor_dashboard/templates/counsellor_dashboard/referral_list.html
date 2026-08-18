@@ -1,0 +1,30 @@
+{% extends "admin_panel/bases.html" %}
+{% load static %}
+{% block title %}Counselling Referrals{% endblock %}
+{% block head %}<link rel="stylesheet" href="{% static 'counsellor_dashboard/css/counsellor_theme.css' %}">{% endblock %}
+{% block content %}
+<div class="cns-wrap">
+  <div class="cns-page-header">
+    <div><h2>📋 Counselling Referrals</h2><p>Submitted by teachers, parents, staff, or students themselves.</p></div>
+    <div class="cns-header-actions"><a class="btn btn-teal" href="{% url 'counsellor_dashboard:referral_create' %}">+ New Referral</a></div>
+  </div>
+  <div class="cns-panel">
+    <table class="cns-table">
+      <thead><tr><th>Student</th><th>Category</th><th>Source</th><th>Priority</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+        {% for r in referrals %}
+        <tr>
+          <td>{{ r.student.full_name }}</td>
+          <td>{{ r.get_category_display }}</td>
+          <td>{{ r.get_source_display }}</td>
+          <td><span class="cns-priority-{{ r.priority }}">{{ r.get_priority_display }}</span></td>
+          <td><span class="cns-badge">{{ r.get_status_display }}</span></td>
+          <td>{% if r.status == "new" %}<a class="btn btn-teal" href="{% url 'counsellor_dashboard:referral_accept' r.id %}">Accept</a>{% endif %}</td>
+        </tr>
+        {% empty %}<tr><td colspan="6" class="cns-empty">No referrals yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

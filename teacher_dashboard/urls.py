@@ -1,0 +1,220 @@
+from django.urls import path, include
+from . import views
+from edupilot_core import voucher_portal
+from django.views.generic import TemplateView
+
+urlpatterns = [
+    path('help-support/report-issue/', TemplateView.as_view(template_name='shared/help_support/report_issue.html', extra_context={'portal_base': 'teacher_dashboard/base.html', 'portal_label': 'Teacher', 'portal_kind': 'teacher', 'report_route': 'teacher_report_issue', 'reports_route': 'teacher_requested_reports', 'suggestion_route': 'teacher_suggestion_bucket', 'suggestions_route': 'teacher_my_suggestions'}), name='teacher_report_issue'),
+    path('help-support/requested-reports/', TemplateView.as_view(template_name='shared/help_support/requested_reports.html', extra_context={'portal_base': 'teacher_dashboard/base.html', 'portal_label': 'Teacher', 'portal_kind': 'teacher', 'report_route': 'teacher_report_issue', 'reports_route': 'teacher_requested_reports', 'suggestion_route': 'teacher_suggestion_bucket', 'suggestions_route': 'teacher_my_suggestions'}), name='teacher_requested_reports'),
+    path('help-support/suggestion-bucket/', TemplateView.as_view(template_name='shared/help_support/suggestion_bucket.html', extra_context={'portal_base': 'teacher_dashboard/base.html', 'portal_label': 'Teacher', 'portal_kind': 'teacher', 'report_route': 'teacher_report_issue', 'reports_route': 'teacher_requested_reports', 'suggestion_route': 'teacher_suggestion_bucket', 'suggestions_route': 'teacher_my_suggestions'}), name='teacher_suggestion_bucket'),
+    path('help-support/my-suggestions/', TemplateView.as_view(template_name='shared/help_support/my_suggestions.html', extra_context={'portal_base': 'teacher_dashboard/base.html', 'portal_label': 'Teacher', 'portal_kind': 'teacher', 'report_route': 'teacher_report_issue', 'reports_route': 'teacher_requested_reports', 'suggestion_route': 'teacher_suggestion_bucket', 'suggestions_route': 'teacher_my_suggestions'}), name='teacher_my_suggestions'),
+    path('vouchers/', voucher_portal.portal_vouchers, {'portal_role': 'TEACHER'}, name='teacher_vouchers'),
+    path('vouchers/summary/', voucher_portal.voucher_summary, {'portal_role': 'TEACHER'}, name='teacher_voucher_summary'),
+    path('vouchers/<int:delivery_id>/view/', voucher_portal.voucher_view, {'portal_role': 'TEACHER'}, name='teacher_voucher_view'),
+    path('vouchers/<int:delivery_id>/download/', voucher_portal.voucher_download, {'portal_role': 'TEACHER'}, name='teacher_voucher_download'),
+    path('vouchers/<int:delivery_id>/dismiss/', voucher_portal.voucher_dismiss, {'portal_role': 'TEACHER'}, name='teacher_voucher_dismiss'),
+    path('notifications/<int:notification_id>/read/', voucher_portal.notification_read, {'portal_role': 'TEACHER'}, name='teacher_notification_read'),
+    path("announcements/", views.teacher_announcements, name="teacher_announcements"),
+    # =========================
+    # TEACHER DASHBOARD CORE
+    # =========================
+    path("teacher_dashboard/", views.teacher_dashboard_view, name="teacher_dashboard"),
+    path('appraisal/submit/', views.teacher_appraisal_submit, name='teacher_appraisal_submit'),
+
+    # ✅ TEACHER TIMETABLE — sirf login_required, 403 nahi ayega
+    # path("my-timetable/", views.teacher_timetable_view, name="teacher_timetable"),
+    path('timetable/', views.teacher_timetable_view, name='teacher_timetable'),
+
+    path(
+        "view-students/<int:class_id>/<int:section_id>/",
+        views.view_students,
+        name="view_students",
+    ),
+
+    # =========================
+    # ATTENDANCE
+    # =========================
+    path(
+        "attendance/mark/<int:assigned_period_id>/",
+        views.mark_attendance,
+        name="mark_attendance",
+    ),
+    path(
+        "attendance/view/<int:assigned_period_id>/",
+        views.view_attendance,
+        name="view_attendance",
+    ),
+    path(
+        "attendance/summary/<int:assigned_period_id>/",
+        views.attendance_summary,
+        name="attendance_summary",
+    ),
+
+    # =========================
+    # RESULTS
+    # =========================
+    path(
+        "upload-result/<int:class_id>/<int:section_id>/<int:subject_id>/",
+        views.upload_result,
+        name="upload_result",
+    ),
+    path(
+        "merge-result/<int:class_id>/<int:section_id>/",
+        views.merge_result,
+        name="merge_result",
+    ),
+
+    # =========================
+    # LMS DASHBOARD
+    # =========================
+    path("lms/", views.lms_dashboard, name="lms_dashboard"),
+
+    path('lesson-plans/', views.lesson_plans_list, name='lesson_plans_list'),
+
+    path(
+        "lms/class/<int:class_id>/section/<int:section_id>/subject/<int:subject_id>/",
+        views.lms_actions_menu,
+        name="lms_actions_menu",
+    ),
+
+    # =========================
+    # LMS CONTENT
+    # =========================
+    path(
+        "lms/class/<int:class_id>/section/<int:section_id>/subject/<int:subject_id>/upload-lecture/",
+        views.upload_lecture_note,
+        name="upload_lecture_note",
+    ),
+
+    path(
+        "upload-assignment/<int:class_id>/<int:section_id>/<int:subject_id>/",
+        views.upload_assignment,
+        name="upload_assignment",
+    ),
+
+    path(
+        "assignments/<int:class_id>/<int:section_id>/<int:subject_id>/",
+        views.view_assignments,
+        name="view_assignments",
+    ),
+
+    path('view-submissions/<int:class_id>/<int:section_id>/<int:subject_id>/',
+        views.view_assignment_submissions, name='view_assignment_submissions'),
+
+    path('give-marks/<int:submission_id>/',
+        views.give_assignment_marks, name='give_assignment_marks'),
+
+    path(
+        "upload_quiz/<int:class_id>/<int:section_id>/<int:subject_id>/",
+        views.upload_quiz,
+        name="upload_quiz",
+    ),
+
+    path(
+        "quiz_submissions/<int:class_id>/<int:section_id>/<int:subject_id>/",
+        views.view_quiz_submissions,
+        name="view_quiz_submissions",
+    ),
+
+    path(
+        "diary/submit/<int:class_id>/<int:section_id>/<int:subject_id>/",
+        views.submit_diary,
+        name="submit_diary",
+    ),
+
+    path(
+        "diary/view/<int:class_id>/<int:section_id>/<int:subject_id>/",
+        views.view_diary_student,
+        name="view_diary_student",
+    ),
+
+    # =========================
+    # LMS → BOOKS
+    # =========================
+    path(
+        "teacher/lms/class/<int:class_id>/section/<int:section_id>/subject/<int:subject_id>/books/",
+        views.lms_books_list,
+        name="lms_books_list",
+    ),
+
+    path(
+        "lms/class/<int:class_id>/section/<int:section_id>/subject/<int:subject_id>/books/create/",
+        views.lms_create_book,
+        name="lms_create_book",
+    ),
+
+    path(
+        "teacher/lms/book/<int:book_id>/chapters/",
+        views.lms_book_chapters,
+        name="lms_book_chapters",
+    ),
+
+    # =========================
+    # LESSON PLANNING (FINAL FLOW)
+    # =========================
+    path(
+        "teacher/lesson-planning/upload/",
+        views.lesson_upload_chapter,
+        name="lesson_upload_chapter",
+    ),
+
+    path(
+        "teacher/lesson-planning/chapter/<int:chapter_id>/topics/",
+        views.lesson_select_topics,
+        name="lesson_select_topics",
+    ),
+
+    path(
+        "teacher/lms/chapter/<int:chapter_id>/lesson-plans/",
+        views.lms_chapter_lesson_plans,
+        name="lms_chapter_lesson_plans",
+    ),
+
+    # =========================
+    # EXAM SYSTEM
+    # =========================
+    path('exam/question-banks/', views.question_bank_list, name='question_bank_list'),
+    path('exam/question-banks/<int:bank_id>/', views.question_bank_detail, name='question_bank_detail'),
+    path('exam/question-banks/<int:bank_id>/add-question/', views.add_question_to_bank, name='add_question_to_bank'),
+    path('exam/question-banks/<int:bank_id>/ai-generate/', views.ai_generate_questions, name='ai_generate_questions'),
+    path('exam/questions/<int:question_id>/approve/', views.approve_question, name='approve_question'),
+
+    path('exam/plans/', views.exam_plan_list, name='exam_plan_list'),
+    path('exam/plans/create/', views.create_exam_plan, name='create_exam_plan'),
+    path('exam/plans/<int:plan_id>/', views.exam_plan_detail, name='exam_plan_detail'),
+    path('exam/plans/<int:plan_id>/add-schedule/', views.add_exam_schedule, name='add_exam_schedule'),
+    path('exam/plans/<int:plan_id>/blueprint/<int:subject_id>/', views.create_blueprint, name='create_blueprint'),
+
+    path('exam/blueprint/<int:blueprint_id>/generate-paper/', views.generate_paper_view, name='generate_paper_view'),
+    path('exam/papers/<int:paper_id>/approval/', views.paper_approval_detail, name='paper_approval_detail'),
+    path('exam/papers/<int:paper_id>/download/', views.download_paper, name='download_paper'),
+
+    path('exam/conduct/<int:schedule_id>/', views.exam_conduct_dashboard, name='exam_conduct_dashboard'),
+    path('exam/conduct/<int:schedule_id>/attendance/', views.mark_exam_attendance, name='mark_exam_attendance'),
+    path('exam/conduct/<int:schedule_id>/seating/', views.auto_generate_seating, name='auto_generate_seating'),
+    path('exam/conduct/<int:schedule_id>/sheets/', views.answer_sheet_list, name='answer_sheet_list'),
+    path('exam/sheets/<int:sheet_id>/mark/', views.mark_answer_sheet, name='mark_answer_sheet'),
+    path('exam/conduct/<int:schedule_id>/compile/', views.compile_exam_results, name='compile_exam_results'),
+    path('exam/conduct/<int:schedule_id>/results/', views.exam_results_list, name='exam_results_list'),
+
+    path('exam/analytics/', views.analytics_dashboard, name='analytics_dashboard'),
+
+    # =========================
+    # E+ RESULT
+    # =========================
+    path('e-result/', views.eresult_hub, name='eresult_hub'),
+    path(
+        'e-result/class/<int:class_id>/section/<int:section_id>/subject/<int:subject_id>/analysis/',
+        views.eresult_class_analysis, name='eresult_class_analysis'
+    ),
+    path('e-result/grade-predictor/', views.grade_predictor_hub, name='eresult_grade_predictor_hub'),
+    path(
+        'e-result/grade-predictor/class/<int:class_id>/section/<int:section_id>/subject/<int:subject_id>/',
+        views.grade_predictor_detail, name='eresult_grade_predictor_detail'
+    ),
+
+    path("appraisal/submit/", views.teacher_appraisal_submit, name="teacher_appraisal_submit"),
+    
+    path("teacher/", include("grade_predictor.urls")),
+   
+]

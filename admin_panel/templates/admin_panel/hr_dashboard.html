@@ -1,0 +1,294 @@
+{% extends "admin_panel/bases.html" %}
+{% load static %}
+
+{% block title %}HR Dashboard{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'admin_panel/css/hr_admin.css' %}?v=hr-admin-2">
+<style>
+  /* Scoped to this page only — does not touch hr_admin.css */
+  .hrdash-stats-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(210px, 1fr));
+    gap:18px;
+    margin-bottom:24px;
+  }
+  .hr-stat-card.hrdash-blue{ background:linear-gradient(135deg,#4f8ff7,#3568d6); }
+  .hr-stat-card.hrdash-purple{ background:linear-gradient(135deg,#a78bfa,#7c3aed); }
+  .hr-stat-card.hrdash-orange{ background:linear-gradient(135deg,#fbbf24,#e08e0b); }
+  .hr-stat-card.hrdash-red{ background:linear-gradient(135deg,#f87171,#dc2626); }
+  .hr-stat-card.hrdash-teal{ background:linear-gradient(135deg,#4fd1b8,#33a891); }
+  .hr-stat-card.hrdash-indigo{ background:linear-gradient(135deg,#818cf8,#4f46e5); }
+  .hr-stat-card.hrdash-pink{ background:linear-gradient(135deg,#f472b6,#db2777); }
+  .hr-stat-card.hrdash-slate{ background:linear-gradient(135deg,#94a3b8,#475569); }
+
+  .hrdash-grid-2{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
+  }
+  @media (max-width: 992px){
+    .hrdash-grid-2{ grid-template-columns:1fr; }
+  }
+
+  .hrdash-chart-box{ position:relative; height:260px; }
+
+  .hrdash-mini-table{ width:100%; font-size:14px; }
+  .hrdash-mini-table td{ padding:8px 4px; border-bottom:1px solid #f1f1f4; }
+  .hrdash-mini-table tr:last-child td{ border-bottom:none; }
+  .hrdash-mini-table td.hrdash-num{ text-align:right; font-weight:700; color:#334155; }
+
+  .hrdash-activity-list{ list-style:none; margin:0; padding:0; }
+  .hrdash-activity-list li{
+    display:flex; align-items:flex-start; gap:14px;
+    padding:12px 4px; border-bottom:1px solid #f1f1f4;
+  }
+  .hrdash-activity-list li:last-child{ border-bottom:none; }
+  .hrdash-activity-icon{
+    width:38px; height:38px; border-radius:10px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; color:#fff; font-size:15px;
+  }
+  .hrdash-activity-icon.green{ background:#16a34a; }
+  .hrdash-activity-icon.blue{ background:#3554d1; }
+  .hrdash-activity-text strong{ display:block; font-size:14px; }
+  .hrdash-activity-text span{ font-size:12px; color:#94a3b8; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="hr-page">
+
+  <div class="hr-hero">
+    <div class="hr-title-wrap">
+      <span class="hr-icon purple"><i class="fas fa-tachometer-alt"></i></span>
+      <div>
+        <p class="hr-kicker">People &amp; HR</p>
+        <h2>HR Dashboard</h2>
+        <p class="hr-subtitle">A quick overview of your workforce, departments, and leave activity.</p>
+      </div>
+    </div>
+    <div class="hr-actions">
+      <a href="{% url 'employee_create' %}" class="btn btn-primary"><i class="fas fa-user-plus"></i> Add Employee</a>
+      <a href="{% url 'leave_create' %}" class="btn btn-outline-primary"><i class="fas fa-paper-plane"></i> Apply Leave</a>
+    </div>
+  </div>
+
+  <!-- Top Stat Cards -->
+  <div class="hrdash-stats-grid">
+    <div class="hr-stat-card hrdash-teal">
+      <i class="fas fa-users"></i>
+      <div><span>Total Employees</span><strong>{{ total_employees }}</strong></div>
+    </div>
+    <div class="hr-stat-card hrdash-blue">
+      <i class="fas fa-user-check"></i>
+      <div><span>Active Employees</span><strong>{{ active_employees }}</strong></div>
+    </div>
+    <div class="hr-stat-card hrdash-purple">
+      <i class="fas fa-chalkboard-teacher"></i>
+      <div><span>Teachers</span><strong>{{ teachers_count }}</strong></div>
+    </div>
+    <div class="hr-stat-card hrdash-indigo">
+      <i class="fas fa-user-tie"></i>
+      <div><span>Non Teaching</span><strong>{{ non_teaching_count }}</strong></div>
+    </div>
+    <div class="hr-stat-card hrdash-slate">
+      <i class="fas fa-building"></i>
+      <div><span>Departments</span><strong>{{ departments_count }}</strong></div>
+    </div>
+    <div class="hr-stat-card hrdash-orange">
+      <i class="fas fa-hourglass-half"></i>
+      <div><span>Pending Leave Requests</span><strong>{{ pending_leave_requests }}</strong></div>
+    </div>
+    <div class="hr-stat-card hrdash-red">
+      <i class="fas fa-calendar-times"></i>
+      <div><span>On Leave Today</span><strong>{{ on_leave_today }}</strong></div>
+    </div>
+    <div class="hr-stat-card hrdash-pink">
+      <i class="fas fa-birthday-cake"></i>
+      <div><span>Upcoming Birthdays</span><strong>{{ upcoming_birthdays }}</strong></div>
+    </div>
+  </div>
+
+  <!-- Recent Employees / Recent Leave Requests -->
+  <div class="hrdash-grid-2 mb-4">
+    <div class="hr-panel mb-0">
+      <div class="hr-panel-header">
+        <h4>Recent Employees</h4>
+        <a href="{% url 'employee_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+      </div>
+      <div class="hr-panel-body">
+        <table class="hrdash-mini-table">
+          {% for e in recent_employees %}
+          <tr>
+            <td><strong>{{ e.name }}</strong><br><span class="text-muted" style="font-size:12px;">{{ e.department.name|default:"No Department" }}</span></td>
+            <td class="hrdash-num">{{ e.joining_date|date:"d M Y" }}</td>
+          </tr>
+          {% empty %}
+          <tr><td class="hr-empty">No employees found.</td></tr>
+          {% endfor %}
+        </table>
+      </div>
+    </div>
+
+    <div class="hr-panel mb-0">
+      <div class="hr-panel-header">
+        <h4>Recent Leave Requests</h4>
+        <a href="{% url 'leave_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+      </div>
+      <div class="hr-panel-body">
+        <table class="hrdash-mini-table">
+          {% for l in recent_leaves %}
+          <tr>
+            <td><strong>{{ l.employee.name }}</strong><br><span class="text-muted" style="font-size:12px;">{{ l.leave_type.name|default:"-" }}</span></td>
+            <td class="hrdash-num">
+              {% if l.status == "approved" %}<span class="badge bg-success">Approved</span>
+              {% elif l.status == "rejected" %}<span class="badge bg-danger">Rejected</span>
+              {% else %}<span class="badge bg-warning text-dark">Pending</span>{% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td class="hr-empty">No leave requests found.</td></tr>
+          {% endfor %}
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Department / Designation Summary -->
+  <div class="hrdash-grid-2 mb-4">
+    <div class="hr-panel mb-0">
+      <div class="hr-panel-header"><h4>Department Summary</h4></div>
+      <div class="hr-panel-body">
+        <table class="hrdash-mini-table">
+          {% for d in department_summary %}
+          <tr>
+            <td>{{ d.department__name|default:"Unassigned" }}</td>
+            <td class="hrdash-num">{{ d.total }}</td>
+          </tr>
+          {% empty %}
+          <tr><td class="hr-empty">No data available.</td></tr>
+          {% endfor %}
+        </table>
+      </div>
+    </div>
+
+    <div class="hr-panel mb-0">
+      <div class="hr-panel-header"><h4>Designation Summary</h4></div>
+      <div class="hr-panel-body">
+        <table class="hrdash-mini-table">
+          {% for d in designation_summary %}
+          <tr>
+            <td>{{ d.designation__title|default:"Unassigned" }}</td>
+            <td class="hrdash-num">{{ d.total }}</td>
+          </tr>
+          {% empty %}
+          <tr><td class="hr-empty">No data available.</td></tr>
+          {% endfor %}
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="hrdash-grid-2 mb-4">
+    <div class="hr-panel mb-0">
+      <div class="hr-panel-header"><h4>Employee Category Distribution</h4></div>
+      <div class="hr-panel-body">
+        <div class="hrdash-chart-box"><canvas id="categoryChart"></canvas></div>
+      </div>
+    </div>
+    <div class="hr-panel mb-0">
+      <div class="hr-panel-header"><h4>Department Distribution</h4></div>
+      <div class="hr-panel-body">
+        <div class="hrdash-chart-box"><canvas id="departmentChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="hrdash-grid-2 mb-4">
+    <div class="hr-panel mb-0">
+      <div class="hr-panel-header"><h4>Monthly Leave Trend</h4></div>
+      <div class="hr-panel-body">
+        <div class="hrdash-chart-box"><canvas id="monthlyLeaveChart"></canvas></div>
+      </div>
+    </div>
+    <div class="hr-panel mb-0">
+      <div class="hr-panel-header"><h4>Leave Status</h4></div>
+      <div class="hr-panel-body">
+        <div class="hrdash-chart-box"><canvas id="leaveStatusChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Activity -->
+  <div class="hr-panel mb-0">
+    <div class="hr-panel-header"><h4>Recent Activity</h4></div>
+    <div class="hr-panel-body">
+      <ul class="hrdash-activity-list">
+        {% for a in activity_items %}
+        <li>
+          <span class="hrdash-activity-icon {{ a.tone }}"><i class="fas {{ a.icon }}"></i></span>
+          <div class="hrdash-activity-text">
+            <strong>{{ a.type }} — {{ a.description }}</strong>
+            <span>{{ a.meta }}</span>
+          </div>
+        </li>
+        {% empty %}
+        <li class="hr-empty">No recent activity.</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+
+</div>
+
+{{ category_chart|json_script:"category-chart-data" }}
+{{ department_chart|json_script:"department-chart-data" }}
+{{ monthly_leave_chart|json_script:"monthly-leave-chart-data" }}
+{{ leave_status_chart|json_script:"leave-status-chart-data" }}
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const categoryData = JSON.parse(document.getElementById('category-chart-data').textContent);
+  const departmentData = JSON.parse(document.getElementById('department-chart-data').textContent);
+  const monthlyData = JSON.parse(document.getElementById('monthly-leave-chart-data').textContent);
+  const statusData = JSON.parse(document.getElementById('leave-status-chart-data').textContent);
+
+  const palette = ['#4fd1b8', '#4f8ff7', '#a78bfa', '#fbbf24', '#f87171', '#818cf8', '#f472b6', '#94a3b8'];
+
+  new Chart(document.getElementById('categoryChart'), {
+    type: 'doughnut',
+    data: {
+      labels: categoryData.labels,
+      datasets: [{ data: categoryData.values, backgroundColor: palette }]
+    }
+  });
+
+  new Chart(document.getElementById('departmentChart'), {
+    type: 'bar',
+    data: {
+      labels: departmentData.labels,
+      datasets: [{ label: 'Employees', data: departmentData.values, backgroundColor: '#4f8ff7' }]
+    },
+    options: { legend: { display: false } }
+  });
+
+  new Chart(document.getElementById('monthlyLeaveChart'), {
+    type: 'line',
+    data: {
+      labels: monthlyData.labels,
+      datasets: [{ label: 'Leave Applications', data: monthlyData.values, borderColor: '#7c3aed', backgroundColor: 'rgba(124,58,237,.15)', fill: true, tension: 0.35 }]
+    },
+    options: { legend: { display: false } }
+  });
+
+  new Chart(document.getElementById('leaveStatusChart'), {
+    type: 'pie',
+    data: {
+      labels: statusData.labels,
+      datasets: [{ data: statusData.values, backgroundColor: ['#fbbf24', '#16a34a', '#dc2626'] }]
+    }
+  });
+});
+</script>
+{% endblock %}

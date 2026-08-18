@@ -1,0 +1,117 @@
+{% extends "teacher_dashboard/lms_action_base.html" %}
+{% load static %}
+
+{% block title %}Assignments{% endblock %}
+
+{% block content %}
+
+<div class="card" style="background: #f8f9fa; margin-left: 20px; margin-right: 20px;">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h4 class="card-title">📚 Assignments</h4>
+    <button id="toggleAssignmentForm" class="btn btn-primary">
+      ➕ Add Assignment
+    </button>
+  </div>
+
+  <div class="card-body">
+
+    <!-- Assignment Upload Form (Initially Hidden) -->
+    <div id="assignmentForm" class="d-none mb-4">
+      <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+        {% csrf_token %}
+
+        <div class="mb-3 row">
+          <label class="col-lg-3 col-form-label">Title:</label>
+          <div class="col-lg-6">
+            <input type="text" name="title" class="form-control" required>
+            <div class="invalid-feedback">Please enter a title.</div>
+          </div>
+        </div>
+
+        <div class="mb-3 row">
+          <label class="col-lg-3 col-form-label">Description:</label>
+          <div class="col-lg-6">
+            <textarea name="description" class="form-control"></textarea>
+          </div>
+        </div>
+
+        <div class="mb-3 row">
+          <label class="col-lg-3 col-form-label">Due Date:</label>
+          <div class="col-lg-6">
+            <input type="date" name="due_date" class="form-control" required>
+            <div class="invalid-feedback">Please select a due date.</div>
+          </div>
+        </div>
+
+        <div class="mb-3 row">
+          <label class="col-lg-3 col-form-label">Upload File:</label>
+          <div class="col-lg-6">
+            <input type="file" name="file" class="form-control" required>
+            <div class="invalid-feedback">Please upload a file.</div>
+          </div>
+        </div>
+
+        <div class="text-center">
+          <button type="submit" class="btn btn-success">
+            📤 Upload Assignment
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- List of Uploaded Assignments -->
+    <h5 class="mb-3">📂 Uploaded Assignments</h5>
+
+    {% if assignments %}
+      <ul class="list-group">
+        {% for assignment in assignments %}
+          <li class="list-group-item d-flex justify-content-between align-items-start flex-wrap gap-2">
+
+            <div>
+              <div class="fw-bold">{{ assignment.title }}</div>
+              <small class="text-muted">Due: {{ assignment.due_date }}</small>
+              {% if assignment.description %}
+                <p class="mt-1 mb-1 text-muted" style="font-size:13px;">{{ assignment.description }}</p>
+              {% endif %}
+              <div class="mt-2 d-flex gap-3 align-items-center">
+                <!-- ✅ Download Assignment File -->
+                {% if assignment.file %}
+                  <a href="{{ assignment.file.url }}" target="_blank" class="btn btn-sm btn-outline-secondary">
+                    📥 Download
+                  </a>
+                {% endif %}
+
+                <!-- ✅ View Submissions — sab assignments same page pe dikhti hain -->
+                <a href="{% url 'view_assignment_submissions' class_id section_id subject_id %}"
+                   class="btn btn-sm btn-outline-primary">
+                  📋 View Submissions
+                </a>
+              </div>
+            </div>
+
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="text-muted">No assignments uploaded yet.</p>
+    {% endif %}
+
+  </div>
+</div>
+
+<script>
+  const toggleBtn = document.getElementById('toggleAssignmentForm');
+  const formDiv   = document.getElementById('assignmentForm');
+
+  toggleBtn.addEventListener('click', () => {
+    if (formDiv.classList.contains('d-none')) {
+      formDiv.classList.remove('d-none');
+      toggleBtn.textContent = '✖ Hide Form';
+    } else {
+      formDiv.classList.add('d-none');
+      toggleBtn.textContent = '➕ Add Assignment';
+    }
+  });
+</script>
+
+{% endblock %}

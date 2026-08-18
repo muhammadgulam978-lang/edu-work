@@ -1,0 +1,5 @@
+{% extends "student_profile/bases.html" %}
+{% load static %}
+{% block title %}Announcements | Student Portal{% endblock %}
+{% block head %}<link rel="stylesheet" href="{% static 'admin_panel/css/announcement-center.css' %}?v=announcement-center-2">{% endblock %}
+{% block content %}{% include "shared/announcements/feed_content.html" %}{% endblock %}

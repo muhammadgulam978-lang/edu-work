@@ -1,0 +1,44 @@
+{% extends 'automation/base_automation.html' %}
+{% block page_title %}Automation Logs{% endblock %}
+{% block content %}
+<div class="stats-row">
+    <div class="stat-card"><div class="ic" style="background:#3b82f6;"><i class="fa fa-list"></i></div><div><div class="num">{{ total_jobs }}</div><div class="lbl">Total Jobs</div></div></div>
+    <div class="stat-card"><div class="ic" style="background:#22c55e;"><i class="fa fa-check"></i></div><div><div class="num">{{ completed }}</div><div class="lbl">Completed</div></div></div>
+    <div class="stat-card"><div class="ic" style="background:#ef4444;"><i class="fa fa-xmark"></i></div><div><div class="num">{{ failed }}</div><div class="lbl">Failed</div></div></div>
+    <div class="stat-card"><div class="ic" style="background:#f59e0b;"><i class="fa fa-spinner"></i></div><div><div class="num">{{ success_rate }}%</div><div class="lbl">Success Rate</div></div></div>
+</div>
+
+<div class="card">
+    <h3>Automation Logs</h3>
+    <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Job Type</th>
+                <th>Started</th>
+                <th>Completed</th>
+                <th>Processed</th>
+                <th>Success</th>
+                <th>Failed</th>
+                <th>Status</th>
+            </tr>
+            {% for log in logs %}
+            <tr>
+                <td>{{ log.job_type }}</td>
+                <td>{{ log.started_at|date:"M d, Y H:i" }}</td>
+                <td>{{ log.completed_at|date:"M d, Y H:i"|default:"-" }}</td>
+                <td>{{ log.processed }}</td>
+                <td>{{ log.success }}</td>
+                <td>{{ log.failed }}</td>
+                <td>
+                    <span class="badge {% if log.status == 'COMPLETED' %}badge-green{% elif log.status == 'FAILED' %}badge-red{% else %}badge-yellow{% endif %}">
+                        {{ log.status }}
+                    </span>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="7" style="text-align:center;color:#999;">No automation logs yet.</td></tr>
+            {% endfor %}
+        </table>
+    </div>
+</div>
+{% endblock %}

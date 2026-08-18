@@ -1,0 +1,57 @@
+{% extends "teacher_dashboard/lms_action_base.html" %}
+{% load static %}
+
+{% block title %}Submit Diary{% endblock %}
+
+{% block extra_css %}
+<link href="{% static 'teacher_dashboard/css/style.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="page-titles">
+        <h4>📔 Submit Diary</h4>
+        <span class="text-muted">
+            Class: {{ class_id }} | Section: {{ section_id }} | Subject: {{ subject_id }}
+        </span>
+    </div>
+
+    <!-- Form to submit diary -->
+    <div class="card mt-3">
+        <div class="card-body">
+            <form method="POST">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="content" class="form-label">Diary Content</label>
+                    <textarea class="form-control" id="content" name="content" rows="5" placeholder="Write diary details here..." required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Submit Diary</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- List of submitted diaries -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5>Previous Diaries</h5>
+        </div>
+        <div class="card-body">
+            {% if diaries %}
+                <ul class="list-group">
+                    {% for diary in diaries %}
+                        <li class="list-group-item">
+                            <strong>{{ diary.date }}</strong> - {{ diary.content|linebreaksbr }}
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-muted">No diaries submitted yet.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'teacher_dashboard/js/deznav-init.js' %}"></script>
+{% endblock %}

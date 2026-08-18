@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { background-color: #f4f7f6; display: flex; justify-content: center; align-items: center; height: 100vh; font-family: sans-serif; margin: 0; }
+        .login-box { background: white; padding: 40px; border-radius: 8px; border-top: 5px solid #2e7d32; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 320px; text-align: center; }
+        h2 { color: #2e7d32; margin-bottom: 20px; }
+        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        button { background-color: #2e7d32; color: white; padding: 12px; width: 100%; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        
+        /* Error Message Style */
+        .error-msg { color: #d32f2f; background-color: #ffebee; padding: 10px; border-radius: 4px; margin-bottom: 15px; font-size: 14px; }
+
+        /* Portal Colors */
+        .admin-color { border-top-color: #ffa726; }
+        .teacher-color { border-top-color: #66bb6a; }
+        .student-color { border-top-color: #29b6f6; }
+        .parent-color { border-top-color: #ab47bc; }
+    </style>
+</head>
+<body>
+    <div class="login-box" id="loginBox">
+        <h2 id="portalTitle">Portal Login</h2>
+        
+        <!-- Error Message Display Area -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="error-msg">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="POST">
+            {% csrf_token %}
+            
+            <select name="role" id="roleSelect" onchange="updateTheme()">
+                <option value="admin">Admin Portal</option>
+                <option value="teacher">Teacher Portal</option>
+                <option value="student">Student Portal</option>
+                <option value="parent">Parent Portal</option>
+            </select>
+
+            <input type="text" name="username" placeholder="Username" required>
+            <input type="password" name="password" placeholder="Password" required>
+            
+            <button type="submit" id="loginBtn">Log In</button>
+        </form>
+    </div>
+
+    <script>
+        function updateTheme() {
+            const role = document.getElementById('roleSelect').value;
+            const box = document.getElementById('loginBox');
+            const title = document.getElementById('portalTitle');
+            const btn = document.getElementById('loginBtn');
+
+            box.className = 'login-box';
+            
+            if(role === 'admin') { box.classList.add('admin-color'); title.style.color = '#ffa726'; btn.style.backgroundColor = '#ffa726'; }
+            else if(role === 'teacher') { box.classList.add('teacher-color'); title.style.color = '#66bb6a'; btn.style.backgroundColor = '#66bb6a'; }
+            else if(role === 'student') { box.classList.add('student-color'); title.style.color = '#29b6f6'; btn.style.backgroundColor = '#29b6f6'; }
+            else { box.classList.add('parent-color'); title.style.color = '#ab47bc'; btn.style.backgroundColor = '#ab47bc'; }
+            
+            title.innerText = role.toUpperCase() + ' LOGIN';
+        }
+    </script>
+</body>
+</html>

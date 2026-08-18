@@ -1,0 +1,13 @@
+{% extends 'parent_dashboard/help_support/support_base.html' %}
+
+{% block support_title %}My Suggestions{% endblock %}
+{% block support_heading %}My Suggestions{% endblock %}
+{% block support_intro %}Track all suggestions you have submitted through the parent portal.{% endblock %}
+{% block support_header_action %}<a class="phs-btn phs-btn-primary" href="{% url 'parent_suggestion_bucket' %}"><i class="fas fa-plus"></i> New Suggestion</a>{% endblock %}
+
+{% block support_content %}
+<section class="phs-card phs-list-card">
+    <div class="phs-table-wrap"><table><thead><tr><th>Suggestion</th><th>Type</th><th>Status</th><th>Submitted</th><th>Action</th></tr></thead><tbody></tbody></table></div>
+    <div class="phs-empty"><span class="phs-empty-icon phs-empty-purple"><i class="far fa-lightbulb"></i></span><h2>No suggestions yet</h2><p>Your submitted suggestions will appear here.</p><a href="{% url 'parent_suggestion_bucket' %}"><i class="fas fa-plus"></i> Submit your first suggestion</a></div>
+</section>
+{% endblock %}

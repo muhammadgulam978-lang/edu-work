@@ -1,0 +1,549 @@
+/* Neutral presentation layer for authenticated EduPilot portals. */
+.edu-neutral-surfaces {
+  --edu-surface-white: #ffffff;
+  --edu-surface-page: #f7faf9;
+  --edu-surface-border: #dce8e5;
+  --edu-surface-border-strong: #c7ddd8;
+  --edu-surface-ink: #17302c;
+  --edu-surface-muted: #687a76;
+  --edu-surface-teal: #0f9f94;
+  --edu-surface-blue: #49a8ee;
+  --edu-surface-green: #8bc740;
+  --edu-surface-purple: #7651c7;
+}
+
+/* The shared header occupies normal flow; legacy fixed-header padding created the empty band. */
+.edu-neutral-surfaces .edu-portal-header {
+  position: sticky !important;
+  top: 0 !important;
+  width: auto !important;
+  min-height: 72px !important;
+  height: auto !important;
+  padding: 0 20px !important;
+  background: var(--edu-surface-white) !important;
+  border-bottom: 1px solid var(--edu-surface-border) !important;
+  box-shadow: none !important;
+  z-index: 1190;
+}
+
+.edu-neutral-surfaces .edu-portal-header .edu-portal-header-card {
+  min-height: 72px;
+  height: auto;
+  padding: 10px 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.edu-neutral-surfaces .edu-portal-header-main {
+  min-height: 52px;
+  gap: 10px;
+}
+
+[data-header-position="fixed"] .edu-neutral-surfaces .content-body,
+.edu-neutral-surfaces[data-header-position="fixed"] .content-body,
+.edu-neutral-surfaces .content-body {
+  padding-top: 0 !important;
+}
+
+/* Header actions remain fully functional but no longer read as mint circles or pills. */
+.edu-neutral-surfaces .edu-portal-menu,
+.edu-neutral-surfaces .edu-portal-icon-button {
+  width: 40px !important;
+  min-width: 40px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  padding: 0 !important;
+  border: 1px solid var(--edu-surface-border) !important;
+  border-radius: 8px !important;
+  background: var(--edu-surface-white) !important;
+  color: #176f66 !important;
+  box-shadow: none !important;
+}
+
+.edu-neutral-surfaces .edu-portal-menu:hover,
+.edu-neutral-surfaces .edu-portal-icon-button:hover,
+.edu-neutral-surfaces .edu-portal-menu:focus-visible,
+.edu-neutral-surfaces .edu-portal-icon-button:focus-visible {
+  border-color: var(--edu-surface-teal) !important;
+  background: #f5fbfa !important;
+}
+
+.edu-neutral-surfaces .edu-portal-search {
+  height: 42px !important;
+  min-height: 42px !important;
+  border: 1px solid var(--edu-surface-border-strong) !important;
+  border-radius: 8px !important;
+  background: var(--edu-surface-white) !important;
+  box-shadow: none !important;
+  overflow: visible;
+}
+
+.edu-neutral-surfaces .edu-portal-search input {
+  padding: 0 14px !important;
+  background: transparent !important;
+}
+
+.edu-neutral-surfaces .edu-portal-search button {
+  width: 42px !important;
+  min-width: 42px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-left: 1px solid var(--edu-surface-border) !important;
+  border-radius: 0 7px 7px 0 !important;
+  background: transparent !important;
+  color: #176f66 !important;
+  box-shadow: none !important;
+}
+
+.edu-neutral-surfaces .edu-portal-search button:hover,
+.edu-neutral-surfaces .edu-portal-search button:focus-visible {
+  background: #f5fbfa !important;
+}
+
+.edu-neutral-surfaces .edu-portal-chip {
+  min-height: 40px !important;
+  height: 40px !important;
+  padding: 0 11px !important;
+  border: 1px solid var(--edu-surface-border) !important;
+  border-radius: 8px !important;
+  background: var(--edu-surface-white) !important;
+  box-shadow: none !important;
+}
+
+.edu-neutral-surfaces .edu-portal-profile {
+  min-height: 40px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  color: var(--edu-surface-ink) !important;
+  box-shadow: none !important;
+}
+
+.edu-neutral-surfaces .edu-portal-profile img {
+  width: 40px !important;
+  height: 40px !important;
+  background: #f3f6f5 !important;
+  border: 1px solid var(--edu-surface-border) !important;
+}
+
+.edu-neutral-surfaces .edu-portal-icon-button span {
+  top: -5px !important;
+  right: -5px !important;
+  min-width: 18px !important;
+  height: 18px !important;
+  padding: 0 5px !important;
+  background: var(--edu-surface-teal) !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+  font-size: 10px !important;
+}
+
+/* Neutral cards replace decorative mint fills; semantic borders and icons remain. */
+.edu-neutral-surfaces :is(
+  .ai-snapshot-card,
+  .ai-copilot-card,
+  .admin-inner-header,
+  .admin-inner-toolbar,
+  .teacher-list-header
+) {
+  background: var(--edu-surface-white) !important;
+  background-image: none !important;
+  border-color: var(--edu-surface-border) !important;
+  box-shadow: none !important;
+}
+
+.edu-neutral-surfaces :is(
+  .admin-card-teal,
+  .admin-card-green,
+  .admin-card-success,
+  .admin-card-blue,
+  .admin-card-neutral,
+  .admin-card-warning,
+  .admin-card-danger,
+  .automation-admin-page .stat-card
+) {
+  background: var(--edu-surface-white) !important;
+  background-image: none !important;
+}
+
+.edu-neutral-surfaces .content-body .card-header,
+.edu-neutral-surfaces .main-content .card-header,
+.edu-neutral-surfaces .admin-inner-page .card-header {
+  background: var(--edu-surface-white) !important;
+  background-image: none !important;
+  border-bottom-color: var(--edu-surface-border) !important;
+}
+
+/* Page-specific action chips now use the same light system treatment as other actions. */
+.edu-neutral-surfaces :is(
+  .ai-prompt-row button,
+  .ai-copilot-form button,
+  .ai-filter-actions button,
+  .ai-response-actions a,
+  .ai-response-actions button,
+  .admin-inner-page .back-link
+) {
+  --edu-neutral-button-surface: #ffffff;
+  min-height: 38px !important;
+  height: auto !important;
+  padding: 8px 13px !important;
+  border: 1px solid transparent !important;
+  border-radius: 8px !important;
+  background:
+    linear-gradient(var(--edu-neutral-button-surface), var(--edu-neutral-button-surface)) padding-box,
+    linear-gradient(115deg, var(--edu-surface-teal), var(--edu-surface-blue), var(--edu-surface-green)) border-box !important;
+  color: var(--edu-surface-ink) !important;
+  box-shadow: none !important;
+  font-weight: 500 !important;
+  white-space: normal;
+}
+
+.edu-neutral-surfaces :is(
+  .ai-prompt-row button,
+  .ai-copilot-form button,
+  .ai-filter-actions button,
+  .ai-response-actions a,
+  .ai-response-actions button,
+  .admin-inner-page .back-link
+):hover {
+  --edu-neutral-button-surface: #f5fbfa;
+  transform: translateY(-1px);
+}
+
+.edu-neutral-surfaces .ai-filter-actions button:not(.primary),
+.edu-neutral-surfaces .ai-response-actions :is(a, button) {
+  background:
+    linear-gradient(#ffffff, #ffffff) padding-box,
+    linear-gradient(115deg, var(--edu-surface-purple), #a48ae0, var(--edu-surface-teal)) border-box !important;
+  color: #4b3e76 !important;
+}
+
+.edu-neutral-surfaces .ai-prompt-row {
+  gap: 8px;
+}
+
+/* Keep the AI entry point and drag behavior, but remove the orbit/pulse decoration. */
+.edu-neutral-surfaces .admin-ai-fab {
+  width: 48px !important;
+  height: 48px !important;
+  right: 18px;
+  bottom: 18px;
+  border: 1px solid var(--edu-surface-teal) !important;
+  border-radius: 8px !important;
+  background: var(--edu-surface-white) !important;
+  color: #176f66 !important;
+  box-shadow: 0 6px 18px rgba(24, 96, 86, .12) !important;
+  animation: none !important;
+}
+
+.edu-neutral-surfaces .admin-ai-fab::before,
+.edu-neutral-surfaces .admin-ai-fab::after {
+  display: none !important;
+  animation: none !important;
+}
+
+.edu-neutral-surfaces .admin-ai-fab__mark {
+  width: 100% !important;
+  height: 100% !important;
+  border: 0 !important;
+  border-radius: 7px !important;
+  background: transparent !important;
+  color: inherit !important;
+}
+
+/* Legacy Admin CSS uses ID-scoped important button rules; these keep the shared layer authoritative. */
+.edu-neutral-surfaces #main-wrapper :is(.edu-portal-menu, .edu-portal-icon-button) {
+  width: 40px !important;
+  min-width: 40px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  padding: 0 !important;
+  border: 1px solid var(--edu-surface-border) !important;
+  border-radius: 8px !important;
+  background: var(--edu-surface-white) !important;
+  color: #176f66 !important;
+  box-shadow: none !important;
+}
+
+.edu-neutral-surfaces #main-wrapper .edu-portal-search button {
+  width: 42px !important;
+  min-width: 42px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-left: 1px solid var(--edu-surface-border) !important;
+  border-radius: 0 7px 7px 0 !important;
+  background: transparent !important;
+  color: #176f66 !important;
+  box-shadow: none !important;
+}
+
+.edu-neutral-surfaces #main-wrapper .edu-portal-profile {
+  min-height: 40px !important;
+  height: auto !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  color: var(--edu-surface-ink) !important;
+  box-shadow: none !important;
+}
+
+.edu-neutral-surfaces #main-wrapper :is(
+  .btn,
+  .btn-teal,
+  .btn-submit,
+  .submit-btn,
+  .btn-cancel,
+  .btn-upload,
+  .btn-custom,
+  .admin-btn-primary,
+  .admin-btn-secondary,
+  .admin-btn-danger,
+  .ops-btn,
+  .ag-btn,
+  .sg-btn,
+  .qb-btn,
+  .qd-btn,
+  .ai-btn,
+  .ai-graph-btn,
+  .appraisal-btn,
+  .student-btn,
+  .teacher-soft-btn,
+  .sp-btn,
+  .tp-btn,
+  .uz-btn,
+  .ta-btn,
+  .rm-btn,
+  .aa-action-link,
+  .live-module-actions a,
+  button[type="submit"],
+  input[type="submit"],
+  input[type="button"],
+  input[type="reset"]
+):not(
+  .btn-link,
+  .btn-close,
+  .page-link,
+  .nav-link,
+  .dropdown-item,
+  .toggle-btn,
+  .hamburger-btn,
+  .live-refresh-btn,
+  .edu-portal-menu,
+  .edu-portal-icon-button,
+  .edu-portal-search *,
+  .edu-reference-sidebar *,
+  .pagination *,
+  .dataTables_paginate *,
+  .nav-tabs *,
+  .nav-pills *
+) {
+  --edu-neutral-button-surface: #ffffff;
+  border: 1px solid transparent !important;
+  border-radius: 8px !important;
+  background:
+    linear-gradient(var(--edu-neutral-button-surface), var(--edu-neutral-button-surface)) padding-box,
+    linear-gradient(
+      115deg,
+      var(--edu-btn-border-start, var(--edu-surface-teal)),
+      var(--edu-btn-border-mid, var(--edu-surface-blue)),
+      var(--edu-btn-border-end, var(--edu-surface-green))
+    ) border-box !important;
+  color: var(--edu-btn-ink, var(--edu-surface-ink)) !important;
+  box-shadow: none !important;
+}
+
+.edu-neutral-surfaces #main-wrapper :is(
+  .ai-prompt-row button,
+  .ai-copilot-form button,
+  .ai-filter-actions button,
+  .ai-response-actions a,
+  .ai-response-actions button
+) {
+  min-height: 38px !important;
+  height: auto !important;
+  padding: 8px 13px !important;
+  border: 1px solid transparent !important;
+  border-radius: 8px !important;
+  background:
+    linear-gradient(#ffffff, #ffffff) padding-box,
+    linear-gradient(115deg, var(--edu-surface-teal), var(--edu-surface-blue), var(--edu-surface-green)) border-box !important;
+  color: var(--edu-surface-ink) !important;
+  box-shadow: none !important;
+}
+
+.edu-neutral-surfaces #main-wrapper .ai-filter-actions button:not(.primary),
+.edu-neutral-surfaces #main-wrapper .ai-response-actions :is(a, button) {
+  background:
+    linear-gradient(#ffffff, #ffffff) padding-box,
+    linear-gradient(115deg, var(--edu-surface-purple), #a48ae0, var(--edu-surface-teal)) border-box !important;
+  color: #4b3e76 !important;
+}
+
+/* Exact Admin selectors beat the legacy button:not(...) specificity without altering that legacy file. */
+body.edu-neutral-surfaces #main-wrapper .edu-portal-header button.edu-portal-menu,
+body.edu-neutral-surfaces #main-wrapper .edu-portal-header button.edu-portal-icon-button {
+  width: 40px !important;
+  min-width: 40px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  padding: 0 !important;
+  border: 1px solid var(--edu-surface-border) !important;
+  border-radius: 8px !important;
+  background: #ffffff !important;
+  color: #176f66 !important;
+  box-shadow: none !important;
+}
+
+body.edu-neutral-surfaces #main-wrapper .edu-portal-header .edu-portal-search button[type="submit"] {
+  width: 42px !important;
+  min-width: 42px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-left: 1px solid var(--edu-surface-border) !important;
+  border-radius: 0 7px 7px 0 !important;
+  background: transparent !important;
+  color: #176f66 !important;
+  box-shadow: none !important;
+}
+
+body.edu-neutral-surfaces #main-wrapper .edu-portal-header button.edu-portal-profile {
+  min-height: 40px !important;
+  height: auto !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  color: var(--edu-surface-ink) !important;
+  box-shadow: none !important;
+}
+
+body.edu-neutral-surfaces #main-wrapper .ai-overview-page .ai-prompt-row button[type="button"],
+body.edu-neutral-surfaces #main-wrapper .ai-overview-page .ai-copilot-form button[type="submit"],
+body.edu-neutral-surfaces #main-wrapper .ai-overview-page .ai-filter-actions button {
+  min-height: 38px !important;
+  height: auto !important;
+  padding: 8px 13px !important;
+  border: 1px solid transparent !important;
+  border-radius: 8px !important;
+  background:
+    linear-gradient(#ffffff, #ffffff) padding-box,
+    linear-gradient(115deg, var(--edu-surface-teal), var(--edu-surface-blue), var(--edu-surface-green)) border-box !important;
+  color: var(--edu-surface-ink) !important;
+  box-shadow: none !important;
+}
+
+body.edu-neutral-surfaces #main-wrapper .ai-overview-page .ai-filter-actions button:not(.primary) {
+  background:
+    linear-gradient(#ffffff, #ffffff) padding-box,
+    linear-gradient(115deg, var(--edu-surface-purple), #a48ae0, var(--edu-surface-teal)) border-box !important;
+  color: #4b3e76 !important;
+}
+
+/* Automation and Parent headers live inside their already-offset content columns. */
+body.edu-neutral-surfaces.automation-admin-page .main-content > .edu-portal-header,
+body.edu-neutral-surfaces.parent-portal-page .content-body > .edu-portal-header {
+  width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+body.edu-neutral-surfaces:is(.automation-admin-page, .parent-portal-page) .edu-portal-header button.edu-portal-menu,
+body.edu-neutral-surfaces:is(.automation-admin-page, .parent-portal-page) .edu-portal-header button.edu-portal-icon-button {
+  width: 40px !important;
+  min-width: 40px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  padding: 0 !important;
+  border: 1px solid var(--edu-surface-border) !important;
+  border-radius: 8px !important;
+  background: #ffffff !important;
+  color: #176f66 !important;
+  box-shadow: none !important;
+}
+
+body.edu-neutral-surfaces:is(.automation-admin-page, .parent-portal-page) .edu-portal-header .edu-portal-search button[type="submit"] {
+  width: 42px !important;
+  min-width: 42px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-left: 1px solid var(--edu-surface-border) !important;
+  border-radius: 0 7px 7px 0 !important;
+  background: transparent !important;
+  color: #176f66 !important;
+  box-shadow: none !important;
+}
+
+body.edu-neutral-surfaces:is(.automation-admin-page, .parent-portal-page) .edu-portal-header button.edu-portal-profile {
+  min-height: 40px !important;
+  height: auto !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  color: var(--edu-surface-ink) !important;
+  box-shadow: none !important;
+}
+
+@media (max-width: 980px) {
+  .edu-neutral-surfaces .edu-portal-header {
+    padding: 0 14px !important;
+  }
+
+  .edu-neutral-surfaces .edu-portal-profile span,
+  .edu-neutral-surfaces .edu-portal-profile > i {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .edu-neutral-surfaces .edu-portal-header {
+    min-height: 112px !important;
+    padding: 0 10px !important;
+  }
+
+  .edu-neutral-surfaces .edu-portal-header .edu-portal-header-card {
+    min-height: 112px;
+    padding: 8px 0 !important;
+  }
+
+  .edu-neutral-surfaces .edu-portal-header-main {
+    grid-template-columns: 40px 1fr 40px 40px !important;
+    gap: 7px !important;
+  }
+
+  .edu-neutral-surfaces .edu-portal-search {
+    grid-column: 1 / -1;
+    order: 5;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .edu-neutral-surfaces .admin-ai-fab {
+    width: 44px !important;
+    height: 44px !important;
+    right: 12px !important;
+    bottom: 76px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .edu-neutral-surfaces :is(button, a) {
+    transition-duration: .01ms !important;
+  }
+}

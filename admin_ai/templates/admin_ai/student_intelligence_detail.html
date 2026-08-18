@@ -1,0 +1,89 @@
+{% extends "admin_panel/bases.html" %}
+{% load static %}
+{% block title %}Student Insight Profile{% endblock %}
+{% block page_title %}Student Insight Profile{% endblock %}
+{% block content %}
+<div class="student-360-page">
+  <section class="student-360-card student-360-hero">
+    <div class="student-identity">
+      <div class="student-avatar-wrap">
+        {% if snapshot.student.photo_url %}
+          <img class="student-avatar" src="{{ snapshot.student.photo_url }}" alt="{{ snapshot.student.name }}">
+        {% else %}
+          <img class="student-avatar" src="{% static 'admin_panel/images/dummy-profile.png' %}" alt="{{ snapshot.student.name }}">
+        {% endif %}
+      </div>
+      <div>
+        <h2 class="student-name">{{ snapshot.student.name }}</h2>
+        <p class="student-meta">{{ snapshot.student.student_id }} &middot; {{ snapshot.student.class }} - {{ snapshot.student.section }} &middot; Roll {{ snapshot.student.roll_no }}</p>
+        <div class="student-chip-row">
+          <span class="student-chip"><i class="fas fa-user-graduate"></i>{{ snapshot.student.gender|default:"Not set" }}</span>
+          <span class="student-chip"><i class="fas fa-calendar"></i>{{ snapshot.student.date_of_birth|default:"Date not set" }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="student-hero-stats">
+      <div class="student-hero-stat"><span>{{ snapshot.attendance.rate }}%</span><small>Attendance Rate</small></div>
+      <div class="student-hero-stat"><span>{{ snapshot.marks.average }}</span><small>Average Marks</small></div>
+      <div class="student-hero-stat"><span>{{ snapshot.attendance.present }}/{{ snapshot.attendance.total }}</span><small>Present / Total</small></div>
+      <div class="student-hero-stat"><span>{{ snapshot.attendance.absent }}</span><small>Absences</small></div>
+    </div>
+
+    <div class="student-actions">
+      <a class="student-btn" href="{% url 'admin_ai_student_intelligence_pdf' snapshot.student.student_id %}"><i class="fas fa-download"></i>Download Profile PDF</a>
+      <a class="student-btn secondary" href="https://wa.me/?text={{ profile_url }}" target="_blank"><i class="fas fa-share-alt"></i>Share Link</a>
+    </div>
+  </section>
+
+  <section class="student-grid">
+    <div class="student-360-card student-metric"><span class="student-metric-value">{{ snapshot.attendance.rate }}%</span><span class="student-metric-label">Attendance Rate</span></div>
+    <div class="student-360-card student-metric"><span class="student-metric-value">{{ snapshot.attendance.absent }}</span><span class="student-metric-label">Absences</span></div>
+    <div class="student-360-card student-metric"><span class="student-metric-value">{{ snapshot.fees.unpaid }}</span><span class="student-metric-label">Unpaid Vouchers</span></div>
+    <div class="student-360-card student-metric"><span class="student-metric-value">{{ snapshot.marks.average }}</span><span class="student-metric-label">Average Marks</span></div>
+    <div class="student-360-card student-metric"><span class="student-metric-value">{{ snapshot.ai_tutor.sessions }}</span><span class="student-metric-label">AI Tutor Sessions</span></div>
+    <div class="student-360-card student-metric"><span class="student-metric-value">{{ snapshot.ai_tutor.practice_attempts }}</span><span class="student-metric-label">Practice Attempts</span></div>
+    <div class="student-360-card student-metric"><span class="student-metric-value">{{ snapshot.submissions.assignments }}</span><span class="student-metric-label">Assignments</span></div>
+    <div class="student-360-card student-metric"><span class="student-metric-value">{{ snapshot.submissions.quizzes }}</span><span class="student-metric-label">Quizzes</span></div>
+  </section>
+
+  <section class="student-lower-grid">
+    <article class="student-360-card student-section">
+      <h3>Profile</h3>
+      <div class="profile-list">
+        <div class="profile-item"><span class="profile-label">Father</span><span class="profile-value">{{ snapshot.student.father_name|default:"Not set" }}</span></div>
+        <div class="profile-item"><span class="profile-label">Mother</span><span class="profile-value">{{ snapshot.student.mother_name|default:"Not set" }}</span></div>
+        <div class="profile-item"><span class="profile-label">Email</span><span class="profile-value">{{ snapshot.student.email|default:"Not set" }}</span></div>
+        <div class="profile-item"><span class="profile-label">Phone</span><span class="profile-value">{{ snapshot.student.phone|default:"Not set" }}</span></div>
+        <div class="profile-item"><span class="profile-label">Gender</span><span class="profile-value">{{ snapshot.student.gender|default:"Not set" }}</span></div>
+        <div class="profile-item"><span class="profile-label">Date of Birth</span><span class="profile-value">{{ snapshot.student.date_of_birth|default:"Not set" }}</span></div>
+        <div class="profile-item"><span class="profile-label">Password</span><span class="profile-value">{% if bulk_temporary_password %}<code>{{ bulk_temporary_password }}</code>{% else %}Not available or expired{% endif %}</span></div>
+      </div>
+    </article>
+
+    <article class="student-360-card student-section">
+      <h3>Recent Marks</h3>
+      <div class="student-table-wrap">
+        <table class="student-table">
+          <thead>
+            <tr><th>Subject</th><th>Term</th><th>Marks</th><th>Total</th><th>Remarks</th></tr>
+          </thead>
+          <tbody>
+            {% for row in snapshot.marks.recent %}
+              <tr>
+                <td>{{ row.subject__name }}</td>
+                <td>{{ row.term }}</td>
+                <td>{{ row.marks_obtained }}</td>
+                <td>{{ row.total_marks }}</td>
+                <td>{{ row.teacher_remarks }}</td>
+              </tr>
+            {% empty %}
+              <tr><td class="student-empty" colspan="5">No marks recorded.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </article>
+  </section>
+</div>
+{% endblock %}

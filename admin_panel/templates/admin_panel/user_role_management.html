@@ -1,0 +1,1132 @@
+{% extends "admin_panel/bases.html" %}
+{% load static %}
+
+{% block title %}User Role Management{% endblock %}
+
+{% block content %}
+<style>
+  .role-page {
+    padding: 24px;
+    background: #f5f5f5;
+  }
+
+  .role-shell {
+    background: transparent;
+  }
+
+  .role-hero {
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+    align-items: center;
+    padding: 28px 30px;
+    background: linear-gradient(90deg, rgba(136, 208, 197, .24), rgba(245, 245, 253, .92));
+    border: 1px solid #e9ecef;
+    border-radius: 14px;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.04);
+    margin-bottom: 18px;
+  }
+
+  .role-hero::before {
+    content: "";
+    width: 58px;
+    height: 58px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, .62);
+    border: 1px solid rgba(136, 208, 197, .42);
+    box-shadow: inset 0 0 0 6px rgba(136, 208, 197, .12);
+    flex: 0 0 auto;
+  }
+
+  .role-hero h2,
+  .role-section h3,
+  .role-card h4,
+  .role-table th {
+    font-weight: 500;
+    color: #111111;
+  }
+
+  .role-hero h2 {
+    margin: 0 0 8px;
+    font-size: 30px;
+  }
+
+  .role-section h3 {
+    font-size: 24px;
+    margin: 0 0 6px;
+  }
+
+  .role-hero p,
+  .role-muted,
+  .role-table td,
+  .role-form label {
+    color: #6c757d;
+    font-weight: 400;
+  }
+
+  .role-stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(140px, 1fr));
+    gap: 16px;
+    padding: 0;
+    margin-bottom: 18px;
+  }
+
+  .role-stat {
+    position: relative;
+    min-height: 154px;
+    overflow: hidden;
+    border: 1px solid rgba(233, 236, 239, .9);
+    border-radius: 18px;
+    padding: 18px;
+    box-shadow: 0 14px 34px rgba(0, 0, 0, .055);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .role-stat::before {
+    content: "";
+    position: absolute;
+    inset: 1px;
+    border-radius: 17px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, .72), rgba(255, 255, 255, .18));
+    pointer-events: none;
+  }
+
+  .role-stat > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .role-card-tone-teal {
+    background: #DDF7F2;
+    border-color: rgba(136, 208, 197, .5);
+  }
+
+  .role-card-tone-blue,
+  .role-card-tone-neutral {
+    background: #F5F5FD;
+  }
+
+  .role-card-tone-green {
+    background: #EEF9E5;
+    border-color: rgba(139, 199, 64, .35);
+  }
+
+  .role-stat-icons {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .role-stat-icon-pair {
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .role-stat-icon-tile {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, .76);
+    border: 1px solid rgba(255, 255, 255, .92);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, .035);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #111111;
+    font-size: 16px;
+  }
+
+  .role-card-corner {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 1px solid rgba(17, 17, 17, .22);
+    background: rgba(255, 255, 255, .42);
+    box-shadow: inset 0 0 0 4px rgba(255, 255, 255, .44);
+    flex: 0 0 auto;
+  }
+
+  .role-stat-copy {
+    display: grid;
+    gap: 5px;
+  }
+
+  .role-stat strong {
+    display: block;
+    font-size: clamp(28px, 3vw, 36px);
+    font-weight: 500;
+    color: #111111;
+    line-height: 1.1;
+  }
+
+  .role-stat-title {
+    color: #111111;
+    font-size: 18px;
+    font-weight: 500;
+  }
+
+  .role-stat-label {
+    color: #6c757d;
+    font-size: 14px;
+    font-weight: 400;
+  }
+
+  .role-actions,
+  .role-tabs,
+  .role-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .role-hero > div:first-of-type {
+    flex: 1 1 auto;
+  }
+
+  .role-btn,
+  .role-action-icon {
+    border: 1px solid rgba(136, 208, 197, .9);
+    background: #88D0C5;
+    color: #111111;
+    border-radius: 999px;
+    padding: 10px 18px;
+    font-weight: 500;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 42px;
+    box-shadow: 0 8px 16px rgba(136, 208, 197, .2);
+  }
+
+  .role-btn.secondary,
+  .role-tabs a {
+    background: #ffffff;
+    border-color: #e9ecef;
+    box-shadow: none;
+  }
+
+  .role-tabs-wrap {
+    background: #ffffff;
+    border: 1px solid #e9ecef;
+    border-radius: 14px;
+    padding: 10px;
+    margin-bottom: 18px;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.04);
+  }
+
+  .role-tabs {
+    background: #F5F5FD;
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    padding: 8px;
+    gap: 8px;
+  }
+
+  .role-tabs a {
+    color: #111111;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    padding: 11px 16px;
+    font-weight: 500;
+    text-decoration: none;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .role-tabs a i {
+    color: #111111;
+    font-size: 15px;
+  }
+
+  .role-tabs a.active {
+    background: #DDF7F2;
+    border-color: #88D0C5;
+    box-shadow: 0 8px 16px rgba(136, 208, 197, .16);
+  }
+
+  .role-section-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 280px;
+    gap: 16px;
+    align-items: start;
+  }
+
+  .role-section {
+    display: none;
+    padding: 0;
+  }
+
+  .role-section.active {
+    display: block;
+  }
+
+  .role-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(220px, 1fr));
+    gap: 16px;
+  }
+
+  .role-card {
+    background: #ffffff;
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    padding: 18px;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, .035);
+  }
+
+  .role-summary-panel {
+    position: sticky;
+    top: 16px;
+    overflow: hidden;
+    background: #DDF7F2;
+    border: 1px solid rgba(136, 208, 197, .55);
+    border-radius: 18px;
+    box-shadow: 0 14px 34px rgba(0, 0, 0, .055);
+  }
+
+  .role-summary-panel::before {
+    content: "";
+    position: absolute;
+    inset: 1px;
+    border-radius: 17px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, .72), rgba(255, 255, 255, .18));
+    pointer-events: none;
+  }
+
+  .role-summary-panel > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .role-summary-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: flex-start;
+    margin-bottom: 14px;
+  }
+
+  .role-summary-list {
+    display: grid;
+    gap: 10px;
+    margin-top: 14px;
+  }
+
+  .role-summary-item {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    align-items: center;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, .68);
+    border: 1px solid rgba(255, 255, 255, .8);
+    color: #6c757d;
+    font-size: 14px;
+  }
+
+  .role-summary-item strong {
+    color: #111111;
+    font-weight: 500;
+  }
+
+  .role-card.success {
+    background: #EEF9E5;
+    border-color: rgba(139, 199, 64, .35);
+  }
+
+  .role-card.teal {
+    background: #DDF7F2;
+    border-color: rgba(136, 208, 197, .55);
+  }
+
+  .role-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    padding: 6px 12px;
+    background: #EEF9E5;
+    color: #4d850f;
+    border: 1px solid rgba(139, 199, 64, .35);
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .role-pill.neutral {
+    background: #F5F5FD;
+    color: #6c757d;
+    border-color: #e9ecef;
+  }
+
+  .role-table-card,
+  .role-form-card {
+    background: #ffffff;
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    padding: 18px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, .035);
+  }
+
+  .role-toolbar {
+    justify-content: space-between;
+    margin-bottom: 16px;
+    background: #ffffff;
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    padding: 18px;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, .035);
+  }
+
+  .role-card .role-toolbar {
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    padding: 0;
+  }
+
+  .role-search {
+    width: min(360px, 100%);
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
+    padding: 11px 14px;
+    font-weight: 400;
+    background: #ffffff;
+  }
+
+  .role-toolbar-controls {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+
+  .role-filter {
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
+    min-height: 46px;
+    padding: 10px 12px;
+    background: #ffffff;
+    color: #111111;
+    min-width: 150px;
+    font-weight: 400;
+  }
+
+  .role-table-wrap {
+    overflow-x: auto;
+  }
+
+  .role-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 900px;
+  }
+
+  .role-table th,
+  .role-table td {
+    padding: 14px 12px;
+    border-bottom: 1px solid #e9ecef;
+    text-align: left;
+    vertical-align: middle;
+  }
+
+  .role-table th {
+    background: #F5F5FD;
+  }
+
+  .role-table tbody tr:hover {
+    background: rgba(221, 247, 242, .45);
+  }
+
+  .role-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: #DDF7F2;
+    border: 1px solid rgba(136, 208, 197, .6);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #111111;
+  }
+
+  .role-action-icon {
+    width: 36px;
+    min-height: 36px;
+    padding: 0;
+    border-radius: 50%;
+    box-shadow: none;
+  }
+
+  .role-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(240px, 1fr));
+    gap: 18px;
+  }
+
+  .role-form-compact {
+    padding: 16px;
+    background: #ffffff;
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+  }
+
+  .role-form-card input,
+  .role-form-card select,
+  .role-form-card textarea {
+    width: 100%;
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
+    min-height: 46px;
+    padding: 10px 12px;
+    background: #ffffff;
+    color: #111111;
+  }
+
+  .role-form-card input[type="checkbox"],
+  .role-check input[type="checkbox"] {
+    width: 16px !important;
+    height: 16px !important;
+    min-width: 16px !important;
+    min-height: 16px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    accent-color: #88D0C5;
+    box-shadow: none !important;
+  }
+
+  .role-form-card input[type="checkbox"]:focus,
+  .role-check input[type="checkbox"]:focus {
+    box-shadow: 0 0 0 3px rgba(136, 208, 197, .18) !important;
+  }
+
+  .role-form-card input:focus,
+  .role-form-card select:focus,
+  .role-form-card textarea:focus,
+  .role-search:focus,
+  .role-filter:focus {
+    outline: none;
+    border-color: #88D0C5;
+    box-shadow: 0 0 0 3px rgba(136, 208, 197, .16);
+  }
+
+  .role-permission-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(260px, 1fr));
+    gap: 14px;
+    margin-top: 16px;
+  }
+
+  .role-permission-list {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(210px, 1fr));
+    gap: 12px;
+    margin-top: 16px;
+  }
+
+  .role-permission-group {
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    padding: 0;
+    background: #ffffff;
+    max-height: none;
+    overflow: hidden;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, .025);
+  }
+
+  .role-permission-list .role-permission-group {
+    max-height: none;
+  }
+
+  .role-permission-group h4 {
+    margin: 0;
+    font-size: 16px;
+  }
+
+  .role-permission-summary {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 14px;
+    list-style: none;
+    background: #F5F5FD;
+  }
+
+  .role-permission-summary h4 {
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .role-permission-summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .role-permission-summary::after {
+    content: "+";
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #DDF7F2;
+    border: 1px solid rgba(136, 208, 197, .5);
+    color: #111111;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 500;
+  }
+
+  .role-permission-group[open] .role-permission-summary::after {
+    content: "-";
+  }
+
+  .role-permission-items {
+    max-height: 170px;
+    overflow: auto;
+    padding: 10px 14px 12px;
+  }
+
+  .role-check {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 7px 0;
+    color: #6c757d;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 1.35;
+  }
+
+  .role-check:hover {
+    color: #111111;
+  }
+
+  .role-messages {
+    padding: 16px 30px 0;
+  }
+
+  .role-message {
+    border: 1px solid rgba(136, 208, 197, .5);
+    background: #DDF7F2;
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 8px;
+  }
+
+  @media (max-width: 1100px) {
+    .role-grid,
+    .role-stats {
+      grid-template-columns: repeat(2, minmax(180px, 1fr));
+    }
+
+    .role-section-layout {
+      grid-template-columns: 1fr;
+    }
+
+    .role-summary-panel {
+      position: static;
+    }
+  }
+
+  @media (max-width: 720px) {
+    .role-page {
+      padding: 14px;
+    }
+    .role-hero,
+    .role-toolbar {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+    .role-hero::before {
+      display: none;
+    }
+    .role-grid,
+    .role-stats,
+    .role-form-grid,
+    .role-permission-list,
+    .role-permission-grid {
+      grid-template-columns: 1fr;
+    }
+    .role-tabs {
+      width: 100%;
+      overflow-x: auto;
+      flex-wrap: nowrap;
+    }
+    .role-tabs a {
+      white-space: nowrap;
+    }
+  }
+</style>
+
+<div class="role-page">
+  <div class="role-shell">
+    <div class="role-hero">
+      <div>
+        <h2>User Role Management</h2>
+        <p>Manage login users, roles, permissions, and role assignment from one secure admin workspace.</p>
+      </div>
+      <div class="role-actions">
+        {% if 'auth.add_group' in user_permissions %}
+          <a class="role-btn" href="#roles" data-role-tab-link="roles"><i class="fas fa-plus"></i> Add Role</a>
+        {% endif %}
+        {% if 'auth.change_user' in user_permissions %}
+          <a class="role-btn secondary" href="#assign" data-role-tab-link="assign"><i class="fas fa-user-plus"></i> Assign Role</a>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if messages %}
+      <div class="role-messages">
+        {% for message in messages %}
+          <div class="role-message">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <div class="role-stats">
+      <div class="role-stat role-card-tone-teal">
+        <div class="role-stat-icons">
+          <span class="role-stat-icon-pair">
+            <span class="role-stat-icon-tile"><i class="fas fa-users"></i></span>
+            <span class="role-stat-icon-tile"><i class="fas fa-id-card"></i></span>
+          </span>
+          <span class="role-card-corner"></span>
+        </div>
+        <div class="role-stat-copy">
+          <span class="role-stat-title">Total Users</span>
+          <strong>{{ stats.total_users }}</strong>
+          <span class="role-stat-label">Portal accounts</span>
+        </div>
+      </div>
+      <div class="role-stat role-card-tone-blue">
+        <div class="role-stat-icons">
+          <span class="role-stat-icon-pair">
+            <span class="role-stat-icon-tile"><i class="fas fa-user-check"></i></span>
+            <span class="role-stat-icon-tile"><i class="fas fa-toggle-on"></i></span>
+          </span>
+          <span class="role-card-corner"></span>
+        </div>
+        <div class="role-stat-copy">
+          <span class="role-stat-title">Active Users</span>
+          <strong>{{ stats.active_users }}</strong>
+          <span class="role-stat-label">Enabled logins</span>
+        </div>
+      </div>
+      <div class="role-stat role-card-tone-neutral">
+        <div class="role-stat-icons">
+          <span class="role-stat-icon-pair">
+            <span class="role-stat-icon-tile"><i class="fas fa-user-shield"></i></span>
+            <span class="role-stat-icon-tile"><i class="fas fa-layer-group"></i></span>
+          </span>
+          <span class="role-card-corner"></span>
+        </div>
+        <div class="role-stat-copy">
+          <span class="role-stat-title">Total Roles</span>
+          <strong>{{ stats.total_roles }}</strong>
+          <span class="role-stat-label">Access groups</span>
+        </div>
+      </div>
+      <div class="role-stat role-card-tone-green">
+        <div class="role-stat-icons">
+          <span class="role-stat-icon-pair">
+            <span class="role-stat-icon-tile"><i class="fas fa-key"></i></span>
+            <span class="role-stat-icon-tile"><i class="fas fa-lock"></i></span>
+          </span>
+          <span class="role-card-corner"></span>
+        </div>
+        <div class="role-stat-copy">
+          <span class="role-stat-title">Permissions</span>
+          <strong>{{ stats.total_permissions }}</strong>
+          <span class="role-stat-label">Assignable controls</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="role-tabs-wrap">
+      <div class="role-tabs">
+        <a href="#users" data-role-tab-link="users" class="{% if active_tab == 'users' %}active{% endif %}"><i class="fas fa-users"></i> Users</a>
+        <a href="#roles" data-role-tab-link="roles" class="{% if active_tab == 'roles' %}active{% endif %}"><i class="fas fa-user-shield"></i> Roles</a>
+        <a href="#permissions" data-role-tab-link="permissions" class="{% if active_tab == 'permissions' %}active{% endif %}"><i class="fas fa-key"></i> Permissions</a>
+        <a href="#assign" data-role-tab-link="assign" class="{% if active_tab == 'assign' %}active{% endif %}"><i class="fas fa-user-plus"></i> Assign Role</a>
+        <a href="#activity" data-role-tab-link="activity" class="{% if active_tab == 'activity' %}active{% endif %}"><i class="fas fa-clock"></i> Activity</a>
+      </div>
+    </div>
+
+    <section id="users" class="role-section {% if active_tab == 'users' %}active{% endif %}">
+      <div class="role-toolbar">
+        <div>
+          <h3>Users</h3>
+          <p class="role-muted">All portal users with their active status, profile link type, and assigned roles.</p>
+        </div>
+        <div class="role-toolbar-controls">
+          <select class="role-filter" data-role-filter="users-table">
+            <option value="">All roles</option>
+            {% for group in groups %}
+              <option value="{{ group.name|lower }}">{{ group.name }}</option>
+            {% endfor %}
+          </select>
+          <select class="role-filter" data-status-filter="users-table">
+            <option value="">All status</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+          <input class="role-search" data-role-table-search="users-table" type="search" placeholder="Search users, email, role...">
+        </div>
+      </div>
+      <div class="role-table-card role-table-wrap">
+        <table class="role-table" id="users-table">
+          <thead>
+            <tr>
+              <th>Photo</th>
+              <th>Login ID</th>
+              <th>Full Name</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th>Type</th>
+              <th>Staff</th>
+              <th>Joined</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in users_with_meta %}
+              <tr data-user-role="{{ item.primary_role|lower }}" data-user-status="{% if item.user.is_active %}active{% else %}inactive{% endif %}">
+                <td><span class="role-avatar"><i class="fas fa-user"></i></span></td>
+                <td>{{ item.user.username }}</td>
+                <td>{{ item.user.get_full_name|default:"N/A" }}</td>
+                <td>{{ item.user.email|default:"N/A" }}</td>
+                <td><span class="role-pill neutral">{{ item.primary_role }}</span></td>
+                <td>
+                  {% if item.user.is_active %}
+                    <span class="role-pill">Active</span>
+                  {% else %}
+                    <span class="role-pill neutral">Inactive</span>
+                  {% endif %}
+                </td>
+                <td>{{ item.profile_type }}</td>
+                <td>{% if item.user.is_staff %}Yes{% else %}No{% endif %}</td>
+                <td>{{ item.user.date_joined|date:"M d, Y" }}</td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="9">No users found.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="roles" class="role-section {% if active_tab == 'roles' %}active{% endif %}">
+      <div class="role-toolbar">
+        <div>
+          <h3>Roles</h3>
+          <p class="role-muted">Create roles and review permission coverage for each group.</p>
+        </div>
+        <input class="role-search" data-role-card-search="role-card" type="search" placeholder="Search roles...">
+      </div>
+
+      <div class="role-section-layout">
+        <div>
+          {% if 'auth.add_group' in user_permissions %}
+            <div class="role-form-card" style="margin-bottom:18px;">
+              <h3>Create New Role</h3>
+              <form method="post" class="role-form">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="create_role">
+                <input type="hidden" name="active_tab" value="roles">
+                <div class="role-form-grid">
+                  <div>
+                    <label for="{{ role_form.name.id_for_label }}">Role Name</label>
+                    {{ role_form.name }}
+                    {{ role_form.name.errors }}
+                  </div>
+                  <div>
+                    <label>Permission Search</label>
+                    <input type="search" data-permission-search placeholder="Search permissions...">
+                  </div>
+                </div>
+                <div class="role-permission-list">
+                  {% for model_name, perms in role_form.grouped_permissions.items %}
+                    <details class="role-permission-group" data-permission-group>
+                      <summary class="role-permission-summary">
+                        <h4 title="{{ model_name }}">{{ model_name }}</h4>
+                        <span class="role-pill neutral">{{ perms|length }} items</span>
+                      </summary>
+                      <div class="role-permission-items">
+                        {% for perm in perms %}
+                          <label class="role-check" data-permission-item>
+                            <input type="checkbox" name="permissions" value="{{ perm.id }}">
+                            {{ perm.name }}
+                          </label>
+                        {% endfor %}
+                      </div>
+                    </details>
+                  {% endfor %}
+                </div>
+                {{ role_form.non_field_errors }}
+                <button class="role-btn" type="submit" style="margin-top:16px;"><i class="fas fa-save"></i> Create Role</button>
+              </form>
+            </div>
+          {% endif %}
+
+          <div class="role-table-card role-table-wrap">
+            <table class="role-table" id="roles-table">
+              <thead>
+                <tr>
+                  <th>Role Name</th>
+                  <th>Type</th>
+                  <th>Total Users</th>
+                  <th>Total Permissions</th>
+                  <th>Access Scope</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for role in role_rows %}
+                  <tr data-role-card>
+                    <td>{{ role.group.name }}</td>
+                    <td><span class="role-pill {% if role.role_type != 'System' %}neutral{% endif %}">{{ role.role_type }}</span></td>
+                    <td>{{ role.users_count }}</td>
+                    <td>{{ role.permissions_count }}</td>
+                    <td>
+                      {% if role.role_type == "System" %}
+                        Default portal role
+                      {% else %}
+                        Custom permission set
+                      {% endif %}
+                    </td>
+                    <td><span class="role-pill">Available</span></td>
+                  </tr>
+                {% empty %}
+                  <tr><td colspan="6">No roles found.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <aside class="role-card role-summary-panel">
+          <div class="role-summary-head">
+            <span class="role-stat-icon-pair">
+              <span class="role-stat-icon-tile"><i class="fas fa-shield-alt"></i></span>
+              <span class="role-stat-icon-tile"><i class="fas fa-chart-bar"></i></span>
+            </span>
+            <span class="role-card-corner"></span>
+          </div>
+          <h4>Access Summary</h4>
+          <p class="role-muted">Live role coverage from current database records.</p>
+          <div class="role-summary-list">
+            <div class="role-summary-item"><span>Total roles</span><strong>{{ stats.total_roles }}</strong></div>
+            <div class="role-summary-item"><span>Total permissions</span><strong>{{ stats.total_permissions }}</strong></div>
+            <div class="role-summary-item"><span>Active users</span><strong>{{ stats.active_users }}</strong></div>
+            <div class="role-summary-item"><span>Total users</span><strong>{{ stats.total_users }}</strong></div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section id="permissions" class="role-section {% if active_tab == 'permissions' %}active{% endif %}">
+      <div class="role-toolbar">
+        <div>
+          <h3>Permissions</h3>
+          <p class="role-muted">Read-only permission library grouped by model. Assign permissions from the Roles tab.</p>
+        </div>
+        <input class="role-search" data-permission-search type="search" placeholder="Search permissions...">
+      </div>
+      <div class="role-table-card role-table-wrap">
+        <table class="role-table" id="permissions-table">
+          <thead>
+            <tr>
+              <th>Module</th>
+              <th>Model</th>
+              <th>Permission</th>
+              <th>Codename</th>
+              <th>Usage</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in permission_rows %}
+              <tr data-permission-item>
+                <td>{{ row.module }}</td>
+                <td>{{ row.model }}</td>
+                <td>{{ row.permission.name }}</td>
+                <td>{{ row.permission.codename }}</td>
+                <td><span class="role-pill neutral">Assignable</span></td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="5">No permissions found.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="assign" class="role-section {% if active_tab == 'assign' %}active{% endif %}">
+      <div class="role-toolbar">
+        <div>
+          <h3>Assign Role</h3>
+          <p class="role-muted">Create a login and attach one portal role securely.</p>
+        </div>
+      </div>
+      {% if 'auth.change_user' in user_permissions %}
+        <div class="role-form-card">
+          <form method="post" class="role-form">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="assign_role">
+            <input type="hidden" name="active_tab" value="assign">
+            <div class="role-form-grid">
+              {% for field in assign_form %}
+                <div>
+                  <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                  {{ field }}
+                  {{ field.errors }}
+                </div>
+              {% endfor %}
+            </div>
+            {{ assign_form.non_field_errors }}
+            <button class="role-btn" type="submit" style="margin-top:16px;"><i class="fas fa-user-plus"></i> Assign Role</button>
+          </form>
+        </div>
+      {% else %}
+        <div class="role-card">You do not have permission to assign roles.</div>
+      {% endif %}
+    </section>
+
+    <section id="activity" class="role-section {% if active_tab == 'activity' %}active{% endif %}">
+      <div class="role-toolbar">
+        <div>
+          <h3>Activity</h3>
+          <p class="role-muted">Database-recorded role creation, user creation, assignment, and validation activity.</p>
+        </div>
+        <input class="role-search" data-role-table-search="activity-table" type="search" placeholder="Search activity...">
+      </div>
+      <div class="role-table-card role-table-wrap">
+        <table class="role-table" id="activity-table">
+          <thead>
+            <tr>
+              <th>Date / Time</th>
+              <th>Action</th>
+              <th>Performed By</th>
+              <th>Target User</th>
+              <th>Target Role</th>
+              <th>Details</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for log in activity_logs %}
+              <tr>
+                <td>{{ log.created_at|date:"M d, Y h:i A" }}</td>
+                <td><span class="role-pill">{{ log.get_action_type_display }}</span></td>
+                <td>{{ log.action_by.username|default:"System" }}</td>
+                <td>{{ log.target_user.username|default:"N/A" }}</td>
+                <td>{{ log.target_role.name|default:"N/A" }}</td>
+                <td>{{ log.message }}</td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="6">No role activity recorded yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+  (function () {
+    const tabs = document.querySelectorAll('[data-role-tab-link]');
+    const sections = document.querySelectorAll('.role-section');
+
+    function activateTab(tabName) {
+      tabs.forEach(tab => tab.classList.toggle('active', tab.dataset.roleTabLink === tabName));
+      sections.forEach(section => section.classList.toggle('active', section.id === tabName));
+      if (history.replaceState) {
+        history.replaceState(null, '', '#' + tabName);
+      }
+    }
+
+    tabs.forEach(tab => {
+      tab.addEventListener('click', function (event) {
+        event.preventDefault();
+        activateTab(this.dataset.roleTabLink);
+      });
+    });
+
+    const initialHash = window.location.hash.replace('#', '');
+    if (initialHash && document.getElementById(initialHash)) {
+      activateTab(initialHash);
+    }
+
+    function filterTable(tableId) {
+      const table = document.getElementById(tableId);
+      if (!table) return;
+      const search = document.querySelector('[data-role-table-search="' + tableId + '"]');
+      const roleFilter = document.querySelector('[data-role-filter="' + tableId + '"]');
+      const statusFilter = document.querySelector('[data-status-filter="' + tableId + '"]');
+      const query = search ? search.value.toLowerCase() : '';
+      const roleValue = roleFilter ? roleFilter.value.toLowerCase() : '';
+      const statusValue = statusFilter ? statusFilter.value.toLowerCase() : '';
+
+      table.querySelectorAll('tbody tr').forEach(row => {
+        const matchesSearch = row.innerText.toLowerCase().includes(query);
+        const matchesRole = !roleValue || row.dataset.userRole === roleValue;
+        const matchesStatus = !statusValue || row.dataset.userStatus === statusValue;
+        row.style.display = matchesSearch && matchesRole && matchesStatus ? '' : 'none';
+      });
+    }
+
+    document.querySelectorAll('[data-role-table-search]').forEach(input => {
+      input.addEventListener('input', function () {
+        filterTable(this.dataset.roleTableSearch);
+      });
+    });
+
+    document.querySelectorAll('[data-role-filter], [data-status-filter]').forEach(input => {
+      input.addEventListener('change', function () {
+        filterTable(this.dataset.roleFilter || this.dataset.statusFilter);
+      });
+    });
+
+    document.querySelectorAll('[data-role-card-search]').forEach(input => {
+      input.addEventListener('input', function () {
+        const query = this.value.toLowerCase();
+        document.querySelectorAll('[data-role-card]').forEach(card => {
+          card.style.display = card.innerText.toLowerCase().includes(query) ? '' : 'none';
+        });
+      });
+    });
+
+    document.querySelectorAll('[data-permission-search]').forEach(input => {
+      input.addEventListener('input', function () {
+        const query = this.value.toLowerCase();
+        document.querySelectorAll('[data-permission-item]').forEach(item => {
+          item.style.display = item.innerText.toLowerCase().includes(query) ? '' : 'none';
+        });
+        document.querySelectorAll('[data-permission-group]').forEach(group => {
+          const items = Array.from(group.querySelectorAll('[data-permission-item]'));
+          const hasVisibleItem = !query || items.some(item => item.style.display !== 'none');
+          group.style.display = hasVisibleItem ? '' : 'none';
+          if (query && hasVisibleItem) {
+            group.open = true;
+          } else if (!query) {
+            group.open = false;
+          }
+        });
+      });
+    });
+  })();
+</script>
+{% endblock %}

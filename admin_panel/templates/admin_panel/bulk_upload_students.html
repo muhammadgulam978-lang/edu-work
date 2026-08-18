@@ -1,0 +1,133 @@
+{% extends "admin_panel/bases.html" %}
+{% load static %}
+
+{% block title %}Bulk Upload Students{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'admin_panel/css/bulk-student-upload.css' %}?v=bulk-student-progress-2">
+<link rel="stylesheet" href="{% static 'admin_panel/css/bulk-student-progress.css' %}?v=bulk-student-progress-1">
+{% endblock %}
+
+{% block content %}
+<main class="bulk-student-page" data-activity-url="{% url 'bulk_upload_students_activity' %}" data-import-progress-url="{% url 'bulk_upload_students_progress' %}">
+  <section class="bulk-hero">
+    <div>
+      <p class="bulk-kicker">Student Management</p>
+      <h1>Bulk Student & Parent Import</h1>
+      <p>Validate Excel records first, then create student and parent portal accounts in one controlled import.</p>
+    </div>
+    <div class="bulk-hero-actions">
+      <a class="bulk-btn bulk-btn-secondary" href="{% url 'bulk_upload_students_template' %}"><i class="fa fa-file-excel"></i> Download Template</a>
+      <a class="bulk-btn bulk-btn-secondary" href="{% url 'admission_list' %}"><i class="fa fa-arrow-left"></i> Admission List</a>
+    </div>
+  </section>
+
+  {% if messages %}<div class="bulk-messages">{% for message in messages %}<div class="bulk-alert bulk-alert-{{ message.tags|default:'info' }}">{{ message }}</div>{% endfor %}</div>{% endif %}
+
+  <section class="bulk-stepper" aria-label="Import steps">
+    <div class="bulk-step is-active"><span>1</span><div><b>Select</b><small>Choose .xlsx file</small></div></div>
+    <div class="bulk-step {% if preview %}is-active{% endif %}"><span>2</span><div><b>Validate</b><small>Review rows and accounts</small></div></div>
+    <div class="bulk-step {% if result %}is-active{% endif %}"><span>3</span><div><b>Import</b><small>Create live records</small></div></div>
+  </section>
+
+  <section class="bulk-live-stats">
+    <article><span class="bulk-stat-icon"><i class="fa fa-user-graduate"></i></span><div><strong data-student-count>{{ student_count }}</strong><small>Live Students</small></div></article>
+    <article><span class="bulk-stat-icon"><i class="fa fa-users"></i></span><div><strong data-parent-count>{{ parent_count }}</strong><small>Live Parents</small></div></article>
+    <article><span class="bulk-stat-icon"><i class="fa fa-calendar-check"></i></span><div><strong>{{ active_year.year|default:'Not set' }}</strong><small>Active Academic Year</small></div></article>
+    <article><span class="bulk-stat-icon"><i class="fa fa-sync-alt"></i></span><div><strong data-live-updated>Live</strong><small>Refreshes every 15 seconds</small></div></article>
+  </section>
+
+  <div class="bulk-grid">
+    <section class="bulk-card bulk-upload-card">
+      <div class="bulk-card-head"><span><i class="fa fa-cloud-upload-alt"></i></span><div><h2>Upload Excel File</h2><p>Maximum 10 MB. The first row must contain supported headers.</p></div></div>
+      <form method="post" action="{% url 'bulk_upload_students' %}" enctype="multipart/form-data" data-upload-form data-progress-form data-progress-mode="validate">
+        {% csrf_token %}<input type="hidden" name="action" value="preview">
+        <label class="bulk-dropzone" data-dropzone>
+          <input type="file" name="excel_file" accept=".xlsx" required data-file-input>
+          <i class="fa fa-file-excel"></i>
+          <strong>Drop your Excel file here</strong>
+          <span>or click to browse</span>
+          <output data-file-output>No file selected</output>
+        </label>
+        <div class="bulk-guidance"><i class="fa fa-info-circle"></i><span>Missing student IDs and portal login IDs can be generated. Parent data creates or reuses the linked Parent Portal account.</span></div>
+        <div class="bulk-actions"><button class="bulk-btn bulk-btn-primary" type="submit"><i class="fa fa-check-circle"></i> Validate File</button><a class="bulk-btn bulk-btn-secondary" href="{% url 'admission_list' %}">Cancel</a></div>
+      </form>
+    </section>
+
+    <aside class="bulk-card bulk-readiness">
+      <div class="bulk-card-head"><span><i class="fa fa-tasks"></i></span><div><h2>Import Readiness</h2><p>Complete these before confirming.</p></div></div>
+      <ul>
+        <li class="{% if active_year %}is-ready{% endif %}"><i class="fa fa-check"></i> Active academic year configured</li>
+        <li><i class="fa fa-check"></i> Student and parent credentials checked</li>
+        <li><i class="fa fa-check"></i> Duplicate IDs, usernames and emails detected</li>
+        <li><i class="fa fa-check"></i> Fee plan and class placement reviewed</li>
+      </ul>
+    </aside>
+  </div>
+
+  {% if preview %}
+  <section class="bulk-card bulk-preview">
+    <div class="bulk-section-title"><div><h2>Validation Preview</h2><p>{{ pending_upload.name }} · {{ preview.total_rows }} populated rows</p></div><span class="bulk-status {% if preview.invalid_rows %}is-warning{% else %}is-success{% endif %}">{% if preview.invalid_rows %}Review required{% else %}Ready to import{% endif %}</span></div>
+    <div class="bulk-preview-metrics">
+      <div><strong>{{ preview.valid_rows }}</strong><span>Valid rows</span></div><div><strong>{{ preview.invalid_rows }}</strong><span>Invalid rows</span></div><div><strong>{{ preview.parent_rows }}</strong><span>Parent links</span></div><div><strong>{{ preview.new_parents }}</strong><span>New parents</span></div><div><strong>{{ preview.fee_ready_rows }}</strong><span>Fee ready</span></div>
+    </div>
+    <div class="bulk-table-wrap"><table><thead><tr><th>Row</th><th>Student</th><th>ID</th><th>Class</th><th>Parent</th><th>Fee</th><th>Status</th></tr></thead><tbody>{% for row in preview.rows %}<tr><td>{{ row.row_number }}</td><td>{{ row.name }}</td><td>{{ row.student_id }}</td><td>{{ row.class_name }}</td><td>{{ row.parent }}</td><td>{{ row.fee_status }}</td><td><span class="bulk-row-status is-{{ row.status }}" title="{{ row.message }}">{{ row.status|title }}</span></td></tr>{% endfor %}</tbody></table></div>
+    {% if preview.errors %}<details class="bulk-errors"><summary>View validation messages ({{ preview.errors|length }})</summary>{% for error in preview.errors %}<p>{{ error }}</p>{% endfor %}</details>{% endif %}
+    <div class="bulk-actions">
+      <form method="post" action="{% url 'bulk_upload_students' %}" data-progress-form data-progress-mode="import" data-total-rows="{{ preview.valid_rows }}">{% csrf_token %}<input type="hidden" name="action" value="confirm"><input type="hidden" name="upload_token" value="{{ pending_upload.token }}"><button class="bulk-btn bulk-btn-primary" type="submit" {% if preview.invalid_rows or not preview.valid_rows %}disabled{% endif %}><i class="fa fa-user-cog"></i> Confirm & Import {{ preview.valid_rows }} Rows</button></form>
+      <form method="post" action="{% url 'bulk_upload_students' %}">{% csrf_token %}<input type="hidden" name="action" value="cancel"><button class="bulk-btn bulk-btn-secondary" type="submit">Discard Preview</button></form>
+    </div>
+  </section>
+  {% endif %}
+
+  {% if result %}
+  <section class="bulk-card bulk-result" data-import-report>
+    <div class="bulk-section-title"><div><p class="bulk-kicker">Completed in {{ result.processing_seconds|default:0 }} seconds</p><h2>Complete Import Report</h2><p>Student, portal access, parent, fee and delivery outcomes from the confirmed file.</p></div><span class="bulk-status is-success"><i class="fa fa-check-circle"></i> {{ result.success_rate }}% successful</span></div>
+    <div class="bulk-report-overview">
+      <div class="bulk-report-score" style="--report-progress:{{ result.success_rate }}%"><span><strong>{{ result.success_rate }}%</strong><small>Success rate</small></span></div>
+      <div class="bulk-report-summary"><strong>{{ result.imported }} of {{ result.total_rows }}</strong><span>student rows successfully processed</span><small>{{ result.skipped }} skipped · {{ result.enrolled }} enrolled · {{ result.fee_ready }} fee ready</small></div>
+    </div>
+    <div class="bulk-report-grid">
+      <article><i class="fa fa-user-graduate"></i><strong>{{ result.student_accounts_created }}</strong><span>Student accounts created</span></article>
+      <article><i class="fa fa-sign-in-alt"></i><strong data-report-login-ready>{{ result.login_ready }}</strong><span>Portal logins ready</span><small>{{ result.student_logins_ready }} students · {{ result.parent_logins_ready }} parents</small></article>
+      <article><i class="fa fa-users"></i><strong>{{ result.parents_linked }}</strong><span>Parents linked</span><small>{{ result.parent_accounts_created }} new parent accounts</small></article>
+      <article class="{% if result.skipped %}is-warning{% endif %}"><i class="fa fa-forward"></i><strong>{{ result.skipped }}</strong><span>Rows skipped</span><small>{{ result.errors|length }} recorded messages</small></article>
+      <article><i class="fa fa-envelope"></i><strong data-report-emails-sent>{{ result.emails_sent }}</strong><span>Emails sent</span><small><b data-report-emails-pending>{{ result.emails_pending }}</b> pending · <b data-report-emails-failed>{{ result.emails_failed }}</b> failed</small></article>
+      <article><i class="fa fa-comment-alt"></i><strong data-report-messages-sent>{{ result.messages_sent }}</strong><span>Messages sent</span><small><b data-report-messages-pending>{{ result.messages_pending }}</b> queued · <b data-report-messages-failed>{{ result.messages_failed }}</b> failed</small></article>
+      <article><i class="fa fa-wallet"></i><strong>{{ result.fee_ready }}</strong><span>Fee assignments ready</span><small>Ready for fee automation</small></article>
+      <article class="{% if result.password_reset_required %}is-warning{% endif %}"><i class="fa fa-key"></i><strong>{{ result.password_reset_required }}</strong><span>Password action needed</span><small>Accounts without usable password</small></article>
+    </div>
+    <div class="bulk-actions">
+      {% if result.credentials_report_path %}<a class="bulk-btn bulk-btn-primary" href="{% url 'bulk_upload_students_credentials' %}"><i class="fa fa-file-excel"></i> Download Portal IDs & Passwords</a>{% endif %}
+      {% if result.password_reset_required %}<form method="post" action="{% url 'bulk_upload_students_activate_logins' %}" data-activation-form data-progress-mode="activation" data-total-rows="{{ result.password_reset_required }}">{% csrf_token %}<button class="bulk-btn bulk-btn-primary" type="submit"><i class="fa fa-key"></i> Activate {{ result.password_reset_required }} Portal Logins</button></form>{% endif %}
+    </div>
+    {% if result.parent_data_missing %}<div class="bulk-guidance"><i class="fa fa-info-circle"></i><span>{{ result.parent_data_missing }} row{{ result.parent_data_missing|pluralize }} had no father/parent identity or contact columns, so no parent account could be linked. Upload those rows again with Parent/Father Name plus Parent Email, Phone, Login ID and Password.</span></div>{% elif result.student_accounts_created and not result.parents_linked %}<div class="bulk-guidance"><i class="fa fa-info-circle"></i><span>No parent records were linked from this import. The uploaded workbook did not provide usable parent or father identity/contact data. Parent accounts are created only from supplied family data to avoid linking a student to an invented or incorrect parent.</span></div>{% endif %}
+    <div class="bulk-delivery-note"><i class="fa fa-sync-alt"></i><span>Delivery status updates live every 15 seconds. Queued does not mean delivered; only confirmed deliveries appear under Sent.</span></div>
+    {% if result.errors %}<details class="bulk-errors"><summary>View skipped-row errors</summary>{% for error in result.errors %}<p>{{ error }}</p>{% endfor %}</details>{% endif %}
+  </section>
+  {% endif %}
+
+  <section class="bulk-activity-grid">
+    <article class="bulk-card"><div class="bulk-section-title"><div><h2>Recent Students</h2><p>Click a student to open Student Insight Profile.</p></div></div><div data-student-activity>{% for student in recent_students %}<a class="bulk-activity-row" href="{% url 'admin_ai_student_intelligence_detail' student.student_id %}"><span class="bulk-avatar"><i class="fa fa-user-graduate"></i></span><span><b>{{ student.name }}</b><small>{{ student.student_id }} · {{ student.class_fk.class_name|default:'Not assigned' }}{% if student.section %} - {{ student.section.section_name }}{% endif %}</small></span><i class="fa fa-chevron-right"></i></a>{% empty %}<p class="bulk-empty">No students imported yet.</p>{% endfor %}</div></article>
+    <article class="bulk-card"><div class="bulk-section-title"><div><h2>Recent Parents</h2><p>Live parent accounts and linked children.</p></div></div><div data-parent-activity>{% for parent in recent_parents %}<div class="bulk-activity-row"><span class="bulk-avatar"><i class="fa fa-users"></i></span><span><b>{{ parent.full_name }}</b><small>{{ parent.email|default:'No email' }} · {{ parent.students.count }} child{{ parent.students.count|pluralize:'ren' }}</small></span></div>{% empty %}<p class="bulk-empty">No parents linked yet.</p>{% endfor %}</div></article>
+  </section>
+
+  <details class="bulk-card bulk-columns"><summary><span><i class="fa fa-columns"></i> Supported Excel Columns</span><small>View all student, parent, access and fee fields</small></summary><div class="bulk-column-groups"><div><h3>Student profile</h3><p>Student_Id, Student Name, DOB, Gender, Email, Contact No, Address, Admission Date, Nationality</p></div><div><h3>Academic placement</h3><p>Academic Year, Class, Section, Roll No, Admission Status, Campus, Branch</p></div><div><h3>Portal & family</h3><p>Login_Id, Password, Father/Mother details, Parent Name, Email, Phone, Occupation, Address, Relationship, Parent Login_Id, Parent Password</p></div><div><h3>Fees</h3><p>Fee Plan, Transport Route, Scholarship</p></div></div></details>
+</main>
+<div class="bulk-progress-overlay" data-progress-overlay hidden aria-live="polite" aria-modal="true" role="dialog">
+  <div class="bulk-progress-dialog">
+    <button type="button" class="bulk-progress-close" data-progress-close aria-label="Hide progress"><i class="fa fa-times"></i></button>
+    <div class="bulk-progress-visual" data-progress-ring style="--progress:0deg">
+      <span><i class="fa fa-file-import"></i></span>
+    </div>
+    <p class="bulk-kicker" data-progress-stage>Preparing file</p>
+    <h2 data-progress-title>Validating student records</h2>
+    <p data-progress-detail>Please keep this page open while EduPilot processes the spreadsheet.</p>
+    <strong class="bulk-progress-percent" data-progress-percent>0%</strong>
+    <div class="bulk-progress-track"><span data-progress-bar></span></div>
+    <div class="bulk-progress-times"><span><i class="far fa-clock"></i> Elapsed: <b data-progress-elapsed>0s</b></span><span>Estimated remaining: <b data-progress-remaining>Calculating</b></span></div>
+    <p class="bulk-progress-estimate" data-progress-estimate>Upload progress uses transferred bytes. Import progress, elapsed time and remaining time use rows committed by the server.</p>
+  </div>
+</div>
+<script src="{% static 'admin_panel/js/bulk-student-upload.js' %}?v=bulk-live-progress-credentials-1"></script>
+{% endblock %}

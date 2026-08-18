@@ -1,0 +1,5 @@
+{% extends "automation/base_automation.html" %}
+{% load static %}
+{% block title %}Announcements | Account Automation{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'admin_panel/css/announcement-center.css' %}?v=announcement-center-2">{% endblock %}
+{% block content %}{% include "shared/announcements/feed_content.html" %}{% endblock %}

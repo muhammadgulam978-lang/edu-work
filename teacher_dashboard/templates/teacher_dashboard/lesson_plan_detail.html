@@ -1,0 +1,28 @@
+<h3>Lesson Plan</h3>
+
+<p>
+    <strong>Chapter:</strong> {{ plan.chapter.title }} <br>
+    <strong>Total Periods:</strong> {{ plan.total_periods }}
+</p>
+
+<hr>
+
+{% for day in days %}
+<div class="card mb-3">
+    <div class="card-header">
+        <strong>Period {{ day.day_number }}</strong>
+    </div>
+
+    <div class="card-body">
+        <p><b>Learning Objectives</b><br>{{ day.learning_objectives }}</p>
+
+        <p><b>Teaching Content</b><br>{{ day.teaching_content }}</p>
+
+        <p><b>Practice Work</b><br>{{ day.practice_work }}</p>
+
+        <p><b>Assessment</b><br>{{ day.assessment_tasks }}</p>
+
+        <p><b>Homework</b><br>{{ day.homework_tasks }}</p>
+    </div>
+</div>
+{% endfor %}

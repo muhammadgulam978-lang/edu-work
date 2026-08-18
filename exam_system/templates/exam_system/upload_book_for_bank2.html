@@ -1,0 +1,121 @@
+{% extends "teacher_dashboard/base.html" %}
+{% block content %}
+<div class="container-fluid">
+
+    <div class="d-flex align-items-center mb-4">
+        <a href="{% url 'question_bank_detail' bank.id %}" class="btn btn-outline-secondary btn-sm mr-3">
+            <i class="fa fa-arrow-left"></i> Back
+        </a>
+        <div>
+            <h3 class="mb-1">
+                <i class="fa fa-upload mr-2 text-primary"></i>
+                Book / PDF Upload
+            </h3>
+            <p class="text-muted mb-0">{{ bank.subject.name }} — Class {{ bank.class_fk.class_name }}</p>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-7">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fa fa-magic mr-2"></i>
+                        AI se Questions Generate Karo
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data" id="uploadForm">
+                        {% csrf_token %}
+
+                        <div class="form-group">
+                            <label class="font-weight-bold">
+                                <i class="fa fa-file-pdf-o mr-1 text-danger"></i>
+                                Book / PDF Upload Karo *
+                            </label>
+                            <div class="custom-file">
+                                <input type="file" class="custom-file-input" 
+                                       id="pdf_file" name="pdf_file" 
+                                       accept=".pdf" required>
+                                <label class="custom-file-label" for="pdf_file">
+                                    PDF file chuniye...
+                                </label>
+                            </div>
+                            <small class="text-muted">Max 15MB. Text-based PDF (scanned nahi).</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="font-weight-bold">
+                                <i class="fa fa-signal mr-1 text-warning"></i>
+                                Difficulty Level
+                            </label>
+                            <select name="difficulty" class="form-control">
+                                <option value="EASY">Easy</option>
+                                <option value="MEDIUM" selected>Medium</option>
+                                <option value="HARD">Hard</option>
+                            </select>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label class="font-weight-bold">MCQ Count</label>
+                                    <input type="number" name="mcq_count" 
+                                           class="form-control" value="10" min="0" max="30">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label class="font-weight-bold">Short Q Count</label>
+                                    <input type="number" name="short_count" 
+                                           class="form-control" value="7" min="0" max="20">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label class="font-weight-bold">Long Q Count</label>
+                                    <input type="number" name="long_count" 
+                                           class="form-control" value="5" min="0" max="10">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <i class="fa fa-info-circle mr-1"></i>
+                            <strong>Process:</strong> PDF Upload → AI Questions Generate → 
+                            Review/Edit → Approve → Generate Paper
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-block btn-lg" id="submitBtn">
+                            <i class="fa fa-magic mr-2"></i>
+                            Questions Generate Karo
+                        </button>
+                    </form>
+
+                    <div id="loadingDiv" class="text-center mt-4" style="display:none;">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <p class="mt-2 text-muted">
+                            AI questions generate kar raha hai...<br>
+                            <small>1-2 minute lag sakte hain</small>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('pdf_file').addEventListener('change', function(e) {
+    var fileName = e.target.files[0] ? e.target.files[0].name : 'PDF file chuniye...';
+    document.querySelector('.custom-file-label').textContent = fileName;
+});
+
+document.getElementById('uploadForm').addEventListener('submit', function() {
+    document.getElementById('submitBtn').disabled = true;
+    document.getElementById('submitBtn').innerHTML = 
+        '<i class="fa fa-spinner fa-spin mr-2"></i> Generating... Please wait';
+    document.getElementById('loadingDiv').style.display = 'block';
+});
+</script>
+{% endblock %}

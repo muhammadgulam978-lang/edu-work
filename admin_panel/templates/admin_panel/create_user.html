@@ -1,0 +1,7 @@
+<!-- admin_panel/templates/admin_panel/create_user.html -->
+<h2>Create User</h2>
+<form method="POST">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Create User</button>
+</form>

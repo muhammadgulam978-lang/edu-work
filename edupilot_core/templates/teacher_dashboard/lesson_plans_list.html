@@ -1,0 +1,24 @@
+{% extends 'teacher_dashboard/bases.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Your Generated Lesson Plans</h2>
+
+    {% if plans %}
+        <div class="list-group mt-4">
+            {% for plan in plans %}
+                <a href="{% url 'lesson_plan_detail' plan.id %}" class="list-group-item list-group-item-action">
+                    <strong>{{ plan.topic_title }}</strong>
+                    <br>
+                    <small>Chapter: {{ plan.chapter_title }}</small> |
+                    <small>Periods: {{ plan.no_of_periods }}</small> |
+                    <small>{{ plan.created_at|date:"d M Y" }}</small>
+                </a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="text-muted mt-3">No lesson plans created yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

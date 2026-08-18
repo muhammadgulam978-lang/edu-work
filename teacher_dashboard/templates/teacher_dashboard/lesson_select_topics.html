@@ -1,0 +1,99 @@
+{% extends "teacher_dashboard/bases.html" %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <h2 class="mb-3">Select Topics for Lesson Plan</h2>
+
+    <p>
+        <strong>Chapter:</strong>
+        {{ chapter.title }}
+    </p>
+
+    <form method="POST">
+
+        {% csrf_token %}
+
+        <!-- TOPICS LIST -->
+        <div class="card mb-4">
+
+            <div class="card-header">
+                <strong>Available Topics</strong>
+            </div>
+
+            <div class="card-body">
+
+                {% if topics %}
+
+                    {% for topic in topics %}
+
+                        <div class="form-check mb-2">
+
+                            <input
+                                class="form-check-input"
+                                type="checkbox"
+                                name="topics"
+                                value="{{ topic.id }}"
+                                id="topic{{ topic.id }}"
+                            >
+
+                            <label
+                                class="form-check-label"
+                                for="topic{{ topic.id }}"
+                            >
+
+                                {% if topic.title %}
+                                    {{ topic.title }}
+                                {% else %}
+                                    {{ topic.name }}
+                                {% endif %}
+
+                            </label>
+
+                        </div>
+
+                    {% endfor %}
+
+                {% else %}
+
+                    <div class="alert alert-warning">
+                        No topics found for this chapter.
+                    </div>
+
+                {% endif %}
+
+            </div>
+        </div>
+
+        <!-- TOTAL PERIODS -->
+        <div class="mb-4">
+
+            <label class="form-label">
+                <strong>Total Periods</strong>
+            </label>
+
+            <input
+                type="number"
+                name="total_periods"
+                class="form-control"
+                min="1"
+                value="1"
+                required
+            >
+
+        </div>
+
+        <!-- SUBMIT BUTTON -->
+        <button
+            type="submit"
+            class="btn btn-primary"
+        >
+            Generate Lesson Plan
+        </button>
+
+    </form>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,180 @@
+{% extends "admin_panel/bases.html" %}
+{% load static %}
+
+{% block title %}AI Analytics{% endblock %}
+{% block page_title %}AI Analytics{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'admin_panel/css/ai-graphs.css' %}?v=ai-graphs-2">
+<link rel="stylesheet" href="{% static 'admin_panel/css/ai-overview.css' %}?v=ai-overview-1">
+<link rel="stylesheet" href="{% static 'admin_panel/css/edupilot-charts.css' %}?v=charts-1">
+<link rel="stylesheet" href="{% static 'admin_panel/css/ai-admin-design.css' %}?v=ai-admin-design-5">
+
+<main class="ai-overview-page" data-ai-overview
+      data-analytics-url="{% url 'ai_analytics_data' %}"
+      data-copilot-url="{% url 'admin_ai_copilot_message' %}">
+    <header class="ai-overview-heading">
+        <div>
+            <span class="ai-eyebrow">School Intelligence</span>
+            <h1>AI Analytics Overview</h1>
+            <p>Live ERP signals, operational risk, and evidence-based command workflows.</p>
+        </div>
+        <div class="ai-live-status"><span></span> Live data <strong data-generated-at>{{ ai_analytics.generated_at }}</strong></div>
+    </header>
+
+    <section class="ai-kpi-grid" data-kpi-grid aria-label="AI analytics key performance indicators">
+        {% for kpi in ai_analytics.kpis %}
+        <article class="ai-kpi ai-tone-{{ kpi.tone }}" data-kpi-card="{{ kpi.key }}">
+            <span class="ai-icon"><i class="{{ kpi.icon }}"></i></span>
+            <div><span class="ai-label">{{ kpi.title }}</span><strong data-kpi-value>{{ kpi.value }}</strong><small data-kpi-label>{{ kpi.label }}</small></div>
+        </article>
+        {% endfor %}
+    </section>
+
+    <section class="ai-top-grid">
+        <article class="ai-surface ai-copilot-card">
+            <div class="ai-section-head">
+                <div><h2>EduPilot AI Copilot</h2><p>Ask school-wide questions, search ERP records, or prepare reports.</p></div>
+                <a href="{% url 'admin_ai_copilot' %}" title="Open full AI Copilot"><i class="fas fa-expand-alt"></i></a>
+            </div>
+            <form class="ai-copilot-form" method="post" action="{% url 'admin_ai_copilot_message' %}" data-copilot-form>
+                {% csrf_token %}
+                <input type="hidden" name="conversation_id" value="{{ ai_conversation.id }}">
+                <input type="text" name="message" placeholder="Ask: Show attendance today, find a student, compare fees..." autocomplete="off" aria-label="Ask EduPilot AI Copilot">
+                <button type="submit"><i class="fas fa-paper-plane"></i><span>Run</span></button>
+            </form>
+            <div class="ai-copilot-response" data-copilot-response hidden aria-live="polite">
+                <span class="ai-response-icon"><i class="fas fa-brain"></i></span>
+                <div><strong>EduPilot AI</strong><p data-copilot-reply></p><div class="ai-response-actions" data-copilot-actions></div></div>
+            </div>
+            <div class="ai-prompt-row">
+                {% for prompt in ai_analytics.copilot_examples %}
+                <button type="button" data-command="{{ prompt }}">{{ prompt }}</button>
+                {% endfor %}
+            </div>
+        </article>
+
+        <aside class="ai-surface ai-snapshot-card">
+            <div class="ai-section-head"><div><h2>School Snapshot</h2><p>Current core records available to the analytics layer.</p></div></div>
+            <div class="ai-snapshot-grid" data-snapshot-grid>
+                {% for item in ai_analytics.snapshot %}
+                <div data-snapshot="{{ item.key }}"><strong>{{ item.value }}</strong><span>{{ item.label }}</span>{% if item.sublabel %}<small>{{ item.sublabel }}</small>{% endif %}</div>
+                {% endfor %}
+            </div>
+        </aside>
+    </section>
+
+    <form class="ai-filter-bar" id="aiOverviewFilters">
+        <label><span>Date Range</span><select name="period" data-period-select>
+            {% for key,label in period_options %}<option value="{{ key }}" {% if key == "this_month" %}selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select></label>
+        <label><span>Class</span><select name="class_id">
+            <option value="">All Classes</option>
+            {% for class in classes %}<option value="{{ class.id }}">{{ class.class_name }}</option>{% endfor %}
+        </select></label>
+        <label><span>Section</span><select name="section_id">
+            <option value="">All Sections</option>
+            {% for section in sections %}<option value="{{ section.id }}">{{ section.section_name|default:section }}</option>{% endfor %}
+        </select></label>
+        <label><span>Start Date</span><input type="date" name="start_date" data-custom-date></label>
+        <label><span>End Date</span><input type="date" name="end_date" data-custom-date></label>
+        <div class="ai-filter-actions">
+            <button type="submit" class="primary"><i class="fas fa-check"></i> Apply</button>
+            <button type="button" data-filter-reset><i class="fas fa-undo"></i> Reset</button>
+        </div>
+    </form>
+
+    <section class="ai-primary-charts" aria-label="Primary analytics graphs">
+        <article class="ai-chart-panel ep-chart-card" data-chart-tone="academics" id="attendance-intelligence">
+            <div class="ai-section-head"><div><h2>Attendance Intelligence</h2><p>Present, absent, and leave comparison.</p></div><span class="ai-chip-status"><i></i> Live</span></div>
+            <div class="ai-chart-box ep-chart-box"><canvas id="aiAttendanceChart"></canvas></div>
+        </article>
+        <article class="ai-chart-panel ep-chart-card" data-chart-tone="finance">
+            <div class="ai-section-head"><div><h2>Fee Collection Trend</h2><p>School-wide billed versus paid amount.</p></div><span class="ai-chart-scope" data-period-label>{{ ai_analytics.meta.period_label }}</span></div>
+            <div class="ai-chart-box ep-chart-box"><canvas id="aiFeeChart"></canvas></div>
+        </article>
+        <article class="ai-chart-panel ep-chart-card" data-chart-tone="ai">
+            <div class="ai-section-head"><div><h2>Admissions Trend</h2><p>Admission intake for the selected range.</p></div><span class="ai-chart-scope">Trend</span></div>
+            <div class="ai-chart-box ep-chart-box"><canvas id="aiAdmissionsChart"></canvas></div>
+        </article>
+    </section>
+
+    <section class="ai-insights-command-grid">
+        <article class="ai-surface ai-alert-section">
+            <div class="ai-section-head"><div><h2><i class="fas fa-magic"></i> AI Insights &amp; Alerts</h2></div><span data-alert-count>{{ ai_analytics.alerts|length }} live signals</span></div>
+            <div class="ai-alert-grid" data-alert-list>
+                {% for alert in ai_analytics.alerts %}
+                <a class="ai-alert ai-alert-{{ alert.tone }}" href="{{ alert.url }}"><i class="{{ alert.icon }}"></i><span><strong>{{ alert.title }}</strong><small>{{ alert.detail }}</small><em>{{ alert.action }}</em></span></a>
+                {% endfor %}
+            </div>
+        </article>
+        <article class="ai-surface ai-command-section">
+            <div class="ai-section-head"><div><h2>AI Command Center</h2></div></div>
+            <div class="ai-command-grid" data-command-grid>
+                {% for action in ai_analytics.quick_actions %}
+                <a href="{{ action.url }}"><i class="{{ action.icon }}"></i><span>{{ action.title }}</span></a>
+                {% endfor %}
+            </div>
+        </article>
+    </section>
+
+    <section class="ai-risk-health-grid">
+        <article class="ai-surface ai-risk-section" id="ai-risk-index">
+            <div class="ai-section-head"><div><h2><i class="fas fa-brain"></i> AI Risk Index</h2><p>Explainable score derived from live operational signals.</p></div><strong class="ai-risk-score" data-risk-score>{{ ai_analytics.risk.score }}</strong></div>
+            <div class="ai-risk-list" data-risk-list>
+                {% for item in ai_analytics.risk.breakdown %}
+                <a href="{{ item.url }}"><i class="{{ item.icon }}"></i><span>{{ item.label }}<small>{{ item.value }} live records</small></span><strong>+{{ item.points }}</strong></a>
+                {% endfor %}
+            </div>
+        </article>
+        <article class="ai-surface ai-health-section" id="system-health">
+            <div class="ai-section-head"><div><h2><i class="fas fa-heartbeat"></i> System Health</h2><p>Automation, delivery, and timetable exceptions.</p></div><span class="ai-health-status ai-health-{{ ai_analytics.system_health.tone }}" data-health-status>{{ ai_analytics.system_health.status }}</span></div>
+            <div class="ai-health-grid" data-health-grid>
+                {% for item in ai_analytics.system_health.items %}
+                <a href="{{ item.url }}"><i class="{{ item.icon }}"></i><strong>{{ item.value }}</strong><span>{{ item.label }}</span></a>
+                {% endfor %}
+            </div>
+        </article>
+    </section>
+
+    <section class="ai-secondary-section">
+        <div class="ai-block-heading"><div><span class="ai-eyebrow">More Intelligence</span><h2>Additional Live Graphs</h2></div><p>No existing graph has been removed.</p></div>
+        <div class="ai-secondary-charts">
+            <article class="ai-chart-panel ep-chart-card" data-chart-tone="hr"><div class="ai-section-head"><div><h2>Attendance Mix</h2><p>Today's attendance composition.</p></div></div><div class="ai-chart-box ep-chart-box"><canvas id="aiAttendanceDonutChart"></canvas></div></article>
+            <article class="ai-chart-panel ep-chart-card" data-chart-tone="academics"><div class="ai-section-head"><div><h2>Teacher Workload</h2><p>Top six assigned timetable loads.</p></div></div><div class="ai-chart-box ep-chart-box"><canvas id="aiWorkloadChart"></canvas></div></article>
+            <article class="ai-chart-panel ep-chart-card" data-chart-tone="ai"><div class="ai-section-head"><div><h2>Fixture Automation Mix</h2><p>Manual versus automated assignments.</p></div></div><div class="ai-chart-box ep-chart-box"><canvas id="aiFixtureMixChart"></canvas></div></article>
+        </div>
+    </section>
+
+    <section class="ai-module-section">
+        <div class="ai-block-heading"><div><span class="ai-eyebrow">Live Modules</span><h2>Business Intelligence Modules</h2></div></div>
+        <div class="ai-module-grid" data-module-grid>
+            {% for module in ai_analytics.modules %}
+            <article class="ai-module-card">
+                <div class="ai-module-title"><span><i class="{{ module.icon }}"></i></span><div><h3>{{ module.title }}</h3><small class="{% if module.status == 'Needs Review' %}review{% endif %}">{{ module.status }}</small></div></div>
+                <div class="ai-module-values"><div><strong>{{ module.primary_value }}</strong><span>{{ module.primary_label }}</span></div><div><strong>{{ module.secondary_value }}</strong><span>{{ module.secondary_label }}</span></div></div>
+                <a href="{{ module.url }}">Open module <i class="fas fa-arrow-right"></i></a>
+            </article>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="ai-surface ai-trend-section">
+        <div class="ai-section-head"><div><h2>Live Trend Signals</h2><p>Current operational proportions from the same live records.</p></div></div>
+        <div class="ai-trend-grid" data-trend-list>
+            {% for trend in ai_analytics.trends %}
+            <div class="ai-trend"><div><span>{{ trend.label }}</span><strong>{{ trend.value }}</strong></div><div class="ai-progress ai-progress-{{ trend.tone }}"><span style="width:{% widthratio trend.value trend.max 100 %}%"></span></div></div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <div class="ai-page-state ai-page-loading" data-page-loading hidden><i class="fas fa-circle-notch fa-spin"></i> Refreshing live intelligence...</div>
+    <div class="ai-page-state ai-page-error" data-page-error hidden role="alert"></div>
+</main>
+
+{{ ai_analytics|json_script:"ai-overview-data" }}
+<script src="{% static 'admin_panel/vendor/chart.js/Chart.bundle.min.js' %}"></script>
+<script src="{% static 'admin_panel/js/edupilot-charts.js' %}?v=charts-1"></script>
+<script src="{% static 'admin_panel/js/ai-overview.js' %}?v=ai-overview-1"></script>
+{% include "admin_ai/includes/auto_report_modal.html" %}
+{% endblock %}

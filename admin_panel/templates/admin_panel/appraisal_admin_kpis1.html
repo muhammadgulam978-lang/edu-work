@@ -1,0 +1,635 @@
+{% extends 'admin_panel/bases.html' %}
+
+{% block content %}
+
+<style>
+  :root{
+    --card-radius: 16px;
+    --soft-border: #e9ecef;
+    --soft-bg: #F5F5FD;
+    --edu-teal: #88D0C5;
+    --edu-green: #8BC740;
+    --edu-mint: #DDF7F2;
+    --edu-soft-green: #EEF9E5;
+    --edu-muted: #6c757d;
+  }
+
+  .page-wrap{
+    padding: 22px;
+  }
+
+  .kpi-card{
+    border-radius: var(--card-radius);
+    border: 1px solid var(--soft-border);
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0,0,0,.04) !important;
+  }
+
+  .kpi-card .card-header{
+    background: linear-gradient(90deg, var(--edu-mint) 0%, var(--soft-bg) 100%);
+    border-bottom: 1px solid var(--soft-border);
+    padding: 26px 30px;
+  }
+
+  .kpi-card .card-body{
+    padding: 18px;
+    background: #fff;
+  }
+
+  .section-card{
+    border-radius: 14px;
+    border: 1px solid var(--soft-border);
+    background: #fff;
+    box-shadow: 0 3px 14px rgba(0,0,0,.035);
+  }
+
+  .section-card .section-header{
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--soft-border);
+    background: linear-gradient(90deg, var(--edu-mint) 0%, var(--soft-bg) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .section-card .section-body{
+    padding: 14px 16px 16px;
+  }
+
+  .muted{
+    color: var(--edu-muted);
+  }
+
+  .pill{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 999px;
+    padding: 6px 10px;
+    border: 1px solid var(--soft-border);
+    background: rgba(255,255,255,.72);
+    font-size: 13px;
+  }
+
+  .table-pro{
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--soft-border);
+  }
+
+  .table-pro thead th{
+    background: var(--soft-bg) !important;
+    border-bottom: 1px solid var(--soft-border) !important;
+    font-weight: 500;
+    font-size: 13px;
+    text-transform: none;
+    white-space: nowrap;
+  }
+
+  .table-pro td{
+    vertical-align: middle;
+  }
+
+  .table-pro .form-control{
+    border-radius: 10px;
+  }
+
+  .badge-linear{
+    background: var(--edu-soft-green);
+    color: #4f6f0d;
+    border: 1px solid rgba(139,199,64,.35);
+    font-weight: 500;
+  }
+
+  .btn-rounded{
+    border-radius: 12px;
+    padding: 10px 14px;
+  }
+
+  .btn-primary,
+  .btn-success {
+    background: var(--edu-teal) !important;
+    border-color: var(--edu-teal) !important;
+    color: #111 !important;
+    font-weight: 500 !important;
+    box-shadow: 0 8px 18px rgba(136,208,197,.18);
+  }
+
+  .btn-outline-danger {
+    border-radius: 999px !important;
+    color: #ff4d3d !important;
+    border-color: #ffd0ca !important;
+    font-weight: 500 !important;
+  }
+
+  .empty-state{
+    padding: 26px 10px;
+    text-align: center;
+  }
+  .empty-state .title{
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+  .empty-state .desc{
+    color: var(--edu-muted);
+    font-size: 13px;
+  }
+
+  .sticky-actions{
+    position: sticky;
+    bottom: 10px;
+    z-index: 10;
+    margin-top: 14px;
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .action-bar{
+    background: #fff;
+    border: 1px solid var(--soft-border);
+    border-radius: 14px;
+    padding: 10px;
+    box-shadow: 0 12px 30px rgba(0,0,0,.06);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  /* Checkbox: tick only, no background color */
+  .form-check-input {
+    background-color: #fff !important;
+    border: 1.5px solid #adb5bd;
+    box-shadow: none !important;
+  }
+
+  .form-check-input:checked {
+    background-color: #fff !important;
+    border-color: var(--edu-teal);
+  }
+
+  .form-check-input:checked[type="checkbox"] {
+    background-image: none !important;
+    position: relative;
+  }
+
+  .form-check-input:checked[type="checkbox"]::after {
+    content: "✓";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -58%);
+    font-size: 15px;
+    font-weight: 500;
+    color: #111;
+  }
+
+  .form-check-input:focus {
+    box-shadow: none !important;
+  }
+
+  .weight-indicator{
+    font-size: 13px;
+    font-weight: 500;
+    padding: 8px 10px;
+    border-radius: 12px;
+    border: 1px solid var(--soft-border);
+    background: var(--soft-bg);
+    min-width: 170px;
+    text-align: center;
+  }
+
+  .weight-indicator.ok{ color: #4f6f0d; border-color: rgba(139,199,64,.35); background: var(--edu-soft-green); }
+  .weight-indicator.warn{ color: #b08900; border-color: rgba(255,193,7,.3); background: rgba(255,193,7,.10); }
+  .weight-indicator.bad{ color: #dc3545; border-color: rgba(220,53,69,.25); background: rgba(220,53,69,.08); }
+
+  .appraisal-title,
+  .section-title,
+  .kpi-card strong,
+  .section-card strong,
+  .fw-bold,
+  .fw-semibold{
+    font-weight: 500 !important;
+  }
+
+  .appraisal-title{
+    letter-spacing: 0;
+  }
+
+  @media (max-width: 768px){
+    .page-wrap{
+      padding: 14px;
+    }
+
+    .kpi-card .card-header{
+      padding: 20px;
+    }
+
+    .section-card .section-header{
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .action-bar{
+      width: 100%;
+      flex-wrap: wrap;
+    }
+
+    .weight-indicator,
+    .action-bar .btn{
+      width: 100%;
+    }
+  }
+</style>
+
+<div class="page-wrap">
+
+  <div class="card kpi-card shadow-sm">
+    <div class="card-header">
+      <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
+        <div>
+          <div class="d-flex align-items-center gap-2">
+            <h4 class="mb-0 appraisal-title">KPI Builder</h4>
+            <span class="pill">
+              <span class="badge badge-linear">linear</span>
+              <span class="muted">fixed method</span>
+            </span>
+          </div>
+          <div class="mt-1 muted" style="font-size:13px;">
+            Cycle: <strong>{{ cycle.name }}</strong> - Auto KPIs predefined - Manual KPIs addable
+          </div>
+        </div>
+
+        <div class="d-flex align-items-center gap-2">
+          <span class="pill">
+            <span class="muted">Tip</span>
+            <strong>Active weights = 100</strong>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-body">
+
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }} mb-3" style="border-radius:14px;">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+
+      <form method="POST" id="kpiForm">
+        {% csrf_token %}
+        <input type="hidden" name="save_kpis" value="1" />
+
+        <!-- ================= AUTO KPIs ================= -->
+        <div class="section-card mb-4">
+          <div class="section-header">
+            <div>
+              <div class="section-title">Auto (System) KPIs</div>
+              <div class="muted" style="font-size:13px;">Title and KPI key are fixed. Set weight and active status only.</div>
+            </div>
+
+            <div class="d-flex align-items-center gap-2">
+              <span class="pill">
+                <span class="muted">Method</span>
+                <strong>Linear</strong>
+              </span>
+            </div>
+          </div>
+
+          <div class="section-body">
+            <div class="table-responsive table-pro">
+              <table class="table table-hover mb-0">
+                <thead>
+                  <tr>
+                    <th style="width:90px;" class="text-center">Active</th>
+                    <th>Title</th>
+                    <th>KPI</th>
+                    <th style="width:170px;">Weight</th>
+                    <th style="width:120px;" class="text-center">Method</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {% for k in auto_kpis %}
+                    <tr class="auto-row">
+                      <td class="text-center">
+                        <input type="checkbox"
+                               class="form-check-input auto-active"
+                               name="auto_active_{{ k.kpi_key }}"
+                               {% if k.is_active %}checked{% endif %} />
+                      </td>
+
+                      <td>
+                        <div class="section-title">{{ k.title }}</div>
+                        <div class="muted" style="font-size:12px;">Predefined</div>
+                      </td>
+
+                      <td>
+                        <div class="muted" style="font-size:13px;">{{ k.kpi_key }}</div>
+                        <div class="muted" style="font-size:12px;">Key: <code>{{ k.kpi_key }}</code></div>
+                      </td>
+
+                      <td>
+                        <input type="number"
+                               min="0"
+                               max="100"
+                               step="0.01"
+                               class="form-control auto-weight"
+                               name="auto_weight_{{ k.kpi_key }}"
+                               value="{{ k.weight }}"
+                               placeholder="0-100" />
+                        <div class="muted mt-1" style="font-size:12px;">Higher = more impact</div>
+                      </td>
+
+                      <td class="text-center">
+                        <span class="badge badge-linear">linear</span>
+                      </td>
+                    </tr>
+                  {% empty %}
+                    <tr>
+                      <td colspan="5">
+                        <div class="empty-state">
+                          <div class="title">No auto KPIs found</div>
+                          <div class="desc">No predefined KPI rules are available yet.</div>
+                        </div>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================= MANUAL KPIs (NEW) ================= -->
+        <div class="section-card mb-4">
+          <div class="section-header">
+            <div>
+              <div class="section-title">Manual KPIs</div>
+              <div class="muted" style="font-size:13px;">
+                Add a title and weight. The KPI key is generated from the title, and teacher evidence is scored from 0-10.
+              </div>
+            </div>
+
+            <button type="button" class="btn btn-success btn-sm btn-rounded" id="addManualBtn">
+              + Add Manual KPI
+            </button>
+          </div>
+
+          <div class="section-body">
+            <div class="table-responsive table-pro">
+              <table class="table table-hover mb-0" id="manualNewTable">
+                <thead>
+                  <tr>
+                    <th>Title</th>
+                    <th style="width:170px;">Weight</th>
+                    <th style="width:120px;" class="text-center">Method</th>
+                    <th style="width:110px;" class="text-center">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="manualNewTbody">
+                  <tr id="manualEmptyRow">
+                    <td colspan="4">
+                      <div class="empty-state">
+                        <div class="title">No manual KPI added yet</div>
+                        <div class="desc">Click Add Manual KPI to add a new row.</div>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="muted mt-2" style="font-size:13px;">
+              Manual KPIs use teacher evidence to calculate a 0-10 score. KPI keys are generated from the title.
+            </div>
+          </div>
+        </div>
+
+        <!-- ================= EXISTING MANUAL KPIs ================= -->
+        <div class="section-card">
+          <div class="section-header">
+            <div>
+              <div class="section-title">Existing Manual KPIs</div>
+              <div class="muted" style="font-size:13px;">Edit title, weight, active status, or mark a KPI for delete, then save.</div>
+            </div>
+          </div>
+
+          <div class="section-body">
+            <div class="table-responsive table-pro">
+              <table class="table table-hover mb-0">
+                <thead>
+                  <tr>
+                    <th style="width:90px;" class="text-center">Active</th>
+                    <th>Title</th>
+                    <th style="width:170px;">Weight</th>
+                    <th style="width:120px;" class="text-center">Method</th>
+                    <th style="width:110px;" class="text-center">Delete</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {% for r in manual_rules %}
+                    <tr class="manual-existing-row">
+                      <td class="text-center">
+                        <input type="checkbox"
+                               class="form-check-input manual-existing-active"
+                               name="manual_active_{{ r.id }}"
+                               {% if r.is_active %}checked{% endif %} />
+                      </td>
+
+                      <td>
+                        <input type="text"
+                               class="form-control"
+                               name="manual_title_{{ r.id }}"
+                               value="{{ r.title }}"
+                               placeholder="Manual KPI Title" />
+
+                        <div class="muted mt-1" style="font-size:12px;">
+                          KPI Key: <code>{{ r.kpi_key }}</code>
+                        </div>
+                      </td>
+
+                      <td>
+                        <input type="number"
+                               min="0"
+                               max="100"
+                               step="0.01"
+                               class="form-control manual-existing-weight"
+                               name="manual_weight_{{ r.id }}"
+                               value="{{ r.weight }}"
+                               placeholder="0-100" />
+                      </td>
+
+                      <td class="text-center">
+                        <span class="badge badge-linear">linear</span>
+                      </td>
+
+                      <td class="text-center">
+                        <input type="checkbox" class="form-check-input" name="manual_delete_{{ r.id }}" />
+                      </td>
+                    </tr>
+                  {% empty %}
+                    <tr>
+                      <td colspan="5">
+                        <div class="empty-state">
+                          <div class="title">No saved manual KPIs</div>
+                          <div class="desc">Add and save a manual KPI from the section above.</div>
+                        </div>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================= STICKY SAVE BAR ================= -->
+        <div class="sticky-actions">
+          <div class="action-bar">
+            <div id="weightIndicator" class="weight-indicator warn">Total Active Weight: 0 / 100</div>
+            <button type="submit" class="btn btn-primary btn-rounded">
+              Save Changes
+            </button>
+          </div>
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  const addBtn = document.getElementById("addManualBtn");
+  const tbody = document.getElementById("manualNewTbody");
+  const emptyRow = document.getElementById("manualEmptyRow");
+  const indicator = document.getElementById("weightIndicator");
+
+  function clampNumber(x){
+    const n = parseFloat(x);
+    if (isNaN(n)) return 0;
+    return n;
+  }
+
+  function calcActiveWeightTotal(){
+    let total = 0;
+
+    document.querySelectorAll(".auto-row").forEach(row=>{
+      const active = row.querySelector(".auto-active");
+      const w = row.querySelector(".auto-weight");
+      if (active && active.checked){
+        total += clampNumber(w ? w.value : 0);
+      }
+    });
+
+    document.querySelectorAll(".manual-existing-row").forEach(row=>{
+      const active = row.querySelector(".manual-existing-active");
+      const w = row.querySelector(".manual-existing-weight");
+      if (active && active.checked){
+        total += clampNumber(w ? w.value : 0);
+      }
+    });
+
+    document.querySelectorAll(".manual-new-weight").forEach(inp=>{
+      total += clampNumber(inp.value);
+    });
+
+    total = Math.round(total * 100) / 100;
+
+    indicator.textContent = `Total Active Weight: ${total} / 100`;
+    indicator.classList.remove("ok","warn","bad");
+
+    if (total === 100) indicator.classList.add("ok");
+    else if (total > 100) indicator.classList.add("bad");
+    else indicator.classList.add("warn");
+  }
+
+  function ensureEmptyState(){
+    const hasRows = tbody.querySelectorAll("tr.manual-new-row").length > 0;
+    if (emptyRow) emptyRow.style.display = hasRows ? "none" : "";
+  }
+
+  function makeRow() {
+    const tr = document.createElement("tr");
+    tr.className = "manual-new-row";
+
+    tr.innerHTML = `
+      <td>
+        <input type="text"
+               class="form-control"
+               name="manual_title[]"
+               placeholder="e.g. Classroom Discipline"
+               required />
+        <div class="muted mt-1" style="font-size:12px;">KPI key auto-generated from title</div>
+      </td>
+
+      <td>
+        <input type="number"
+               min="0"
+               max="100"
+               step="0.01"
+               class="form-control manual-new-weight"
+               name="manual_weight[]"
+               placeholder="0-100" />
+        <div class="muted mt-1" style="font-size:12px;">Weight impact</div>
+      </td>
+
+      <td class="text-center">
+        <span class="badge badge-linear">linear</span>
+      </td>
+
+      <td class="text-center">
+        <button type="button" class="btn btn-sm btn-outline-danger removeManualRow btn-rounded" style="padding:6px 10px;">
+          Remove
+        </button>
+      </td>
+    `;
+
+    tbody.appendChild(tr);
+    ensureEmptyState();
+    calcActiveWeightTotal();
+  }
+
+  addBtn.addEventListener("click", function () {
+    makeRow();
+  });
+
+  tbody.addEventListener("click", function (e) {
+    if (e.target && e.target.classList.contains("removeManualRow")) {
+      const tr = e.target.closest("tr");
+      if (tr) tr.remove();
+      ensureEmptyState();
+      calcActiveWeightTotal();
+    }
+  });
+
+  document.addEventListener("input", function(e){
+    if (
+      e.target.classList.contains("auto-weight") ||
+      e.target.classList.contains("manual-existing-weight") ||
+      e.target.classList.contains("manual-new-weight")
+    ){
+      calcActiveWeightTotal();
+    }
+  });
+
+  document.addEventListener("change", function(e){
+    if (
+      e.target.classList.contains("auto-active") ||
+      e.target.classList.contains("manual-existing-active")
+    ){
+      calcActiveWeightTotal();
+    }
+  });
+
+  ensureEmptyState();
+  calcActiveWeightTotal();
+})();
+</script>
+
+{% endblock %}

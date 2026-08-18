@@ -1,0 +1,80 @@
+{% extends "admin_panel/bases.html" %}
+{% block content %}
+
+<div class="container-fluid">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h3 class="mb-1">Grading Scales</h3>
+            <p class="text-muted mb-0">{{ academic_year }} — configurable percentage-to-grade bands</p>
+        </div>
+        <a href="{% url 'create_grading_scale' %}" class="btn btn-primary">
+            <i class="fa fa-plus mr-2"></i> New Grading Scale
+        </a>
+    </div>
+
+    {% if scales %}
+        {% for scale in scales %}
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h5 class="mb-0">
+                        {{ scale.name }}
+                        {% if scale.is_default %}
+                            <span class="badge badge-success ml-2">Default</span>
+                        {% endif %}
+                    </h5>
+                    <div>
+                        <a href="{% url 'edit_grading_scale' scale_id=scale.id %}" class="btn btn-xs btn-outline-primary">
+                            <i class="fa fa-pencil"></i> Edit
+                        </a>
+                        <a href="{% url 'delete_grading_scale' scale_id=scale.id %}" class="btn btn-xs btn-outline-danger"
+                           onclick="return confirm('Delete this grading scale?');">
+                            <i class="fa fa-trash"></i> Delete
+                        </a>
+                    </div>
+                </div>
+
+                {% if scale.bands.all %}
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered mb-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Grade</th>
+                                <th>Min %</th>
+                                <th>Max %</th>
+                                <th>Grade Point</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for band in scale.bands.all %}
+                            <tr>
+                                <td><strong>{{ band.grade }}</strong></td>
+                                <td>{{ band.min_percent }}</td>
+                                <td>{{ band.max_percent }}</td>
+                                <td>{{ band.grade_point }}</td>
+                                <td>{{ band.description }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted mb-0">No grade bands defined yet.</p>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+    <div class="card">
+        <div class="card-body text-center py-5">
+            <i class="fa fa-graduation-cap fa-3x text-muted mb-3"></i>
+            <p class="text-muted">No grading scale configured yet. Default hardcoded scale (A+ to F) is being used.</p>
+            <a href="{% url 'create_grading_scale' %}" class="btn btn-primary btn-sm">
+                Create First Grading Scale
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

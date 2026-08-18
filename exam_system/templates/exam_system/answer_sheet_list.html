@@ -1,0 +1,102 @@
+{% extends "teacher_dashboard/base.html" %}
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex align-items-center">
+            <a href="{% url 'exam_conduct_dashboard' schedule.id %}" class="btn btn-outline-secondary btn-sm mr-3">
+                <i class="fa fa-arrow-left"></i>
+            </a>
+            <div>
+                <h3 class="mb-1">Answer Sheets</h3>
+                <p class="text-muted mb-0">{{ schedule.subject.name }} — {{ schedule.exam_date|date:"d M Y" }}</p>
+            </div>
+        </div>
+        <div>
+            <a href="{% url 'compile_exam_results' schedule.id %}" class="btn btn-warning btn-sm mr-2">
+                <i class="fa fa-calculator mr-1"></i> Compile Results
+            </a>
+            <a href="{% url 'exam_results_list' schedule.id %}" class="btn btn-info btn-sm">
+                <i class="fa fa-trophy mr-1"></i> View Results
+            </a>
+        </div>
+    </div>
+
+    <!-- Progress Bar -->
+    {% with total=sheets.count %}
+    {% if total > 0 %}
+    {% with marked=sheets|length %}
+    <div class="card mb-3">
+        <div class="card-body py-2">
+            <div class="d-flex justify-content-between mb-1">
+                <small>Marking Progress</small>
+                <small><strong>{{ marked }}/{{ total }}</strong> sheets</small>
+            </div>
+            <div class="progress" style="height:8px;">
+                <div class="progress-bar bg-success" style="width:{% widthratio marked total 100 %}%"></div>
+            </div>
+        </div>
+    </div>
+    {% endwith %}
+    {% endif %}
+    {% endwith %}
+
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>#</th>
+                            <th>Student</th>
+                            <th>Roll No</th>
+                            <th>Submitted</th>
+                            <th>Questions Marked</th>
+                            <th>Total Score</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sheet in sheets %}
+                        {% with scores=sheet.scores.all %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td><strong>{{ sheet.student.name }}</strong></td>
+                            <td>{{ sheet.student.roll_no }}</td>
+                            <td>
+                                {% if sheet.is_submitted %}
+                                    <span class="badge badge-success">Yes</span>
+                                {% else %}
+                                    <span class="badge badge-secondary">No</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge badge-info">{{ scores.count }} marked</span>
+                            </td>
+                            <td>
+                                {% with total=0 %}
+                                    {% for s in scores %}{% endfor %}
+                                    <strong>—</strong>
+                                {% endwith %}
+                            </td>
+                            <td>
+                                <a href="{% url 'mark_answer_sheet' sheet.id %}"
+                                   class="btn btn-xs btn-primary">
+                                    <i class="fa fa-pencil"></i> Mark
+                                </a>
+                            </td>
+                        </tr>
+                        {% endwith %}
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4 text-muted">
+                                No answer sheets yet. Create them after attendance is marked.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

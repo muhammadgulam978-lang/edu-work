@@ -1,0 +1,52 @@
+{% extends "admin_panel/bases.html" %}
+{% load static %}
+{% block title %}{{ paper.blueprint.name }} - Paper {{ paper.version_label }}{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{% static 'admin_panel/css/academics_gateway.css' %}">
+{% endblock %}
+{% block content %}
+<div class="academics-gateway">
+  {% if messages %}{% for message in messages %}<div class="ag-alert {% if message.tags == 'error' %}alert-danger{% endif %}">{{ message }}</div>{% endfor %}{% endif %}
+  <div class="ag-card">
+    <div class="ag-header">
+      <div>
+        <p class="ag-kicker">AI Admission Assessment</p>
+        <h4 class="ag-title">{{ paper.blueprint.name }} - Paper {{ paper.version_label }}</h4>
+        <p class="ag-subtitle">Status: <span class="ag-badge ag-badge-info">{{ paper.get_status_display }}</span> &middot; {{ questions|length }} questions &middot; {{ paper.total_marks }} marks</p>
+      </div>
+      <div class="ag-actions">
+        {% if paper.status != "approved" %}
+        <form method="post" action="{% url 'admission_paper_advance' pk=paper.pk %}">
+          {% csrf_token %}
+          <button type="submit" class="ag-btn ag-btn-primary"><i class="fa fa-check"></i> Advance to Next Approval Stage</button>
+        </form>
+        {% else %}
+        <span class="ag-badge ag-badge-active">Approved &middot; ready for scheduling</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="ag-body">
+      {% for q in questions %}
+      <div class="ag-panel" style="margin-bottom:14px;">
+        <p class="ag-section-title" style="margin-bottom:8px;">
+          Q{{ forloop.counter }}. {{ q.blueprint_subject.subject }}
+          <span class="ag-badge ag-badge-info">{{ q.get_question_type_display }}</span>
+          <span class="ag-badge ag-badge-info">{{ q.marks }} marks</span>
+          <span class="ag-badge ag-badge-warning">{{ q.get_difficulty_display }}</span>
+          <span class="ag-badge ag-badge-info">Bloom: {{ q.get_bloom_level_display }}</span>
+        </p>
+        <p style="margin:0 0 8px;">{{ q.question_text }}</p>
+        {% if q.options %}
+        <ul>{% for opt in q.options %}<li>{{ opt }}</li>{% endfor %}</ul>
+        {% endif %}
+        {% if q.duplicate_flag %}<p class="ag-subtitle" style="color:#c33d35;"><i class="fa fa-exclamation-triangle"></i> {{ q.duplicate_flag }}</p>{% endif %}
+        {% if q.ai_quality_notes.notes %}<p class="ag-subtitle">AI quality check: {{ q.ai_quality_notes.notes }}</p>{% endif %}
+      </div>
+      {% empty %}
+      <p class="ag-empty">No questions on this paper yet.</p>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

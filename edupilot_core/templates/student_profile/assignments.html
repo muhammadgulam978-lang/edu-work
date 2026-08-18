@@ -1,0 +1,134 @@
+{% extends "student_profile/bases.html" %}
+{% load static %}
+{% load dict_filters %}
+
+{% block title %}Assignments{% endblock %}
+
+{% block head %}
+    <link rel="stylesheet" href="{% static 'admin_panel/css/query.css' %}">
+    <link rel="stylesheet" href="{% static 'admin_panel/vendor/datatables/css/jquery.dataTables.min.css' %}">
+
+    <style>
+        .deadline-badge {
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .deadline-red {
+            background: #ff4d4d;
+            color: white;
+        }
+        .deadline-green {
+            background: #28a745;
+            color: white;
+        }
+        .hover-box {
+            background: #e7e7e7;
+            border-radius: 5px;
+            padding: 3px 10px;
+            font-size: 12px;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+
+<div class="col-12">
+  <div class="card" style="background: #f8f9fa; margin-left: 20px; margin-right: 20px;">
+
+    <!-- Card Header -->
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h4 class="card-title mb-0">Assignments</h4>
+    </div>
+
+    <!-- Card Body -->
+    <div class="card-body">
+
+      <div class="table-responsive">
+        <table id="example3" class="display table-responsive-lg dataTable no-footer" style="width: 100%;">
+          <thead>
+            <tr>
+              <th>No.</th>
+              <th>Title</th>
+              <th>Assignment File</th>
+              <th>Added Submission</th>
+              <th>Marks</th>
+              <th>Returned Comments</th>
+              <th>Action</th>
+              <th>Deadline</th>
+            </tr>
+          </thead>
+
+          <tbody>
+
+            {% for a in assignments %}
+            {% with sub=submission_dict|dictget:a.id %}
+            <tr>
+              <td>{{ forloop.counter }}</td>
+
+              <td>{{ a.title }}</td>
+
+              <td>
+                <a class="btn btn-info btn-sm" href="{{ a.file.url }}" download>Assignment</a>
+              </td>
+
+              <td>
+                {% if sub %}
+                  <a class="btn btn-primary btn-sm" href="{{ sub.file.url }}" download>Submission</a>
+                {% else %}
+                  No Submission
+                {% endif %}
+              </td>
+
+              <td>
+                {% if sub and sub.marks %}
+                  {{ sub.marks }}
+                {% else %}
+                  Not marked yet
+                {% endif %}
+              </td>
+
+              <td>
+                {% if sub and sub.feedback %}
+                <span class="hover-box" title="{{ sub.feedback }}">Hover To View Comments</span>
+                {% else %}
+                ---
+                {% endif %}
+              </td>
+
+              <td>
+                {% if a.due_date < today %}
+                  <span class="badge bg-secondary">Deadline Exceeded</span>
+                {% else %}
+                  <a href="{% url 'submit_assignment' a.id %}" class="btn btn-success btn-sm">Submit</a>
+                {% endif %}
+              </td>
+
+              <td>
+                {% if a.due_date < today %}
+                  <span class="deadline-badge deadline-red">{{ a.due_date }}</span>
+                {% else %}
+                  <span class="deadline-badge deadline-green">{{ a.due_date }}</span>
+                {% endif %}
+              </td>
+
+            </tr>
+            {% endwith %}
+            {% endfor %}
+
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+<!-- Required JS -->
+<script src="{% static 'admin_panel/vendor/global/global.min.js' %}"></script>
+<script src="{% static 'admin_panel/vendor/bootstrap-select/dist/js/bootstrap-select.min.js' %}"></script>
+<script src="{% static 'admin_panel/vendor/datatables/js/jquery.dataTables.min.js' %}"></script>
+<script src="{% static 'admin_panel/js/plugins-init/datatables.init.js' %}"></script>
+
+{% endblock %}

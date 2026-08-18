@@ -1,0 +1,77 @@
+{% extends "admin_panel/bases.html" %}
+{% load static %}
+
+{% block title %}Assign Role to User{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'admin_panel/css/query.css' %}">
+<link rel="stylesheet" href="{% static 'admin_panel/vendor/datatables/css/jquery.dataTables.min.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<div class="col-12">
+
+  <div class="card" style="background:#f8f9fa; margin:20px;">
+
+    <!-- Card Header -->
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h4 class="card-title mb-0">Assign Role to User</h4>
+    </div>
+
+    <!-- Card Body -->
+    <div class="card-body">
+
+      <!-- Assign Role Form -->
+      <form method="POST" class="mb-4">
+        {% csrf_token %}
+
+        <div class="mb-3">
+          {{ form.as_p }}
+        </div>
+
+        <button type="submit" class="btn btn-success">Assign Role</button>
+      </form>
+
+      <hr>
+
+      <!-- Assigned Roles Table -->
+      <h4 class="mb-3">Assigned Roles</h4>
+
+      <div class="table-responsive">
+        <table id="example3" class="display table-responsive-lg dataTable no-footer" style="width:100%;">
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Assigned Roles</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {% for user in users_with_roles %}
+            <tr>
+              <td>{{ user.username }}</td>
+              <td>
+                {% for role in user.groups.all %}
+                  {{ role.name }}{% if not forloop.last %}, {% endif %}
+                {% empty %}
+                  <span class="text-muted">No Role</span>
+                {% endfor %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Required JS -->
+<script src="{% static 'admin_panel/vendor/global/global.min.js' %}"></script>
+<script src="{% static 'admin_panel/vendor/bootstrap-select/dist/js/bootstrap-select.min.js' %}"></script>
+<script src="{% static 'admin_panel/vendor/datatables/js/jquery.dataTables.min.js' %}"></script>
+<script src="{% static 'admin_panel/js/plugins-init/datatables.init.js' %}"></script>
+
+{% endblock %}

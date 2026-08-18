@@ -1,0 +1,293 @@
+{% extends base_template %}
+{% load static %}
+
+{% block title %}{{ page_title }} | EduPilot{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{% static 'communication/communication.css' %}?v=communication-8">
+{% endblock %}
+
+{% block content %}
+<main id="communication-root" class="communication-page"
+      data-active-conversation="{{ active_conversation.id|default:'' }}"
+      data-send-url="{% if active_conversation %}{% url 'communication:send_message' active_conversation.id %}{% endif %}"
+      data-poll-url="{% if active_conversation %}{% url 'communication:poll' active_conversation.id %}{% endif %}"
+      data-updates-url="{% url 'communication:updates' %}"
+      data-heartbeat-url="{% url 'communication:heartbeat' %}"
+      data-websocket-url="{% if active_conversation %}/ws/communication/{{ active_conversation.id }}/{% endif %}"
+      data-action-template="/communication/messages/0/action/">
+  <header class="communication-heading">
+    <div>
+      <span class="communication-eyebrow">Communication</span>
+      <h1>{{ page_title }}</h1>
+      <p>Secure direct and group messaging for your school community.</p>
+    </div>
+    <div class="communication-heading-actions">
+      <button type="button" class="communication-btn communication-btn-secondary" data-open-dialog="new-message-dialog">
+        <i class="fas fa-pen"></i> New message
+      </button>
+      {% if can_create_group %}
+      <button type="button" class="communication-btn communication-btn-primary" data-open-dialog="new-group-dialog">
+        <i class="fas fa-users"></i> Create group
+      </button>
+      {% endif %}
+    </div>
+  </header>
+
+  {% if messages %}
+  <div class="communication-flashes">
+    {% for message in messages %}
+    <div class="communication-flash">{{ message }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <section class="communication-metrics" aria-label="Communication summary">
+    <article><i class="fas fa-paper-plane"></i><div><strong>{{ stats.messages_today }}</strong><span>Messages today</span></div></article>
+    <article><i class="fas fa-comments"></i><div><strong>{{ stats.active_conversations }}</strong><span>Active conversations</span></div></article>
+    <article><i class="fas fa-users"></i><div><strong>{{ stats.groups }}</strong><span>Groups</span></div></article>
+    <article><i class="fas fa-check-circle"></i><div><strong>{{ stats.delivery_rate }}%</strong><span>Delivery rate</span></div></article>
+  </section>
+
+  <section class="communication-layout">
+    <aside class="communication-card communication-inbox">
+      <div class="communication-card-head">
+        <div>
+          <h2>Inbox</h2>
+          <span>{{ stats.active_conversations }} conversations</span>
+        </div>
+      </div>
+      <label class="communication-search">
+        <i class="fas fa-search"></i>
+        <input id="conversation-search" type="search" placeholder="Search conversations" autocomplete="off">
+      </label>
+      <nav class="communication-inbox-filters" aria-label="Conversation filters">
+        <a href="{% url 'communication:inbox' %}" {% if view_filter == 'inbox' %}class="is-active"{% endif %}>Inbox</a>
+        <a href="{% url 'communication:inbox' %}?view=unread" {% if view_filter == 'unread' %}class="is-active"{% endif %}>Unread</a>
+        <a href="{% url 'communication:inbox' %}?view=sent" {% if view_filter == 'sent' %}class="is-active"{% endif %}>Sent</a>
+        <a href="{% url 'communication:inbox' %}?view=archived" {% if view_filter == 'archived' %}class="is-active"{% endif %}>Archived</a>
+      </nav>
+      <div class="communication-conversations" id="conversation-list">
+        {% for conversation in conversations %}
+        <a href="{% url 'communication:inbox' %}?conversation={{ conversation.id }}"
+           class="communication-conversation {% if active_conversation.id == conversation.id %}is-active{% endif %}"
+           data-conversation-id="{{ conversation.id }}"
+           data-conversation-name="{{ conversation.name|lower }}">
+          <span class="communication-avatar {% if conversation.is_group %}is-group{% endif %}">
+            {% if conversation.is_group %}<i class="fas fa-users"></i>{% else %}{{ conversation.name|slice:":1"|upper }}{% endif %}
+          </span>
+          <span class="communication-conversation-copy">
+            <strong>{{ conversation.name }}</strong>
+            <small>{{ conversation.last_message }}</small>
+          </span>
+          {% if conversation.unread %}<b class="communication-unread">{{ conversation.unread }}</b>{% endif %}
+        </a>
+        {% empty %}
+        <div class="communication-empty compact">
+          <i class="fas fa-comments"></i>
+          <strong>No conversations yet</strong>
+          <span>Start a secure message with an available contact.</span>
+        </div>
+        {% endfor %}
+      </div>
+    </aside>
+
+    <section class="communication-card communication-chat">
+      {% if active_conversation %}
+      <header class="communication-chat-head">
+        <span class="communication-avatar {% if active_conversation.is_group %}is-group{% endif %}">
+          {% if active_conversation.is_group %}<i class="fas fa-users"></i>{% else %}{{ active_name|slice:":1"|upper }}{% endif %}
+        </span>
+        <div>
+          <h2>{{ active_name }}</h2>
+          <span id="presence-label">{% if active_conversation.is_group %}{{ active_conversation.memberships.count }} members{% else %}Secure conversation{% endif %}</span>
+        </div>
+        <div class="communication-chat-tools">
+          {% if view_filter == 'archived' %}
+          <button type="button" title="Restore conversation" aria-label="Restore conversation" data-conversation-action="restore"><i class="fas fa-undo" aria-hidden="true"></i></button>
+          {% endif %}
+          <button type="button" title="Mute conversation" aria-label="Mute conversation" data-conversation-action="mute"><i class="fas fa-bell-slash" aria-hidden="true"></i></button>
+          <button type="button" title="Archive conversation" aria-label="Archive conversation" data-conversation-action="archive"><i class="fas fa-archive" aria-hidden="true"></i></button>
+          {% if not active_conversation.is_group %}
+          <button type="button" title="Block user" aria-label="Block user" data-conversation-action="block"><i class="fas fa-ban" aria-hidden="true"></i></button>
+          {% endif %}
+        </div>
+      </header>
+      <div class="communication-messages" id="message-list" aria-live="polite">
+        <div class="communication-day">Conversation history</div>
+        {% for message in initial_messages %}
+        <article class="communication-message {% if message.mine %}is-mine{% endif %}" data-message-id="{{ message.id }}">
+          <div class="communication-bubble {% if message.deleted %}is-deleted{% endif %}">
+            {% if not message.mine %}<strong>{{ message.sender }}</strong>{% endif %}
+            {% if message.reply_to %}
+            <aside class="communication-reply-context">
+              <strong>{{ message.reply_to.sender }}</strong>
+              <span>{{ message.reply_to.content }}</span>
+            </aside>
+            {% endif %}
+            {% if message.forwarded_from %}<small class="communication-forwarded"><i class="fas fa-share"></i> Forwarded</small>{% endif %}
+            <p>{{ message.content }}</p>
+            {% if message.attachment_url %}
+            <a class="communication-attachment" href="{{ message.attachment_url }}" target="_blank" rel="noopener">
+              <i class="fas fa-paperclip"></i> {{ message.attachment_name }}
+            </a>
+            {% endif %}
+          </div>
+          <footer>
+            <time>{{ message.created_at }}</time>
+            {% if message.edited %}<span>Edited</span>{% endif %}
+            {% if message.mine %}<span data-message-status title="{% if message.read_at %}Read {{ message.read_at }}{% elif message.delivered_at %}Delivered {{ message.delivered_at }}{% endif %}">{{ message.status|title }}</span>{% endif %}
+            {% if message.pinned %}<i class="fas fa-star" title="Pinned"></i>{% endif %}
+            {% if not message.deleted %}
+            <button type="button" data-message-action="react" data-emoji="👍" title="React">👍</button>
+            <button type="button" data-message-action="reply" title="Reply" aria-label="Reply"><i class="fas fa-reply" aria-hidden="true"></i></button>
+            <button type="button" data-message-action="copy" title="Copy message" aria-label="Copy message"><i class="fas fa-copy" aria-hidden="true"></i></button>
+            <button type="button" data-message-action="forward-open" title="Forward message" aria-label="Forward message"><i class="fas fa-share" aria-hidden="true"></i></button>
+            <button type="button" data-message-action="pin" title="Pin message" aria-label="Pin message"><i class="fas fa-thumbtack" aria-hidden="true"></i></button>
+            {% if message.mine %}
+            <button type="button" data-message-action="edit" title="Edit message" aria-label="Edit message"><i class="fas fa-edit" aria-hidden="true"></i></button>
+            <button type="button" data-message-action="delete" title="Delete message" aria-label="Delete message"><i class="fas fa-trash-alt" aria-hidden="true"></i></button>
+            {% endif %}
+            {% endif %}
+          </footer>
+        </article>
+        {% empty %}
+        <div class="communication-empty" id="empty-chat">
+          <i class="fas fa-comment"></i>
+          <strong>No messages yet</strong>
+          <span>Send the first message in this conversation.</span>
+        </div>
+        {% endfor %}
+      </div>
+      <div class="communication-typing" id="typing-label" hidden>Typing...</div>
+      <div class="communication-compose-context" id="reply-context" hidden>
+        <span><strong>Replying to <b id="reply-name"></b></strong><small id="reply-copy"></small></span>
+        <button type="button" id="cancel-reply" title="Cancel reply" aria-label="Cancel reply"><i class="fas fa-times"></i></button>
+      </div>
+      <form class="communication-compose" id="message-form" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="hidden" name="reply_to_id" id="reply-to-id">
+        <label class="communication-attach" title="Attach a file">
+          <i class="fas fa-paperclip"></i>
+          <input type="file" name="attachment" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.png,.jpg,.jpeg,.gif,.txt,.zip">
+        </label>
+        <button type="button" class="communication-emoji-toggle" id="emoji-toggle" title="Add emoji" aria-label="Add emoji"><i class="far fa-smile"></i></button>
+        <textarea name="content" rows="1" maxlength="5000" placeholder="Write a message..."></textarea>
+        <button type="submit" class="communication-send" title="Send message"><i class="fas fa-paper-plane"></i></button>
+      </form>
+      <div class="communication-compose-meta">
+        <div class="communication-emoji-picker" id="emoji-picker" hidden>
+          <button type="button">👍</button><button type="button">😊</button>
+          <button type="button">👏</button><button type="button">❤️</button>
+          <button type="button">🎉</button><button type="button">✅</button>
+        </div>
+        <span id="message-character-count">0 / 5000</span>
+      </div>
+      <div class="communication-form-error" id="message-error" hidden></div>
+      {% else %}
+      <div class="communication-empty large">
+        <i class="fas fa-comments"></i>
+        <strong>Select a conversation</strong>
+        <span>Choose an existing conversation or start a new secure message.</span>
+        <button type="button" class="communication-btn communication-btn-primary" data-open-dialog="new-message-dialog">New message</button>
+      </div>
+      {% endif %}
+    </section>
+
+    <aside class="communication-side">
+      <section class="communication-card communication-side-card">
+        <h2>Quick actions</h2>
+        <button type="button" data-open-dialog="new-message-dialog"><i class="fas fa-comment"></i><span>Direct message</span><i class="fas fa-chevron-right"></i></button>
+        {% if can_create_group %}
+        <button type="button" data-open-dialog="new-group-dialog"><i class="fas fa-users"></i><span>Create group</span><i class="fas fa-chevron-right"></i></button>
+        {% endif %}
+        <a href="{% if portal_role == 'admin' %}{% url 'announcement_center' %}{% elif portal_role == 'teacher' %}{% url 'teacher_announcements' %}{% elif portal_role == 'parent' %}{% url 'parent_announcements' %}{% else %}{% url 'student_announcements' %}{% endif %}">
+          <i class="fas fa-bullhorn"></i><span>Announcements</span><i class="fas fa-chevron-right"></i>
+        </a>
+      </section>
+      <section class="communication-card communication-side-card">
+        <h2>Messaging safeguards</h2>
+        <p><i class="fas fa-shield-alt"></i> Role-based recipient access</p>
+        <p><i class="fas fa-lock"></i> Authenticated message history</p>
+        <p><i class="fas fa-file-alt"></i> Restricted attachments</p>
+      </section>
+    </aside>
+  </section>
+</main>
+
+<dialog class="communication-dialog" id="new-message-dialog">
+  <form method="post" action="{% url 'communication:start_direct' %}">
+    {% csrf_token %}
+    <header><h2>New message</h2><button type="button" data-close-dialog title="Close" aria-label="Close new message dialog"><i class="fas fa-times" aria-hidden="true"></i></button></header>
+    <label for="recipient-search">Find recipient</label>
+    <div class="communication-recipient-search">
+      <i class="fas fa-search"></i>
+      <input id="recipient-search" type="search"
+             placeholder="Search ID, name, class, email or parent"
+             autocomplete="off">
+    </div>
+    <span class="communication-search-count" id="recipient-search-count">
+      {{ contacts|length }} permitted contacts
+    </span>
+    <label for="recipient-select">Recipient
+      <select id="recipient-select" name="recipient_id" required>
+        <option value="">Select a permitted contact</option>
+        {% for contact in contacts %}
+        <option value="{{ contact.id }}" data-search="{{ contact.search }}">
+          {{ contact.name }} - {{ contact.role|title }}{% if contact.detail %} | {{ contact.detail }}{% endif %}
+        </option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Message
+      <textarea name="content" rows="4" maxlength="5000" placeholder="Write your message"></textarea>
+    </label>
+    <footer><button type="button" class="communication-btn communication-btn-secondary" data-close-dialog>Cancel</button><button class="communication-btn communication-btn-primary" type="submit">Open conversation</button></footer>
+  </form>
+</dialog>
+
+{% if can_create_group %}
+<dialog class="communication-dialog" id="new-group-dialog">
+  <form method="post" action="{% url 'communication:create_group' %}">
+    {% csrf_token %}
+    <header><h2>Create group</h2><button type="button" data-close-dialog title="Close" aria-label="Close create group dialog"><i class="fas fa-times" aria-hidden="true"></i></button></header>
+    <label>Group name<input name="name" maxlength="200" required></label>
+    <label>Group type
+      <select name="group_type">
+        <option value="CLASS">Class</option><option value="DEPARTMENT">Department</option>
+        <option value="CLUB">Club</option><option value="COMMITTEE">Committee</option>
+        {% if portal_role == 'admin' %}<option value="BROADCAST">Broadcast</option>{% endif %}
+      </select>
+    </label>
+    <label>Description<textarea name="description" rows="2"></textarea></label>
+    <fieldset><legend>Members</legend>
+      <label class="communication-member-search"><i class="fas fa-search"></i><input id="group-member-search" type="search" placeholder="Search members"></label>
+      <div class="communication-member-list">
+        {% for contact in contacts %}
+        <label data-member-search="{{ contact.search }}"><input type="checkbox" name="members" value="{{ contact.id }}"><span>{{ contact.name }} <small>{{ contact.role|title }}</small></span></label>
+        {% endfor %}
+      </div>
+    </fieldset>
+    <footer><button type="button" class="communication-btn communication-btn-secondary" data-close-dialog>Cancel</button><button class="communication-btn communication-btn-primary" type="submit">Create group</button></footer>
+  </form>
+</dialog>
+{% endif %}
+
+<dialog class="communication-dialog" id="forward-message-dialog">
+  <form id="forward-message-form">
+    {% csrf_token %}
+    <header><h2>Forward message</h2><button type="button" data-close-dialog title="Close" aria-label="Close forward dialog"><i class="fas fa-times" aria-hidden="true"></i></button></header>
+    <input type="hidden" id="forward-message-id">
+    <label>Conversation
+      <select id="forward-conversation-id" required>
+        <option value="">Select conversation</option>
+        {% for conversation in conversations %}
+        <option value="{{ conversation.id }}">{{ conversation.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <footer><button type="button" class="communication-btn communication-btn-secondary" data-close-dialog>Cancel</button><button class="communication-btn communication-btn-primary" type="submit"><i class="fas fa-share"></i> Forward</button></footer>
+  </form>
+</dialog>
+
+<script src="{% static 'communication/communication.js' %}?v=communication-8"></script>
+{% endblock %}

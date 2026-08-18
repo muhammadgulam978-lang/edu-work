@@ -1,0 +1,55 @@
+{% extends "admin_panel/bases.html" %}
+{% block title %}AI Report Preview{% endblock %}
+{% block page_title %}AI Report Preview{% endblock %}
+{% block content %}
+<div class="ai-report">
+  <section class="ai-card">
+    <h2>{{ report.title }}</h2>
+    <p>{{ report.get_report_type_display }} &middot; Created {{ report.created_at }} &middot; Share: {{ report.get_share_status_display }}</p>
+    <div class="ai-actions">
+      <a class="ai-btn" href="{% url 'ai_analytics_report_pdf' report.uuid %}"><i class="fas fa-file-pdf"></i> Download PDF</a>
+      <a class="ai-btn" href="{% url 'ai_analytics_report_excel' report.uuid %}"><i class="fas fa-file-excel"></i> Download Excel</a>
+      <a class="ai-btn secondary" href="{{ whatsapp_url }}" target="_blank">WhatsApp</a>
+      <a class="ai-btn secondary" href="{{ facebook_url }}" target="_blank">Facebook</a>
+      <a class="ai-btn secondary" href="{{ x_url }}" target="_blank">X / Twitter</a>
+      <button class="ai-btn secondary" type="button" data-copy-share="{{ report_url }}">Copy for Instagram</button>
+      <button class="ai-btn secondary" type="button" data-copy-share="{{ report_url }}">Copy for TikTok</button>
+    </div>
+  </section>
+
+  <section class="ai-card">
+    <h3>Preview Summary</h3>
+    <div class="ai-grid">
+      {% for kpi in snapshot.kpis %}
+        <div class="ai-mini"><span>{{ kpi.value }}</span>{{ kpi.title }}<br><small>{{ kpi.label }}</small></div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="ai-card ai-share" id="share-report">
+    <h3>Share Report</h3>
+    <input type="text" value="{{ report_url }}" readonly onclick="this.select()">
+    <form method="post" action="{% url 'ai_analytics_report_share' report.uuid %}">
+      {% csrf_token %}
+      <textarea name="emails" rows="2" placeholder="recipient@example.com, another@example.com"></textarea>
+      <textarea name="message" rows="3" placeholder="Optional message"></textarea>
+      <button class="ai-btn" type="submit"><i class="fas fa-envelope"></i> Email PDF + Link</button>
+    </form>
+  </section>
+</div>
+<script>
+  document.querySelectorAll("[data-copy-share]").forEach(function(button) {
+    button.dataset.originalText = button.textContent;
+    button.addEventListener("click", function() {
+      var value = button.getAttribute("data-copy-share");
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(value);
+      }
+      button.textContent = "Link Copied";
+      setTimeout(function() {
+        button.textContent = button.dataset.originalText;
+      }, 1400);
+    });
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,159 @@
+{% extends "teacher_dashboard/base.html" %}
+{% block content %}
+<div class="container-fluid">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="mb-1">Exam Conduct Dashboard</h3>
+            <p class="text-muted mb-0">
+                <strong>{{ schedule.subject.name }}</strong> &nbsp;|&nbsp;
+                {{ schedule.exam_date|date:"d M Y" }} &nbsp;|&nbsp;
+                {{ schedule.start_time|time:"h:i A" }} – {{ schedule.end_time|time:"h:i A" }}
+                {% if schedule.room %}&nbsp;|&nbsp; Room: {{ schedule.room }}{% endif %}
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'auto_generate_seating' schedule.id %}" class="btn btn-outline-primary btn-sm">
+                <i class="fa fa-th mr-1"></i> Generate Seating
+            </a>
+            <a href="{% url 'mark_exam_attendance' schedule.id %}" class="btn btn-success btn-sm">
+                <i class="fa fa-check mr-1"></i> Mark Attendance
+            </a>
+            <a href="{% url 'answer_sheet_list' schedule.id %}" class="btn btn-primary btn-sm">
+                <i class="fa fa-file-text mr-1"></i> Answer Sheets
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-left-primary text-center">
+                <div class="card-body py-3">
+                    <h3 class="text-primary mb-1">{{ seating.count }}</h3>
+                    <p class="text-muted mb-0">Total Seats</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-left-success text-center">
+                <div class="card-body py-3">
+                    <h3 class="text-success mb-1">{{ attended_ids|length }}</h3>
+                    <p class="text-muted mb-0">Present</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-left-danger text-center">
+                <div class="card-body py-3">
+                    <h3 class="text-danger mb-1">{{ seating.count|add:"-1" }}</h3>
+                    <p class="text-muted mb-0">Absent</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-left-info text-center">
+                <div class="card-body py-3">
+                    <h3 class="text-info mb-1">{{ schedule.invigilator_duties.count }}</h3>
+                    <p class="text-muted mb-0">Invigilators</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Seating Plan -->
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fa fa-th mr-2"></i>Seating Plan</h5>
+                    <span class="badge badge-primary">{{ seating.count }} seats</span>
+                </div>
+                <div class="card-body p-0">
+                    {% if seating %}
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Seat #</th>
+                                    <th>Student Name</th>
+                                    <th>Roll No</th>
+                                    <th>Room</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for seat in seating %}
+                                <tr>
+                                    <td><strong>{{ seat.seat_number }}</strong></td>
+                                    <td>{{ seat.student.name }}</td>
+                                    <td>{{ seat.student.roll_no }}</td>
+                                    <td>{{ seat.room|default:"—" }}</td>
+                                    <td>
+                                        {% if seat.student.id in attended_ids %}
+                                            <span class="badge badge-success">Present</span>
+                                        {% else %}
+                                            <span class="badge badge-secondary">Not Marked</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <p class="text-muted">No seating plan generated yet.</p>
+                        <a href="{% url 'auto_generate_seating' schedule.id %}" class="btn btn-primary btn-sm">
+                            <i class="fa fa-magic mr-1"></i> Auto-Generate Now
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Invigilators + Quick Actions -->
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fa fa-user mr-2"></i>Invigilator Duty</h5>
+                </div>
+                <div class="card-body">
+                    {% for duty in schedule.invigilator_duties.all %}
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="fa fa-user-circle fa-2x text-muted mr-2"></i>
+                        <div>
+                            <strong>{{ duty.teacher.name }}</strong>
+                            {% if duty.room %}<br><small class="text-muted">Room: {{ duty.room }}</small>{% endif %}
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted small">No invigilators assigned yet.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fa fa-tasks mr-2"></i>Quick Actions</h5>
+                </div>
+                <div class="list-group list-group-flush">
+                    <a href="{% url 'mark_exam_attendance' schedule.id %}" class="list-group-item list-group-item-action">
+                        <i class="fa fa-check-circle text-success mr-2"></i> Mark Student Attendance
+                    </a>
+                    <a href="{% url 'answer_sheet_list' schedule.id %}" class="list-group-item list-group-item-action">
+                        <i class="fa fa-file-text text-primary mr-2"></i> Manage Answer Sheets
+                    </a>
+                    <a href="{% url 'compile_exam_results' schedule.id %}" class="list-group-item list-group-item-action">
+                        <i class="fa fa-bar-chart text-warning mr-2"></i> Compile Results
+                    </a>
+                    <a href="{% url 'exam_results_list' schedule.id %}" class="list-group-item list-group-item-action">
+                        <i class="fa fa-trophy text-info mr-2"></i> View Results
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,308 @@
+{% extends "admin_panel/bases.html" %}
+{% load static %}
+
+{% block title %}Bulk Upload — Employees | EduPilot{% endblock %}
+
+{% block head %}
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'admin_panel/css/admin-inner-theme.css' %}?v=admin-sidebar-color-icons-2">
+<style>
+  .bulk-upload-page, .bulk-upload-page *, .bulk-upload-page *::before, .bulk-upload-page *::after {
+    box-sizing: border-box;
+  }
+  .bulk-upload-page { font-family: 'Inter', sans-serif; }
+
+  .bulk-upload-page .page-wrap { max-width: 880px; margin: 0 auto; padding: 20px 0; }
+
+  .bulk-upload-page .top-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 30px; }
+  .bulk-upload-page .brand { display: flex; align-items: center; gap: 11px; }
+  .bulk-upload-page .brand-icon {
+    width: 42px; height: 42px;
+    background: linear-gradient(135deg, #2dbdad, #1a9e90);
+    border-radius: 11px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    box-shadow: 0 4px 12px rgba(45,189,173,.3);
+  }
+  .bulk-upload-page .brand-name { font-size: 17px; font-weight: 700; color: #2c3e50; margin: 0; }
+  .bulk-upload-page .brand-name span { color: #2dbdad; }
+
+  .bulk-upload-page .back-link {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 13px; font-weight: 500;
+    color: #39e9d4; text-decoration: none;
+    background: #fff;
+    padding: 8px 16px; border-radius: 8px;
+    box-shadow: 0 1px 6px rgba(0,0,0,.08);
+    transition: box-shadow .2s, color .2s;
+  }
+  .bulk-upload-page .back-link:hover { box-shadow: 0 3px 12px rgba(0,0,0,.13); color: #1a9e90; }
+
+  .bulk-upload-page .page-heading { margin-bottom: 22px; }
+  .bulk-upload-page .page-heading h1 {
+    font-size: 22px; font-weight: 700; color: #2c3e50; margin: 0;
+    display: flex; align-items: center; gap: 9px;
+  }
+  .bulk-upload-page .page-heading p { font-size: 13px; color: #7f8c8d; margin-top: 4px; }
+
+  .bulk-upload-page .alert {
+    border-radius: 10px; padding: 11px 16px;
+    font-size: 13px; margin-bottom: 12px;
+    display: flex; align-items: flex-start; gap: 9px;
+    font-weight: 500; line-height: 1.5;
+  }
+  .bulk-upload-page .alert-success { background: #d4f4ee; color: #1a6e5e; border-left: 4px solid #2dbdad; }
+  .bulk-upload-page .alert-danger,
+  .bulk-upload-page .alert-error   { background: #fde8e8; color: #842029; border-left: 4px solid #e74c3c; }
+  .bulk-upload-page .alert-info    { background: #daf0fd; color: #0c5577; border-left: 4px solid #3498db; }
+  .bulk-upload-page .alert-warning { background: #fff8e1; color: #856404; border-left: 4px solid #f0ad4e; }
+
+  .bulk-upload-page .card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 2px 16px rgba(45,189,173,.09);
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+  .bulk-upload-page .card-head {
+    padding: 16px 22px 13px;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .bulk-upload-page .ch-icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+  }
+  .bulk-upload-page .ci-teal { background: #e8f9f7; }
+  .bulk-upload-page .ci-blue { background: #e8f4fd; }
+  .bulk-upload-page .card-head h5 { font-size: 14px; font-weight: 700; color: #2c3e50; margin: 0; }
+  .bulk-upload-page .card-body { padding: 20px 22px; }
+
+  .bulk-upload-page .tip {
+    background: #fff8e1; border-left: 4px solid #f0ad4e;
+    border-radius: 8px; padding: 10px 14px;
+    font-size: 12.5px; color: #7d5a00;
+    margin-bottom: 18px;
+    display: flex; gap: 8px;
+    align-items: flex-start; line-height: 1.6;
+  }
+
+  .bulk-upload-page .info-box {
+    background: #eaf4fd; border-left: 4px solid #3498db;
+    border-radius: 8px; padding: 10px 14px;
+    font-size: 12.5px; color: #0c5577;
+    margin-top: 16px;
+    display: flex; gap: 8px;
+    align-items: flex-start; line-height: 1.6;
+  }
+  .bulk-upload-page .info-box code {
+    background: #d0e8f8; color: #0c5577;
+    padding: 1px 7px; border-radius: 5px;
+    font-family: 'Courier New', monospace;
+    font-size: 12px; font-weight: 700;
+  }
+
+  .bulk-upload-page .drop-zone {
+    border: 2px dashed #2dbdad;
+    border-radius: 12px;
+    padding: 38px 20px;
+    text-align: center;
+    background: #f0fdfb;
+    cursor: pointer;
+    position: relative;
+    transition: background .2s, border-color .2s;
+    margin-bottom: 6px;
+  }
+  .bulk-upload-page .drop-zone:hover { background: #d9f5f0; border-color: #1a9e90; }
+  .bulk-upload-page .drop-zone input[type="file"] {
+    position: absolute; inset: 0;
+    opacity: 0; cursor: pointer; width: 100%;
+  }
+  .bulk-upload-page .dz-icon  { font-size: 42px; display: block; margin-bottom: 9px; }
+  .bulk-upload-page .dz-title { font-size: 14.5px; font-weight: 600; color: #2c3e50; margin-bottom: 4px; }
+  .bulk-upload-page .dz-sub   { font-size: 12px; color: #7f8c8d; }
+
+  .bulk-upload-page .file-badge {
+    display: none;
+    background: #e8f9f7; color: #1a9e90;
+    padding: 4px 14px; border-radius: 20px;
+    font-size: 12px; font-weight: 600;
+    margin-top: 10px;
+  }
+
+  .bulk-upload-page .btn-row { display: flex; align-items: center; gap: 11px; margin-top: 18px; }
+
+  .bulk-upload-page .btn-upload {
+    background: linear-gradient(135deg, #2dbdad, #1a9e90);
+    color: #fff; border: none;
+    padding: 11px 26px; border-radius: 10px;
+    font-size: 13.5px; font-weight: 600; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 7px;
+    box-shadow: 0 4px 12px rgba(45,189,173,.28);
+    transition: filter .2s, transform .2s;
+  }
+  .bulk-upload-page .btn-upload:hover { filter: brightness(1.08); transform: translateY(-1px); }
+
+  .bulk-upload-page .btn-cancel {
+    background: #f0f2f5; color: #2c3e50; border: none;
+    padding: 11px 20px; border-radius: 10px;
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    text-decoration: none;
+    display: inline-flex; align-items: center; gap: 6px;
+    transition: background .2s;
+  }
+  .bulk-upload-page .btn-cancel:hover { background: #e2e5ea; }
+
+  .bulk-upload-page .tbl-wrap { overflow-x: auto; }
+  .bulk-upload-page table.fmt {
+    width: 100%; border-collapse: separate; border-spacing: 0;
+    font-size: 12.5px;
+    border-radius: 10px; overflow: hidden;
+    border: 1px solid #e8ecef;
+  }
+  .bulk-upload-page table.fmt thead tr {
+    background: linear-gradient(90deg, #2dbdad, #1a9e90);
+    color: #fff;
+  }
+  .bulk-upload-page table.fmt thead th { padding: 10px 13px; font-weight: 600; font-size: 12px; }
+  .bulk-upload-page table.fmt tbody tr { border-bottom: 1px solid #f2f2f2; transition: background .15s; }
+  .bulk-upload-page table.fmt tbody tr:hover { background: #f0fdfb; }
+  .bulk-upload-page table.fmt tbody tr:last-child { border-bottom: none; }
+  .bulk-upload-page table.fmt td { padding: 8px 13px; vertical-align: middle; color: #2c3e50; }
+  .bulk-upload-page table.fmt td:first-child {
+    font-weight: 700; color: #2dbdad;
+    background: #f8fffd;
+    width: 34px; text-align: center; font-size: 11px;
+  }
+  .bulk-upload-page .cn  { font-weight: 600; }
+  .bulk-upload-page .ce  { font-family: 'Courier New', monospace; color: #555; font-size: 11.5px; }
+  .bulk-upload-page .bdg { padding: 2px 9px; border-radius: 20px; font-size: 10.5px; font-weight: 600; }
+  .bulk-upload-page .b-red  { background: #ffe0e0; color: #c0392b; }
+  .bulk-upload-page .b-blue { background: #e8f4fd; color: #2980b9; }
+  .bulk-upload-page .b-grn  { background: #e8f8f0; color: #27ae60; }
+  .bulk-upload-page .b-gry  { background: #f0f2f5; color: #7f8c8d; }
+  .bulk-upload-page .b-org  { background: #fff0e0; color: #b35a00; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="bulk-upload-page">
+<div class="page-wrap">
+
+  <div class="top-bar">
+    <div class="brand">
+      <div class="brand-icon">🎓</div>
+      <div class="brand-name">Edu<span>Pilot</span></div>
+    </div>
+    <a href="{% url 'employee_list' %}" class="back-link">← Back to Employees</a>
+  </div>
+
+  <div class="page-heading">
+    <h1>📥 Bulk Upload — Employees</h1>
+    <p>Only Upload in Excel file. Row 1 must contain the headers, in the columns shown below.</p>
+  </div>
+
+  {% if messages %}
+    {% for msg in messages %}
+      <div class="alert alert-{{ msg.tags|default:'info' }}">
+        {% if   msg.tags == 'success' %}✅
+        {% elif msg.tags == 'danger' or msg.tags == 'error' %}❌
+        {% elif msg.tags == 'warning' %}⚠️
+        {% else %}ℹ️{% endif %}
+        {{ msg }}
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="card">
+    <div class="card-head">
+      <div class="ch-icon ci-teal">📂</div>
+      <h5>Select Excel File</h5>
+    </div>
+    <div class="card-body">
+
+      <div class="tip">
+        ⚠️&nbsp; Only <strong>upload a .xlsx file</strong>.
+        Row 1 must contain the column headers exactly as listed below.
+      </div>
+
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div class="drop-zone">
+          <input type="file" name="excel_file" accept=".xlsx"
+                 required id="fileInput" onchange="pickFile(this)">
+          <span class="dz-icon">📊</span>
+          <div class="dz-title">Click or drag &amp; drop the file here</div>
+          <div class="dz-sub">Only .xlsx — max 10MB</div>
+        </div>
+        <div id="fileBadge" class="file-badge"></div>
+
+        <div class="btn-row">
+          <button type="submit" class="btn-upload">⬆️ Upload</button>
+          <a href="{% url 'employee_list' %}" class="btn-cancel">✖ Cancel</a>
+        </div>
+      </form>
+
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div class="ch-icon ci-blue">📋</div>
+      <h5>Required Excel Columns — Row 1 = Header</h5>
+    </div>
+    <div class="card-body" style="padding-top:14px;">
+      <div class="tbl-wrap">
+        <table class="fmt">
+          <thead>
+            <tr>
+              <th>Col</th>
+              <th>Column Name (Exact)</th>
+              <th>Example Value</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>A</td><td class="cn">Name</td>            <td class="ce">Ayesha Khan</td>          <td><span class="bdg b-red">Required</span></td></tr>
+            <tr><td>B</td><td class="cn">Email</td>           <td class="ce">ayesha@school.edu.pk</td> <td><span class="bdg b-red">Required · Unique</span></td></tr>
+            <tr><td>C</td><td class="cn">Phone</td>           <td class="ce">03001234567</td>          <td>—</td></tr>
+            <tr><td>D</td><td class="cn">Staff_Category</td>  <td class="ce">Admin Staff</td>          <td><span class="bdg b-org">Must exist in HR Setup</span></td></tr>
+            <tr><td>E</td><td class="cn">Job_Type</td>        <td class="ce">Full Time</td>            <td><span class="bdg b-org">Must exist in HR Setup</span></td></tr>
+            <tr><td>F</td><td class="cn">Department</td>      <td class="ce">Administration</td>       <td><span class="bdg b-org">Must exist in HR Setup</span></td></tr>
+            <tr><td>G</td><td class="cn">Designation</td>     <td class="ce">Office Coordinator</td>   <td><span class="bdg b-org">Must belong to the Department</span></td></tr>
+            <tr><td>H</td><td class="cn">Employee_Type</td>   <td class="ce">Full Time</td>            <td><span class="bdg b-gry">Full Time / Part Time / Contract / Intern</span></td></tr>
+            <tr><td>I</td><td class="cn">Joining_Date</td>    <td class="ce">21-Feb-2024</td>          <td><span class="bdg b-blue">DD-Mon-YYYY · Required</span></td></tr>
+            <tr><td>J</td><td class="cn">Is_Teacher</td>      <td class="ce">Yes / No</td>             <td><span class="bdg b-gry">Defaults to No</span></td></tr>
+            <tr><td>K</td><td class="cn">Is_Active</td>       <td class="ce">Yes / No</td>             <td><span class="bdg b-grn">Defaults to Yes</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="info-box">
+        ℹ️&nbsp;
+        <span>
+          <strong>Staff_Category</strong>, <strong>Job_Type</strong>, <strong>Department</strong> and
+          <strong>Designation</strong> must already exist under HR Setup — rows referencing an unknown
+          value will be skipped with an error message. Login accounts are not created by bulk upload;
+          use the employee edit page afterwards if a login is needed.
+        </span>
+      </div>
+
+    </div>
+  </div>
+
+</div><!-- /page-wrap -->
+</div><!-- /bulk-upload-page -->
+
+<script>
+  function pickFile(input) {
+    const b = document.getElementById('fileBadge');
+    if (input.files && input.files[0]) {
+      b.textContent = '📎 ' + input.files[0].name;
+      b.style.display = 'inline-block';
+    }
+  }
+</script>
+{% endblock %}

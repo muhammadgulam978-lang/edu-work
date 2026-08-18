@@ -1,0 +1,31 @@
+<div class="voucher-dashboard-alert" data-voucher-alert hidden>
+    <i class="fas fa-file-invoice-dollar" aria-hidden="true"></i>
+    <span><strong data-voucher-alert-count>0</strong> new fee voucher notification(s)</span>
+    <a href="{% url vouchers_url_name %}">Open Vouchers</a>
+</div>
+
+<div class="voucher-modal" data-voucher-popup data-summary-url="{% url voucher_summary_url_name %}" hidden>
+    <div class="voucher-modal__backdrop" data-voucher-close></div>
+    <section class="voucher-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="voucher-popup-title">
+        <button type="button" class="voucher-modal__close edu-icon-btn" data-voucher-close aria-label="Close voucher popup">
+            <i class="fas fa-times" aria-hidden="true"></i>
+        </button>
+        <div class="voucher-modal__icon"><i class="fas fa-file-invoice-dollar" aria-hidden="true"></i></div>
+        <p class="voucher-modal__eyebrow">New fee voucher</p>
+        <h2 id="voucher-popup-title" data-voucher-title>Fee Voucher</h2>
+        <p class="voucher-modal__student" data-voucher-student></p>
+        <dl class="voucher-modal__details">
+            <div><dt>Issue date</dt><dd data-voucher-issue></dd></div>
+            <div><dt>Due date</dt><dd data-voucher-due></dd></div>
+            <div><dt>Amount</dt><dd>PKR <span data-voucher-amount></span></dd></div>
+        </dl>
+        <div class="voucher-modal__actions">
+            <a class="edu-btn edu-btn-primary" data-voucher-view target="_blank" rel="noopener">
+                <i class="fas fa-eye"></i> View PDF
+            </a>
+            <a class="edu-btn edu-btn-secondary" data-voucher-download>
+                <i class="fas fa-download"></i> Download PDF
+            </a>
+        </div>
+    </section>
+</div>

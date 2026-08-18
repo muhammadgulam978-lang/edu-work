@@ -1,0 +1,443 @@
+{% extends "teacher_dashboard/base.html" %}
+{% block title %}Curriculum Planner{% endblock %}
+
+{% block custom_style %}
+<style>
+body {
+    background-color: #f7f9fb;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+h2 {
+    font-weight: 600;
+}
+
+.form-control {
+    border-radius: 8px;
+    transition: border-color 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: #264c84;
+    box-shadow: 0 0 0 0.2rem rgba(38, 76, 132, 0.25);
+}
+
+.card {
+    border-left: 5px solid #264c84;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+    transition: transform 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-3px);
+}
+
+.btn {
+    border-radius: 8px;
+    transition: background-color 0.3s ease, transform 0.2s ease, color 0.2s ease;
+}
+
+.btn:hover {
+    transform: scale(1.03);
+}
+
+.btn-primary {
+    background-color: #f8951f;
+    border-color: #f8951f;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #f8951f;
+    border-color: #f8951f;
+    color: white;
+}
+
+.btn-success {
+    background-color: #8ec241;
+    border-color: #8ec241;
+    color: white;
+}
+
+.btn-success:hover {
+    background-color: #8ec241;
+    border-color: #8ec241;
+    color: white;
+}
+
+.btn-info {
+    background-color: #264c84;
+    border-color: #264c84;
+    color: white;
+}
+
+.btn-info:hover {
+    background-color: #264c84;
+    border-color: #264c84;
+    color: white;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    color: white;
+}
+
+.btn-outline-primary {
+    border-radius: 6px;
+    color: #264c84;
+    border-color: #264c84;
+}
+
+.btn-outline-primary:hover {
+    background-color: #264c84;
+    color: white;
+}
+
+.bg-light {
+    background-color: #f1f5f9 !important;
+}
+
+.status-pending {
+    background-color: #fffbe6;
+    border-left: 4px solid #ffe58f;
+}
+
+.status-completed {
+    background-color: #f6ffed;
+    border-left: 4px solid #95de64;
+}
+
+.status-missed {
+    background-color: #fff1f0;
+    border-left: 4px solid #ff7875;
+}
+
+.status-rescheduled {
+    background-color: #e6f7ff;
+    border-left: 4px solid #69c0ff;
+}
+
+label {
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+.center-horizontal {
+  
+  margin-left: 220px;
+  margin-right: 20px;
+  max-width: calc(100% - 240px);
+  max-width: 960px;
+  background-color: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.05);
+}
+</style>
+{% endblock %}
+{% block content %}
+<div class="center-horizontal">
+<div class="container mt-4">
+    <h2 class="mb-4 text-primary">Lesson Planning </h2>
+    <input type="hidden" id="csrf-token" value="{{ csrf_token }}" />
+
+    <div class="row mb-3">
+        <div class="col">
+            <label class="form-label">Class</label>
+            <input type="text" class="form-control" id="class-input" placeholder="e.g., Grade 8" />
+        </div>
+        <div class="col">
+            <label class="form-label">Section</label>
+            <input type="text" class="form-control" id="section-input" placeholder="e.g., A" />
+        </div>
+        <div class="col">
+            <label class="form-label">Subject</label>
+            <input type="text" class="form-control" id="subject-input" placeholder="e.g., Mathematics" />
+        </div>
+    </div>
+
+    <div id="book-container"></div>
+    <button class="btn btn-primary my-3" id="add-book">Add Book/Guide</button>
+    <button class="btn btn-success" id="save-btn">Save</button>
+    <div id="loadingMessage" style="display: none; margin-top: 10px; text-align:center;">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <div class="mt-2 text-success">⏳ Generating lesson plans, please wait...</div>
+</div>
+</div>
+</div>
+<div id="lesson-output" class="container mt-4"></div>
+{% endblock %}
+<script>
+  console.log("✅ Inline test script loaded!");
+</script>
+{% block  extra_scripts %}
+{{ block.super }}
+<script>
+    
+document.addEventListener('DOMContentLoaded', function () {
+
+    const csrfToken = document.getElementById('csrf-token').value;
+
+    function createBookCard() {
+        const bookContainer = document.getElementById('book-container');
+
+        const bookDiv = document.createElement('div');
+        bookDiv.className = 'card mb-3 p-3';
+
+        bookDiv.innerHTML = `
+            <div class="mb-2">
+                <label class="form-label">Book/Guide Name</label>
+                <input type="text" class="form-control book-name" placeholder="e.g., NCERT Mathematics" />
+            </div>
+            <div class="mb-2">
+                <label class="form-label">Guide URL</label>
+                <input type="text" class="form-control guide-url" placeholder="Optional URL" />
+            </div>
+            <div class="chapters"></div>
+            <button class="btn btn-info add-chapter mt-2">+ Add Chapter</button>
+            <hr/>
+        `;
+
+        const nameInput = bookDiv.querySelector('.book-name');
+        const guideUrlInput = bookDiv.querySelector('.guide-url');
+
+        nameInput.addEventListener('input', function () {
+            const q = this.value.trim();
+            if (q.length < 3) return;
+
+            const subject = document.getElementById('subject-input').value;
+            const schoolClass = document.getElementById('class-input').value;
+
+            fetch(`/teacher/api/fetch-guides/?q=${encodeURIComponent(q)}&subject=${encodeURIComponent(subject)}&class=${encodeURIComponent(schoolClass)}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'ok' && data.guides.length > 0) {
+                        guideUrlInput.value = data.guides[0].url;
+                    }
+                })
+                .catch(console.error);
+        });
+
+        bookDiv.querySelector('.add-chapter').addEventListener('click', function () {
+            const chaptersDiv = bookDiv.querySelector('.chapters');
+            const chapterDiv = document.createElement('div');
+            chapterDiv.className = 'border p-2 my-2 chapter';
+
+            chapterDiv.innerHTML = `
+                <label class="form-label">Chapter Title</label>
+                <input type="text" class="form-control chapter-name mb-2" placeholder="e.g., Geometry" />
+                <div class="topics"></div>
+                <button class="btn btn-sm btn-secondary add-topic">+ Add Topic</button>
+            `;
+
+            chapterDiv.querySelector('.add-topic').addEventListener('click', function () {
+                const topicsDiv = chapterDiv.querySelector('.topics');
+                const topicDiv = document.createElement('div');
+                topicDiv.className = 'border p-2 my-2 bg-light';
+
+                topicDiv.innerHTML = `
+                    <label>Topic Title</label>
+                    <input type="text" class="form-control topic-title mb-1" placeholder="e.g., Area of Triangles" />
+                    <label>Periods</label>
+                    <input type="number" class="form-control topic-periods mb-1" placeholder="e.g., 3" />
+                    <label>Planning Style</label>
+                    <input type="text" class="form-control topic-style mb-1" placeholder="e.g., Detailed" />
+        
+                    <div class="generated-details mt-2 border p-2 d-none">
+                        <p><strong>Objective:</strong> <span class="ai-objective text-muted"></span></p>
+                        <p><strong>Activities:</strong> <span class="ai-activities text-muted"></span></p>
+                        <p><strong>Materials:</strong> <span class="ai-materials text-muted"></span></p>
+                        <p><strong>Assessment:</strong> <span class="ai-assessment text-muted"></span></p>
+                        <p><strong>Homework:</strong> <span class="ai-homework text-muted"></span></p>
+                    </div>
+                `;
+                topicsDiv.appendChild(topicDiv);
+            });
+
+            chaptersDiv.appendChild(chapterDiv);
+        });
+
+        bookContainer.appendChild(bookDiv);
+    }
+
+    document.getElementById('add-book').addEventListener('click', createBookCard);
+     console.log("Curriculum Planner script loaded successfully.");
+    $('.btn-success').click(function () {
+         const loadingMsg = document.getElementById("loadingMessage");
+          loadingMsg.style.display = "block";
+        const className = $('#class-input').val();
+        const section = $('#section-input').val();
+        const subject = $('#subject-input').val();
+
+        const books = [];
+
+        $('#book-container .card').each(function () {
+            const bookName = $(this).find('.book-name').val();
+            const guideUrl = $(this).find('.guide-url').val();
+            const chapters = [];
+
+            $(this).find('.chapters > div').each(function () {
+                const chapterTitle = $(this).find('.chapter-name').val();
+                const topics = [];
+
+                $(this).find('.topics > div').each(function () {
+                    topics.push({
+                        title: $(this).find('.topic-title').val(),
+                        periods: parseInt($(this).find('.topic-periods').val(), 10),
+                        planning_style: $(this).find('.topic-style').val()
+                    });
+                });
+
+                chapters.push({ name: chapterTitle, topics });
+            });
+
+            books.push({ name: bookName, guide_url: guideUrl, chapters });
+        });
+
+        const data = {
+            class: className,
+            section: section,
+            subject: subject,
+            books: books
+        };
+
+        fetch('/teacher/save-curriculum/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.ok ? response.json() : response.text().then(text => { throw new Error(`Server returned ${response.status}: ${text}`); }))
+        .then(data => {
+            loadingMsg.style.display = "none";
+            alert(data.message || 'Saved!');
+            const outputDiv = document.getElementById('lesson-output');
+            outputDiv.innerHTML = '';
+
+            if (data.lesson_plans && data.lesson_plans.length > 0) {
+                data.lesson_plans.forEach(plan => {
+                    // ✅ Detect if subject is RTL
+                        const subject = document.getElementById("subject-input").value.toLowerCase();
+                        const rtlSubjects = ['urdu', 'islamiat', 'اسلامیات', 'اردو', 'arabic', 'sindhi'];
+                        const dir = rtlSubjects.includes(subject) ? 'rtl' : 'ltr';
+
+                    const card = document.createElement('div');
+                    card.className = 'card mb-3';
+
+                    const cardBody = document.createElement('div');
+                    cardBody.className = 'card-body';
+
+                    const header = document.createElement('h5');
+                    header.innerText = `Chapter: ${plan.chapter} | Topic: ${plan.topic}`;
+                    cardBody.appendChild(header);
+
+                    plan.days.forEach(day => {
+                        const dayDiv = document.createElement('div');
+                        let statusClass = '';
+                        switch (day.status) {
+                            case 'completed': statusClass = 'status-completed'; break;
+                            case 'missed': statusClass = 'status-missed'; break;
+                            case 'rescheduled': statusClass = 'status-rescheduled'; break;
+                            default: statusClass = 'status-pending';
+                        }
+                        dayDiv.className = `p-2 mb-2 ${statusClass}`;
+                        dayDiv.innerHTML = `
+                        <strong>Day ${day.day_number}</strong><br>
+                        <b>Date:</b> ${day.scheduled_date || 'TBD'}<br>
+                        <b>Status:</b> ${day.status || 'pending'}<br>
+                        <div dir="${dir}" style="font-family: 'Noto Nastaliq Urdu', Arial, sans-serif;">
+                            <b>🎯 Objective:</b> ${day.objective}<br>
+                            <b>📝 Activities:</b> ${day.activities}<br>
+                            <b>📦 Materials:</b> ${day.materials}<br>
+                            <b>🧪 Assessment:</b> ${day.assessment}<br>
+                            <b>🏠 Homework:</b> ${day.homework}<br>
+                            <b>📄 Worksheet:</b> ${day.worksheet}<br>
+                        </div>
+                    `;
+
+                        cardBody.appendChild(dayDiv);
+                    });
+
+                    card.appendChild(cardBody);
+                    outputDiv.appendChild(card);
+                });
+            }
+        })
+        .catch(error => {
+            loadingMsg.style.display = "none";
+            console.error("Fetch error:", error);
+            alert("Error: " + error.message);
+        });
+    });
+
+    $(document).on('click', '.generate-btn', function () {
+        const topicDiv = $(this).closest('.bg-light');
+        const chapterDiv = $(this).closest('.chapter');
+        const subject = $('#subject-input').val();
+        const chapter = chapterDiv.find('.chapter-name').val();
+        const topic = topicDiv.find('.topic-title').val();
+
+        if (!subject || !chapter || !topic) {
+            alert("Please fill in subject, chapter, and topic before generating.");
+            return;
+        }
+
+        const outputDiv = topicDiv.find('.generated-details');
+        const button = $(this);
+        button.text("Generating...").prop('disabled', true);
+
+        fetch('/teacher/generate-lesson-details/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+           
+            body: JSON.stringify({ subject, chapter, topic, periods })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'ok') {
+                outputDiv.removeClass('d-none');
+                outputDiv.empty(); // Clear old content if any
+
+                data.data.forEach(day => {
+                    outputDiv.append(`
+                        <div class="p-2 mb-3 border bg-white">
+                            <strong>Day ${day.day_number}</strong><br>
+                            <b>🎯 Objective:</b> ${day.objective}<br>
+                            <b>📝 Activities:</b> ${day.activities}<br>
+                            <b>📦 Materials:</b> ${day.materials}<br>
+                            <b>🧪 Assessment:</b> ${day.assessment}<br>
+                            <b>🏠 Homework:</b> ${day.homework}<br>
+                            <b>📄 Worksheet:</b> ${day.worksheet}<br>
+                        </div>
+                    `);
+                });
+            } else {
+                alert("AI Error: " + data.message);
+            }
+        })
+        .catch(err => {
+            console.error("Generation failed:", err);
+            alert("Local AI server error.");
+        })
+        .finally(() => {
+            button.remove();
+        });
+    });
+
+}); 
+</script>
+{% endblock %}

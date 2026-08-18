@@ -1,0 +1,87 @@
+{% extends "admin_panel/bases.html" %}
+{% load static %}
+
+{% block title %}Questions for {{ exam_format.format_name }}{% endblock %}
+{% block content %}
+<div class="col-12">
+  <div class="card" style="background: #f8f9fa; margin-left:20px; margin-right:20px;">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h4 class="card-title mb-0">
+        Questions for {{ exam_format.format_name }}
+      </h4>
+      <div>
+        <a href="{% url 'generate_paper_confirm' exam_format.id %}" class="btn btn-success me-2">
+          <i class="fa fa-file-pdf me-2"></i>Generate Paper
+        </a>
+        <a href="{% url 'format_list' %}" class="btn btn-secondary">
+          <i class="fa fa-arrow-left me-2"></i>Back to Formats
+        </a>
+      </div>
+    </div>
+
+    <div class="card-body">
+      <p><strong>Class:</strong> {{ exam_format.class_obj.class_name }} | 
+         <strong>Subject:</strong> {{ exam_format.subject.name }}</p>
+
+      <div class="table-responsive">
+        <table
+          id="example3"
+          class="display table table-striped table-bordered align-middle"
+          style="width: 100%;">
+          <thead class="table-light">
+            <tr>
+              <th style="width: 50px;">#</th>
+              <th>Question</th>
+              <th>Type</th>
+              <th>Options (if MCQ)</th>
+              <th>Correct Answer</th>
+              <th>Teacher</th>
+              <th>Section</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for q in questions %}
+            <tr>
+              <td>{{ forloop.counter }}</td>
+              <td>{{ q.text }}</td>
+              <td>{{ q.question_type }}</td>
+              <td>
+                {% if q.question_type == "MCQ" %}
+                  <ul class="list-unstyled mb-0">
+                    <li><strong>A:</strong> {{ q.option_a }}</li>
+                    <li><strong>B:</strong> {{ q.option_b }}</li>
+                    <li><strong>C:</strong> {{ q.option_c }}</li>
+                    <li><strong>D:</strong> {{ q.option_d }}</li>
+                  </ul>
+                {% else %}
+                  <span class="text-muted">N/A</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if q.question_type == "MCQ" %}
+                  <span class="badge bg-success">{{ q.correct_answer }}</span>
+                {% else %}
+                  <span class="text-muted">N/A</span>
+                {% endif %}
+              </td>
+              <td>{{ q.teacher.username }}</td>
+              <td>{{ q.section.section_name }}</td>
+            </tr>
+            {% empty %}
+              <tr><td colspan="7" class="text-center">No questions available</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Required vendors -->
+<script src="{% static 'admin_panel/vendor/global/global.min.js' %}"></script>
+<script src="{% static 'admin_panel/vendor/bootstrap-select/dist/js/bootstrap-select.min.js' %}"></script>
+
+<!-- Datatable -->
+<script src="{% static 'admin_panel/vendor/datatables/js/jquery.dataTables.min.js' %}"></script>
+<script src="{% static 'admin_panel/js/plugins-init/datatables.init.js' %}"></script>
+{% endblock %}

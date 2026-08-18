@@ -1,0 +1,41 @@
+:root {
+    --orange: #f8951f;
+    --blue: #264c84;
+    --green: #8ec241;
+}
+body {
+    background-color: #f1f1f1;
+}
+
+.form-container {
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+        }
+
+        .form-heading {
+            background-color: var(--blue); /* Bootstrap green */
+            color: white;
+            padding: 15px;
+            border-radius: 10px 10px 0 0;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        label {
+            font-weight: 600;
+        }
+
+        .btn-custom {
+            background-color: var(--blue); /* Bootstrap blue */
+            color: white;
+            font-weight: bold;
+            width: 20%;
+        }
+.btn-custom:hover {
+            background-color: var(--orange); /* Bootstrap blue */
+            color: white;
+            font-weight: bold;
+            width: 20%;
+        }

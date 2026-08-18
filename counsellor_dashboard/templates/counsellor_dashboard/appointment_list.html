@@ -1,0 +1,29 @@
+{% extends "admin_panel/bases.html" %}
+{% load static %}
+{% block title %}Counselling Appointments{% endblock %}
+{% block head %}<link rel="stylesheet" href="{% static 'counsellor_dashboard/css/counsellor_theme.css' %}">{% endblock %}
+{% block content %}
+<div class="cns-wrap">
+  <div class="cns-page-header">
+    <div><h2>📆 Appointments</h2><p>Individual and group counselling sessions, scheduled.</p></div>
+    <div class="cns-header-actions"><a class="btn btn-teal" href="{% url 'counsellor_dashboard:appointment_create' %}">+ Schedule Appointment</a></div>
+  </div>
+  <div class="cns-panel">
+    <table class="cns-table">
+      <thead><tr><th>Student</th><th>Counsellor</th><th>Date/Time</th><th>Mode</th><th>Status</th></tr></thead>
+      <tbody>
+        {% for a in appointments %}
+        <tr>
+          <td>{{ a.student.full_name }}</td>
+          <td>{{ a.counsellor.name|default:"—" }}</td>
+          <td>{{ a.scheduled_datetime|date:"d M Y, H:i" }}</td>
+          <td>{{ a.get_mode_display }}</td>
+          <td><span class="cns-badge">{{ a.get_status_display }}</span></td>
+        </tr>
+        {% empty %}<tr><td colspan="5" class="cns-empty">No appointments scheduled yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
