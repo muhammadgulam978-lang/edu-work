@@ -1,6 +1,7 @@
 (function () {
   const root = document.querySelector('.bulk-student-page');
   if (!root) return;
+  const isTeacher = root.dataset.entity === 'teacher';
 
   const input = root.querySelector('[data-file-input]');
   const zone = root.querySelector('[data-dropzone]');
@@ -62,6 +63,16 @@
       const response = await fetch(root.dataset.activityUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
       if (!response.ok) return;
       const data = await response.json();
+      if (isTeacher) {
+        updateCounter('[data-teacher-count]', data.teacher_count);
+        updateCounter('[data-login-count]', data.login_count);
+        updateCounter('[data-live-updated]', data.updated_at);
+        const activity = root.querySelector('[data-teacher-activity]');
+        if (activity) activity.innerHTML = data.teachers.length ? data.teachers.map((teacher) =>
+          `<a class="bulk-activity-row" href="${escapeHtml(teacher.url)}"><span class="bulk-avatar"><i class="fa fa-chalkboard-teacher"></i></span><span><b>${escapeHtml(teacher.name)}</b><small>${escapeHtml(teacher.email)} · ${escapeHtml(teacher.department)}</small></span><i class="fa fa-chevron-right"></i></a>`
+        ).join('') : '<p class="bulk-empty">No teachers imported yet.</p>';
+        return;
+      }
       updateCounter('[data-student-count]', data.student_count);
       updateCounter('[data-parent-count]', data.parent_count);
       updateCounter('[data-live-updated]', data.updated_at);
@@ -98,6 +109,17 @@
 
   function setProgress(value, copy) {
     if (!overlay) return;
+    if (isTeacher && copy) {
+      copy = { ...copy };
+      for (const key of ['stage', 'title', 'detail']) {
+        if (copy[key]) copy[key] = copy[key]
+          .replace('student and parent data', 'teacher profile and login data')
+          .replace('student data, duplicates, placement, parent links and fee readiness', 'teacher data, duplicate accounts, subjects and faculty groups')
+          .replace('students, parents, portal accounts, fee links and delivery queues', 'teachers, portal accounts and subject assignments')
+          .replace('import and delivery report', 'teacher import report')
+          .replace(/Student/g, 'Teacher').replace(/student/g, 'teacher');
+      }
+    }
     currentProgress = Math.max(0, Math.min(100, Math.round(value)));
     overlay.querySelector('[data-progress-ring]').style.setProperty('--progress', `${currentProgress * 3.6}deg`);
     overlay.querySelector('[data-progress-bar]').style.width = `${currentProgress}%`;

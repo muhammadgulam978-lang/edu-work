@@ -1,343 +1,113 @@
+{% extends "admin_panel/bases.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bulk Upload — Teachers</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{% static 'admin_panel/css/admin-inner-theme.css' %}?v=admin-sidebar-color-icons-2">
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    body {
-      font-family: 'Inter', sans-serif;
-      background: #f0fafa;
-      min-height: 100vh;
-      padding: 36px 20px;
-    }
+{% block title %}Bulk Upload Teachers{% endblock %}
 
-    .page-wrap {
-      max-width: 880px;
-      margin: 0 auto;
-    }
+{% block head %}
+<link rel="stylesheet" href="{% static 'admin_panel/css/bulk-student-upload.css' %}?v=bulk-student-progress-2">
+<link rel="stylesheet" href="{% static 'admin_panel/css/bulk-student-progress.css' %}?v=bulk-student-progress-1">
+{% endblock %}
 
-    /* ── Top bar ── */
-    .top-bar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 30px;
-    }
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 11px;
-    }
-    .brand-icon {
-      width: 42px; height: 42px;
-      background: linear-gradient(135deg, #2dbdad, #1a9e90);
-      border-radius: 11px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 20px;
-      box-shadow: 0 4px 12px rgba(45,189,173,.3);
-    }
-    .brand-name { font-size: 17px; font-weight: 700; color: #2c3e50; }
-    .brand-name span { color: #2dbdad; }
-
-    .back-link {
-      display: inline-flex; align-items: center; gap: 6px;
-      font-size: 13px; font-weight: 500;
-      color: #2dbdad; text-decoration: none;
-      background: #fff;
-      padding: 8px 16px; border-radius: 8px;
-      box-shadow: 0 1px 6px rgba(0,0,0,.08);
-      transition: box-shadow .2s, color .2s;
-    }
-    .back-link:hover { box-shadow: 0 3px 12px rgba(0,0,0,.13); color: #1a9e90; }
-
-    /* ── Page heading ── */
-    .page-heading { margin-bottom: 22px; }
-    .page-heading h1 {
-      font-size: 22px; font-weight: 700; color: #2c3e50;
-      display: flex; align-items: center; gap: 9px;
-    }
-    .page-heading p { font-size: 13px; color: #7f8c8d; margin-top: 4px; }
-
-    /* ── Alerts ── */
-    .alert {
-      border-radius: 10px; padding: 11px 16px;
-      font-size: 13px; margin-bottom: 12px;
-      display: flex; align-items: flex-start; gap: 9px;
-      font-weight: 500; line-height: 1.5;
-    }
-    .alert-success { background: #d4f4ee; color: #1a6e5e; border-left: 4px solid #2dbdad; }
-    .alert-danger,
-    .alert-error   { background: #fde8e8; color: #842029; border-left: 4px solid #e74c3c; }
-    .alert-info    { background: #daf0fd; color: #0c5577; border-left: 4px solid #3498db; }
-    .alert-warning { background: #fff8e1; color: #856404; border-left: 4px solid #f0ad4e; }
-
-    /* ── Card ── */
-    .card {
-      background: #fff;
-      border-radius: 16px;
-      box-shadow: 0 2px 16px rgba(45,189,173,.09);
-      margin-bottom: 20px;
-      overflow: hidden;
-    }
-    .card-head {
-      padding: 16px 22px 13px;
-      border-bottom: 1px solid #f0f0f0;
-      display: flex; align-items: center; gap: 10px;
-    }
-    .ch-icon {
-      width: 32px; height: 32px; border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 15px;
-    }
-    .ci-teal { background: #e8f9f7; }
-    .ci-blue { background: #e8f4fd; }
-    .card-head h5 { font-size: 14px; font-weight: 700; color: #2c3e50; }
-    .card-body { padding: 20px 22px; }
-
-    /* ── Tip ── */
-    .tip {
-      background: #fff8e1; border-left: 4px solid #f0ad4e;
-      border-radius: 8px; padding: 10px 14px;
-      font-size: 12.5px; color: #7d5a00;
-      margin-bottom: 18px;
-      display: flex; gap: 8px;
-      align-items: flex-start; line-height: 1.6;
-    }
-
-    /* ── Password info box ── */
-    .info-box {
-      background: #eaf4fd; border-left: 4px solid #3498db;
-      border-radius: 8px; padding: 10px 14px;
-      font-size: 12.5px; color: #0c5577;
-      margin-top: 16px;
-      display: flex; gap: 8px;
-      align-items: flex-start; line-height: 1.6;
-    }
-    .info-box code {
-      background: #d0e8f8; color: #0c5577;
-      padding: 1px 7px; border-radius: 5px;
-      font-family: 'Courier New', monospace;
-      font-size: 12px; font-weight: 700;
-    }
-
-    /* ── Drop zone ── */
-    .drop-zone {
-      border: 2px dashed #2dbdad;
-      border-radius: 12px;
-      padding: 38px 20px;
-      text-align: center;
-      background: #f0fdfb;
-      cursor: pointer;
-      position: relative;
-      transition: background .2s, border-color .2s;
-      margin-bottom: 6px;
-    }
-    .drop-zone:hover { background: #d9f5f0; border-color: #1a9e90; }
-    .drop-zone input[type="file"] {
-      position: absolute; inset: 0;
-      opacity: 0; cursor: pointer; width: 100%;
-    }
-    .dz-icon  { font-size: 42px; display: block; margin-bottom: 9px; }
-    .dz-title { font-size: 14.5px; font-weight: 600; color: #2c3e50; margin-bottom: 4px; }
-    .dz-sub   { font-size: 12px; color: #7f8c8d; }
-
-    .file-badge {
-      display: none;
-      background: #e8f9f7; color: #1a9e90;
-      padding: 4px 14px; border-radius: 20px;
-      font-size: 12px; font-weight: 600;
-      margin-top: 10px;
-    }
-
-    /* ── Buttons ── */
-    .btn-row { display: flex; align-items: center; gap: 11px; margin-top: 18px; }
-
-    .btn-upload {
-      background: linear-gradient(135deg, #2dbdad, #1a9e90);
-      color: #fff; border: none;
-      padding: 11px 26px; border-radius: 10px;
-      font-size: 13.5px; font-weight: 600; cursor: pointer;
-      display: inline-flex; align-items: center; gap: 7px;
-      box-shadow: 0 4px 12px rgba(45,189,173,.28);
-      transition: filter .2s, transform .2s;
-    }
-    .btn-upload:hover { filter: brightness(1.08); transform: translateY(-1px); }
-
-    .btn-cancel {
-      background: #f0f2f5; color: #2c3e50; border: none;
-      padding: 11px 20px; border-radius: 10px;
-      font-size: 13px; font-weight: 500; cursor: pointer;
-      text-decoration: none;
-      display: inline-flex; align-items: center; gap: 6px;
-      transition: background .2s;
-    }
-    .btn-cancel:hover { background: #e2e5ea; }
-
-    /* ── Format table ── */
-    .tbl-wrap { overflow-x: auto; }
-    table.fmt {
-      width: 100%; border-collapse: separate; border-spacing: 0;
-      font-size: 12.5px;
-      border-radius: 10px; overflow: hidden;
-      border: 1px solid #e8ecef;
-    }
-    table.fmt thead tr {
-      background: linear-gradient(90deg, #2dbdad, #1a9e90);
-      color: #fff;
-    }
-    table.fmt thead th { padding: 10px 13px; font-weight: 600; font-size: 12px; }
-    table.fmt tbody tr { border-bottom: 1px solid #f2f2f2; transition: background .15s; }
-    table.fmt tbody tr:hover { background: #f0fdfb; }
-    table.fmt tbody tr:last-child { border-bottom: none; }
-    table.fmt td { padding: 8px 13px; vertical-align: middle; color: #2c3e50; }
-    table.fmt td:first-child {
-      font-weight: 700; color: #2dbdad;
-      background: #f8fffd;
-      width: 34px; text-align: center; font-size: 11px;
-    }
-    .cn  { font-weight: 600; }
-    .ce  { font-family: 'Courier New', monospace; color: #555; font-size: 11.5px; }
-    .bdg { padding: 2px 9px; border-radius: 20px; font-size: 10.5px; font-weight: 600; }
-    .b-red  { background: #ffe0e0; color: #c0392b; }
-    .b-blue { background: #e8f4fd; color: #2980b9; }
-    .b-grn  { background: #e8f8f0; color: #27ae60; }
-    .b-gry  { background: #f0f2f5; color: #7f8c8d; }
-    .b-org  { background: #fff0e0; color: #b35a00; }
-  </style>
-</head>
-
-<body class="admin-inner-page">
-<div class="page-wrap">
-
-  <!-- Top bar -->
-  <div class="top-bar">
-    <div class="brand">
-      <div class="brand-icon">🎓</div>
-      <div class="brand-name">Edu<span>Pilot</span></div>
+{% block content %}
+<main class="bulk-student-page" data-entity="teacher" data-activity-url="{% url 'bulk_upload_teachers_activity' %}" data-import-progress-url="{% url 'bulk_upload_teachers_progress' %}">
+  <section class="bulk-hero">
+    <div>
+      <p class="bulk-kicker">Teacher Gateway</p>
+      <h1>Bulk Teacher Import</h1>
+      <p>Validate Excel records first, then create teacher profiles and portal accounts in one controlled import.</p>
     </div>
-    <a href="{% url 'teacher_list' %}" class="back-link">← Back to Teachers</a>
+    <div class="bulk-hero-actions">
+      <a class="bulk-btn bulk-btn-secondary" href="{% url 'bulk_upload_teachers_template' %}"><i class="fa fa-file-excel"></i> Download Template</a>
+      <a class="bulk-btn bulk-btn-secondary" href="{% url 'teacher_list' %}"><i class="fa fa-arrow-left"></i> Teacher List</a>
+    </div>
+  </section>
+
+  {% if messages %}<div class="bulk-messages">{% for message in messages %}<div class="bulk-alert bulk-alert-{{ message.tags|default:'info' }}">{{ message }}</div>{% endfor %}</div>{% endif %}
+
+  <section class="bulk-stepper" aria-label="Import steps">
+    <div class="bulk-step is-active"><span>1</span><div><b>Select</b><small>Choose .xlsx file</small></div></div>
+    <div class="bulk-step {% if preview %}is-active{% endif %}"><span>2</span><div><b>Validate</b><small>Review rows and accounts</small></div></div>
+    <div class="bulk-step {% if result %}is-active{% endif %}"><span>3</span><div><b>Import</b><small>Create live records</small></div></div>
+  </section>
+
+  <section class="bulk-live-stats">
+    <article><span class="bulk-stat-icon"><i class="fa fa-chalkboard-teacher"></i></span><div><strong data-teacher-count>{{ teacher_count }}</strong><small>Live Teachers</small></div></article>
+    <article><span class="bulk-stat-icon"><i class="fa fa-users"></i></span><div><strong data-login-count>{{ login_count }}</strong><small>Active Teacher Logins</small></div></article>
+    <article><span class="bulk-stat-icon"><i class="fa fa-calendar-check"></i></span><div><strong>{{ active_year.year|default:'Not set' }}</strong><small>Active Academic Year</small></div></article>
+    <article><span class="bulk-stat-icon"><i class="fa fa-sync-alt"></i></span><div><strong data-live-updated>Live</strong><small>Refreshes every 15 seconds</small></div></article>
+  </section>
+
+  <div class="bulk-grid">
+    <section class="bulk-card bulk-upload-card">
+      <div class="bulk-card-head"><span><i class="fa fa-cloud-upload-alt"></i></span><div><h2>Upload Excel File</h2><p>Maximum 10 MB. The first row must contain supported headers.</p></div></div>
+      <form method="post" action="{% url 'bulk_upload_teachers' %}" enctype="multipart/form-data" data-upload-form data-progress-form data-progress-mode="validate">
+        {% csrf_token %}<input type="hidden" name="action" value="preview">
+        <label class="bulk-dropzone" data-dropzone>
+          <input type="file" name="excel_file" accept=".xlsx" required data-file-input>
+          <i class="fa fa-file-excel"></i>
+          <strong>Drop your Excel file here</strong>
+          <span>or click to browse</span>
+          <output data-file-output>No file selected</output>
+        </label>
+        <div class="bulk-guidance"><i class="fa fa-info-circle"></i><span>Name and Email are required. Missing login IDs and secure passwords are generated. Subject names and faculty groups must match the configured choices.</span></div>
+        <div class="bulk-actions"><button class="bulk-btn bulk-btn-primary" type="submit"><i class="fa fa-check-circle"></i> Validate File</button><a class="bulk-btn bulk-btn-secondary" href="{% url 'teacher_list' %}">Cancel</a></div>
+      </form>
+    </section>
+
+    <aside class="bulk-card bulk-readiness">
+      <div class="bulk-card-head"><span><i class="fa fa-tasks"></i></span><div><h2>Import Readiness</h2><p>Complete these before confirming.</p></div></div>
+      <ul>
+        <li class="is-ready"><i class="fa fa-check"></i> Teacher profile and login details checked</li>
+        <li><i class="fa fa-check"></i> Duplicate usernames and emails detected</li>
+        <li><i class="fa fa-check"></i> Subjects and faculty groups reviewed</li>
+        <li><i class="fa fa-check"></i> Dates, qualifications and status validated</li>
+      </ul>
+    </aside>
   </div>
 
-  <!-- Heading -->
-  <div class="page-heading">
-    <h1>📥 Bulk Upload — Teachers</h1>
-    <p>Only Upload in Excel file . Must have Row 1 header  and  columns as like this format.</p>
-  </div>
-
-  <!-- Django Messages -->
-  {% if messages %}
-    {% for msg in messages %}
-      <div class="alert alert-{{ msg.tags|default:'info' }}">
-        {% if   msg.tags == 'success' %}✅
-        {% elif msg.tags == 'danger' or msg.tags == 'error' %}❌
-        {% elif msg.tags == 'warning' %}⚠️
-        {% else %}ℹ️{% endif %}
-        {{ msg }}
-      </div>
-    {% endfor %}
+  {% if preview %}
+  <section class="bulk-card bulk-preview">
+    <div class="bulk-section-title"><div><h2>Validation Preview</h2><p>{{ pending_upload.name }} · {{ preview.total_rows }} populated rows</p></div><span class="bulk-status {% if preview.invalid_rows %}is-warning{% else %}is-success{% endif %}">{% if preview.invalid_rows %}Review required{% else %}Ready to import{% endif %}</span></div>
+    <div class="bulk-preview-metrics">
+      <div><strong>{{ preview.valid_rows }}</strong><span>Valid rows</span></div><div><strong>{{ preview.invalid_rows }}</strong><span>Invalid rows</span></div>
+    </div>
+    <div class="bulk-table-wrap"><table><thead><tr><th>Row</th><th>Teacher</th><th>Email</th><th>Login ID</th><th>Department</th><th>Status</th></tr></thead><tbody>{% for row in preview.rows %}<tr><td>{{ row.row_number }}</td><td>{{ row.name }}</td><td>{{ row.email }}</td><td>{{ row.login_id }}</td><td>{{ row.department|default:'—' }}</td><td><span class="bulk-row-status is-{{ row.status }}" title="{{ row.message }}">{{ row.status|title }}</span></td></tr>{% endfor %}</tbody></table></div>
+    {% if preview.warnings %}<details class="bulk-errors"><summary>View validation warnings</summary>{% for warning in preview.warnings %}<p>{{ warning }}</p>{% endfor %}</details>{% endif %}
+    {% if preview.errors %}<details class="bulk-errors"><summary>View validation messages ({{ preview.errors|length }})</summary>{% for error in preview.errors %}<p>{{ error }}</p>{% endfor %}</details>{% endif %}
+    <div class="bulk-actions">
+      <form method="post" action="{% url 'bulk_upload_teachers' %}" data-progress-form data-progress-mode="import" data-total-rows="{{ preview.valid_rows }}">{% csrf_token %}<input type="hidden" name="action" value="confirm"><input type="hidden" name="upload_token" value="{{ pending_upload.token }}"><button class="bulk-btn bulk-btn-primary" type="submit" {% if preview.invalid_rows or not preview.valid_rows %}disabled{% endif %}><i class="fa fa-user-cog"></i> Confirm & Import {{ preview.valid_rows }} Rows</button></form>
+      <form method="post" action="{% url 'bulk_upload_teachers' %}">{% csrf_token %}<input type="hidden" name="action" value="cancel"><button class="bulk-btn bulk-btn-secondary" type="submit">Discard Preview</button></form>
+    </div>
+  </section>
   {% endif %}
 
-  <!-- Upload Card -->
-  <div class="card">
-    <div class="card-head">
-      <div class="ch-icon ci-teal">📂</div>
-      <h5>Only Select Excel File </h5>
+  {% if result %}
+  <section class="bulk-card bulk-result" data-import-report>
+    <div class="bulk-section-title"><div><p class="bulk-kicker">Completed in {{ result.processing_seconds }} seconds</p><h2>Complete Import Report</h2><p>Teacher profiles, portal accounts and subject assignments from the confirmed file.</p></div><span class="bulk-status {% if result.skipped %}is-warning{% else %}is-success{% endif %}">{{ result.success_rate }}% successful</span></div>
+    <div class="bulk-report-overview"><div class="bulk-report-score" style="--report-progress:{{ result.success_rate }}%"><span><strong>{{ result.success_rate }}%</strong><small>Success rate</small></span></div><div class="bulk-report-summary"><strong>{{ result.imported }} of {{ result.total_rows }}</strong><span>teacher rows successfully processed</span><small>{{ result.skipped }} skipped</small></div></div>
+    <div class="bulk-report-grid"><article><i class="fa fa-chalkboard-teacher"></i><strong>{{ result.imported }}</strong><span>Teacher accounts created</span></article><article><i class="fa fa-sign-in-alt"></i><strong>{{ result.login_ready }}</strong><span>Portal logins ready</span><small>Inactive and On Leave accounts remain disabled</small></article><article><i class="fa fa-forward"></i><strong>{{ result.skipped }}</strong><span>Rows skipped</span></article></div>
+    {% if result.credentials_report_path %}<div class="bulk-actions"><a class="bulk-btn bulk-btn-primary" href="{% url 'bulk_upload_teachers_credentials' %}"><i class="fa fa-file-excel"></i> Download Portal IDs & Passwords</a></div>{% endif %}
+    {% if result.errors %}<details class="bulk-errors"><summary>View skipped-row errors</summary>{% for error in result.errors %}<p>{{ error }}</p>{% endfor %}</details>{% endif %}
+    {% if result.warnings %}<details class="bulk-errors"><summary>View import warnings</summary>{% for warning in result.warnings %}<p>{{ warning }}</p>{% endfor %}</details>{% endif %}
+  </section>
+  {% endif %}
+  <section class="bulk-card"><div class="bulk-section-title"><div><h2>Recent Teachers</h2><p>Open a teacher profile to review their details.</p></div></div><div data-teacher-activity>{% for teacher in recent_teachers %}<a class="bulk-activity-row" href="{% url 'teacher_profile' teacher.pk %}"><span class="bulk-avatar"><i class="fa fa-chalkboard-teacher"></i></span><span><b>{{ teacher.name }}</b><small>{{ teacher.email }} · {{ teacher.department|default:'Not assigned' }}</small></span><i class="fa fa-chevron-right"></i></a>{% empty %}<p class="bulk-empty">No teachers imported yet.</p>{% endfor %}</div></section>
+  <details class="bulk-card bulk-columns"><summary><span><i class="fa fa-columns"></i> Supported Excel Columns</span><small>View teacher profile and portal fields</small></summary><div class="bulk-column-groups"><div><h3>Required fields</h3><p>Name, Email</p><h3>Portal access</h3><p>Login_Id, Password (generated when blank)</p></div><div><h3>Teacher profile</h3><p>Phone Number, Gender, Date Of Birth, Qualification, Experience, Address, Department, Joining Date, Status</p></div><div><h3>Teaching assignments</h3><p>Subject (comma-separated existing names), Faculty Group</p><p>{% for value, label in faculties %}{{ label }}{% if not forloop.last %}, {% endif %}{% endfor %}</p></div><div><h3>Compatibility columns</h3><p>Id and Image are accepted but cannot be stored. Upload photos from the teacher profile.</p></div></div></details>
+</main>
+<div class="bulk-progress-overlay" data-progress-overlay hidden aria-live="polite" aria-modal="true" role="dialog">
+  <div class="bulk-progress-dialog">
+    <button type="button" class="bulk-progress-close" data-progress-close aria-label="Hide progress"><i class="fa fa-times"></i></button>
+    <div class="bulk-progress-visual" data-progress-ring style="--progress:0deg">
+      <span><i class="fa fa-file-import"></i></span>
     </div>
-    <div class="card-body">
-
-      <div class="tip">
-        ⚠️&nbsp; Only <strong>upload .xlsx file only </strong> 
-        The file format is as follows <strong>Row 1 </strong>contains the headers for the columns.
-      </div>
-
-      <form method="post" enctype="multipart/form-data" action="{% url 'bulk_upload_teachers' %}">
-        {% csrf_token %}
-
-        <div class="drop-zone">
-          <input type="file" name="excel_file" accept=".xlsx"
-                 required id="fileInput" onchange="pickFile(this)">
-          <span class="dz-icon">📊</span>
-          <div class="dz-title">Click it and drag &amp; and drop the file </div>
-          <div class="dz-sub">Only .xlsx — max 10MB</div>
-        </div>
-        <div id="fileBadge" class="file-badge"></div>
-
-        <div class="btn-row">
-          <button type="submit" class="btn-upload">⬆️ Upload </button>
-          <a href="{% url 'teacher_list' %}" class="btn-cancel">✖ Cancel</a>
-        </div>
-      </form>
-
-    </div>
+    <p class="bulk-kicker" data-progress-stage>Preparing file</p>
+    <h2 data-progress-title>Validating teacher records</h2>
+    <p data-progress-detail>Please keep this page open while EduPilot processes the spreadsheet.</p>
+    <strong class="bulk-progress-percent" data-progress-percent>0%</strong>
+    <div class="bulk-progress-track"><span data-progress-bar></span></div>
+    <div class="bulk-progress-times"><span><i class="far fa-clock"></i> Elapsed: <b data-progress-elapsed>0s</b></span><span>Estimated remaining: <b data-progress-remaining>Calculating</b></span></div>
+    <p class="bulk-progress-estimate" data-progress-estimate>Upload progress uses transferred bytes. Import progress, elapsed time and remaining time use rows committed by the server.</p>
   </div>
-
-  <!-- Format Reference Card -->
-  <div class="card">
-    <div class="card-head">
-      <div class="ch-icon ci-blue">📋</div>
-      <h5>Required Excel Columns — Row 1 = Header</h5>
-    </div>
-    <div class="card-body" style="padding-top:14px;">
-      <div class="tbl-wrap">
-        <table class="fmt">
-          <thead>
-            <tr>
-              <th>Col</th>
-              <th>Column Name (Exact)</th>
-              <th>Example Value</th>
-              <th>Notes</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td>A</td><td class="cn">Id</td>             <td class="ce">TCH-0001</td>                      <td><span class="bdg b-gry">Teacher ID</span></td></tr>
-            <tr><td>B</td><td class="cn">Name</td>           <td class="ce">Sara Sheikh</td>                   <td><span class="bdg b-red">Required</span></td></tr>
-            <tr><td>C</td><td class="cn">Email</td>          <td class="ce">sara@faculty.edu.pk</td>           <td><span class="bdg b-red">Required · Unique</span></td></tr>
-            <tr><td>D</td><td class="cn">Phone Number</td>   <td class="ce">03001234567</td>                   <td>—</td></tr>
-            <tr><td>E</td><td class="cn">Gender</td>         <td class="ce">Male / Female</td>                 <td>—</td></tr>
-            <tr><td>F</td><td class="cn">Date_Of_Birth</td>  <td class="ce">24-Nov-1989</td>                   <td><span class="bdg b-blue">DD-Mon-YYYY</span></td></tr>
-            <tr><td>G</td><td class="cn">Qualification</td>  <td class="ce">Masters / Bachelor / Diploma</td> <td>MS, MBA, BS and BE are normalized</td></tr>
-            <tr><td>H</td><td class="cn">Experience</td>     <td class="ce">5 years / 10</td>                  <td><span class="bdg b-gry">Number ya "X years"</span></td></tr>
-            <tr><td>I</td><td class="cn">Address</td>        <td class="ce">House 5, Street 1, Karachi</td>    <td>—</td></tr>
-            <tr><td>J</td><td class="cn">Faculty Group</td>  <td class="ce">Junior Section</td>                 <td>Must match a configured faculty choice</td></tr>
-            <tr><td>K</td><td class="cn">Department</td>     <td class="ce">Computer Science</td>              <td>—</td></tr>
-            <tr><td>L</td><td class="cn">Subject</td>        <td class="ce">Science</td>                       <td><span class="bdg b-org">Must already exist</span></td></tr>
-            <tr><td>M</td><td class="cn">Image</td>          <td class="ce">sara.jpg</td>                      <td><span class="bdg b-gry">Skip — upload nahi hota</span></td></tr>
-            <tr><td>N</td><td class="cn">Joining Date</td>   <td class="ce">21-Feb-2016</td>                   <td><span class="bdg b-blue">DD-Mon-YYYY</span></td></tr>
-            <tr><td>O</td><td class="cn">Status</td>         <td class="ce">Active / Inactive / On Leave</td>  <td><span class="bdg b-grn">Active = Login enabled</span></td></tr>
-            <tr><td>P</td><td class="cn">Login_Id</td>       <td class="ce">teacher.sara</td>                  <td><span class="bdg b-red">Required · Unique</span></td></tr>
-            <tr><td>Q</td><td class="cn">Password</td>       <td class="ce">Teacher@12345</td>                 <td><span class="bdg b-red">Required</span></td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Password info -->
-      <div class="info-box">
-        ℹ️&nbsp;
-        <span>
-         Each teacher's login is created at the time of upload.
-          <strong>Login_Id</strong> and <strong>Password</strong> columns.
-        </span>
-      </div>
-
-    </div>
-  </div>
-
-</div><!-- /page-wrap -->
-
-<script>
-  function pickFile(input) {
-    const b = document.getElementById('fileBadge');
-    if (input.files && input.files[0]) {
-      b.textContent = '📎 ' + input.files[0].name;
-      b.style.display = 'inline-block';
-    }
-  }
-</script>
-</body>
-</html>
+</div>
+<script src="{% static 'admin_panel/js/bulk-student-upload.js' %}?v=bulk-teacher-progress-2"></script>
+{% endblock %}

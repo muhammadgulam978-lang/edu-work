@@ -237,6 +237,10 @@ urlpatterns = [
     path('bulk-upload-students/activate-logins/', views.bulk_upload_students_activate_logins, name='bulk_upload_students_activate_logins'),
     ## Teachers  
     path('bulk-upload-teachers/', views.bulk_upload_teachers, name='bulk_upload_teachers'),
+    path('bulk-upload-teachers/progress/', views.bulk_upload_teachers_progress, name='bulk_upload_teachers_progress'),
+    path('bulk-upload-teachers/template/', views.bulk_upload_teachers_template, name='bulk_upload_teachers_template'),
+    path('bulk-upload-teachers/activity/', views.bulk_upload_teachers_activity, name='bulk_upload_teachers_activity'),
+    path('bulk-upload-teachers/credentials/', views.bulk_upload_teachers_credentials, name='bulk_upload_teachers_credentials'),
     
     path('students/bulk-delete/', bulk_delete_students, name='bulk_delete_students'),
     path('teachers/bulk-delete/', bulk_delete_teachers, name='bulk_delete_teachers'),
