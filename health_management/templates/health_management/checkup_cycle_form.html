@@ -1,0 +1,19 @@
+{% extends "admin_panel/bases.html" %}
+{% load static %}
+{% block title %}New Checkup Cycle{% endblock %}
+{% block head %}<link rel="stylesheet" href="{% static 'health_management/css/health_theme.css' %}">{% endblock %}
+{% block content %}
+<div class="hlm-wrap">
+  <div class="hlm-form-card">
+    <h2>📅 New Monthly Checkup Cycle</h2>
+    <form method="post">
+      {% csrf_token %}
+      {% include "health_management/_form_fields.html" %}
+      <div class="hlm-form-actions">
+        <button type="submit" class="btn btn-teal">Create Cycle</button>
+        <a class="btn btn-cancel" href="{% url 'health_management:checkup_cycle_list' %}">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends "student_profile/bases.html" %}
+
+{% block content %}
+
+<div class="container" style="margin-top: 40px; text-align: center;">
+    <h2 style="font-weight: bold; margin-bottom: 10px;">Grade Predictor</h2>
+    <p style="color:#6c757d; margin-bottom: 20px;">
+        Predicted Final Term % based on your Midterm result and how the class usually moves from Midterm to Final.
+    </p>
+
+    <div style="display: flex; justify-content: center;">
+        <table class="table table-bordered"
+               style="width: 85%; text-align: center; background: white; border-radius: 10px;">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Subject</th>
+                    <th>Midterm %</th>
+                    <th>Final %</th>
+                    <th>Predicted Final %</th>
+                    <th>Trend</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                <tr>
+                    <td>{{ row.subject.name }}</td>
+                    <td>{% if row.midterm_pct is not None %}{{ row.midterm_pct }}%{% else %}—{% endif %}</td>
+                    <td>
+                        {% if row.final_pct is not None %}
+                            <strong>{{ row.final_pct }}%</strong> (actual)
+                        {% else %}—{% endif %}
+                    </td>
+                    <td>
+                        {% if row.predicted_pct is not None %}
+                            <strong>{{ row.predicted_pct }}%</strong>
+                        {% else %}—{% endif %}
+                    </td>
+                    <td>
+                        {% if row.trend == "Improving" %}
+                            <span class="badge badge-success">Improving</span>
+                        {% elif row.trend == "Declining" %}
+                            <span class="badge badge-danger">Declining</span>
+                        {% elif row.trend == "Stable" %}
+                            <span class="badge badge-secondary">Stable</span>
+                        {% else %}—{% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5">No results available yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

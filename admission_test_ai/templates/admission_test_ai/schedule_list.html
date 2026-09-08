@@ -1,0 +1,44 @@
+{% extends "admin_panel/bases.html" %}
+{% load static %}
+{% block title %}Scheduled Admission Tests{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{% static 'admin_panel/css/academics_gateway.css' %}">
+{% endblock %}
+{% block content %}
+<div class="academics-gateway">
+  {% if messages %}{% for message in messages %}<div class="ag-alert {% if message.tags == 'error' %}alert-danger{% endif %}">{{ message }}</div>{% endfor %}{% endif %}
+  <div class="ag-card">
+    <div class="ag-header">
+      <div>
+        <p class="ag-kicker">AI Admission Assessment</p>
+        <h4 class="ag-title">Scheduled Tests</h4>
+        <p class="ag-subtitle">Candidates booked for an approved admission test paper.</p>
+      </div>
+      <div class="ag-actions">
+        <a href="{% url 'admission_schedule_create' %}" class="ag-btn ag-btn-primary"><i class="fa fa-plus"></i> Schedule Test</a>
+      </div>
+    </div>
+    <div class="ag-body">
+      <div class="ag-table-wrap">
+        <table class="display" style="width:100%;">
+          <thead><tr><th>Candidate</th><th>Paper</th><th>Date</th><th>Time</th><th>Mode</th><th>Campus / Room</th></tr></thead>
+          <tbody>
+            {% for s in schedules %}
+            <tr>
+              <td>{{ s.candidate }}</td>
+              <td>{{ s.paper.blueprint.name }} - Paper {{ s.paper.version_label }}</td>
+              <td>{{ s.test_date }}</td>
+              <td>{{ s.test_time }}</td>
+              <td><span class="ag-badge ag-badge-info">{{ s.get_mode_display }}</span></td>
+              <td>{{ s.campus }} {{ s.room }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6" class="ag-empty">No tests scheduled yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

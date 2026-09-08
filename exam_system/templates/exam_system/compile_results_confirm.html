@@ -1,0 +1,54 @@
+{% extends "teacher_dashboard/base.html" %}
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex align-items-center mb-4">
+        <a href="{% url 'answer_sheet_list' schedule.id %}" class="btn btn-outline-secondary btn-sm mr-3">
+            <i class="fa fa-arrow-left"></i>
+        </a>
+        <h3 class="mb-0">Compile Exam Results</h3>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card border-warning">
+                <div class="card-header bg-warning">
+                    <h5 class="mb-0"><i class="fa fa-calculator mr-2"></i>Confirm Result Compilation</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <strong>Exam:</strong> {{ schedule.subject.name }}<br>
+                        <strong>Date:</strong> {{ schedule.exam_date|date:"d M Y" }}<br>
+                        <strong>Class:</strong> {{ schedule.exam_plan.class_fk.class_name }}
+                    </div>
+
+                    <p>This will:</p>
+                    <ul>
+                        <li>Aggregate all teacher-verified marks</li>
+                        <li>Calculate percentage and grade for each student</li>
+                        <li>Assign class positions (rank 1, 2, 3...)</li>
+                        <li>Mark Pass / Fail based on passing marks</li>
+                    </ul>
+
+                    <div class="alert alert-warning">
+                        <i class="fa fa-exclamation-triangle mr-2"></i>
+                        Make sure all answer sheets are marked before compiling.
+                        Results can be re-compiled anytime to update.
+                    </div>
+
+                    <form method="POST">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-end">
+                            <a href="{% url 'answer_sheet_list' schedule.id %}" class="btn btn-outline-secondary mr-2">
+                                Cancel
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fa fa-check mr-1"></i> Compile Results Now
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

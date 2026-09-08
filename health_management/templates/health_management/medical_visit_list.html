@@ -1,0 +1,29 @@
+{% extends "admin_panel/bases.html" %}
+{% load static %}
+{% block title %}Medical Room Visits{% endblock %}
+{% block head %}<link rel="stylesheet" href="{% static 'health_management/css/health_theme.css' %}">{% endblock %}
+{% block content %}
+<div class="hlm-wrap">
+  <div class="hlm-page-header">
+    <div><h2>🩺 Medical Room Visits</h2><p>Every routine visit to the medical room, logged.</p></div>
+    <div class="hlm-header-actions"><a class="btn btn-teal" href="{% url 'health_management:medical_visit_create' %}">+ Log Visit</a></div>
+  </div>
+  <div class="hlm-panel">
+    <table class="hlm-table">
+      <thead><tr><th>Patient</th><th>Date/Time</th><th>Reason</th><th>Outcome</th><th>Follow-Up</th></tr></thead>
+      <tbody>
+        {% for v in visits %}
+        <tr>
+          <td><a href="{% url 'health_management:health_profile_detail' v.profile_id %}">{{ v.profile.display_name }}</a></td>
+          <td>{{ v.visit_datetime|date:"d M Y, H:i" }}</td>
+          <td>{{ v.reason }}</td>
+          <td><span class="hlm-badge">{{ v.get_outcome_display }}</span></td>
+          <td>{{ v.follow_up_date|default:"—" }}</td>
+        </tr>
+        {% empty %}<tr><td colspan="5" class="hlm-empty">No medical visits logged yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

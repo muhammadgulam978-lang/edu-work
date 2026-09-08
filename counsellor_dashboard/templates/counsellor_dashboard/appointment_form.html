@@ -1,0 +1,19 @@
+{% extends "admin_panel/bases.html" %}
+{% load static %}
+{% block title %}Schedule Appointment{% endblock %}
+{% block head %}<link rel="stylesheet" href="{% static 'counsellor_dashboard/css/counsellor_theme.css' %}">{% endblock %}
+{% block content %}
+<div class="cns-wrap">
+  <div class="cns-form-card">
+    <h2>📆 Schedule Appointment</h2>
+    <form method="post">
+      {% csrf_token %}
+      {% include "counsellor_dashboard/_form_fields.html" %}
+      <div class="cns-form-actions">
+        <button type="submit" class="btn btn-teal">Schedule</button>
+        <a class="btn btn-cancel" href="{% url 'counsellor_dashboard:appointment_list' %}">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,66 @@
+{% extends "admin_panel/bases.html" %}
+{% load static %}
+{% block title %}{{ blueprint.name }}{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{% static 'admin_panel/css/academics_gateway.css' %}">
+{% endblock %}
+{% block content %}
+<div class="academics-gateway">
+  {% if messages %}{% for message in messages %}<div class="ag-alert {% if message.tags == 'error' %}alert-danger{% elif message.tags == 'warning' %}alert-danger{% endif %}">{{ message }}</div>{% endfor %}{% endif %}
+
+  <div class="ag-card">
+    <div class="ag-header">
+      <div>
+        <p class="ag-kicker">AI Admission Assessment</p>
+        <h4 class="ag-title">{{ blueprint.name }}</h4>
+        <p class="ag-subtitle">{{ blueprint.applying_class }} &middot; {{ blueprint.curriculum }} &middot; Passing {{ blueprint.passing_percentage }}%</p>
+      </div>
+      <div class="ag-actions">
+        <form method="post" action="{% url 'admission_generate_paper' pk=blueprint.pk %}">
+          {% csrf_token %}
+          <button type="submit" class="ag-btn ag-btn-primary"><i class="fa fa-robot"></i> Generate Paper (AI)</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="ag-body">
+      <p class="ag-section-title"><i class="fa fa-drafting-compass"></i> Test Blueprint</p>
+      <div class="ag-table-wrap">
+        <table class="display" style="width:100%;">
+          <thead><tr><th>Subject</th><th>Questions</th><th>Marks</th><th>Time</th><th>Topics</th></tr></thead>
+          <tbody>
+            {% for s in blueprint.subjects.all %}
+            <tr><td>{{ s.subject }}</td><td>{{ s.num_questions }}</td><td>{{ s.marks }}</td><td>{{ s.time_minutes }} min</td><td>{{ s.topics }}</td></tr>
+            {% empty %}
+            <tr><td colspan="5" class="ag-empty">No subjects added yet - edit this blueprint to add subjects.</td></tr>
+            {% endfor %}
+            {% if blueprint.subjects.all %}
+            <tr style="font-weight:600;"><td>Total</td><td>{{ blueprint.total_questions }}</td><td>{{ blueprint.total_marks }}</td><td>{{ blueprint.total_time_minutes }} min</td><td></td></tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+
+      <p class="ag-section-title" style="margin-top:24px;"><i class="fa fa-file-alt"></i> Generated Papers</p>
+      <div class="ag-table-wrap">
+        <table class="display" style="width:100%;">
+          <thead><tr><th>Version</th><th>Status</th><th>Marks</th><th>Generated</th><th>Actions</th></tr></thead>
+          <tbody>
+            {% for paper in blueprint.papers.all %}
+            <tr>
+              <td>Paper {{ paper.version_label }}</td>
+              <td><span class="ag-badge ag-badge-info">{{ paper.get_status_display }}</span></td>
+              <td>{{ paper.total_marks }}</td>
+              <td>{{ paper.generated_at|date:"d M Y H:i" }}</td>
+              <td><div class="ag-inline-actions"><a href="{% url 'admission_paper_detail' pk=paper.pk %}" class="ag-btn ag-icon-btn ag-btn-primary" title="Open"><i class="fa fa-eye"></i></a></div></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="ag-empty">No papers generated yet - click "Generate Paper (AI)" above.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

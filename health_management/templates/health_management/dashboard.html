@@ -1,0 +1,111 @@
+{% extends "admin_panel/bases.html" %}
+{% load static %}
+
+{% block title %}Health & Wellness Center{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'health_management/css/health_theme.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="hlm-wrap">
+  <div class="hlm-page-header">
+    <div>
+      <h2>🏥 Health &amp; Wellness Center</h2>
+      <p>Monthly checkups, medical visits, emergency treatment, sick bay and medicine inventory — one place.</p>
+    </div>
+    <div class="hlm-header-actions">
+      <a class="btn btn-teal" href="{% url 'health_management:checkup_cycle_create' %}">+ New Checkup Cycle</a>
+      <a class="btn btn-red" href="{% url 'health_management:emergency_case_create' %}">🚑 Log Emergency</a>
+    </div>
+  </div>
+
+  <div class="hlm-stats-grid">
+    <div class="hlm-stat-card hlm-teal">
+      <span class="hlm-stat-label">Checked This Month</span>
+      <span class="hlm-stat-value">{{ checked_this_month }}</span>
+    </div>
+    <div class="hlm-stat-card hlm-amber">
+      <span class="hlm-stat-label">Pending Checkups</span>
+      <span class="hlm-stat-value">{{ pending_checkups }}</span>
+    </div>
+    <div class="hlm-stat-card hlm-purple">
+      <span class="hlm-stat-label">Follow-Up Required</span>
+      <span class="hlm-stat-value">{{ follow_up_required }}</span>
+    </div>
+    <div class="hlm-stat-card hlm-blue">
+      <span class="hlm-stat-label">Medical Visits Today</span>
+      <span class="hlm-stat-value">{{ visits_today }}</span>
+    </div>
+    <div class="hlm-stat-card hlm-green">
+      <span class="hlm-stat-label">In Sick Bay</span>
+      <span class="hlm-stat-value">{{ in_sick_bay }}</span>
+    </div>
+    <div class="hlm-stat-card hlm-red">
+      <span class="hlm-stat-label">Emergencies Today</span>
+      <span class="hlm-stat-value">{{ emergencies_today }}</span>
+    </div>
+    <div class="hlm-stat-card hlm-red">
+      <span class="hlm-stat-label">Open Emergency Cases</span>
+      <span class="hlm-stat-value">{{ open_emergencies }}</span>
+    </div>
+    <div class="hlm-stat-card hlm-amber">
+      <span class="hlm-stat-label">Medicines Near Expiry (60d)</span>
+      <span class="hlm-stat-value">{{ near_expiry_batches }}</span>
+    </div>
+    <div class="hlm-stat-card hlm-amber">
+      <span class="hlm-stat-label">Medicines Low Stock</span>
+      <span class="hlm-stat-value">{{ low_stock_count }}</span>
+    </div>
+  </div>
+
+  <div class="hlm-quick-links">
+    <a href="{% url 'health_management:checkup_cycle_list' %}">📅 Monthly Checkups</a>
+    <a href="{% url 'health_management:medical_visit_list' %}">🩺 Medical Room Visits</a>
+    <a href="{% url 'health_management:emergency_case_list' %}">🚑 Emergency Treatment</a>
+    <a href="{% url 'health_management:sick_bay_list' %}">🛏 Sick Bay</a>
+    <a href="{% url 'health_management:medicine_inventory_list' %}">💊 Medicine Inventory</a>
+  </div>
+
+  <div class="hlm-grid-2">
+    <div class="hlm-panel">
+      <h3>Recent Emergency Cases</h3>
+      <table class="hlm-table">
+        <thead><tr><th>Case #</th><th>Patient</th><th>Type</th><th>Triage</th><th>Status</th></tr></thead>
+        <tbody>
+          {% for case in recent_emergencies %}
+          <tr>
+            <td><a href="{% url 'health_management:emergency_case_detail' case.id %}">{{ case.case_number }}</a></td>
+            <td>{{ case.profile.display_name|default:"Unknown" }}</td>
+            <td>{{ case.incident_type }}</td>
+            <td>{{ case.get_triage_level_display }}</td>
+            <td><span class="hlm-badge hlm-badge-{{ case.status }}">{{ case.get_status_display }}</span></td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="5" class="hlm-empty">No emergency cases yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="hlm-panel">
+      <h3>Recent Medical Room Visits</h3>
+      <table class="hlm-table">
+        <thead><tr><th>Patient</th><th>Reason</th><th>Date</th><th>Outcome</th></tr></thead>
+        <tbody>
+          {% for visit in recent_visits %}
+          <tr>
+            <td>{{ visit.profile.display_name }}</td>
+            <td>{{ visit.reason }}</td>
+            <td>{{ visit.visit_datetime|date:"d M, H:i" }}</td>
+            <td>{{ visit.get_outcome_display }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="4" class="hlm-empty">No visits recorded yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

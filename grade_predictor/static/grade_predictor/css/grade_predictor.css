@@ -1,0 +1,243 @@
+/* Grade Predictor theme — matched to EduPilot's existing teacher portal
+   (teal-green sidebar / mint page background / white cards seen on the
+   Fee Vouchers page). If your base.html already defines these as global
+   CSS variables, delete the :root block and it will inherit automatically. */
+
+:root {
+    --gp-primary: #16794f;
+    --gp-primary-light: #e6f5ec;
+    --gp-bg: #f2f8f4;
+    --gp-card: #ffffff;
+    --gp-border: #e6eae8;
+    --gp-text: #1f2937;
+    --gp-muted: #7c8a86;
+    --gp-orange: #b8790a;
+    --gp-orange-bg: #fdf1de;
+    --gp-red: #b3261e;
+    --gp-red-bg: #fbe9e8;
+    --gp-blue: #2563eb;
+    --gp-blue-bg: #e8f0fe;
+    --gp-radius: 12px;
+}
+
+.gp-wrap {
+    background: var(--gp-bg);
+    padding: 4px 0 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    font-family: inherit;
+    color: var(--gp-text);
+}
+
+.gp-card {
+    background: var(--gp-card);
+    border: 1px solid var(--gp-border);
+    border-radius: var(--gp-radius);
+    box-shadow: 0 1px 2px rgba(16, 24, 20, 0.04);
+}
+
+/* Filter dropdown in header actions */
+.gp-select {
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--gp-border);
+    background: var(--gp-card);
+    color: var(--gp-text);
+    font-size: 14px;
+}
+
+/* Stat cards */
+.gp-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+}
+.gp-stat-card {
+    padding: 18px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+.gp-stat-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+}
+.gp-icon-green { background: var(--gp-primary-light); }
+.gp-icon-blue { background: var(--gp-blue-bg); }
+.gp-icon-orange { background: var(--gp-orange-bg); }
+.gp-icon-gray { background: #eef1ef; }
+
+.gp-stat-value {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--gp-text);
+    line-height: 1.2;
+}
+.gp-stat-label {
+    font-size: 13px;
+    color: var(--gp-muted);
+    margin-top: 2px;
+}
+
+@media (max-width: 992px) {
+    .gp-stats-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* Section cards */
+.gp-section { padding: 20px 22px; }
+.gp-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+.gp-section-header h3 {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+    color: var(--gp-text);
+}
+.gp-muted { color: var(--gp-muted); font-size: 13px; }
+.gp-empty { color: var(--gp-muted); font-size: 14px; padding: 12px 0; }
+
+/* Grade distribution bars */
+.gp-distribution { display: flex; flex-direction: column; gap: 10px; }
+.gp-dist-row {
+    display: grid;
+    grid-template-columns: 40px 1fr 32px;
+    align-items: center;
+    gap: 12px;
+}
+.gp-dist-grade { font-weight: 600; font-size: 13px; color: var(--gp-text); }
+.gp-dist-bar-track {
+    background: var(--gp-primary-light);
+    border-radius: 6px;
+    height: 10px;
+    overflow: hidden;
+}
+.gp-dist-bar-fill {
+    background: var(--gp-primary);
+    height: 100%;
+    border-radius: 6px;
+    transition: width .3s ease;
+}
+.gp-dist-count { font-size: 13px; color: var(--gp-muted); text-align: right; }
+
+/* Risk table */
+.gp-table-wrap { overflow-x: auto; }
+.gp-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.gp-table thead th {
+    text-align: left;
+    font-size: 11px;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--gp-muted);
+    font-weight: 600;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--gp-border);
+}
+.gp-table tbody td {
+    padding: 12px;
+    border-bottom: 1px solid var(--gp-border);
+    color: var(--gp-text);
+}
+.gp-table tbody tr:last-child td { border-bottom: none; }
+.gp-student-name { font-weight: 600; }
+
+.gp-grade-chip {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 6px;
+    background: var(--gp-primary-light);
+    color: var(--gp-primary);
+    font-weight: 600;
+    font-size: 12px;
+}
+
+.gp-trend { font-size: 13px; font-weight: 500; }
+.gp-trend-up { color: var(--gp-primary); }
+.gp-trend-down { color: var(--gp-red); }
+.gp-trend-flat { color: var(--gp-muted); }
+
+.gp-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+}
+.gp-badge-low { background: var(--gp-primary-light); color: var(--gp-primary); }
+.gp-badge-moderate { background: var(--gp-orange-bg); color: var(--gp-orange); }
+.gp-badge-high { background: var(--gp-red-bg); color: var(--gp-red); }
+.gp-badge-critical { background: var(--gp-red); color: #fff; }
+
+.gp-actions { display: flex; gap: 6px; }
+.gp-icon-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    border: 1px solid var(--gp-border);
+    background: var(--gp-card);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 14px;
+}
+.gp-icon-btn:hover { background: var(--gp-primary-light); border-color: var(--gp-primary); }
+
+.gp-pagination {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    justify-content: flex-end;
+    margin-top: 14px;
+    font-size: 13px;
+}
+.gp-pagination a { color: var(--gp-primary); text-decoration: none; font-weight: 500; }
+
+/* Modal */
+.gp-modal {
+    border: none;
+    border-radius: var(--gp-radius);
+    padding: 22px;
+    width: 380px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.15);
+}
+.gp-modal::backdrop { background: rgba(15, 23, 20, .45); }
+.gp-modal h4 { margin: 0 0 14px; font-size: 15px; }
+.gp-modal-label { display: block; font-size: 12px; color: var(--gp-muted); margin: 10px 0 4px; }
+.gp-input {
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--gp-border);
+    font-size: 14px;
+    box-sizing: border-box;
+}
+.gp-modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+.gp-btn-primary {
+    background: var(--gp-primary);
+    color: #fff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.gp-btn-secondary {
+    background: transparent;
+    border: 1px solid var(--gp-border);
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--gp-text);
+}

@@ -1,0 +1,165 @@
+{% extends "teacher_dashboard/base.html" %}
+
+{% block page_actions %}
+<form method="get" class="gp-filter-form">
+    <select name="class_room" class="gp-select" onchange="this.form.submit()">
+        {% for c in class_rooms %}
+            <option value="{{ c.id }}" {% if c.id == selected_class_room_id %}selected{% endif %}>{{ c.name }}</option>
+        {% endfor %}
+    </select>
+</form>
+{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% load static %}{% static 'grade_predictor/css/grade_predictor.css' %}">
+
+<div class="gp-wrap">
+
+    {# ---------- Stat cards (section 13) ---------- #}
+    <div class="gp-stats-grid">
+        <div class="gp-card gp-stat-card">
+            <div class="gp-stat-icon gp-icon-green">🎯</div>
+            <div>
+                <div class="gp-stat-value">{{ expected_pass_rate }}%</div>
+                <div class="gp-stat-label">Expected Pass Rate</div>
+            </div>
+        </div>
+        <div class="gp-card gp-stat-card">
+            <div class="gp-stat-icon gp-icon-blue">📈</div>
+            <div>
+                <div class="gp-stat-value">{{ improving_count }}</div>
+                <div class="gp-stat-label">Students Improving</div>
+            </div>
+        </div>
+        <div class="gp-card gp-stat-card">
+            <div class="gp-stat-icon gp-icon-gray">➖</div>
+            <div>
+                <div class="gp-stat-value">{{ stable_count }}</div>
+                <div class="gp-stat-label">Students Stable</div>
+            </div>
+        </div>
+        <div class="gp-card gp-stat-card">
+            <div class="gp-stat-icon gp-icon-orange">⚠️</div>
+            <div>
+                <div class="gp-stat-value">{{ at_risk_count }}</div>
+                <div class="gp-stat-label">Students at Risk</div>
+            </div>
+        </div>
+    </div>
+
+    {# ---------- Predicted Grade Distribution (section 13) ---------- #}
+    <div class="gp-card gp-section">
+        <div class="gp-section-header">
+            <h3>Predicted Grade Distribution</h3>
+            <span class="gp-muted">{{ total_students }} student{{ total_students|pluralize }}</span>
+        </div>
+
+        {% if grade_distribution %}
+        <div class="gp-distribution">
+            {% for row in grade_distribution %}
+            <div class="gp-dist-row">
+                <span class="gp-dist-grade">{{ row.grade }}</span>
+                <div class="gp-dist-bar-track">
+                    <div class="gp-dist-bar-fill" style="width: {% widthratio row.count total_students|default:1 100 %}%;"></div>
+                </div>
+                <span class="gp-dist-count">{{ row.count }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="gp-empty">No predictions calculated yet for this class.</p>
+        {% endif %}
+    </div>
+
+    {# ---------- Students at Academic Risk (section 12) ---------- #}
+    <div class="gp-card gp-section">
+        <div class="gp-section-header">
+            <h3>Students at Academic Risk</h3>
+            <span class="gp-muted">{{ risk_students.paginator.count }} flagged</span>
+        </div>
+
+        {% if risk_students %}
+        <div class="gp-table-wrap">
+            <table class="gp-table">
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Subject</th>
+                        <th>Predicted Grade</th>
+                        <th>Trend</th>
+                        <th>Risk</th>
+                        <th>Confidence</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in risk_students %}
+                    <tr>
+                        <td class="gp-student-cell">
+                            <span class="gp-student-name">{{ p.student }}</span>
+                        </td>
+                        <td>{{ p.subject }}</td>
+                        <td><span class="gp-grade-chip">{{ p.predicted_grade }}</span> <span class="gp-muted">({{ p.predicted_score }}%)</span></td>
+                        <td>
+                            {% if p.trend == "improving" or p.trend == "rapidly_improving" %}
+                                <span class="gp-trend gp-trend-up">↑ {{ p.get_trend_display }}</span>
+                            {% elif p.trend == "declining" or p.trend == "high_risk" %}
+                                <span class="gp-trend gp-trend-down">↓ {{ p.get_trend_display }}</span>
+                            {% else %}
+                                <span class="gp-trend gp-trend-flat">→ {{ p.get_trend_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="gp-badge gp-badge-{{ p.risk_level }}">{{ p.get_risk_level_display }}</span>
+                        </td>
+                        <td class="gp-muted">{{ p.get_confidence_level_display }} · {{ p.confidence_pct|floatformat:0 }}%</td>
+                        <td>
+                            <div class="gp-actions">
+                                <a href="{% url 'grade_predictor:prediction_detail' p.id %}" class="gp-icon-btn" title="View detail">👁</a>
+                                <button type="button" class="gp-icon-btn" title="Create intervention"
+                                        onclick="document.getElementById('gp-intervene-{{ p.id }}').showModal()">➕</button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if risk_students.paginator.num_pages > 1 %}
+        <div class="gp-pagination">
+            {% if risk_students.has_previous %}
+                <a href="?page={{ risk_students.previous_page_number }}">‹ Prev</a>
+            {% endif %}
+            <span class="gp-muted">Page {{ risk_students.number }} of {{ risk_students.paginator.num_pages }}</span>
+            {% if risk_students.has_next %}
+                <a href="?page={{ risk_students.next_page_number }}">Next ›</a>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% else %}
+        <p class="gp-empty">No students currently flagged at risk for this class. 🎉</p>
+        {% endif %}
+    </div>
+
+</div>
+
+{# Intervention modals (section 14) #}
+{% for p in risk_students %}
+<dialog id="gp-intervene-{{ p.id }}" class="gp-modal">
+    <form method="post" action="{% url 'grade_predictor:create_intervention' p.id %}">
+        {% csrf_token %}
+        <h4>Create Intervention — {{ p.student }} ({{ p.subject }})</h4>
+        <label class="gp-modal-label">Action</label>
+        <input type="text" name="action" placeholder="e.g. Assign remedial Algebra class" required class="gp-input">
+        <label class="gp-modal-label">Note</label>
+        <textarea name="note" rows="3" class="gp-input" placeholder="Evidence / reasoning"></textarea>
+        <div class="gp-modal-actions">
+            <button type="button" onclick="document.getElementById('gp-intervene-{{ p.id }}').close()" class="gp-btn-secondary">Cancel</button>
+            <button type="submit" class="gp-btn-primary">Save</button>
+        </div>
+    </form>
+</dialog>
+{% endfor %}
+{% endblock %}

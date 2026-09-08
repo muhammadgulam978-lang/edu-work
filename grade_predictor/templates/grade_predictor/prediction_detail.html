@@ -1,0 +1,76 @@
+{% extends "teacher_dashboard/base.html" %}
+
+{% block breadcrumb %}TEACHING / GRADE PREDICTOR / {{ prediction.student }}{% endblock %}
+{% block page_title %}{{ prediction.subject }} — {{ prediction.student }}{% endblock %}
+{% block page_subtitle %}Prediction generated {{ prediction.last_calculated|timesince }} ago{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% load static %}{% static 'grade_predictor/css/grade_predictor.css' %}">
+
+<div class="gp-wrap">
+    <div class="gp-card gp-section">
+        <div class="gp-stats-grid" style="grid-template-columns: repeat(4,1fr);">
+            <div>
+                <div class="gp-stat-label">Current Score</div>
+                <div class="gp-stat-value">{{ prediction.current_score }}%</div>
+            </div>
+            <div>
+                <div class="gp-stat-label">Predicted Final Score</div>
+                <div class="gp-stat-value">{{ prediction.predicted_score }}%</div>
+            </div>
+            <div>
+                <div class="gp-stat-label">Predicted Grade</div>
+                <div class="gp-stat-value">{{ prediction.predicted_grade }}</div>
+            </div>
+            <div>
+                <div class="gp-stat-label">Prediction Range</div>
+                <div class="gp-stat-value">{{ prediction.predicted_score_low }}%–{{ prediction.predicted_score_high }}%</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="gp-card gp-section">
+        <div class="gp-section-header"><h3>Why this prediction?</h3></div>
+        <div class="gp-distribution">
+            {% for factor, label in prediction.explanation.items %}
+            <div class="gp-dist-row" style="grid-template-columns: 160px 1fr;">
+                <span class="gp-dist-grade">{{ factor }}</span>
+                <span class="gp-badge {% if label == 'Strong' %}gp-badge-low{% elif label == 'Needs improvement' %}gp-badge-high{% else %}gp-badge-moderate{% endif %}">{{ label }}</span>
+            </div>
+            {% empty %}
+            <p class="gp-empty">Not enough data yet to explain this prediction.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="gp-card gp-section">
+        <div class="gp-section-header"><h3>Grade Probability</h3></div>
+        <div class="gp-distribution">
+            {% for grade, pct in prediction.grade_probability.items %}
+            <div class="gp-dist-row">
+                <span class="gp-dist-grade">{{ grade }}</span>
+                <div class="gp-dist-bar-track"><div class="gp-dist-bar-fill" style="width:{{ pct }}%;"></div></div>
+                <span class="gp-dist-count">{{ pct }}%</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="gp-card gp-section">
+        <div class="gp-section-header">
+            <h3>Interventions</h3>
+        </div>
+        {% for i in interventions %}
+        <div class="gp-dist-row" style="grid-template-columns: 1fr auto; margin-bottom:8px;">
+            <div>
+                <strong>{{ i.action }}</strong>
+                <div class="gp-muted">{{ i.note }}</div>
+            </div>
+            <span class="gp-badge gp-badge-{% if i.status == 'completed' %}low{% else %}moderate{% endif %}">{{ i.get_status_display }}</span>
+        </div>
+        {% empty %}
+        <p class="gp-empty">No interventions logged yet.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

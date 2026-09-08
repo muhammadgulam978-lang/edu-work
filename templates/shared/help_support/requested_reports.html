@@ -1,0 +1,5 @@
+{% extends 'shared/help_support/support_base.html' %}
+{% block support_title %}Requested Reports{% endblock %}{% block support_heading %}Requested Reports{% endblock %}
+{% block support_intro %}Track support issues submitted through the {{ portal_label|lower }} portal.{% endblock %}
+{% block support_header_action %}<a class="phs-btn phs-btn-primary" href="{% url report_route %}"><i class="fas fa-plus"></i> New Report</a>{% endblock %}
+{% block support_content %}<section class="phs-card phs-list-card"><div class="phs-table-wrap"><table><thead><tr><th>Report</th><th>Category</th><th>Status</th><th>Submitted</th><th>Action</th></tr></thead><tbody></tbody></table></div><div class="phs-empty"><span class="phs-empty-icon"><i class="fas fa-clipboard-list"></i></span><h2>No reports yet</h2><p>Your submitted support reports will appear here.</p><a href="{% url report_route %}"><i class="fas fa-plus"></i> Submit your first report</a></div></section>{% endblock %}

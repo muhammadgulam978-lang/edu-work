@@ -1,0 +1,76 @@
+/* Student Counselling & Wellbeing — theme matches EduPilot's edu-* design tokens */
+
+.cns-wrap { padding: 24px; max-width: 1500px; margin: 0 auto; color: #17302c; }
+
+.cns-page-header {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  flex-wrap: wrap; gap: 14px; margin-bottom: 20px;
+}
+.cns-page-header h2 { margin: 0 0 4px; color: #17302c; font-size: 22px; }
+.cns-page-header p { margin: 0; color: #5a6a67; font-size: 14px; }
+.cns-header-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+.cns-notice {
+  background: #fff7e6; border: 1px solid #f0ab2c; color: #805000;
+  border-radius: 10px; padding: 12px 16px; font-size: 13.5px; margin-bottom: 20px;
+}
+.cns-notice.cns-notice-danger { background: #fdeceb; border-color: #e24e55; color: #a1373e; }
+
+.cns-stats-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px; margin-bottom: 24px;
+}
+.cns-stat-card {
+  border-radius: 14px; padding: 16px 18px; color: #fff;
+  display: flex; flex-direction: column; gap: 6px;
+  box-shadow: 0 8px 18px rgba(23, 48, 44, .12);
+}
+.cns-stat-label { font-size: 12.5px; opacity: .92; font-weight: 500; }
+.cns-stat-value { font-size: 26px; font-weight: 700; }
+
+.cns-purple { background: linear-gradient(135deg, #8b6fd1, #6a4fb0); }
+.cns-teal   { background: linear-gradient(135deg, #0f9f94, #0c7a71); }
+.cns-amber  { background: linear-gradient(135deg, #f0ab2c, #d9880c); }
+.cns-red    { background: linear-gradient(135deg, #f0656b, #d63b42); }
+.cns-blue   { background: linear-gradient(135deg, #49a8ee, #2f7fc4); }
+
+.cns-quick-links { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 24px; }
+.cns-quick-links a {
+  background: #fff; border: 1px solid #e3ece9; border-radius: 10px;
+  padding: 10px 16px; color: #17302c; font-weight: 500; font-size: 14px; text-decoration: none;
+}
+.cns-quick-links a:hover { border-color: #6a4fb0; color: #4b3e76; }
+
+.cns-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 992px) { .cns-grid-2 { grid-template-columns: 1fr; } }
+
+.cns-panel { background: #fff; border: 1px solid #edf1f0; border-radius: 14px; padding: 18px; }
+.cns-panel h3 { margin: 0 0 12px; font-size: 15px; color: #17302c; }
+
+.cns-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.cns-table th { text-align: left; padding: 8px 6px; color: #5a6a67; border-bottom: 1px solid #edf1f0; font-weight: 600; }
+.cns-table td { padding: 9px 6px; border-bottom: 1px solid #f4f7f6; color: #17302c; }
+.cns-empty { text-align: center; color: #8a9793; padding: 18px 0 !important; }
+
+.cns-badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 600; color: #17302c; background: #eef4f3; }
+.cns-priority-low     { color: #4f8614; font-weight: 600; }
+.cns-priority-medium  { color: #805000; font-weight: 600; }
+.cns-priority-high    { color: #a1373e; font-weight: 600; }
+.cns-priority-urgent  { color: #fff; background: #a1373e; padding: 2px 8px; border-radius: 999px; font-weight: 600; }
+
+.cns-form-card { background: #fff; border: 1px solid #edf1f0; border-radius: 14px; padding: 24px; max-width: 760px; margin: 0 auto; }
+.cns-form-card.cns-wide { max-width: 920px; }
+.cns-form-card h2 { margin-top: 0; color: #17302c; }
+.cns-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 18px; }
+.cns-field { display: flex; flex-direction: column; gap: 5px; }
+.cns-field label { font-size: 13px; font-weight: 600; color: #17302c; }
+.cns-field input, .cns-field select, .cns-field textarea {
+  border: 1px solid #dbe4e1; border-radius: 8px; padding: 8px 10px; font-size: 14px; color: #17302c; background: #fff;
+}
+.cns-checkbox { flex-direction: row; align-items: center; gap: 8px; }
+.cns-form-actions { margin-top: 18px; display: flex; gap: 10px; }
+
+.cns-session-note {
+  border: 1px solid #edf1f0; border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; background: #fbfbfa;
+}
+.cns-session-note .cns-session-meta { font-size: 12px; color: #5a6a67; margin-bottom: 6px; }

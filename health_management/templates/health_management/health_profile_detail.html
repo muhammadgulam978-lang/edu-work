@@ -1,0 +1,62 @@
+{% extends "admin_panel/bases.html" %}
+{% load static %}
+{% block title %}{{ profile.display_name }} — Health Profile{% endblock %}
+{% block head %}<link rel="stylesheet" href="{% static 'health_management/css/health_theme.css' %}">{% endblock %}
+{% block content %}
+<div class="hlm-wrap">
+  <div class="hlm-page-header">
+    <div>
+      <h2>{{ profile.display_name }}</h2>
+      <p>{{ profile.get_patient_type_display }} · Blood Group: {{ profile.blood_group|default:"—" }} · Risk: <span class="hlm-risk-{{ profile.risk_level }}">{{ profile.get_risk_level_display }}</span></p>
+    </div>
+  </div>
+
+  {% if allergies %}
+  <div class="hlm-panel" style="border-color:#f0656b;margin-bottom:18px;">
+    <h3>⚠ Allergies</h3>
+    {% for a in allergies %}<span class="hlm-badge hlm-badge-open">{{ a.allergen }} — {{ a.get_severity_display }}</span> {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if chronic_conditions %}
+  <div class="hlm-panel" style="margin-bottom:18px;">
+    <h3>❤️ Chronic Conditions</h3>
+    {% for c in chronic_conditions %}<span class="hlm-badge">{{ c.condition_name }}</span> {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="hlm-grid-2">
+    <div class="hlm-panel">
+      <h3>Recent Checkups</h3>
+      <table class="hlm-table">
+        <thead><tr><th>Date</th><th>Status</th><th>Outcome</th></tr></thead>
+        <tbody>
+          {% for c in checkups %}<tr><td>{{ c.checkup_date|default:"—" }}</td><td>{{ c.get_status_display }}</td><td>{{ c.get_outcome_display }}</td></tr>
+          {% empty %}<tr><td colspan="3" class="hlm-empty">No checkups yet.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="hlm-panel">
+      <h3>Recent Medical Visits</h3>
+      <table class="hlm-table">
+        <thead><tr><th>Date</th><th>Reason</th><th>Outcome</th></tr></thead>
+        <tbody>
+          {% for v in visits %}<tr><td>{{ v.visit_datetime|date:"d M" }}</td><td>{{ v.reason }}</td><td>{{ v.get_outcome_display }}</td></tr>
+          {% empty %}<tr><td colspan="3" class="hlm-empty">No visits yet.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="hlm-panel" style="margin-top:20px;">
+    <h3>Emergency History</h3>
+    <table class="hlm-table">
+      <thead><tr><th>Case #</th><th>Date</th><th>Type</th><th>Triage</th><th>Status</th></tr></thead>
+      <tbody>
+        {% for e in emergencies %}<tr><td><a href="{% url 'health_management:emergency_case_detail' e.id %}">{{ e.case_number }}</a></td><td>{{ e.incident_datetime|date:"d M Y" }}</td><td>{{ e.incident_type }}</td><td>{{ e.get_triage_level_display }}</td><td>{{ e.get_status_display }}</td></tr>
+        {% empty %}<tr><td colspan="5" class="hlm-empty">No emergencies recorded.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

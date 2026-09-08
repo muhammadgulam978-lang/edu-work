@@ -1,0 +1,116 @@
+/* Health & Wellness Center — theme matches EduPilot's edu-* design tokens */
+
+.hlm-wrap {
+  padding: 24px;
+  max-width: 1500px;
+  margin: 0 auto;
+  color: #17302c;
+}
+
+.hlm-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.hlm-page-header h2 { margin: 0 0 4px; color: #17302c; font-size: 22px; }
+.hlm-page-header p { margin: 0; color: #5a6a67; font-size: 14px; }
+.hlm-header-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+.hlm-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.hlm-stat-card {
+  border-radius: 14px;
+  padding: 16px 18px;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: 0 8px 18px rgba(23, 48, 44, .12);
+}
+.hlm-stat-label { font-size: 12.5px; opacity: .92; font-weight: 500; }
+.hlm-stat-value { font-size: 26px; font-weight: 700; }
+
+.hlm-teal   { background: linear-gradient(135deg, #0f9f94, #0c7a71); }
+.hlm-blue   { background: linear-gradient(135deg, #49a8ee, #2f7fc4); }
+.hlm-purple { background: linear-gradient(135deg, #8b6fd1, #6a4fb0); }
+.hlm-amber  { background: linear-gradient(135deg, #f0ab2c, #d9880c); }
+.hlm-green  { background: linear-gradient(135deg, #8bc740, #6a9f2c); }
+.hlm-red    { background: linear-gradient(135deg, #f0656b, #d63b42); }
+
+.hlm-quick-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+.hlm-quick-links a {
+  background: #fff;
+  border: 1px solid #e3ece9;
+  border-radius: 10px;
+  padding: 10px 16px;
+  color: #17302c;
+  font-weight: 500;
+  font-size: 14px;
+  text-decoration: none;
+}
+.hlm-quick-links a:hover { border-color: #0f9f94; color: #0c7a71; }
+
+.hlm-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+@media (max-width: 992px) { .hlm-grid-2 { grid-template-columns: 1fr; } }
+
+.hlm-panel {
+  background: #fff;
+  border: 1px solid #edf1f0;
+  border-radius: 14px;
+  padding: 18px;
+}
+.hlm-panel h3 { margin: 0 0 12px; font-size: 15px; color: #17302c; }
+
+.hlm-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.hlm-table th {
+  text-align: left; padding: 8px 6px; color: #5a6a67;
+  border-bottom: 1px solid #edf1f0; font-weight: 600;
+}
+.hlm-table td { padding: 9px 6px; border-bottom: 1px solid #f4f7f6; color: #17302c; }
+.hlm-empty { text-align: center; color: #8a9793; padding: 18px 0 !important; }
+
+.hlm-badge {
+  display: inline-block; padding: 3px 10px; border-radius: 999px;
+  font-size: 11.5px; font-weight: 600; color: #17302c; background: #eef4f3;
+}
+.hlm-badge-open       { background: #ffe3d9; color: #a1373e; }
+.hlm-badge-treatment  { background: #fff2cc; color: #805000; }
+.hlm-badge-referred   { background: #e6ddff; color: #4b3e76; }
+.hlm-badge-closed     { background: #ddf3ea; color: #0c5e56; }
+
+.hlm-form-card {
+  background: #fff; border: 1px solid #edf1f0; border-radius: 14px;
+  padding: 24px; max-width: 760px; margin: 0 auto;
+}
+.hlm-form-card h2 { margin-top: 0; color: #17302c; }
+.hlm-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 18px; }
+.hlm-form-grid.hlm-single { grid-template-columns: 1fr; }
+.hlm-field { display: flex; flex-direction: column; gap: 5px; }
+.hlm-field label { font-size: 13px; font-weight: 600; color: #17302c; }
+.hlm-field input, .hlm-field select, .hlm-field textarea {
+  border: 1px solid #dbe4e1; border-radius: 8px; padding: 8px 10px;
+  font-size: 14px; color: #17302c; background: #fff;
+}
+.hlm-checkbox { flex-direction: row; align-items: center; gap: 8px; }
+.hlm-form-actions { margin-top: 18px; display: flex; gap: 10px; }
+
+.hlm-risk-low      { color: #4f8614; font-weight: 600; }
+.hlm-risk-moderate { color: #805000; font-weight: 600; }
+.hlm-risk-high     { color: #a1373e; font-weight: 600; }
+.hlm-risk-urgent   { color: #fff; background:#a1373e; padding:2px 8px; border-radius:999px; font-weight:600; }

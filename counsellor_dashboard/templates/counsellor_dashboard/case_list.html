@@ -1,0 +1,31 @@
+{% extends "admin_panel/bases.html" %}
+{% load static %}
+{% block title %}Counselling Cases{% endblock %}
+{% block head %}<link rel="stylesheet" href="{% static 'counsellor_dashboard/css/counsellor_theme.css' %}">{% endblock %}
+{% block content %}
+<div class="cns-wrap">
+  <div class="cns-page-header">
+    <div><h2>📁 Counselling Cases</h2><p>Confidential — restricted to authorized counselling staff.</p></div>
+    <div class="cns-header-actions"><a class="btn btn-teal" href="{% url 'counsellor_dashboard:case_create' %}">+ Open Case Directly</a></div>
+  </div>
+  <div class="cns-panel">
+    <table class="cns-table">
+      <thead><tr><th>Case #</th><th>Student</th><th>Priority</th><th>Status</th><th>Counsellor</th><th>Follow-Up</th><th></th></tr></thead>
+      <tbody>
+        {% for c in cases %}
+        <tr>
+          <td>{{ c.case_number }}</td>
+          <td>{{ c.student.full_name }}</td>
+          <td><span class="cns-priority-{{ c.priority }}">{{ c.get_priority_display }}</span></td>
+          <td><span class="cns-badge">{{ c.get_status_display }}</span></td>
+          <td>{{ c.assigned_counsellor.name|default:"Unassigned" }}</td>
+          <td>{{ c.follow_up_date|default:"—" }}</td>
+          <td><a class="btn btn-teal" href="{% url 'counsellor_dashboard:case_detail' c.id %}">Open</a></td>
+        </tr>
+        {% empty %}<tr><td colspan="7" class="cns-empty">No cases yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

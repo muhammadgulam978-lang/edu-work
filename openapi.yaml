@@ -1,0 +1,957 @@
+openapi: 3.0.3
+info:
+  title: EduPilot Student Mobile API
+  description: |
+    OpenAPI specification for the EduPilot student-facing mobile APIs.
+    These endpoints are designed to be mounted under /api/v1/ and use Bearer token authentication (JWT recommended).
+  version: 1.0.0
+servers:
+  - url: https://api.edupilot.example.com/api/v1
+    description: Production server (example)
+  - url: http://localhost:8000/api/v1
+    description: Local development
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    TokenPair:
+      type: object
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+        token_type:
+          type: string
+          example: Bearer
+        user:
+          $ref: '#/components/schemas/UserSummary'
+      required: [access_token]
+    UserSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+        full_name:
+          type: string
+        admission_number:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+    PaginationMeta:
+      type: object
+      properties:
+        page:
+          type: integer
+        page_size:
+          type: integer
+        total:
+          type: integer
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+    PagedResponse:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            type: object
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+    StudentProfile:
+      type: object
+      properties:
+        id:
+          type: integer
+        admission_number:
+          type: string
+        full_name:
+          type: string
+        current_class:
+          type: string
+        section:
+          type: string
+        avatar_url:
+          type: string
+          format: uri
+        email:
+          type: string
+        phone:
+          type: string
+    Voucher:
+      type: object
+      properties:
+        voucher_no:
+          type: string
+        month:
+          type: string
+        year:
+          type: integer
+        net_amount:
+          type: number
+          format: float
+        status:
+          type: string
+          example: UNPAID
+        due_date:
+          type: string
+          format: date
+        download_url:
+          type: string
+          format: uri
+        line_items:
+          type: array
+          items:
+            type: object
+            properties:
+              description:
+                type: string
+              amount:
+                type: number
+                format: float
+    VoucherListResponse:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Voucher'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+    BalanceResponse:
+      type: object
+      properties:
+        outstanding:
+          type: number
+          format: float
+        total_due:
+          type: number
+          format: float
+        last_generated_at:
+          type: string
+          format: date-time
+    PaymentRequest:
+      type: object
+      properties:
+        voucher_no:
+          type: string
+        payment_method:
+          type: string
+          enum: [stripe, payfast, banktransfer]
+        payment_token:
+          type: string
+      required: [voucher_no, payment_method]
+    PaymentResponse:
+      type: object
+      properties:
+        payment_id:
+          type: string
+        status:
+          type: string
+          example: PENDING
+    Notification:
+      type: object
+      properties:
+        id:
+          type: integer
+        notification_type:
+          type: string
+          example: IN_APP
+        content:
+          type: string
+        status:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        read:
+          type: boolean
+    DeviceRegisterRequest:
+      type: object
+      properties:
+        device_id:
+          type: string
+        platform:
+          type: string
+          enum: [android, ios]
+        push_token:
+          type: string
+      required: [device_id, platform, push_token]
+    TimetablePeriod:
+      type: object
+      properties:
+        period_number:
+          type: integer
+        subject:
+          type: string
+        teacher:
+          type: string
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        class:
+          type: string
+    TimetableDay:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        periods:
+          type: array
+          items:
+            $ref: '#/components/schemas/TimetablePeriod'
+    TimetableWeekResponse:
+      type: object
+      properties:
+        week_start:
+          type: string
+          format: date
+        days:
+          type: array
+          items:
+            $ref: '#/components/schemas/TimetableDay'
+    AttendanceRecord:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        status:
+          type: string
+          example: present
+        remarks:
+          type: string
+    AttendanceSummaryResponse:
+      type: object
+      properties:
+        summary:
+          type: object
+          properties:
+            present:
+              type: integer
+            absent:
+              type: integer
+        records:
+          type: array
+          items:
+            $ref: '#/components/schemas/AttendanceRecord'
+    ExamResult:
+      type: object
+      properties:
+        exam_id:
+          type: integer
+        title:
+          type: string
+        subject:
+          type: string
+        marks_obtained:
+          type: number
+          format: float
+        max_marks:
+          type: number
+          format: float
+        grade:
+          type: string
+    Assignment:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        due_date:
+          type: string
+          format: date-time
+        attachments:
+          type: array
+          items:
+            type: string
+            format: uri
+    SubmissionRequest:
+      type: object
+      properties:
+        text:
+          type: string
+        file_id:
+          type: string
+    Announcement:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        body:
+          type: string
+        published_at:
+          type: string
+          format: date-time
+    ConversationSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        last_message:
+          type: string
+        unread_count:
+          type: integer
+    Message:
+      type: object
+      properties:
+        id:
+          type: integer
+        sender_id:
+          type: integer
+        text:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+paths:
+  /auth/login/:
+    post:
+      summary: Student login
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+              required: [username, password]
+      responses:
+        '200':
+          description: Token pair and user summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenPair'
+        '400':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /auth/logout/:
+    post:
+      summary: Logout (revoke refresh token)
+      tags: [Auth]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+      responses:
+        '204':
+          description: Logged out
+  /auth/refresh/:
+    post:
+      summary: Refresh access token
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refresh_token:
+                  type: string
+              required: [refresh_token]
+      responses:
+        '200':
+          description: New token pair
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenPair'
+  /student/profile/:
+    get:
+      summary: Get current student profile
+      tags: [Student]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Student profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentProfile'
+    put:
+      summary: Update student profile
+      tags: [Student]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StudentProfile'
+      responses:
+        '200':
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentProfile'
+  /fees/vouchers/:
+    get:
+      summary: List vouchers (filter by status)
+      tags: [Fees]
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            example: UNPAID
+        - in: query
+          name: page
+          schema:
+            type: integer
+        - in: query
+          name: page_size
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Paged list of vouchers
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoucherListResponse'
+  /fees/vouchers/{voucher_no}/:
+    get:
+      summary: Get voucher detail
+      tags: [Fees]
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: voucher_no
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Voucher detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Voucher'
+  /fees/balance/:
+    get:
+      summary: Get student's outstanding balance
+      tags: [Fees]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Balance summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BalanceResponse'
+  /fees/pay/:
+    post:
+      summary: Start a payment for a voucher
+      tags: [Fees]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentRequest'
+      responses:
+        '200':
+          description: Payment initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+  /fees/payment/webhook/:
+    post:
+      summary: Payment gateway webhook (server-to-server)
+      tags: [Fees]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Webhook received
+  /notifications/:
+    get:
+      summary: List notifications
+      tags: [Notifications]
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+        - in: query
+          name: page_size
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Paged notifications
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Notification'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+  /notifications/{id}/mark-read/:
+    post:
+      summary: Mark notification as read
+      tags: [Notifications]
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Notification updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+  /device/register/:
+    post:
+      summary: Register device for push notifications
+      tags: [Notifications]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceRegisterRequest'
+      responses:
+        '200':
+          description: Device registered
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  registered:
+                    type: boolean
+  /timetable/week/:
+    get:
+      summary: Get timetable for a week
+      tags: [Timetable]
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: start_date
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Week timetable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimetableWeekResponse'
+  /timetable/day/:
+    get:
+      summary: Get timetable for a day
+      tags: [Timetable]
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: date
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Day timetable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimetableDay'
+  /attendance/:
+    get:
+      summary: Get attendance summary for a month
+      tags: [Attendance]
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: month
+          schema:
+            type: string
+            example: '2026-08'
+      responses:
+        '200':
+          description: Attendance summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AttendanceSummaryResponse'
+  /exams/results/:
+    get:
+      summary: List exam results
+      tags: [Exams]
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: term
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Exam results
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ExamResult'
+  /exams/{exam_id}/report/:
+    get:
+      summary: Get exam report detail
+      tags: [Exams]
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: exam_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Exam report
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  exam:
+                    $ref: '#/components/schemas/ExamResult'
+                  attachments:
+                    type: array
+                    items:
+                      type: string
+                      format: uri
+  /assignments/:
+    get:
+      summary: List assignments
+      tags: [Assignments]
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            example: open
+      responses:
+        '200':
+          description: Paged assignments
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Assignment'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+  /assignments/{id}/:
+    get:
+      summary: Get assignment details
+      tags: [Assignments]
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Assignment detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Assignment'
+  /assignments/{id}/submit/:
+    post:
+      summary: Submit assignment (multipart supported)
+      tags: [Assignments]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                text:
+                  type: string
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: Submission created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  submission_id:
+                    type: integer
+                  status:
+                    type: string
+  /announcements/:
+    get:
+      summary: List announcements
+      tags: [Announcements]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Announcement list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Announcement'
+  /announcements/{id}/:
+    get:
+      summary: Get announcement
+      tags: [Announcements]
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Announcement detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Announcement'
+  /conversations/:
+    get:
+      summary: List conversations
+      tags: [Messaging]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Conversations list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ConversationSummary'
+  /conversations/{id}/messages/:
+    get:
+      summary: List messages for a conversation
+      tags: [Messaging]
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+        - in: query
+          name: page
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Messages
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Message'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+    post:
+      summary: Send a message to a conversation
+      tags: [Messaging]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                text:
+                  type: string
+                attachments:
+                  type: array
+                  items:
+                    type: string
+                    format: uri
+      responses:
+        '201':
+          description: Message sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+  /media/upload/:
+    post:
+      summary: Upload file (assignments, avatars)
+      tags: [Media]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: File uploaded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  file_id:
+                    type: string
+                  url:
+                    type: string
+                    format: uri
+  /status/health/:
+    get:
+      summary: Health check
+      tags: [Monitoring]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+security:
+  - BearerAuth: []
+tags:
+  - name: Auth
+    description: Authentication endpoints
+  - name: Student
+    description: Student profile & account
+  - name: Fees
+    description: Fee vouchers, balance and payments (edupilot_core/voucher_portal)
+  - name: Notifications
+    description: In-app notifications and device registration
+  - name: Timetable
+    description: Timetable endpoints (week/day)
+  - name: Attendance
+    description: Attendance records and summaries
+  - name: Exams
+    description: Exam results and reports
+  - name: Assignments
+    description: Assignments and submissions
+  - name: Announcements
+    description: General announcements and feeds
+  - name: Messaging
+    description: Conversations and real-time messages
+  - name: Media
+    description: File uploads/downloads
+  - name: Monitoring
+    description: Health and status endpoints
+x-info:
+  generated_by: "EduPilot OpenAPI generator - assistant"
+  note: "WebSocket endpoints (/ws/communication/, /ws/vouchers/) are real-time and not directly modeled as HTTP paths. Authenticate WebSocket connections with the same Bearer token (as query param or subprotocol)."

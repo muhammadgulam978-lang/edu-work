@@ -1,0 +1,67 @@
+{% extends "admin_panel/bases.html" %}
+{% load static %}
+{% block title %}{{ case.case_number }}{% endblock %}
+{% block head %}<link rel="stylesheet" href="{% static 'counsellor_dashboard/css/counsellor_theme.css' %}">{% endblock %}
+{% block content %}
+<div class="cns-wrap">
+  <div class="cns-page-header">
+    <div>
+      <h2>📁 {{ case.case_number }} — {{ case.student.full_name }}</h2>
+      <p><span class="cns-priority-{{ case.priority }}">{{ case.get_priority_display }}</span> · <span class="cns-badge">{{ case.get_status_display }}</span> · Counsellor: {{ case.assigned_counsellor.name|default:"Unassigned" }}</p>
+    </div>
+    <div class="cns-header-actions">
+      <a class="btn btn-teal" href="{% url 'counsellor_dashboard:session_create' case.id %}">+ Add Session Note</a>
+      <a class="btn btn-teal" href="{% url 'counsellor_dashboard:support_plan_edit' case.id %}">{% if support_plan %}Edit{% else %}Create{% endif %} Support Plan</a>
+    </div>
+  </div>
+
+  <div class="cns-panel" style="margin-bottom:18px;">
+    <h3>Reason for Referral</h3>
+    <p>{{ case.reason_for_referral }}</p>
+    {% if case.support_goals %}<h3>Support Goals</h3><p>{{ case.support_goals }}</p>{% endif %}
+  </div>
+
+  {% if support_plan %}
+  <div class="cns-panel" style="margin-bottom:18px;">
+    <h3>🎯 Student Support Plan</h3>
+    <p><b>Main Concern:</b> {{ support_plan.main_concern }}</p>
+    <p><b>Strengths:</b> {{ support_plan.student_strengths|default:"—" }}</p>
+    <p><b>Short-Term Goals:</b> {{ support_plan.short_term_goals|default:"—" }}</p>
+    <p><b>Long-Term Goals:</b> {{ support_plan.long_term_goals|default:"—" }}</p>
+    <p><b>Planned Interventions:</b> {{ support_plan.planned_interventions|default:"—" }}</p>
+    <p><b>Review Date:</b> {{ support_plan.review_date|default:"—" }}</p>
+  </div>
+  {% endif %}
+
+  <div class="cns-panel" style="margin-bottom:18px;">
+    <h3>Session Notes (Confidential)</h3>
+    {% for s in sessions %}
+    <div class="cns-session-note">
+      <div class="cns-session-meta">{{ s.get_session_type_display }} · {{ s.session_datetime|date:"d M Y, H:i" }} · {{ s.conducted_by.name|default:"—" }}{% if s.is_locked %} · 🔒 Locked{% endif %}</div>
+      <p>{{ s.notes|linebreaksbr }}</p>
+      {% if s.next_steps %}<p><b>Next Steps:</b> {{ s.next_steps }}</p>{% endif %}
+    </div>
+    {% empty %}<p class="cns-empty">No session notes yet.</p>
+    {% endfor %}
+  </div>
+
+  {% if case.status != "closed" %}
+  <div class="cns-panel">
+    <h3>Close Case</h3>
+    <form method="post">
+      {% csrf_token %}
+      {% include "counsellor_dashboard/_form_fields.html" with form=closure_form %}
+      <div class="cns-form-actions">
+        <button type="submit" name="close_case" value="1" class="btn btn-teal">Close Case</button>
+      </div>
+    </form>
+  </div>
+  {% else %}
+  <div class="cns-panel">
+    <h3>Case Closed</h3>
+    <p><b>Outcome:</b> {{ case.outcome }}</p>
+    <p><b>Closure Summary:</b> {{ case.closure_summary }}</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

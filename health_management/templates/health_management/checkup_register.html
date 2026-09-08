@@ -1,0 +1,34 @@
+{% extends "admin_panel/bases.html" %}
+{% load static %}
+{% block title %}{{ cycle.title }} — Register{% endblock %}
+{% block head %}<link rel="stylesheet" href="{% static 'health_management/css/health_theme.css' %}">{% endblock %}
+{% block content %}
+<div class="hlm-wrap">
+  <div class="hlm-page-header">
+    <div><h2>{{ cycle.title }}</h2><p>{{ cycle.start_date }} – {{ cycle.end_date }} · {{ cycle.get_checkup_type_display }}</p></div>
+    <div class="hlm-header-actions">
+      <a class="btn btn-teal" href="{% url 'health_management:checkup_cycle_list' %}">← All Cycles</a>
+    </div>
+  </div>
+  <div class="hlm-panel">
+    <table class="hlm-table">
+      <thead><tr><th>Patient</th><th>Scheduled</th><th>Status</th><th>Risk</th><th>Follow-Up</th><th>Ack.</th><th></th></tr></thead>
+      <tbody>
+        {% for record in records %}
+        <tr>
+          <td><a href="{% url 'health_management:health_profile_detail' record.profile_id %}">{{ record.profile.display_name }}</a></td>
+          <td>{{ record.scheduled_date|default:"—" }}</td>
+          <td><span class="hlm-badge">{{ record.get_status_display }}</span></td>
+          <td><span class="hlm-risk-{{ record.risk_level }}">{{ record.get_risk_level_display }}</span></td>
+          <td>{{ record.follow_up_date|default:"—" }}</td>
+          <td>{% if record.parent_or_staff_acknowledged %}Confirmed{% else %}Pending{% endif %}</td>
+          <td><a class="btn btn-teal" href="{% url 'health_management:checkup_record_edit' record.id %}">Update</a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="hlm-empty">No patients added to this cycle yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends "admin_panel/bases.html" %}
+{% load static %}
+{% block title %}Emergency Treatment{% endblock %}
+{% block head %}<link rel="stylesheet" href="{% static 'health_management/css/health_theme.css' %}">{% endblock %}
+{% block content %}
+<div class="hlm-wrap">
+  <div class="hlm-page-header">
+    <div><h2>🚑 Emergency Treatment</h2><p>Triage, treat, notify, and close — every emergency case tracked end to end.</p></div>
+    <div class="hlm-header-actions"><a class="btn btn-red" href="{% url 'health_management:emergency_case_create' %}">🚑 Log New Emergency</a></div>
+  </div>
+  <div class="hlm-panel">
+    <table class="hlm-table">
+      <thead><tr><th>Case #</th><th>Patient</th><th>Type</th><th>Triage</th><th>Date</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+        {% for c in cases %}
+        <tr>
+          <td>{{ c.case_number }}</td>
+          <td>{{ c.profile.display_name|default:c.unknown_patient_note|default:"Unknown" }}</td>
+          <td>{{ c.incident_type }}</td>
+          <td>{{ c.get_triage_level_display }}</td>
+          <td>{{ c.incident_datetime|date:"d M Y, H:i" }}</td>
+          <td><span class="hlm-badge hlm-badge-{{ c.status }}">{{ c.get_status_display }}</span></td>
+          <td><a class="btn btn-teal" href="{% url 'health_management:emergency_case_detail' c.id %}">Open</a></td>
+        </tr>
+        {% empty %}<tr><td colspan="7" class="hlm-empty">No emergency cases logged yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

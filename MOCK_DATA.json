@@ -1,0 +1,58 @@
+{
+  "auth/login": {
+    "access_token": "eyJhbGci...mocktoken",
+    "refresh_token": "rft_mock_123",
+    "token_type": "Bearer",
+    "user": {
+      "id": 42,
+      "full_name": "Ali Khan",
+      "admission_number": "A-2026-01",
+      "email": "student1@example.com"
+    }
+  },
+  "student/profile": {
+    "id": 42,
+    "admission_number": "A-2026-01",
+    "full_name": "Ali Khan",
+    "current_class": "7",
+    "section": "A",
+    "avatar_url": "http://localhost:4010/media/avatars/ali.jpg",
+    "email": "student1@example.com",
+    "phone": "+923001234567"
+  },
+  "fees/vouchers": {
+    "results": [
+      {
+        "voucher_no": "V-2026-07-001",
+        "month": "July",
+        "year": 2026,
+        "net_amount": 1250.0,
+        "status": "UNPAID",
+        "due_date": "2026-07-31",
+        "download_url": "http://localhost:4010/media/vouchers/V-2026-07-001.pdf"
+      }
+    ],
+    "meta": { "page": 1, "page_size": 20, "total": 1 }
+  },
+  "fees/balance": {
+    "outstanding": 1250.0,
+    "total_due": 2500.0,
+    "last_generated_at": "2026-07-30T09:00:00Z"
+  },
+  "notifications": {
+    "results": [
+      { "id": 987, "notification_type": "IN_APP", "content": "New fee voucher generated.", "status": "PENDING", "created_at": "2026-07-30T09:05:00Z", "read": false }
+    ],
+    "meta": { "page": 1, "page_size": 20, "total": 1 }
+  },
+  "timetable/week": {
+    "week_start": "2026-08-23",
+    "days": [
+      { "date": "2026-08-23", "periods": [ { "period_number": 1, "subject": "English", "teacher": "Ms. Ayesha", "start_time": "2026-08-23T09:00:00Z", "end_time": "2026-08-23T09:40:00Z", "class": "7-A" } ] }
+    ]
+  },
+  "attendance/month": {
+    "summary": { "present": 18, "absent": 2 },
+    "records": [ { "date": "2026-08-01", "status": "present", "remarks": "" } ]
+  }
+}

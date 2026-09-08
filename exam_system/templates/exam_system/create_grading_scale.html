@@ -1,0 +1,102 @@
+{% extends "admin_panel/bases.html" %}
+{% block content %}
+
+<div class="container-fluid">
+    <div class="d-flex align-items-center mb-4">
+        <a href="{% url 'grading_scale_list' %}" class="btn btn-outline-secondary btn-sm mr-3">
+            <i class="fa fa-arrow-left"></i> Back
+        </a>
+        <div>
+            <h3 class="mb-1">{% if scale %}Edit{% else %}New{% endif %} Grading Scale</h3>
+            <p class="text-muted mb-0">{{ academic_year }}</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form method="POST" id="scaleForm">
+                {% csrf_token %}
+
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <label>Scale Name</label>
+                        <input type="text" name="name" class="form-control"
+                               value="{{ scale.name|default:'' }}" placeholder="e.g. Standard Scale" required>
+                    </div>
+                    <div class="col-md-6 d-flex align-items-end">
+                        <div class="custom-control custom-checkbox mb-2">
+                            <input type="checkbox" class="custom-control-input" id="isDefault" name="is_default"
+                                   {% if scale.is_default %}checked{% endif %}>
+                            <label class="custom-control-label" for="isDefault">
+                                Set as default scale for {{ academic_year }}
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <h5 class="mb-3">Grade Bands</h5>
+                <div class="table-responsive">
+                    <table class="table table-bordered" id="bandsTable">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Grade</th>
+                                <th>Min %</th>
+                                <th>Max %</th>
+                                <th>Grade Point</th>
+                                <th>Description</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="bandsBody">
+                            {% for band in scale.bands.all %}
+                            <tr>
+                                <td><input type="text" name="grade" class="form-control form-control-sm" value="{{ band.grade }}"></td>
+                                <td><input type="number" step="0.01" name="min_percent" class="form-control form-control-sm" value="{{ band.min_percent }}"></td>
+                                <td><input type="number" step="0.01" name="max_percent" class="form-control form-control-sm" value="{{ band.max_percent }}"></td>
+                                <td><input type="number" step="0.01" name="grade_point" class="form-control form-control-sm" value="{{ band.grade_point }}"></td>
+                                <td><input type="text" name="description" class="form-control form-control-sm" value="{{ band.description }}"></td>
+                                <td><button type="button" class="btn btn-xs btn-danger" onclick="this.closest('tr').remove()">✕</button></td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td><input type="text" name="grade" class="form-control form-control-sm" value="A+"></td>
+                                <td><input type="number" step="0.01" name="min_percent" class="form-control form-control-sm" value="90"></td>
+                                <td><input type="number" step="0.01" name="max_percent" class="form-control form-control-sm" value="100"></td>
+                                <td><input type="number" step="0.01" name="grade_point" class="form-control form-control-sm" value="4.0"></td>
+                                <td><input type="text" name="description" class="form-control form-control-sm" value="Outstanding"></td>
+                                <td><button type="button" class="btn btn-xs btn-danger" onclick="this.closest('tr').remove()">✕</button></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <button type="button" class="btn btn-outline-secondary btn-sm mb-3" onclick="addRow()">
+                    <i class="fa fa-plus mr-1"></i> Add Grade Band
+                </button>
+
+                <div class="d-flex justify-content-end">
+                    <a href="{% url 'grading_scale_list' %}" class="btn btn-outline-secondary mr-2">Cancel</a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa fa-save mr-1"></i> Save Grading Scale
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function addRow() {
+    const tr = `<tr>
+        <td><input type="text" name="grade" class="form-control form-control-sm" placeholder="e.g. B"></td>
+        <td><input type="number" step="0.01" name="min_percent" class="form-control form-control-sm"></td>
+        <td><input type="number" step="0.01" name="max_percent" class="form-control form-control-sm"></td>
+        <td><input type="number" step="0.01" name="grade_point" class="form-control form-control-sm"></td>
+        <td><input type="text" name="description" class="form-control form-control-sm"></td>
+        <td><button type="button" class="btn btn-xs btn-danger" onclick="this.closest('tr').remove()">✕</button></td>
+    </tr>`;
+    document.getElementById('bandsBody').insertAdjacentHTML('beforeend', tr);
+}
+</script>
+{% endblock %}
