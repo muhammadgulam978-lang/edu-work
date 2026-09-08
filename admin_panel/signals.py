@@ -25,17 +25,8 @@ def assign_section(sender, instance, created, **kwargs):
 
 
 # =============================== USER GROUP ASSIGNMENT ===============================
-@receiver(post_save, sender=User)
-def assign_default_group(sender, instance, created, **kwargs):
-    """
-    Automatically assign a default Group (role) to newly created users.
-    You can modify this logic as needed.
-    """
-    if created:
-        # Example: Assign every new user to 'Student' group by default.
-        # You can customize based on username, email domain, etc.
-        default_group, _ = Group.objects.get_or_create(name='Student')
-        instance.groups.add(default_group)
+# Accounts receive roles explicitly through provisioning. Usernames and profile
+# creation must never grant authorization automatically.
 
 
 # admin_panel/signals.py
@@ -98,35 +89,9 @@ from django.contrib.auth.models import User, Group
 
 @receiver(post_save, sender=User)
 def assign_group_on_creation(sender, instance, created, **kwargs):
-    """
-    Automatically assign users to groups based on their role or username.
-    """
-    if not created:
-        return
-
-    username = instance.username.lower()
-
-    # 🔹 Superuser → Admin group
-    if instance.is_superuser:
+    if created and instance.is_superuser:
         group, _ = Group.objects.get_or_create(name="Admin")
         instance.groups.add(group)
-        print(f"Superuser '{instance.username}' added to Admin group")
-
-    # 🔹 Normal users → assign based on name
-    elif "teacher" in username:
-        group, _ = Group.objects.get_or_create(name="Teacher")
-        instance.groups.add(group)
-        print(f"{instance.username} added to Teacher group")
-
-    elif "student" in username:
-        group, _ = Group.objects.get_or_create(name="Student")
-        instance.groups.add(group)
-        print(f"{instance.username} added to Student group")
-
-    elif "parent" in username:
-        group, _ = Group.objects.get_or_create(name="Parent")
-        instance.groups.add(group)
-        print(f"{instance.username} added to Parent group")
 
 
 # from django.db.models.signals import post_save

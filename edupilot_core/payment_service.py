@@ -4,6 +4,7 @@ Real payments ke liye: Stripe, PayPal, JazzCash integration karo
 """
 
 from django.utils import timezone
+from django.conf import settings
 from decimal import Decimal
 from .models import FeeVoucher, StudentBalance, StudentLedger
 import random
@@ -30,6 +31,9 @@ class DummyPaymentService:
         Returns:
             dict with payment status
         """
+        if not getattr(settings, 'ALLOW_DEMO_PAYMENTS', False):
+            return {'success': False, 'message': 'Demo payments are disabled. Use verified finance receipts.',
+                    'transaction_id': None}
         try:
             voucher = FeeVoucher.objects.get(id=voucher_id)
             amount_paid = Decimal(str(amount_paid))
@@ -120,6 +124,8 @@ class DummyPaymentService:
         """
         Process refund for a voucher
         """
+        if not getattr(settings, 'ALLOW_DEMO_PAYMENTS', False):
+            return {'success': False, 'message': 'Refunds require an independently approved finance workflow.'}
         try:
             voucher = FeeVoucher.objects.get(id=voucher_id)
             refund_amount = Decimal(str(refund_amount))

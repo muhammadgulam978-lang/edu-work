@@ -1,0 +1,1 @@
+{% extends 'access_control/management/base.html' %}{% block security_content %}<section class="security-panel security-form"><form method="post">{% csrf_token %}{{ form.as_p }}<button class="security-btn primary" type="submit"><i class="fas fa-save"></i> Save</button> <a class="security-btn" href="{% url back_name %}">Cancel</a></form></section>{% endblock %}

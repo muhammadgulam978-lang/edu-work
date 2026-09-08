@@ -1,3 +1,4 @@
+from parent_dashboard.access import accessible_students
 from django.contrib.auth import get_user_model
 from django.db.models import Q
 
@@ -32,11 +33,11 @@ def _parent_student_ids(user):
     parent = getattr(user, "parent", None)
     if not parent:
         return set()
-    return set(parent.students.values_list("id", flat=True))
+    return set(accessible_students(parent).values_list("id", flat=True))
 
 
 def can_contact(sender, recipient):
-    if not sender.is_authenticated or not recipient.is_active or sender.pk == recipient.pk:
+    if not sender.is_authenticated or not sender.is_active or not recipient.is_active or sender.pk == recipient.pk:
         return False
     if sender.is_staff or sender.is_superuser:
         return True
@@ -55,7 +56,7 @@ def can_contact(sender, recipient):
         parent = getattr(recipient, "parent", None)
         return bool(
             parent
-            and parent.students.filter(section_id__in=section_ids).exists()
+            and accessible_students(parent).filter(section_id__in=section_ids).exists()
         )
     if sender_role == "student":
         student = sender.student
@@ -73,7 +74,7 @@ def can_contact(sender, recipient):
                 teacher=teacher, section_id=student.section_id
             ).exists()
         parent = getattr(recipient, "parent", None)
-        return bool(parent and parent.students.filter(pk=student.pk).exists())
+        return bool(parent and accessible_students(parent).filter(pk=student.pk).exists())
     if sender_role == "parent":
         child_ids = _parent_student_ids(sender)
         student = getattr(recipient, "student", None)
@@ -106,3 +107,22 @@ def contactable_users(user):
     if user.is_staff or user.is_superuser:
         return candidates
     return [candidate for candidate in candidates if can_contact(user, candidate)]
+
+
+def can_access_conversation(user, conversation):
+    if not user.is_authenticated or not user.is_active or conversation.is_archived:
+        return False
+    if not conversation.memberships.filter(user=user, is_archived=False).exists():
+        return False
+    if not conversation.is_group:
+        others = list(conversation.memberships.exclude(user=user).select_related('user'))
+        return bool(others) and all(can_contact(user, member.user) for member in others)
+    if conversation.class_fk_id and user_role(user) == 'parent':
+        return accessible_students(getattr(user, 'parent', None)).filter(class_fk_id=conversation.class_fk_id).exists()
+    if conversation.class_fk_id and user_role(user) == 'student':
+        return user.student.class_fk_id == conversation.class_fk_id
+    if conversation.class_fk_id and user_role(user) == 'teacher':
+        from admin_panel.models import ClassTeacher, AssignedPeriod
+        return (ClassTeacher.objects.filter(teacher__user=user, class_fk_id=conversation.class_fk_id).exists()
+                or AssignedPeriod.objects.filter(teacher__user=user, class_fk_id=conversation.class_fk_id).exists())
+    return True

@@ -9,6 +9,12 @@ from .services import CommunicationService, display_name
 
 
 class CommunicationConsumer(AsyncWebsocketConsumer):
+    async def send(self, text_data=None, bytes_data=None, close=False):
+        if not await self._is_member():
+            await self.close(code=4403)
+            return
+        await super().send(text_data=text_data, bytes_data=bytes_data, close=close)
+
     async def connect(self):
         self.user = self.scope["user"]
         self.conversation_id = self.scope["url_route"]["kwargs"]["conversation_id"]
@@ -60,6 +66,9 @@ class CommunicationConsumer(AsyncWebsocketConsumer):
             await self.channel_layer.group_discard(self.user_group, self.channel_name)
 
     async def receive(self, text_data=None, bytes_data=None):
+        if not await self._is_member():
+            await self.close(code=4403)
+            return
         try:
             payload = json.loads(text_data or "{}")
         except json.JSONDecodeError:
@@ -80,6 +89,9 @@ class CommunicationConsumer(AsyncWebsocketConsumer):
             await self._mark_read()
 
     async def communication_message(self, event):
+        if not await self._is_member():
+            await self.close(code=4403)
+            return
         await self.send(
             text_data=json.dumps(
                 {
@@ -91,6 +103,9 @@ class CommunicationConsumer(AsyncWebsocketConsumer):
         )
 
     async def communication_inbox(self, event):
+        if not await self._is_member():
+            await self.close(code=4403)
+            return
         await self.send(
             text_data=json.dumps(
                 {
@@ -113,11 +128,17 @@ class CommunicationConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def _is_member(self):
-        return Conversation.objects.filter(
+        from django.contrib.auth import get_user_model
+        from .permissions import can_access_conversation
+        user = get_user_model().objects.filter(pk=self.user.pk, is_active=True).first()
+        if not user:
+            return False
+        conversation = Conversation.objects.filter(
             pk=self.conversation_id,
             memberships__user=self.user,
             is_archived=False,
-        ).exists()
+        ).first()
+        return bool(conversation and can_access_conversation(user, conversation))
 
     @database_sync_to_async
     def _set_presence(self, online):

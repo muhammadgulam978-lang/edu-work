@@ -39,7 +39,16 @@ from .models import (
 
 admin.site.register(Admission)
 admin.site.register(Class)
-admin.site.register(AcademicYear)
+@admin.register(AcademicYear)
+class AcademicYearAdmin(admin.ModelAdmin):
+    list_display = ['year', 'status', 'is_active', 'starts_on', 'ends_on']
+
+    def delete_model(self, request, obj):
+        obj.delete()
+
+    def delete_queryset(self, request, queryset):
+        for obj in queryset:
+            obj.delete()
 admin.site.register(Section)
 admin.site.register(Subject)
 admin.site.register(CreatePeriod)

@@ -63,6 +63,11 @@ class StudentGuardian(models.Model):
     is_primary = models.BooleanField(default=False)
     portal_access = models.BooleanField(default=True)
     notifications_enabled = models.BooleanField(default=True)
+    verified_at = models.DateTimeField(null=True, blank=True)
+    verified_by = models.ForeignKey(User, on_delete=models.PROTECT, null=True, blank=True,
+                                    related_name='verified_guardian_relationships')
+    consent_reference = models.CharField(max_length=255, blank=True)
+    expires_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         constraints = [

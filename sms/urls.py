@@ -6,6 +6,8 @@ from login import views as login_views
 from django.urls import path, include
 
 urlpatterns = [
+    path('access/', include('access_control.urls')),
+    path('workspace/operations/', include('school_operations.urls')),
     path('', login_views.role_select_view, name='home'), 
     path('login/', login_views.role_select_view, name='login'),
     path('login/admin/', login_views.admin_login, name='login_admin'),

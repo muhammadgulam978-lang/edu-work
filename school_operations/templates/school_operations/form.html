@@ -1,0 +1,7 @@
+{% extends 'access_control/base.html' %}
+{% block workspace_content %}
+<section class="ops-panel ops-form-panel"><form method="post">{% csrf_token %}{{ form.non_field_errors }}
+<div class="ops-form-grid">{% for field in form %}<div class="ops-field">{{ field.label_tag }}{{ field }}{% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}{{ field.errors }}</div>{% endfor %}</div>
+<div class="ops-form-actions"><a class="ops-btn ops-btn-secondary" href="{% url 'operations_records' kind %}">Cancel</a><button class="ops-btn ops-btn-primary" type="submit">Save record</button></div>
+</form></section>
+{% endblock %}

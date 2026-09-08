@@ -1,0 +1,24 @@
+{% extends "admin_panel/base.html" %}
+{% load static %}
+{% block title %}{{ title }} | EduPilot{% endblock %}
+{% block head %}<link rel="stylesheet" href="{% static 'admin_panel/css/operations_admin.css' %}">{% endblock %}
+{% block navbar %}
+<header class="header edu-portal-header" data-edu-portal-header data-portal-kind="workspace">
+<div class="edu-portal-header-card"><div class="edu-portal-header-main">
+<button class="edu-portal-menu" type="button" data-edu-sidebar-toggle aria-controls="eduSidebar" aria-expanded="false" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+<a class="edu-portal-brand" href="{% url 'access_workspace' %}"><img src="{% static 'admin_panel/images/edupilot-logo-2026-nav.png' %}" alt="EduPilot"></a>
+<span class="edu-portal-chip">{{ user.get_full_name|default:user.username }} · {{ user_role }}</span>
+<form action="{% url 'logout' %}" method="post">{% csrf_token %}<button class="ops-btn ops-btn-secondary" type="submit">Sign out</button></form>
+</div></div></header>
+{% endblock %}
+{% block assistant_widget %}{% endblock %}
+{% block sidebar %}
+{% include 'shared/sidebar/shell.html' with sidebar_portal='workspace' sidebar_menu_template='access_control/sidebar.html' %}
+{% endblock %}
+{% block content %}
+<div class="ops-page">
+  <div class="ops-heading"><div class="ops-title"><div><h2>{{ title }}</h2><p>{{ user_role }}</p></div></div></div>
+  {% if messages %}{% for message in messages %}<div class="alert" role="status">{{ message }}</div>{% endfor %}{% endif %}
+  {% block workspace_content %}{% endblock %}
+</div>
+{% endblock %}

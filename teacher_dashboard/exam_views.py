@@ -1,3 +1,4 @@
+from exam_system.access import banks_for
 # =============================================================
 # exam_views.py
 # Ye code aapke existing teacher_dashboard/views.py mein
@@ -54,7 +55,7 @@ def question_bank_list(request):
     Admin ya coordinator ke liye.
     """
     academic_year = get_active_year()
-    banks = QuestionBank.objects.filter(
+    banks = banks_for(request.user).filter(
         academic_year=academic_year
     ).select_related('subject', 'class_fk', 'created_by')
 

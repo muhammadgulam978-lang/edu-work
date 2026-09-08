@@ -1,3 +1,5 @@
+from django.db import transaction
+from django.core.exceptions import ValidationError
 """
 exam_system/services.py
 =======================
@@ -268,6 +270,7 @@ def generate_paper_from_blueprint(blueprint) -> list:
 # SECTION 4: RESULTS COMPILE KARO
 # =============================================================
 
+@transaction.atomic
 def compile_results(schedule) -> int:
     from exam_system.models import AnswerSheet, QuestionScore, CentralizedResult, PaperBlueprint
 
@@ -287,16 +290,28 @@ def compile_results(schedule) -> int:
         total_marks   = 100
         passing_marks = 40
 
+    if schedule.exam_plan.is_published:
+        raise ValidationError('Published results are locked. Use the correction approval workflow.')
+    sheets = list(sheets.select_for_update())
+    for sheet in sheets:
+        if not sheet.paper_id:
+            raise ValidationError('Every submitted answer sheet must reference its paper.')
+        expected = set(sheet.paper.questions.values_list('pk', flat=True))
+        scores = list(QuestionScore.objects.filter(answer_sheet=sheet).select_related('question'))
+        if not expected or {score.question_id for score in scores} != expected:
+            raise ValidationError('Every paper question must have a recorded mark.')
+        if any(score.teacher_score is None or score.verified_by_id is None for score in scores):
+            raise ValidationError('Every mark requires human verification before compilation.')
+        if any(score.teacher_score < 0 or score.teacher_score > score.question.marks for score in scores):
+            raise ValidationError('A mark is outside its question maximum.')
+
     compiled_count = 0
 
     for sheet in sheets:
         scores  = QuestionScore.objects.filter(answer_sheet=sheet)
         obtained = 0
         for score in scores:
-            if score.teacher_score is not None:
-                obtained += float(score.teacher_score)
-            elif score.ai_score is not None:
-                obtained += float(score.ai_score)
+            obtained += float(score.teacher_score)
 
         percentage = round((obtained / total_marks) * 100, 2) if total_marks else 0
         is_pass    = obtained >= passing_marks

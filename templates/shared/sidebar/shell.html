@@ -5,9 +5,11 @@
        id="eduSidebar"
        data-edu-sidebar
        data-sidebar-portal="{{ sidebar_portal }}"
-       aria-label="{% if sidebar_portal == 'admin' %}Admin{% elif sidebar_portal == 'teacher' %}Teacher{% elif sidebar_portal == 'student' %}Student{% elif sidebar_portal == 'parent' %}Parent{% else %}Automation{% endif %} navigation">
+       aria-label="{% if sidebar_portal == 'admin' %}Admin{% elif sidebar_portal == 'teacher' %}Teacher{% elif sidebar_portal == 'student' %}Student{% elif sidebar_portal == 'parent' %}Parent{% elif sidebar_portal == 'workspace' %}Workspace{% else %}Automation{% endif %} navigation">
     <div class="deznav-brand">
-        {% if sidebar_portal == 'admin' %}
+        {% if sidebar_portal == 'workspace' %}
+            <a href="{% url 'access_workspace' %}" class="brand-logo">
+        {% elif sidebar_portal == 'admin' %}
             <a href="{% url 'admin_panel_dashboard' %}" class="brand-logo">
         {% elif sidebar_portal == 'teacher' %}
             <a href="{% url 'teacher_dashboard' %}" class="brand-logo">

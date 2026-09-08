@@ -1,0 +1,5 @@
+{% extends 'access_control/base.html' %}
+{% block workspace_content %}
+<section class="ops-panel"><p>{{ item.student.name }} · {{ item.campus.name }}</p><p>{{ item.get_category_display }}</p><p>Authority reference: {{ item.consent_reference }}</p><div>{{ notes|linebreaks }}</div><p>Follow up: {{ item.follow_up_on|default:'Not scheduled' }}</p></section>
+{% if can_close %}<form method="post" action="{% url 'operations_action' 'health' item.pk %}">{% csrf_token %}<button class="ops-btn ops-btn-secondary" name="action" value="close">Close case</button></form>{% else %}{% if item.closed_at %}<p>Closed: {{ item.closed_at }}</p>{% endif %}{% endif %}
+{% endblock %}

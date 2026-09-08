@@ -179,6 +179,15 @@ def _record_role_activity(action_by, action_type, message, target_user=None, tar
     )
 
 
+def _safe_role_label(user):
+    from access_control.identity import effective_role
+    from django.core.exceptions import PermissionDenied
+    try:
+        return effective_role(user) or "No Role"
+    except PermissionDenied:
+        return "Role conflict"
+
+
 def _role_management_context(active_tab="users", role_form=None, assign_form=None):
     groups = Group.objects.prefetch_related('permissions').annotate(user_count=Count('user')).order_by('name')
     users = User.objects.prefetch_related('groups').order_by('-date_joined', 'username')
@@ -194,7 +203,7 @@ def _role_management_context(active_tab="users", role_form=None, assign_form=Non
         users_with_meta.append({
             "user": user,
             "roles": user_roles,
-            "primary_role": user_roles[0].name if user_roles else "No Role",
+            "primary_role": _safe_role_label(user),
             "profile_type": _detect_user_profile_type(user),
         })
 
@@ -2046,10 +2055,7 @@ def dashboard_summary_data(request):
 
 
 def _admin_role_label(user):
-    if user.is_superuser:
-        return "Super Admin"
-    groups = list(user.groups.values_list("name", flat=True))
-    return ", ".join(groups) if groups else "Admin"
+    return _safe_role_label(user)
 
 
 def _admin_search_result(title, module, url, description="", status=""):
@@ -3503,9 +3509,8 @@ def add_academic_year(request):
     if request.method == 'POST':
         form = AcademicYearForm(request.POST)
         if form.is_valid():
-            if form.cleaned_data['is_active']:
-                AcademicYear.objects.update(is_active=False)
-            form.save()
+            from .academic_year_services import save_academic_year
+            save_academic_year(form, request.user)
             return redirect('academic_year_list')
     else:
         form = AcademicYearForm()
@@ -3518,9 +3523,8 @@ def update_academic_year(request, pk):
     if request.method == 'POST':
         form = AcademicYearForm(request.POST, instance=year)
         if form.is_valid():
-            if form.cleaned_data['is_active']:
-                AcademicYear.objects.update(is_active=False)
-            form.save()
+            from .academic_year_services import save_academic_year
+            save_academic_year(form, request.user)
             return redirect('academic_year_list')
     else:
         form = AcademicYearForm(instance=year)
@@ -8441,14 +8445,20 @@ def _operation_save(request, key, pk=None):
     form = config["form"](request.POST or None, instance=instance)
     if request.method == "POST" and form.is_valid():
         obj = form.save(commit=False)
-        if key == "purchase_request":
-            if not obj.requested_by_id:
-                obj.requested_by = request.user
-            if obj.status == "received" and not obj.received_on:
-                obj.received_on = timezone.localdate()
         if key == "stock_movement" and not obj.created_by_id:
             obj.created_by = request.user
-        obj.save()
+        if key == "purchase_request":
+            from .procurement_services import save_purchase_request
+            from django.core.exceptions import ValidationError
+            try:
+                save_purchase_request(obj, request.user)
+            except ValidationError as exc:
+                form.add_error(None, exc)
+                return render(request, "admin_panel/operations_form.html", {
+                    **config, "form": form, "is_edit": bool(instance),
+                })
+        else:
+            obj.save()
         messages.success(request, f"{config['singular']} saved successfully.")
         return redirect(config["list_url"])
     return render(request, "admin_panel/operations_form.html", {

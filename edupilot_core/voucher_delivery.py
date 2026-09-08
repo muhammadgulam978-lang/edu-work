@@ -1,3 +1,4 @@
+from parent_dashboard.access import accessible_students
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.db import transaction
@@ -42,25 +43,15 @@ def recipients_for_student(student):
         recipients.append((student.user, 'STUDENT'))
 
     for parent in student.parents.select_related('user').filter(user__isnull=False):
-        recipients.append((parent.user, 'PARENT'))
+        if accessible_students(parent).filter(pk=student.pk, guardian_links__notifications_enabled=True).exists():
+            recipients.append((parent.user, 'PARENT'))
 
-    if student.class_fk_id and student.section_id:
-        from admin_panel.models import ClassTeacher
-
-        teachers = ClassTeacher.objects.filter(
-            class_fk_id=student.class_fk_id,
-            section_id=student.section_id,
-            teacher__user__isnull=False,
-        ).select_related('teacher__user')
-        if student.academic_year_id:
-            teachers = teachers.filter(academic_year_id=student.academic_year_id)
-        for assignment in teachers:
-            recipients.append((assignment.teacher.user, 'TEACHER'))
+    # Teachers may receive approved fee indicators, never full financial vouchers.
 
     unique = {}
     for user, role in recipients:
         unique[user.pk] = (user, role)
-    return list(unique.values())
+    return [(user, role) for user, role in unique.values() if user.is_active]
 
 
 def _broadcast(user_id, voucher_id):
@@ -129,6 +120,8 @@ def eligible_vouchers_for(user, role):
     base = FeeVoucher.objects.select_related(
         'student__canonical_student', 'canonical_student',
     )
+    if not user.is_authenticated or not user.is_active:
+        return base.none()
     if role == 'STUDENT':
         student = getattr(user, 'student', None)
         if not student:
@@ -141,37 +134,14 @@ def eligible_vouchers_for(user, role):
         parent = getattr(user, 'parent', None)
         if not parent:
             return base.none()
-        students = parent.students.all()
+        students = accessible_students(parent)
         return base.filter(
             Q(canonical_student__in=students) | Q(student__canonical_student__in=students)
         ).distinct()
 
-    if role == 'TEACHER':
-        teacher = getattr(user, 'teacher', None)
-        if not teacher:
-            return base.none()
-        from admin_panel.models import ClassTeacher
-
-        assignments = ClassTeacher.objects.filter(teacher=teacher).values(
-            'class_fk_id', 'section_id', 'academic_year_id'
-        )
-        filters = Q(pk__in=[])
-        for assignment in assignments:
-            pair = Q(
-                canonical_student__class_fk_id=assignment['class_fk_id'],
-                canonical_student__section_id=assignment['section_id'],
-            ) | Q(
-                student__canonical_student__class_fk_id=assignment['class_fk_id'],
-                student__canonical_student__section_id=assignment['section_id'],
-            )
-            if assignment['academic_year_id']:
-                pair &= (
-                    Q(canonical_student__academic_year_id=assignment['academic_year_id'])
-                    | Q(student__canonical_student__academic_year_id=assignment['academic_year_id'])
-                )
-            filters |= pair
-        return base.filter(filters).distinct()
+    # Full voucher amounts and PDFs are outside the teacher role.
     return base.none()
+
 
 
 def sync_user_deliveries(user, role):

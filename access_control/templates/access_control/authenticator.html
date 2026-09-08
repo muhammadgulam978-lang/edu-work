@@ -1,0 +1,11 @@
+{% extends 'access_control/base.html' %}
+{% block workspace_content %}
+<section class="ops-panel ops-form-panel">
+<p>Use an authenticator app to verify sensitive actions.</p>
+{% if secret %}<p>Add a time-based account named EduPilot to your authenticator using this setup key. Keep it private.</p><p><code>{{ secret }}</code></p>{% endif %}
+<form method="post">{% csrf_token %}{{ form.non_field_errors }}
+{% if not device.confirmed and not secret %}<div class="ops-field">{{ form.password.label_tag }}{{ form.password }}{{ form.password.errors }}</div><button class="ops-btn ops-btn-secondary" name="action" value="enroll">Set up authenticator</button>{% endif %}
+<div class="ops-field">{{ form.code.label_tag }}{{ form.code }}{{ form.code.errors }}</div>
+<button class="ops-btn ops-btn-primary" name="action" value="verify">Verify code</button>
+</form></section>
+{% endblock %}

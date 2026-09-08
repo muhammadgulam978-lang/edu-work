@@ -40,9 +40,7 @@ def student_announcements(request):
 # =============================================================
 @login_required
 def student_dashboard(request):
-    print("=== student_dashboard view reached ===")
     user = request.user
-    print("Logged in user:", user.username)
 
     try:
         student = Student.objects.get(user=user)
@@ -51,17 +49,27 @@ def student_dashboard(request):
             'message': 'Student profile not found.'
         })
 
-    if not student.class_fk:
-        return render(request, 'student_profile/error.html', {
-            'message': 'Student is not assigned to any class.'
-        })
-
-    subjects = Subject.objects.filter(class_fk=student.class_fk)
+    has_class_assignment = bool(student.class_fk_id)
+    subjects = (
+        Subject.objects.filter(class_fk=student.class_fk)
+        if has_class_assignment
+        else Subject.objects.none()
+    )
 
     return render(request, 'student_profile/dashboard.html', {
-        'student':    student,
-        'class_name': student.class_fk.class_name,
-        'subjects':   subjects,
+        'student': student,
+        'class_name': (
+            student.class_fk.class_name
+            if has_class_assignment
+            else 'Not assigned yet'
+        ),
+        'section_name': (
+            student.section.section_name
+            if student.section_id
+            else 'Not assigned yet'
+        ),
+        'has_class_assignment': has_class_assignment,
+        'subjects': subjects,
     })
 
 
@@ -301,7 +309,11 @@ def student_attendance(request):
 
     attendance = []
 
-    subjects = Subject.objects.filter(class_fk=student.class_fk)
+    subjects = (
+        Subject.objects.filter(class_fk=student.class_fk)
+        if student.class_fk_id
+        else Subject.objects.none()
+    )
 
     for subject in subjects:
 
@@ -355,7 +367,11 @@ def student_result(request):
             "message": "Student profile not found."
         })
 
-    subjects = Subject.objects.filter(class_fk=student.class_fk)
+    subjects = (
+        Subject.objects.filter(class_fk=student.class_fk)
+        if student.class_fk_id
+        else Subject.objects.none()
+    )
     term     = request.GET.get("term", "midterm")
 
     results  = ExamResult.objects.filter(
@@ -381,10 +397,14 @@ def student_result(request):
 @login_required
 def student_assignments(request):
     student     = Student.objects.get(user=request.user)
-    assignments = Assignment.objects.filter(
-        class_fk=student.class_fk,
-        section=student.section
-    ).order_by('due_date')
+    assignments = (
+        Assignment.objects.filter(
+            class_fk=student.class_fk,
+            section=student.section
+        ).order_by('due_date')
+        if student.class_fk_id
+        else Assignment.objects.none()
+    )
 
     submissions     = AssignmentSubmission.objects.filter(student=student)
     submission_dict = {s.assignment_id: s for s in submissions}
@@ -433,10 +453,14 @@ def submit_assignment(request, assignment_id):
 @login_required
 def student_quizzes(request):
     student = Student.objects.get(user=request.user)
-    quizzes = Quiz.objects.filter(
-        class_fk=student.class_fk,
-        section=student.section
-    ).order_by('due_date')
+    quizzes = (
+        Quiz.objects.filter(
+            class_fk=student.class_fk,
+            section=student.section
+        ).order_by('due_date')
+        if student.class_fk_id
+        else Quiz.objects.none()
+    )
 
     submissions     = QuizSubmission.objects.filter(student=student)
     submission_dict = {s.quiz_id: s for s in submissions}
@@ -483,10 +507,14 @@ def submit_quiz(request, quiz_id):
 @login_required
 def student_diary(request):
     student = get_object_or_404(Student, user=request.user)
-    diaries = Diary.objects.filter(
-        class_fk=student.class_fk,
-        section=student.section,
-    ).select_related('teacher', 'subject').order_by('-date')
+    diaries = (
+        Diary.objects.filter(
+            class_fk=student.class_fk,
+            section=student.section,
+        ).select_related('teacher', 'subject').order_by('-date')
+        if student.class_fk_id
+        else Diary.objects.none()
+    )
 
     return render(request, 'student_profile/diary.html', {'diaries': diaries})
 
@@ -497,10 +525,14 @@ def student_diary(request):
 @login_required
 def student_lecture_notes(request):
     student      = get_object_or_404(Student, user=request.user)
-    lecture_notes = LectureNote.objects.filter(
-        class_fk=student.class_fk,
-        section=student.section,
-    ).select_related('teacher', 'subject').order_by('-id')
+    lecture_notes = (
+        LectureNote.objects.filter(
+            class_fk=student.class_fk,
+            section=student.section,
+        ).select_related('teacher', 'subject').order_by('-id')
+        if student.class_fk_id
+        else LectureNote.objects.none()
+    )
 
     return render(request, 'student_profile/lecture_notes.html', {
         'lecture_notes': lecture_notes,
@@ -530,11 +562,15 @@ def student_timetable(request):
     slots = {}
 
     for day in days:
-        assigned_periods = AssignedPeriod.objects.filter(
-            class_fk=class_obj,
-            section=section_obj,
-            day=day
-        ).select_related('period', 'subject', 'teacher')
+        assigned_periods = (
+            AssignedPeriod.objects.filter(
+                class_fk=class_obj,
+                section=section_obj,
+                day=day
+            ).select_related('period', 'subject', 'teacher')
+            if student.class_fk_id
+            else AssignedPeriod.objects.none()
+        )
 
         assigned_map = {ap.period.period_name: ap for ap in assigned_periods}
         day_slots    = {}

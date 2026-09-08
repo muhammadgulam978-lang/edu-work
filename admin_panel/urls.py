@@ -1,5 +1,6 @@
 from django.urls import path, include
 from .import views
+from access_control import management_views as access_management
 from django.contrib.auth import views as auth_views
 from django.views.generic import TemplateView
 from admin_panel.views import bulk_upload_students, bulk_upload_teachers, bulk_delete_students,  bulk_delete_teachers
@@ -137,10 +138,10 @@ urlpatterns = [
     # ---- Test Page for generator ----
     path("generate-paper/<int:format_id>/", views.generate_question_paper, name="generate_question_paper"),
     
-    path('user-role-management/', views.user_role_management, name='user_role_management'),
-    path('create-role/', views.create_role, name='create_role'),
-    path('roles/', views.list_roles, name='list_roles'),
-    path('assign-role/', views.assign_role, name='assign_role'),
+    path('user-role-management/', access_management.security_center, name='user_role_management'),
+    path('create-role/', access_management.role_add, name='create_role'),
+    path('roles/', access_management.roles, name='list_roles'),
+    path('assign-role/', access_management.assignment_add, name='assign_role'),
     
     path('books/upload/', views.upload_book, name='upload_book'),
     path('books/parse/<int:book_id>/', views.parse_book_toc_ml, name='parse_book_toc_ml'),

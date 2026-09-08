@@ -218,6 +218,7 @@
           <div class="class-card-actions">
             <a href="{% url 'class_students' rec.class_obj.id %}" class="card-primary-action">View Students</a>
             <a href="{% url 'class_update' rec.class_obj.id %}" title="Edit"><i class="fas fa-pencil-alt"></i></a>
+            <a href="{% url 'class_delete' rec.class_obj.id %}" title="Delete class" aria-label="Delete {{ rec.class_obj.class_name }}"><i class="fas fa-trash-alt"></i></a>
             <button type="button" class="ai-summary"
               data-class="{{ rec.class_obj.class_name }}"
               data-students="{{ rec.students }}"
@@ -292,6 +293,7 @@
                     <a href="{% url 'class_students' rec.class_obj.id %}" class="icon-btn" title="Students"><i class="fa fa-users"></i></a>
                     <button type="button" class="icon-btn" title="View" data-expand-id="detail-{{ rec.class_obj.id }}"><i class="fa fa-eye"></i></button>
                     <a href="{% url 'class_update' rec.class_obj.id %}" class="icon-btn" title="Edit"><i class="fas fa-pencil-alt"></i></a>
+                    <a href="{% url 'class_delete' rec.class_obj.id %}" class="icon-btn" title="Delete class" aria-label="Delete {{ rec.class_obj.class_name }}"><i class="fas fa-trash-alt"></i></a>
                     <button type="button" class="icon-btn ai-summary"
                       data-class="{{ rec.class_obj.class_name }}"
                       data-students="{{ rec.students }}"

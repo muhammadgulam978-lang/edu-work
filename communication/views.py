@@ -38,7 +38,7 @@ def _config(user):
 
 def _member_conversation(user, conversation_id):
     return get_object_or_404(
-        Conversation.objects.prefetch_related("memberships__user"),
+        CommunicationService.conversations_for(user),
         pk=conversation_id,
         memberships__user=user,
         is_archived=False,
@@ -412,11 +412,7 @@ def poll(request, conversation_id):
 @login_required
 @require_GET
 def conversation_updates(request):
-    conversations = Conversation.objects.filter(
-        memberships__user=request.user,
-        memberships__is_archived=False,
-        is_archived=False,
-    ).prefetch_related("memberships__user")
+    conversations = CommunicationService.conversations_for(request.user)
     return JsonResponse(
         {
             "ok": True,

@@ -12,8 +12,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(dotenv_path=os.path.join(BASE_DIR, '.env'))
 
 # SECURITY
+EDUPILOT_FIELD_ENCRYPTION_KEY = os.getenv('EDUPILOT_FIELD_ENCRYPTION_KEY', '')
 SECRET_KEY = 'django-insecure-1u@4sktn_vg=d#+u)*f^v9ut(jt&0&4g@s9_)-$d-l&mema=ei'
-DEBUG = True
+DEBUG = os.getenv('DJANGO_DEBUG', 'true').lower() in {'1', 'true', 'yes'}
 
 # Allowed hosts (Render URL + localhost)
 PORTAL_BASE_DOMAIN = os.getenv("PORTAL_BASE_DOMAIN", "").strip().strip(".")
@@ -46,6 +47,8 @@ INSTALLED_APPS = [
     'ai_tutor',
     'admin_ai',
     'communication',
+    'access_control',
+    'school_operations',
     
 ]
 
@@ -56,6 +59,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "access_control.middleware.IdentityBoundaryMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]

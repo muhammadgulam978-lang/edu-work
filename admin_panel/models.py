@@ -103,6 +103,22 @@ class BulkStudentCredential(models.Model):
 class AcademicYear(models.Model):
     year = models.CharField(max_length=9)
     is_active = models.BooleanField(default=False)
+    status = models.CharField(max_length=12, default='draft', choices=[
+        ('draft', 'Draft'), ('active', 'Active'), ('closed', 'Closed'), ('archived', 'Archived')])
+    starts_on = models.DateField(null=True, blank=True)
+    ends_on = models.DateField(null=True, blank=True)
+
+    def clean(self):
+        if self.starts_on and self.ends_on and self.ends_on < self.starts_on:
+            raise ValidationError('Academic year end must not precede its start.')
+        if self.status in {'closed', 'archived'} and self.is_active:
+            raise ValidationError('A closed or archived academic year cannot be active.')
+
+    def delete(self, *args, **kwargs):
+        # Preserve all historical sections, students, subjects, and assignments.
+        self.is_active = False
+        self.status = 'archived'
+        self.save(update_fields=['is_active', 'status'])
 
     def __str__(self):
         return self.year
@@ -1583,6 +1599,9 @@ class PurchaseRequest(models.Model):
     category = models.ForeignKey(ProcurementCategory, on_delete=models.SET_NULL, null=True, blank=True)
     vendor = models.ForeignKey(Vendor, on_delete=models.SET_NULL, null=True, blank=True)
     requested_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    approved_by = models.ForeignKey(User, on_delete=models.PROTECT, null=True, blank=True,
+                                    related_name='approved_purchase_requests')
+    approved_at = models.DateTimeField(null=True, blank=True)
     needed_by = models.DateField(null=True, blank=True)
     received_on = models.DateField(null=True, blank=True)
     priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default="normal")
@@ -1593,6 +1612,7 @@ class PurchaseRequest(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+        permissions = [('approve_purchaserequest', 'Can approve a purchase request')]
 
     def __str__(self):
         return self.title

@@ -10,7 +10,7 @@ from django.views.decorators.http import require_GET, require_POST
 
 from .models import PortalNotification, VoucherDelivery
 from .services import PDFGeneratorService
-from .voucher_delivery import ROLE_ROUTE_NAMES, sync_user_deliveries
+from .voucher_delivery import ROLE_ROUTE_NAMES, sync_user_deliveries, eligible_vouchers_for
 
 
 BASE_TEMPLATES = {
@@ -35,6 +35,7 @@ def _delivery(request, delivery_id, role):
         pk=delivery_id,
         recipient=request.user,
         recipient_role=role,
+        voucher__in=eligible_vouchers_for(request.user, role),
     )
 
 
@@ -89,10 +90,11 @@ def portal_vouchers(request, portal_role):
     _profile_for(request.user, portal_role)
     sync_user_deliveries(request.user, portal_role)
     deliveries = VoucherDelivery.objects.filter(
-        recipient=request.user, recipient_role=portal_role
+        recipient=request.user, recipient_role=portal_role,
+        voucher__in=eligible_vouchers_for(request.user, portal_role)
     ).select_related('voucher', 'related_student')
     notifications = PortalNotification.objects.filter(
-        recipient=request.user, notification_type='VOUCHER'
+        recipient=request.user, voucher__in=eligible_vouchers_for(request.user, portal_role), notification_type='VOUCHER'
     ).select_related('voucher', 'related_student')[:20]
     return render(request, 'voucher_portal/list.html', {
         'base_template': BASE_TEMPLATES[portal_role],
@@ -100,7 +102,7 @@ def portal_vouchers(request, portal_role):
         'deliveries': deliveries,
         'notifications': notifications,
         'unread_count': PortalNotification.objects.filter(
-            recipient=request.user, notification_type='VOUCHER', is_read=False
+            recipient=request.user, voucher__in=eligible_vouchers_for(request.user, portal_role), notification_type='VOUCHER', is_read=False
         ).count(),
         'route_names': ROLE_ROUTE_NAMES[portal_role],
     })
@@ -112,11 +114,12 @@ def voucher_summary(request, portal_role):
     _profile_for(request.user, portal_role)
     sync_user_deliveries(request.user, portal_role)
     deliveries = VoucherDelivery.objects.filter(
-        recipient=request.user, recipient_role=portal_role
+        recipient=request.user, recipient_role=portal_role,
+        voucher__in=eligible_vouchers_for(request.user, portal_role)
     ).select_related('voucher', 'related_student')
     popup = deliveries.filter(dismissed_at__isnull=True).first()
     unread = PortalNotification.objects.filter(
-        recipient=request.user, notification_type='VOUCHER', is_read=False
+        recipient=request.user, voucher__in=eligible_vouchers_for(request.user, portal_role), notification_type='VOUCHER', is_read=False
     )
     return JsonResponse({
         'popup': _delivery_json(popup, portal_role) if popup else None,

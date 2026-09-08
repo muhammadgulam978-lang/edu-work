@@ -12,9 +12,8 @@ def user_permissions(request):
     if not request.user.is_authenticated:
         return {}
 
-    # ✅ Get user's groups (roles)
-    groups = request.user.groups.all()
-    role_name = groups.first().name if groups.exists() else None
+    from access_control.identity import effective_role
+    role_name = effective_role(request.user)
 
     # ✅ Get all permissions (from groups + user)
     permissions = list(request.user.get_all_permissions())

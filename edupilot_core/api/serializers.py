@@ -17,7 +17,7 @@
 #         model = Student
 #         fields = ['full_name', 'admission_number', 'current_fee']
 
-#     def get_current_fee(self, obj):
+#     def get_current_fee(self, obj):PS D:\edu-work>
 #         # 'student' field FeeVoucher mein define hai, so filter(student=obj) is correct
 #         voucher = FeeVoucher.objects.filter(student=obj).order_by('-id').first()
 #         if voucher:

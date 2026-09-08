@@ -1,0 +1,7 @@
+{% extends 'admin_panel/bases.html' %}{% load static %}
+{% block title %}{{ title|default:'Access & Security' }} | EduPilot{% endblock %}
+{% block head %}<link rel="stylesheet" href="{% static 'access_control/security.css' %}?v=2">{% endblock %}
+{% block content %}<main class="security-center">
+<div class="security-head"><div><h1>{{ title|default:'Access & Security' }}</h1><p>Institution, campus, identity and permission administration</p></div><a class="security-btn" href="{% url 'access_security_center' %}"><i class="fas fa-shield-alt"></i> Security Center</a></div>
+{% if messages %}{% for message in messages %}<div class="alert alert-{{ message.tags|default:'info' }}">{{ message }}</div>{% endfor %}{% endif %}
+{% block security_content %}{% endblock %}</main>{% endblock %}

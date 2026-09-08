@@ -1,5 +1,5 @@
 from django.contrib.auth.hashers import make_password
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group, Permission
 from django.test import Client, TestCase
 from django.urls import reverse
 
@@ -15,6 +15,9 @@ class LiveExamAnalyticsTests(TestCase):
         )
         User.objects.bulk_create([self.user])
         self.user.refresh_from_db()
+        role, _ = Group.objects.get_or_create(name='Examination Controller')
+        role.permissions.add(Permission.objects.get(content_type__app_label='exam_system', codename='view_centralizedresult'))
+        self.user.groups.add(role)
         self.client = Client(HTTP_HOST="127.0.0.1")
         self.client.force_login(self.user)
 

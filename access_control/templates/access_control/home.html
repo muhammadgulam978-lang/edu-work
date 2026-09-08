@@ -1,0 +1,13 @@
+{% extends 'access_control/base.html' %}
+{% block workspace_content %}
+<section class="ops-panel"><h3>My roles and campuses</h3>
+  {% for assignment in assignments %}<p>{{ assignment.role.name }} · {% if assignment.campus %}{{ assignment.campus.name }}{% else %}Assigned institution{% endif %}</p>{% empty %}<p>No approved campus assignments yet. Ask your administrator to assign your role and campus.</p>{% endfor %}
+  {% if not mfa_verified %}<a class="ops-btn ops-btn-secondary" href="{% url 'access_authenticator' %}">Verify identity for sensitive work</a>{% endif %}
+  {% if user.is_superuser %}<a class="ops-btn ops-btn-secondary" href="{% url 'access_security_center' %}">Access &amp; Security</a>{% endif %}
+</section>
+<section class="ops-panel"><h3>Workspaces</h3>
+{% for link in workspace_links %}<a class="ops-btn ops-btn-secondary" href="{% url 'operations_records' link.key %}">{{ link.label }}</a>{% empty %}<p>Your workspaces appear after your access is assigned and, where required, your identity is verified.</p>{% endfor %}</section>
+<section class="ops-panel"><h3>Approval requests</h3><table class="table"><thead><tr><th>Request</th><th>Maker</th><th>Status</th><th>Action</th></tr></thead><tbody>
+{% for item in items %}<tr><td>{{ item.operation }}</td><td>{{ item.maker.get_full_name|default:item.maker.username }}</td><td>{{ item.get_status_display }}</td><td><a href="{% url 'access_approval_detail' item.pk %}">Open request</a></td></tr>{% empty %}<tr><td colspan="4">No requests available within your current access.</td></tr>{% endfor %}
+</tbody></table></section>
+{% endblock %}

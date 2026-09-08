@@ -11,6 +11,23 @@
 {% block content %}
 {% include 'voucher_portal/_dashboard_popup.html' with vouchers_url_name='student_vouchers' voucher_summary_url_name='student_voucher_summary' %}
 
+{% if not has_class_assignment %}
+<div class="col-12">
+  <div class="card" style="background:#ffffff; margin:20px 20px 0; border-left:4px solid #88D0C5;">
+    <div class="card-body" style="display:flex; align-items:flex-start; gap:14px; flex-wrap:wrap;">
+      <div style="width:48px; height:48px; border-radius:8px; display:flex; align-items:center; justify-content:center; background:rgba(136,208,197,.18); color:#264c84; border:1px solid #e9ecef; flex:0 0 auto;">
+        <i class="fas fa-school" aria-hidden="true"></i>
+      </div>
+      <div style="flex:1; min-width:220px;">
+        <h4 class="card-title mb-1" style="color:#343a40; font-weight:500;">Welcome to your student portal</h4>
+        <p class="mb-1" style="color:#6c757d;">Your account is active and you can use the portal. Your class and section have not been assigned yet.</p>
+        <p class="mb-0" style="color:#6c757d;">Courses, timetable, assignments and class-specific content will appear automatically after the administration completes your placement.</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
 <div class="col-12">
   <div class="card" style="background:#ffffff; margin: 20px 20px 0;">
     <div class="card-body" style="display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;">
@@ -37,7 +54,7 @@
       <h4 class="card-title mb-0">Courses Registered</h4>
 
       <div class="d-flex align-items-center">
-        <strong class="mr-2">Class:&nbsp;</strong>
+        <span class="mr-2" style="font-weight:500;">Class:&nbsp;</span>
         <select class="form-control" disabled style="width: 200px;">
             <option>{{ class_name }}</option>
         </select>
@@ -66,7 +83,13 @@
             </tr>
             {% empty %}
             <tr>
-              <td colspan="3" class="text-center">No Courses Registered.</td>
+              <td colspan="3" class="text-center">
+                {% if has_class_assignment %}
+                  No courses are registered for your class yet.
+                {% else %}
+                  Courses will appear after your class is assigned.
+                {% endif %}
+              </td>
             </tr>
             {% endfor %}
           </tbody>

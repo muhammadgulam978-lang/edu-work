@@ -7,7 +7,8 @@ from django.core.exceptions import PermissionDenied
 from django.test import TestCase, TransactionTestCase
 from django.urls import reverse
 
-from parent_dashboard.models import Parent
+from parent_dashboard.models import Parent, StudentGuardian
+from django.utils import timezone
 from student_profile.models import Student
 
 from .models import (
@@ -63,6 +64,7 @@ class CommunicationServiceTests(TestCase):
             email="comm.parent@example.com",
         )
         self.parent.students.add(self.student)
+        StudentGuardian.objects.create(parent=self.parent, student=self.student, relationship='Parent', verified_at=timezone.now())
 
     def test_admin_can_start_direct_conversation_and_deliver(self):
         conversation = CommunicationService.get_or_create_direct(

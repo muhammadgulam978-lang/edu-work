@@ -50,6 +50,16 @@
             <div class="ag-field">
               <label for="{{ form.group.id_for_label }}">Class Group</label>
               {{ form.group }}
+              <button type="button" class="ag-btn ag-btn-secondary mt-2" id="toggle-new-group" aria-expanded="false" aria-controls="new-group-field">
+                <i class="fa fa-plus"></i> Create Another Group
+              </button>
+              <div id="new-group-field" class="mt-2" hidden>
+                <label for="id_new_group_name">Custom Group Name</label>
+                <input type="text" name="new_group_name" id="id_new_group_name" class="form-control"
+                       value="{{ request.POST.new_group_name|default:'' }}" maxlength="100"
+                       placeholder="e.g. Montessori, O Level, Evening Program">
+                <small class="text-muted">The new group will be created and selected when this class is saved.</small>
+              </div>
             </div>
           </div>
         </div>
@@ -62,4 +72,23 @@
     </div>
   </div>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const toggle = document.getElementById('toggle-new-group');
+  const field = document.getElementById('new-group-field');
+  const input = document.getElementById('id_new_group_name');
+  if (!toggle || !field) return;
+
+  function setOpen(open) {
+    field.hidden = !open;
+    toggle.setAttribute('aria-expanded', String(open));
+    if (open && input) input.focus();
+  }
+
+  toggle.addEventListener('click', function () {
+    setOpen(field.hidden);
+  });
+  if (input && input.value.trim()) setOpen(true);
+});
+</script>
 {% endblock %}

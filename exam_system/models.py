@@ -192,6 +192,8 @@ class PaperApproval(models.Model):
     paper       = models.ForeignKey(GeneratedPaper, on_delete=models.CASCADE, related_name='approvals')
     stage       = models.CharField(max_length=20, choices=STAGE_CHOICES)
     reviewed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    assigned_to = models.ForeignKey(User, on_delete=models.PROTECT, null=True, blank=True,
+                                    related_name='assigned_paper_reviews')
     status      = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PENDING')
     remarks     = models.TextField(blank=True)
     timestamp   = models.DateTimeField(auto_now=True)
@@ -291,7 +293,7 @@ class QuestionScore(models.Model):
 
     @property
     def final_score(self):
-        return self.teacher_score if self.teacher_score is not None else self.ai_score
+        return self.teacher_score if self.verified_by_id is not None else None
 
     def __str__(self):
         return f"{self.answer_sheet.student.name} Q{self.question.id}: {self.final_score}"
@@ -331,4 +333,4 @@ final_approved_by = models.ForeignKey(
 final_approved_at = models.DateTimeField(
     null=True,
     blank=True
-)    
+)

@@ -82,6 +82,11 @@ def dispatch_pending_emails(batch_size=100):
     try:
         ids = list(EmailOutbox.objects.filter(status='PENDING').values_list('pk', flat=True)[:batch_size])
         for item in EmailOutbox.objects.filter(pk__in=ids).order_by('created_at'):
+            if item.dedupe_key.startswith('voucher:') and not _voucher_delivery_authorized(item):
+                item.status = 'FAILED'
+                item.last_error = 'Current recipient access does not authorize this voucher.'
+                item.save(update_fields=['status', 'last_error'])
+                continue
             if item.attachment_path and not os.path.exists(item.attachment_path):
                 item.last_error = 'Attachment is not available yet.'
                 item.save(update_fields=['last_error'])
@@ -124,3 +129,20 @@ def dispatch_pending_emails(batch_size=100):
 
 def kick_email_dispatch():
     _EMAIL_EXECUTOR.submit(dispatch_pending_emails)
+
+
+def _voucher_delivery_authorized(item):
+    from .models import VoucherDelivery
+    from .voucher_delivery import eligible_vouchers_for
+    try:
+        prefix, voucher_id, recipient_label, user_id = item.dedupe_key.split(':')
+        if prefix != 'voucher' or recipient_label != 'recipient':
+            return False
+        delivery = VoucherDelivery.objects.select_related('recipient').filter(
+            voucher_id=int(voucher_id), recipient_id=int(user_id), recipient__is_active=True,
+        ).first()
+    except (ValueError, TypeError):
+        return False
+    if not delivery or delivery.recipient.email.casefold() != item.recipient.casefold():
+        return False
+    return eligible_vouchers_for(delivery.recipient, delivery.recipient_role).filter(pk=delivery.voucher_id).exists()

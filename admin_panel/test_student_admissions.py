@@ -1,7 +1,7 @@
 from datetime import date
 
 from django.contrib.auth.hashers import make_password
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
@@ -22,6 +22,7 @@ class StudentAdmissionWorkflowTests(TestCase):
         self.admin = User.objects.create_user(
             'admission-admin', 'admin@example.com', 'Admin@2026!', is_staff=True
         )
+        self.admin.groups.add(Group.objects.get_or_create(name='Admin')[0])
         self.year = AcademicYear.objects.create(year='2026-27', is_active=True)
         self.class_obj = Class.objects.create(class_name='Admission Test Grade')
         self.section = Section.objects.create(

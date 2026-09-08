@@ -15,7 +15,7 @@ from .models import (
     Message,
     MessageReceipt,
 )
-from .permissions import can_contact
+from .permissions import can_contact, can_access_conversation
 
 
 ALLOWED_ATTACHMENT_EXTENSIONS = {
@@ -50,7 +50,7 @@ def display_name(user):
 class CommunicationService:
     @staticmethod
     def conversations_for(user):
-        return (
+        candidates = (
             Conversation.objects.filter(
                 memberships__user=user,
                 memberships__is_archived=False,
@@ -59,6 +59,8 @@ class CommunicationService:
             .prefetch_related("memberships__user")
             .distinct()
         )
+        ids = [item.pk for item in candidates if can_access_conversation(user, item)]
+        return candidates.filter(pk__in=ids)
 
     @staticmethod
     @transaction.atomic
@@ -162,6 +164,8 @@ class CommunicationService:
         reply_to=None,
         forwarded_from=None,
     ):
+        if not can_access_conversation(sender, conversation):
+            raise PermissionDenied('Your current assignments do not permit this conversation.')
         membership = ConversationParticipant.objects.filter(
             conversation=conversation, user=sender
         ).first()

@@ -1,3 +1,6 @@
+from exam_system.access import banks_for
+from .access import visible_papers, require_paper, decide_paper, invalidate_reviews
+from django.core.exceptions import ValidationError
 # =============================================================
 # exam_system/views.py
 # =============================================================
@@ -86,7 +89,7 @@ def question_bank_list(request):
     Yahan se naya bank (subject) create bhi ho sakta hai.
     """
     academic_year = get_active_year()
-    banks = QuestionBank.objects.filter(
+    banks = banks_for(request.user).filter(
         academic_year=academic_year
     ).select_related('subject', 'class_fk', 'created_by')
 
@@ -219,6 +222,7 @@ def upload_book_for_bank(request, bank_id):
             long_count  = int(request.POST.get('long_count',   5))
 
             groq_client = Groq(api_key=settings.GROQ_API_KEY)
+            invalidate_reviews(paper)
             total_saved = 0
 
             question_configs = [
@@ -562,7 +566,7 @@ def exam_plan_detail(request, plan_id):
     plan       = get_object_or_404(ExamPlan, id=plan_id)
     schedules  = ExamSchedule.objects.filter(exam_plan=plan).select_related('subject')
     blueprints = PaperBlueprint.objects.filter(exam_plan=plan).select_related('subject')
-    papers     = GeneratedPaper.objects.filter(
+    papers     = visible_papers(request.user).filter(
                      blueprint__exam_plan=plan
                  ).select_related('blueprint__subject')
 
@@ -721,16 +725,16 @@ def admin_paper_queue(request):
     generated papers invisible on the admin side."""
     status_filter = request.GET.get('status', '')
 
-    papers = GeneratedPaper.objects.select_related(
+    papers = visible_papers(request.user).select_related(
         'blueprint__subject', 'blueprint__exam_plan__class_fk', 'generated_by'
     ).prefetch_related('approvals').order_by('-created_at')
 
     if status_filter:
         papers = papers.filter(status=status_filter)
 
-    pending_count  = GeneratedPaper.objects.exclude(status__in=['LOCKED', 'REJECTED']).count()
-    locked_count   = GeneratedPaper.objects.filter(status='LOCKED').count()
-    rejected_count = GeneratedPaper.objects.filter(status='REJECTED').count()
+    pending_count  = visible_papers(request.user).exclude(status__in=['LOCKED', 'REJECTED']).count()
+    locked_count   = visible_papers(request.user).filter(status='LOCKED').count()
+    rejected_count = visible_papers(request.user).filter(status='REJECTED').count()
 
     return render(request, 'exam_system/admin_paper_queue.html', {
         'papers': papers,
@@ -745,7 +749,7 @@ def admin_paper_queue(request):
 # @login_required
 # def paper_approval_detail(request, paper_id):
 #     """4-level approval workflow."""
-#     paper     = get_object_or_404(GeneratedPaper, id=paper_id)
+#     paper     = get_object_or_404(visible_papers(request.user), id=paper_id)
 #     approvals = paper.approvals.all().order_by('stage')
 #     questions = paper.questions.all().order_by('question_type')
 
@@ -790,68 +794,39 @@ def admin_paper_queue(request):
 
 @login_required
 def paper_approval_detail(request, paper_id):
-    """4-level approval workflow."""
-    paper     = get_object_or_404(GeneratedPaper, id=paper_id)
-    approvals = paper.approvals.all().order_by('stage')
-    questions = paper.questions.all().order_by('question_type')
-
+    paper = get_object_or_404(visible_papers(request.user), pk=paper_id)
     if request.method == 'POST':
-        stage   = request.POST.get('stage')
-        action  = request.POST.get('action')
-        remarks = request.POST.get('remarks', '')
-
-        approval             = get_object_or_404(PaperApproval, paper=paper, stage=stage)
-        approval.status      = 'APPROVED' if action == 'approve' else 'REJECTED'
-        approval.reviewed_by = request.user
-        approval.remarks     = remarks
-        approval.save()
-
-        if action == 'approve':
-            all_approved = paper.approvals.filter(status='APPROVED').count() == 4
-
-            if all_approved:
-                # ── Sab 4 stages approve ho chuke — lock karo aur PDF banao ──
-                paper.status = 'LOCKED'
-                paper.save()
+        try:
+            paper = decide_paper(request.user, paper.pk, request.POST.get('stage'),
+                                 request.POST.get('action'), request.POST.get('remarks', ''))
+        except ValidationError as exc:
+            messages.error(request, '; '.join(exc.messages))
+        else:
+            if paper.status == 'LOCKED':
                 try:
                     generate_paper_pdf(paper)
-                    messages.success(request, "Paper fully approved and locked! PDF is ready to download.")
-                except Exception as e:
-                    messages.error(request, f"Approved, but PDF generation failed: {str(e)}")
-                return redirect('paper_approval_detail', paper_id=paper.id)
-
-            # Abhi tak sab approve nahi hue
-            paper.status = 'REVIEW'
-            paper.save()
-
-            if stage == 'TEACHER':
-                messages.success(
-                    request,
-                    "Approved by the Subject Teacher! You can optionally upload a supporting "
-                    "PDF here, or wait for the remaining approvals."
-                )
-                return redirect('upload_pdf_for_paper', paper_id=paper.id)
-
-            messages.success(request, f"Stage '{stage}' approved. Waiting for the next reviewer.")
-
-        else:
-            paper.status = 'REJECTED'
-            paper.save()
-            messages.error(request, f"Paper rejected at the '{stage}' stage.")
-
-        return redirect('paper_approval_detail', paper_id=paper.id)
-
+                except Exception:
+                    import logging
+                    logging.getLogger(__name__).exception('Approved paper PDF generation failed')
+                    messages.error(request, 'Paper approved; PDF generation needs administrator attention.')
+                else:
+                    messages.success(request, 'Paper approved and locked.')
+            else:
+                messages.success(request, 'Review decision recorded.')
+        return redirect('paper_approval_detail', paper_id=paper.pk)
+    PaperAccessLog.objects.create(paper=paper, accessed_by=request.user, action='VIEW',
+                                  ip_address=request.META.get('REMOTE_ADDR'))
     return render(request, 'exam_system/paper_approval_detail.html', {
-        'paper':     paper,
-        'approvals': approvals,
-        'questions': questions,
+        'paper': paper, 'approvals': paper.approvals.all(),
+        'questions': paper.questions.order_by('question_type'),
     })
-    
+
 
 @login_required
 def upload_pdf_for_paper(request, paper_id):
     """Subject Teacher PDF upload kare → Groq AI se questions → Paper mein add."""
-    paper     = get_object_or_404(GeneratedPaper, id=paper_id)
+    paper     = get_object_or_404(visible_papers(request.user), id=paper_id)
+    require_paper(request.user, paper, edit=True)
     blueprint = paper.blueprint
 
     if request.method == 'POST':
@@ -891,6 +866,7 @@ def upload_pdf_for_paper(request, paper_id):
                 defaults={'created_by': request.user},
             )
 
+            invalidate_reviews(paper)
             total_saved = 0
 
             for rule in rules:
@@ -947,7 +923,7 @@ Generate exactly {rule.count} questions now:"""
                         correct_answer=q_data.get('correct_answer', ''),
                         topic_tag=f"PDF: {pdf_file.name}",
                         ai_generated=True,
-                        human_approved=True,
+                        human_approved=False,
                     )
                     paper.questions.add(question)
                     total_saved += 1
@@ -980,7 +956,9 @@ Generate exactly {rule.count} questions now:"""
 @login_required
 def download_paper(request, paper_id):
     """Secure paper download."""
-    paper = get_object_or_404(GeneratedPaper, id=paper_id)
+    paper = get_object_or_404(visible_papers(request.user), id=paper_id)
+
+    require_paper(request.user, paper, download=True)
 
     PaperAccessLog.objects.create(
         paper=paper,

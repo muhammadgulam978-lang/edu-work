@@ -1,0 +1,10 @@
+{% extends 'access_control/base.html' %}
+{% block workspace_content %}
+<section class="ops-panel"><h3>{{ item.operation }}</h3><p>Status: {{ item.get_status_display }}</p><p>Requested by {{ item.maker }} · Reviewer {{ item.reviewer }}</p>
+<dl>{% for label, value in details %}<dt>{{ label }}</dt><dd>{{ value }}</dd>{% endfor %}</dl><p>{{ item.reason }}</p>
+{% if can_submit or can_decide %}<form method="post">{% csrf_token %}<input type="hidden" name="version" value="{{ item.version }}">
+<div class="ops-field"><label for="reason">Reason</label><textarea class="form-control" id="reason" name="reason" required></textarea></div>
+{% if can_submit %}<button class="ops-btn ops-btn-primary" name="action" value="submit">Submit for approval</button>{% endif %}
+{% if can_decide %}<button class="ops-btn ops-btn-primary" name="action" value="approve">Approve</button> <button class="ops-btn ops-btn-secondary" name="action" value="reject">Reject</button>{% endif %}
+</form>{% endif %}</section>
+{% endblock %}

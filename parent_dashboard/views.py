@@ -1,3 +1,4 @@
+from .access import accessible_students
 # from django.shortcuts import render
 # from django.contrib.auth.decorators import login_required
 # from parent_dashboard.models import Parent
@@ -20,7 +21,7 @@
 #     except Parent.DoesNotExist:
 #         parent = None
 
-#     students = parent.students.all() if parent else []
+#     students = accessible_students(parent) if parent else []
 
 #     return render(request, 'parent_dashboard/dashboard.html', {
 #         'parent':   parent,
@@ -121,7 +122,7 @@ def parent_dashboard(request):
         user=request.user,
     )
 
-    students = parent.students.all()
+    students = accessible_students(parent)
 
     selected_student = None
 
@@ -166,7 +167,7 @@ def parent_attendance(request):
 
     parent = get_object_or_404(Parent, user=request.user)
 
-    students = parent.students.all()
+    students = accessible_students(parent)
 
     student_id = request.GET.get("student")
 
@@ -249,7 +250,7 @@ def parent_result(request):
 
     parent = Parent.objects.get(user=request.user)
 
-    students = parent.students.all()
+    students = accessible_students(parent)
 
     student_id = request.GET.get("student")
 
@@ -260,9 +261,13 @@ def parent_result(request):
 
     term = request.GET.get("term", "midterm")
 
-    subjects = Subject.objects.filter(
-        class_fk=student.class_fk
-    )
+    if student is None:
+        return render(request, "parent_dashboard/result.html", {
+            "student": None, "students": students, "subjects": [],
+            "result_dict": {}, "comments_dict": {}, "term": term,
+        })
+
+    subjects = Subject.objects.filter(class_fk=student.class_fk)
 
     results = ExamResult.objects.filter(
         student=student,
@@ -297,7 +302,7 @@ def parent_assignment(request):
 
     parent = get_object_or_404(Parent, user=request.user)
 
-    students = parent.students.all()
+    students = accessible_students(parent)
 
     student = students.filter(
         id=request.GET.get("student")
@@ -339,7 +344,7 @@ def parent_quizzes(request):
 
     parent = get_object_or_404(Parent, user=request.user)
 
-    students = parent.students.all()
+    students = accessible_students(parent)
 
     student = students.filter(
         id=request.GET.get("student")
@@ -385,7 +390,7 @@ def parent_diary(request):
         user=request.user
     )
 
-    students = parent.students.all()
+    students = accessible_students(parent)
 
     student = students.filter(
         id=request.GET.get("student")
@@ -425,7 +430,7 @@ def parent_timetable(request):
 
     parent = get_object_or_404(Parent, user=request.user)
 
-    students = parent.students.all()
+    students = accessible_students(parent)
 
     student = students.filter(
         id=request.GET.get("student")

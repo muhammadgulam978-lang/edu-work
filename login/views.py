@@ -89,10 +89,19 @@ def _portal_selector_url(request):
 
 
 def _user_has_role(user, role):
-    config = ROLE_LOGIN_CONFIG[role]
-    if role == "admin" and user.is_superuser:
-        return True
-    return user.groups.filter(name__iexact=config["group"]).exists()
+    from access_control.identity import has_portal
+    from access_control.workspace import current_assignments
+    if role == 'admin' and user.is_authenticated and user.is_active:
+        if current_assignments(user).exclude(role__name__in=['Teacher', 'Student', 'Parent']).exists():
+            return True
+    return has_portal(user, role)
+
+
+def _dashboard_for(user, role):
+    from access_control.workspace import current_assignments
+    if role == 'admin' and current_assignments(user).exists():
+        return 'access_workspace'
+    return ROLE_LOGIN_CONFIG[role]['dashboard']
 
 
 def _linked_profile_exists(user, role):
@@ -117,7 +126,7 @@ def role_select_view(request):
     if request.user.is_authenticated:
         for role in ("admin", "teacher", "student", "parent"):
             if _user_has_role(request.user, role) and _linked_profile_exists(request.user, role):
-                return redirect(ROLE_LOGIN_CONFIG[role]["dashboard"])
+                return redirect(_dashboard_for(request.user, role))
     return render(request, "registration/role_select.html", {
         "roles": ROLE_LOGIN_CONFIG,
         "admin_login_url": _portal_login_url(request, "admin"),
@@ -159,7 +168,7 @@ def role_login_view(request, role):
             login(request, user)
             if not remember_me:
                 request.session.set_expiry(0)
-            return redirect(config["dashboard"])
+            return redirect(_dashboard_for(user, role))
 
     return render(request, "registration/role_login.html", {
         "role": role,
@@ -189,6 +198,10 @@ def login_view(request):
 
 
 def redirect_user_dashboard(request, user):
+    from access_control.workspace import current_assignments
+    if current_assignments(user).exists():
+        return redirect('access_workspace')
+
     if user.groups.filter(name__iexact='Admin').exists():
         return redirect('admin_panel_dashboard')  # apna correct url name
     elif user.groups.filter(name__iexact='Parent').exists():

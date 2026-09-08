@@ -1,3 +1,4 @@
+from exam_system.access import banks_for
 from datetime import timedelta, date
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt, csrf_protect
@@ -2043,7 +2044,7 @@ def question_bank_list(request):
     Admin ya coordinator ke liye.
     """
     academic_year = get_active_year()
-    banks = QuestionBank.objects.filter(
+    banks = banks_for(request.user).filter(
         academic_year=academic_year
     ).select_related('subject', 'class_fk', 'created_by')
 
