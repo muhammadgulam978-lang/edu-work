@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 
 from django.contrib.auth.models import User
 from django.test import TestCase
@@ -97,3 +97,18 @@ class BulkTeacherImportTests(TestCase):
 
         self.assertEqual(selected.title, 'Teachers')
         self.assertEqual(result.imported, 1, result.errors)
+
+    def test_optional_credentials_and_excel_date_cells(self):
+        sheet = self.worksheet(
+            ['Name', 'Email', 'Date Of Birth'],
+            [['Generated Teacher', 'generated@example.com', datetime(1990, 5, 6)]],
+        )
+        preview = import_teachers_from_worksheet(sheet, preview=True)
+        self.assertEqual(preview.imported, 1, preview.errors)
+        self.assertFalse(Teacher.objects.filter(email='generated@example.com').exists())
+        result = import_teachers_from_worksheet(sheet)
+        self.assertEqual(result.imported, 1, result.errors)
+        teacher = Teacher.objects.get(email='generated@example.com')
+        self.assertEqual(teacher.user.username, preview.rows[0]['login_id'])
+        self.assertTrue(teacher.user.check_password(result.credentials[0]['password']))
+        self.assertEqual(teacher.date_of_birth, date(1990, 5, 6))
