@@ -28,7 +28,12 @@ ALLOWED_HOSTS.extend(
 )
 if PORTAL_BASE_DOMAIN:
     ALLOWED_HOSTS.append(f".{PORTAL_BASE_DOMAIN}")
-CSRF_TRUSTED_ORIGINS = [  "https://sms-2hxg.onrender.com" ]
+CSRF_TRUSTED_ORIGINS = ["https://sms-2hxg.onrender.com", "https://*.vercel.app"]
+CSRF_TRUSTED_ORIGINS.extend(
+    origin.strip()
+    for origin in os.getenv("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",")
+    if origin.strip()
+)
 # Application definition
 INSTALLED_APPS = [
     "daphne",
