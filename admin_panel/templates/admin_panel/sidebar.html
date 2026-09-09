@@ -162,6 +162,9 @@
                     <span class="nav-text">Accounts &amp; Fees</span>
                 </a>
                 <ul aria-expanded="false">
+                    <li><a href="{% url 'finance:dashboard' %}"><i class="fas fa-chart-line"></i> Financial Ledger</a></li>
+                    <li><a href="{% url 'finance:voucher_list' %}"><i class="fas fa-book"></i> Voucher Workbench</a></li>
+                    <li><a href="{% url 'finance:reports' %}"><i class="fas fa-scale-balanced"></i> Financial Reports</a></li>
                     <li><a href="{% url 'automation-dashboard' %}"><i class="fas fa-tachometer-alt"></i> Accounts Dashboard</a></li>
                     <li><a href="{% url 'fee-automation' %}"><i class="fas fa-wallet"></i> Fee Automation</a></li>
                     <li><a href="{% url 'voucher-management' %}"><i class="fas fa-receipt"></i> Voucher Management</a></li>

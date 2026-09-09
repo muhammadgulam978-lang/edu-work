@@ -1,0 +1,4 @@
+{% extends "finance/base.html" %}
+{% block finance_title %}Create Voucher{% endblock %}
+{% block finance_subtitle %}Debits and credits must balance before the draft can be saved{% endblock %}
+{% block finance_content %}<form method="post" class="fin-panel fin-form">{% csrf_token %}{{ form.non_field_errors }}<div class="fin-grid three">{% for field in form %}<label>{{ field.label }}{{ field }}{{ field.errors }}</label>{% endfor %}</div><h2>Voucher lines</h2>{{ formset.management_form }}<div class="fin-line-grid">{% for line in formset %}<fieldset>{{ line.non_field_errors }}{% for field in line %}<label>{{ field.label }}{{ field }}{{ field.errors }}</label>{% endfor %}</fieldset>{% endfor %}</div><button class="fin-primary">Save balanced draft</button></form>{% endblock %}

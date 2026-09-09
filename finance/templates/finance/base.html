@@ -1,0 +1,10 @@
+{% extends "admin_panel/bases.html" %}
+{% load static %}
+{% block head %}<link rel="stylesheet" href="{% static 'finance/finance.css' %}">{% endblock %}
+{% block content %}
+<main class="fin-page">
+  <header class="fin-hero"><div><p>Financial Ledger</p><h1>{% block finance_title %}Finance{% endblock %}</h1><span>{% block finance_subtitle %}Controlled double-entry accounting for EduPilot{% endblock %}</span></div><nav><a href="{% url 'finance:dashboard' %}">Dashboard</a><a href="{% url 'finance:voucher_list' %}">Vouchers</a><a href="{% url 'finance:request_list' %}">Requests</a><a href="{% url 'finance:reports' %}">Reports</a><a href="{% url 'finance:setup' %}">Setup</a></nav></header>
+  {% if messages %}<div class="fin-messages">{% for message in messages %}<p class="{{ message.tags }}">{{ message }}</p>{% endfor %}</div>{% endif %}
+  {% block finance_content %}{% endblock %}
+</main>
+{% endblock %}
