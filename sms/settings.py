@@ -3,7 +3,9 @@ Django settings for sms project.
 """
 
 import os
+from datetime import timedelta
 from pathlib import Path
+import dj_database_url
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -12,15 +14,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(dotenv_path=os.path.join(BASE_DIR, '.env'))
 
 # SECURITY
-SECRET_KEY = 'django-insecure-1u@4sktn_vg=d#+u)*f^v9ut(jt&0&4g@s9_)-$d-l&mema=ei'
-DEBUG = True
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-change-me-before-production')
+DEBUG = os.getenv('DJANGO_DEBUG', 'false').lower() == 'true'
 
 # Allowed hosts (Render URL + localhost)
 PORTAL_BASE_DOMAIN = os.getenv("PORTAL_BASE_DOMAIN", "").strip().strip(".")
 PORTAL_SCHEME = os.getenv("PORTAL_SCHEME", "").strip()
 ALLOWED_HOSTS = [
-    'sms-2hxg.onrender.com', '127.0.0.1', 'localhost', '.localhost'
+    'sms-2hxg.onrender.com', '127.0.0.1', 'localhost', '.localhost', '10.0.2.2'
 ]
+ALLOWED_HOSTS.extend(
+    host.strip() for host in os.getenv('DJANGO_ALLOWED_HOSTS', '').split(',') if host.strip()
+)
 if PORTAL_BASE_DOMAIN:
     ALLOWED_HOSTS.append(f".{PORTAL_BASE_DOMAIN}")
 CSRF_TRUSTED_ORIGINS = [  "https://sms-2hxg.onrender.com" ]
@@ -33,6 +38,9 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "rest_framework",
+    "rest_framework_simplejwt.token_blacklist",
+    "drf_spectacular",
     "phonenumber_field",
     "login",
     "parent_dashboard",
@@ -116,6 +124,12 @@ DATABASES = {
     }
     
 }
+if os.getenv('DATABASE_URL'):
+    DATABASES['default'] = dj_database_url.config(
+        conn_max_age=600,
+        conn_health_checks=True,
+        ssl_require=not DEBUG,
+    )
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
@@ -177,3 +191,26 @@ AI_TUTOR_FALLBACK_MODEL = os.getenv("AI_TUTOR_FALLBACK_MODEL", "llama-3.3-70b-ve
 AI_TUTOR_API_KEY = os.getenv("AI_TUTOR_API_KEY", "")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
+    ),
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=int(os.getenv("JWT_ACCESS_MINUTES", "15"))),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=int(os.getenv("JWT_REFRESH_DAYS", "7"))),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "UPDATE_LAST_LOGIN": True,
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "EduPilot API",
+    "DESCRIPTION": "Central API for EduPilot mobile and web clients.",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+}

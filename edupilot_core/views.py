@@ -11,6 +11,7 @@ from django.utils import timezone
 from datetime import date, datetime, timedelta
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from drf_spectacular.utils import extend_schema
 from .models import (
     Student, Transaction, Teacher, Staff, StudentPerformance, FeeVoucher,
     AutomationJob, AutomationJobDetail, get_dashboard_stats, StudentBalance,
@@ -211,6 +212,7 @@ def admin_dashboard_view(request):
     return render(request, 'dashboard.html', context)
 
 # API for Admin Dashboard (Dynamic Front-end ke liye)
+@extend_schema(exclude=True)
 class AdminDashboardAPI(APIView):
     def get(self, request):
         data = get_dashboard_stats()

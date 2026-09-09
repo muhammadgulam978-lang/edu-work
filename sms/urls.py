@@ -1,11 +1,15 @@
 from django.contrib import admin
 from django.urls import path, include
+from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from django.contrib.auth import views as auth_views
 from admin_panel.views import custom_login 
 from login import views as login_views
 from django.urls import path, include
 
 urlpatterns = [
+    path('api/v1/', include('login.api_urls')),
+    path('api/schema/', SpectacularAPIView.as_view(), name='api-schema'),
+    path('api/docs/', SpectacularSwaggerView.as_view(url_name='api-schema'), name='api-docs'),
     path('', login_views.role_select_view, name='home'), 
     path('login/', login_views.role_select_view, name='login'),
     path('login/admin/', login_views.admin_login, name='login_admin'),

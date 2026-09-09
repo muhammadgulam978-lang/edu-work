@@ -1,0 +1,64 @@
+{
+  "info": {
+    "name": "EduPilot Student Authentication",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {"key": "baseUrl", "value": "http://127.0.0.1:8000/api/v1"},
+    {"key": "accessToken", "value": ""},
+    {"key": "refreshToken", "value": ""}
+  ],
+  "item": [
+    {
+      "name": "Student Login",
+      "request": {
+        "method": "POST",
+        "header": [{"key": "Content-Type", "value": "application/json"}],
+        "body": {"mode": "raw", "raw": "{\n  \"identifier\": \"student001\",\n  \"password\": \"student-password\"\n}"},
+        "url": "{{baseUrl}}/auth/student/login/"
+      },
+      "event": [{
+        "listen": "test",
+        "script": {"exec": [
+          "const body = pm.response.json();",
+          "if (body.access) pm.collectionVariables.set('accessToken', body.access);",
+          "if (body.refresh) pm.collectionVariables.set('refreshToken', body.refresh);"
+        ]}
+      }]
+    },
+    {
+      "name": "Current Student",
+      "request": {
+        "method": "GET",
+        "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}],
+        "url": "{{baseUrl}}/auth/me/"
+      }
+    },
+    {
+      "name": "Refresh Session",
+      "request": {
+        "method": "POST",
+        "header": [{"key": "Content-Type", "value": "application/json"}],
+        "body": {"mode": "raw", "raw": "{\n  \"refresh\": \"{{refreshToken}}\"\n}"},
+        "url": "{{baseUrl}}/auth/token/refresh/"
+      },
+      "event": [{
+        "listen": "test",
+        "script": {"exec": [
+          "const body = pm.response.json();",
+          "if (body.access) pm.collectionVariables.set('accessToken', body.access);",
+          "if (body.refresh) pm.collectionVariables.set('refreshToken', body.refresh);"
+        ]}
+      }]
+    },
+    {
+      "name": "Logout",
+      "request": {
+        "method": "POST",
+        "header": [{"key": "Content-Type", "value": "application/json"}],
+        "body": {"mode": "raw", "raw": "{\n  \"refresh\": \"{{refreshToken}}\"\n}"},
+        "url": "{{baseUrl}}/auth/logout/"
+      }
+    }
+  ]
+}
