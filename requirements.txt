@@ -3,7 +3,7 @@ aiofiles==24.1.0
 allama==0.1.18
 annotated-types==0.7.0
 anyio==4.9.0
-asgiref==3.8.1
+asgiref==3.11.1
 asttokens==3.0.0
 beautifulsoup4==4.13.4
 bleach==6.3.0
