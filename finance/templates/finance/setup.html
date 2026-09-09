@@ -1,0 +1,18 @@
+{% extends "finance/base.html" %}
+{% block finance_title %}Financial Master Setup{% endblock %}
+{% block finance_subtitle %}Financial years, accounting periods and Chart of Accounts{% endblock %}
+{% block finance_content %}
+<div class="fin-grid three">
+  <section class="fin-panel"><h2>Financial year</h2><form method="post" class="fin-form">{% csrf_token %}<input type="hidden" name="kind" value="year">{{ forms.year.as_p }}<button>Save year</button></form></section>
+  <section class="fin-panel"><h2>Accounting period</h2><form method="post" class="fin-form">{% csrf_token %}<input type="hidden" name="kind" value="period">{{ forms.period.as_p }}<button>Save period</button></form></section>
+  <section class="fin-panel"><h2>Ledger account</h2><form method="post" class="fin-form">{% csrf_token %}<input type="hidden" name="kind" value="account">{{ forms.account.as_p }}<button>Save account</button></form></section>
+</div>
+<div class="fin-grid three">
+  <section class="fin-panel"><h2>Cost centre</h2><form method="post" class="fin-form">{% csrf_token %}<input type="hidden" name="kind" value="cost_center">{{ forms.cost_center.as_p }}<button>Save cost centre</button></form></section>
+  <section class="fin-panel"><h2>Cash / bank account</h2><form method="post" class="fin-form">{% csrf_token %}<input type="hidden" name="kind" value="cash_bank">{{ forms.cash_bank.as_p }}<button>Save account</button></form></section>
+  <section class="fin-panel"><h2>Approval rule</h2><form method="post" class="fin-form">{% csrf_token %}<input type="hidden" name="kind" value="approval">{{ forms.approval.as_p }}<button>Save rule</button></form></section>
+</div>
+<section class="fin-panel"><h2>Period control</h2><div class="fin-table"><table><thead><tr><th>Period</th><th>Dates</th><th>Status</th><th>Action</th></tr></thead><tbody>{% for period in periods %}<tr><td>{{ period }}</td><td>{{ period.starts_on }} to {{ period.ends_on }}</td><td>{{ period.get_status_display }}</td><td>{% if period.status == 'OPEN' %}<form method="post" action="{% url 'finance:period_action' period.pk 'soft-close' %}">{% csrf_token %}<button>Soft close</button></form>{% elif period.status == 'SOFT_CLOSED' %}<form method="post" action="{% url 'finance:period_action' period.pk 'reopen' %}">{% csrf_token %}<button>Reopen</button></form><form method="post" action="{% url 'finance:period_action' period.pk 'lock' %}">{% csrf_token %}<button>Lock permanently</button></form>{% else %}Locked{% endif %}</td></tr>{% endfor %}</tbody></table></div></section>
+<section class="fin-panel"><h2>Chart of Accounts</h2><div class="fin-table"><table><thead><tr><th>Code</th><th>Account</th><th>Type</th><th>Normal balance</th><th>Status</th></tr></thead><tbody>{% for account in accounts %}<tr><td>{{ account.code }}</td><td>{{ account.name }}</td><td>{{ account.get_account_type_display }}</td><td>{{ account.normal_balance }}</td><td>{{ account.is_active|yesno:'Active,Inactive' }}</td></tr>{% endfor %}</tbody></table></div></section>
+<section class="fin-panel"><h2>Approval matrix</h2><div class="fin-table"><table><thead><tr><th>Sequence</th><th>Voucher</th><th>Campus</th><th>Amount range</th><th>Required role</th></tr></thead><tbody>{% for rule in approval_rules %}<tr><td>{{ rule.sequence }}</td><td>{{ rule.get_voucher_type_display|default:'All' }}</td><td>{{ rule.campus|default:'All' }}</td><td>{{ rule.minimum_amount }} – {{ rule.maximum_amount|default:'No limit' }}</td><td>{{ rule.required_group.name }}</td></tr>{% empty %}<tr><td colspan="5">No custom rules; permission-based approval applies.</td></tr>{% endfor %}</tbody></table></div></section>
+{% endblock %}

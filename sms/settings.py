@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'ai_tutor',
     'admin_ai',
     'communication',
+    'finance.apps.FinanceConfig',
     
 ]
 
