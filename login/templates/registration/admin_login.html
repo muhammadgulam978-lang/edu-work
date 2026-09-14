@@ -1,0 +1,164 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#119a82">
+    <title>{{ config.title }} | EduPilot</title>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'login/css/admin-login.css' %}?v=admin-login-1">
+</head>
+<body class="admin-login-page">
+    <main class="admin-login-shell">
+        <section class="admin-story" aria-label="About EduPilot">
+            <div class="story-orb story-orb-one" aria-hidden="true"></div>
+            <div class="story-orb story-orb-two" aria-hidden="true"></div>
+
+            <a href="{{ portal_selector_url }}" class="admin-brand" aria-label="EduPilot portal selection">
+                <img src="{% static 'admin_panel/images/final logo.png' %}" alt="EduPilot — Teach, Track, Transform">
+            </a>
+
+            <div class="story-copy">
+                <p class="story-eyebrow">School management, simplified</p>
+                <h1>One Click to<br><span>Go All Digital.</span></h1>
+                <p class="story-description">A smarter way to manage your school — students, staff, classes, exams and more.</p>
+            </div>
+
+            <div class="feature-grid" aria-label="EduPilot benefits">
+                <div class="feature-item">
+                    <span class="feature-icon feature-icon-green"><i class="fa-solid fa-people-group"></i></span>
+                    <strong>Simplify<br>Operations</strong>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-icon feature-icon-blue"><i class="fa-solid fa-chart-simple"></i></span>
+                    <strong>Data-Driven<br>Insights</strong>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-icon feature-icon-orange"><i class="fa-solid fa-shield-halved"></i></span>
+                    <strong>Secure &amp;<br>Reliable</strong>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-icon feature-icon-purple"><i class="fa-solid fa-graduation-cap"></i></span>
+                    <strong>Built for<br>Education</strong>
+                </div>
+            </div>
+
+            <div class="product-scene" aria-hidden="true">
+                <div class="scene-note">Schools<br>Run Better<br>With EduPilot</div>
+                <div class="scene-books">
+                    <span>LEARN</span><span>MANAGE</span><span>GROW</span>
+                </div>
+                <div class="laptop">
+                    <div class="laptop-screen">
+                        <div class="mock-sidebar">
+                            <i class="fa-solid fa-house"></i>
+                            <i class="fa-solid fa-users"></i>
+                            <i class="fa-solid fa-chalkboard-user"></i>
+                            <i class="fa-solid fa-chart-line"></i>
+                        </div>
+                        <div class="mock-dashboard">
+                            <div class="mock-topbar"><b>EDUPILOT</b><span></span></div>
+                            <p>Good Morning,</p>
+                            <h2>Admin!</h2>
+                            <div class="mock-stats">
+                                <span><i class="fa-solid fa-users"></i><b>1,001</b><small>Students</small></span>
+                                <span><i class="fa-solid fa-user-tie"></i><b>15</b><small>Staff</small></span>
+                                <span><i class="fa-solid fa-clock"></i><b>18</b><small>Approvals</small></span>
+                            </div>
+                            <div class="mock-chart">
+                                <svg viewBox="0 0 220 70" preserveAspectRatio="none">
+                                    <polyline points="0,58 35,46 66,53 102,30 138,42 174,17 220,32"></polyline>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="laptop-base"></div>
+                </div>
+            </div>
+
+            <p class="story-signoff">Empowering<br>Better Education</p>
+            <p class="story-copyright">© 2026 EduPilot. All rights reserved.</p>
+        </section>
+
+        <section class="admin-access" aria-label="Admin login">
+            <div class="trust-mark">
+                <span><i class="fa-solid fa-shield-halved"></i></span>
+                <p><strong>Trusted by schools</strong><br>to build brighter futures</p>
+            </div>
+
+            <div class="login-card">
+                <div class="login-lock" aria-hidden="true"><i class="fa-solid fa-lock"></i></div>
+                <div class="login-heading">
+                    <p class="login-kicker">Secure administrator access</p>
+                    <h2>Welcome Back</h2>
+                    <p>Log in to your EduPilot admin account</p>
+                </div>
+
+                <form method="POST" action="" autocomplete="off" class="admin-login-form">
+                    {% csrf_token %}
+
+                    {% if messages %}
+                        <div class="login-messages" role="alert" aria-live="polite">
+                            {% for message in messages %}
+                                <div class="login-message login-message-{{ message.tags|default:'info' }}">
+                                    <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>
+                                    <span>{{ message }}</span>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <div class="field-group">
+                        <label for="username">Login ID</label>
+                        <div class="field-control">
+                            <i class="fa-regular fa-user" aria-hidden="true"></i>
+                            <input type="text" name="username" id="username" placeholder="Enter your login ID" autocomplete="username" autocapitalize="none" spellcheck="false" required>
+                        </div>
+                    </div>
+
+                    <div class="field-group">
+                        <label for="password">Password</label>
+                        <div class="field-control">
+                            <i class="fa-solid fa-lock" aria-hidden="true"></i>
+                            <input type="password" name="password" id="password" placeholder="Enter your password" autocomplete="current-password" required>
+                            <button type="button" class="password-toggle" aria-label="Show password" aria-pressed="false">
+                                <i class="fa-regular fa-eye" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="login-options">
+                        <label class="remember-option">
+                            <input type="checkbox" name="remember_me">
+                            <span class="checkmark"><i class="fa-solid fa-check"></i></span>
+                            <span>Remember Me</span>
+                        </label>
+                        <a href="{% url 'password_reset' %}" class="forgot-link">Forgot Password?</a>
+                    </div>
+
+                    <button type="submit" class="login-submit">
+                        <span>Log In</span>
+                        <span class="submit-arrow"><i class="fa-solid fa-arrow-right"></i></span>
+                    </button>
+
+                    <div class="form-divider"><span>OR</span></div>
+                    <p class="contact-admin">Don’t have an account? <span>Contact Admin</span></p>
+
+                    <div class="security-note">
+                        <span class="security-icon"><i class="fa-solid fa-shield-halved"></i></span>
+                        <p><strong>Secure. Reliable. Always On.</strong><br>Your school’s data is safe with us.</p>
+                    </div>
+                </form>
+            </div>
+
+            <footer class="access-footer" aria-label="Legal information">
+                <span>Privacy</span><i></i><span>Terms</span><i></i><span>Support</span>
+            </footer>
+        </section>
+    </main>
+
+    <script src="{% static 'login/js/admin-login.js' %}?v=admin-login-1"></script>
+</body>
+</html>

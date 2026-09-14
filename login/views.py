@@ -161,7 +161,12 @@ def role_login_view(request, role):
                 request.session.set_expiry(0)
             return redirect(config["dashboard"])
 
-    return render(request, "registration/role_login.html", {
+    template_name = (
+        "registration/admin_login.html"
+        if role == "admin"
+        else "registration/role_login.html"
+    )
+    return render(request, template_name, {
         "role": role,
         "config": config,
         "portal_selector_url": _portal_selector_url(request),

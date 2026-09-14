@@ -43,3 +43,15 @@ class PortalSessionHostTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Teacher Login")
+
+    def test_admin_login_uses_admin_only_design(self):
+        response = self.client.get(
+            reverse("login_admin"),
+            HTTP_HOST="admin.localhost:8000",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "registration/admin_login.html")
+        self.assertContains(response, 'name="username"')
+        self.assertContains(response, 'name="password"')
+        self.assertContains(response, 'name="remember_me"')
