@@ -1,0 +1,32 @@
+{% extends "helpdesk/staff_base.html" %}
+{% block helpdesk_title %}{{ ticket.number }} · {{ ticket.subject }}{% endblock %}
+{% block helpdesk_subtitle %}{{ ticket.get_ticket_type_display }} · {{ ticket.category.name }} · {{ ticket.get_privacy_display }}{% endblock %}
+{% block helpdesk_content %}
+<section class="hd-ticket-grid">
+  <article>
+    <section class="fin-panel">
+      <div class="hd-ticket-head"><span class="fin-status {{ ticket.status|lower }}">{{ ticket.get_status_display }}</span><span class="hd-priority {{ ticket.priority|lower }}">{{ ticket.get_priority_display }}</span></div>
+      <h2>Ticket details</h2><p class="hd-description">{{ ticket.description|linebreaksbr }}</p>
+      <dl class="hd-meta">
+        <dt>Requester</dt><dd>{% if ticket.anonymous_to_handlers %}Identity protected{% else %}{{ ticket.requester }} ({{ ticket.get_requester_role_display }}){% endif %}</dd>
+        {% if ticket.student %}<dt>Student</dt><dd>{% if ticket.anonymous_to_handlers %}Identity protected{% else %}{{ ticket.student }}{% endif %}</dd>{% endif %}
+        <dt>Created</dt><dd>{{ ticket.created_at|date:'d M Y, H:i' }}</dd>
+        <dt>Due</dt><dd class="{% if ticket.is_overdue %}hd-overdue{% endif %}">{{ ticket.due_at|date:'d M Y, H:i' }}</dd>
+      </dl>
+    </section>
+    <section class="fin-panel"><h2>Assignment</h2><form method="post" action="{% url 'helpdesk:staff_ticket_action' ticket.pk 'assign' %}" class="fin-form">{% csrf_token %}{{ assignment_form.as_p }}<button>Save assignment</button></form></section>
+    <section class="fin-panel"><h2>Workflow actions</h2><div class="fin-action-forms">
+      {% if ticket.status == 'SUBMITTED' or ticket.status == 'ASSIGNED' or ticket.status == 'REOPENED' %}<form method="post" action="{% url 'helpdesk:staff_ticket_action' ticket.pk 'IN_REVIEW' %}">{% csrf_token %}<button>Start review</button></form>{% endif %}
+      {% if ticket.status == 'IN_REVIEW' or ticket.status == 'ASSIGNED' %}<form method="post" action="{% url 'helpdesk:staff_ticket_action' ticket.pk 'WAITING_USER' %}">{% csrf_token %}<button>Wait for user</button></form>{% endif %}
+      {% if ticket.status == 'SUBMITTED' or ticket.status == 'IN_REVIEW' %}<form method="post" action="{% url 'helpdesk:staff_ticket_action' ticket.pk 'REJECTED' %}">{% csrf_token %}<input name="note" required placeholder="Rejection reason"><button class="danger">Reject</button></form>{% endif %}
+    </div>{% if ticket.status == 'ASSIGNED' or ticket.status == 'IN_REVIEW' or ticket.status == 'WAITING_USER' or ticket.status == 'REOPENED' %}<form method="post" action="{% url 'helpdesk:staff_ticket_action' ticket.pk 'resolve' %}" class="fin-form hd-resolve">{% csrf_token %}{{ resolution_form.as_p }}<button>Resolve ticket</button></form>{% endif %}</section>
+  </article>
+  <article>
+    <section class="fin-panel"><h2>Conversation and internal notes</h2><div class="hd-thread"><div class="hd-message requester"><strong>Initial request</strong><p>{{ ticket.description|linebreaksbr }}</p><time>{{ ticket.created_at|date:'d M Y, H:i' }}</time></div>
+      {% for item in ticket_messages %}<div class="hd-message {% if item.is_internal %}internal{% elif item.author == ticket.requester %}requester{% else %}staff{% endif %}"><strong>{% if item.is_internal %}Internal note · {{ item.author }}{% elif item.author == ticket.requester %}Requester{% else %}{{ item.author }}{% endif %}</strong><p>{{ item.body|linebreaksbr }}</p>{% if item.attachment %}<a href="{% url 'helpdesk:attachment_download' item.pk %}">Download attachment</a>{% endif %}<time>{{ item.created_at|date:'d M Y, H:i' }}</time></div>{% endfor %}</div>
+      <form method="post" enctype="multipart/form-data" action="{% url 'helpdesk:staff_ticket_action' ticket.pk 'reply' %}" class="fin-form hd-reply">{% csrf_token %}{{ message_form.as_p }}<button>Add message</button></form>
+    </section>
+    <section class="fin-panel"><h2>Immutable activity history</h2><ol class="fin-timeline">{% for event in events %}<li><strong>{{ event.action }}</strong><span>{% if ticket.anonymous_to_handlers and event.actor == ticket.requester %}Requester{% else %}{{ event.actor|default:'System' }}{% endif %} · {{ event.created_at|date:'d M Y, H:i' }}</span>{% if event.from_status %}<p>{{ event.from_status }} → {{ event.to_status }}</p>{% endif %}</li>{% endfor %}</ol></section>
+  </article>
+</section>
+{% endblock %}

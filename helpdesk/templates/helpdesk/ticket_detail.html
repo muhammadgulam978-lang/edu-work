@@ -1,0 +1,20 @@
+{% extends base_template %}{% load static %}
+{% block head %}{{ block.super }}<link rel="stylesheet" href="{% static 'finance/finance.css' %}"><link rel="stylesheet" href="{% static 'helpdesk/helpdesk.css' %}">{% endblock %}
+{% block content %}
+<main class="fin-page fin-portal">
+  <header class="fin-hero"><div><p>{{ ticket.number }}</p><h1>{{ ticket.subject }}</h1><span>{{ ticket.get_ticket_type_display }} · {{ ticket.category.name }}</span></div><a href="{% url 'helpdesk:portal' %}">All tickets</a></header>
+  {% if messages %}<div class="fin-messages">{% for message in messages %}<p class="{{ message.tags }}">{{ message }}</p>{% endfor %}</div>{% endif %}
+  <section class="hd-ticket-grid">
+    <article class="fin-panel"><div class="hd-ticket-head"><span class="fin-status {{ ticket.status|lower }}">{{ ticket.get_status_display }}</span><span class="hd-priority {{ ticket.priority|lower }}">{{ ticket.get_priority_display }}</span></div><h2>Request details</h2><p class="hd-description">{{ ticket.description|linebreaksbr }}</p>
+      {% if ticket.resolution %}<div class="hd-resolution"><strong>Resolution</strong><p>{{ ticket.resolution|linebreaksbr }}</p></div>{% endif %}
+      <dl class="hd-meta"><dt>Department</dt><dd>{{ ticket.assigned_department }}</dd><dt>Assigned to</dt><dd>{{ ticket.assigned_to|default:'Assignment pending' }}</dd><dt>Submitted</dt><dd>{{ ticket.created_at|date:'d M Y, H:i' }}</dd><dt>Target resolution</dt><dd class="{% if ticket.is_overdue %}hd-overdue{% endif %}">{{ ticket.due_at|date:'d M Y, H:i' }}</dd>{% if ticket.student %}<dt>Student</dt><dd>{{ ticket.student.name }}</dd>{% endif %}</dl>
+      {% if ticket.status == 'RESOLVED' %}<div class="fin-action-forms"><form method="post" action="{% url 'helpdesk:ticket_portal_action' ticket.pk 'close' %}">{% csrf_token %}<button>Confirm and close</button></form><form method="post" action="{% url 'helpdesk:ticket_portal_action' ticket.pk 'reopen' %}">{% csrf_token %}<button class="danger">Reopen</button></form></div>{% endif %}
+      {% if ticket.status == 'RESOLVED' or ticket.status == 'CLOSED' %}<form method="post" action="{% url 'helpdesk:ticket_portal_action' ticket.pk 'rate' %}" class="fin-form hd-rating">{% csrf_token %}<h2>Rate the resolution</h2>{{ rating_form.as_p }}<button>Save rating</button></form>{% endif %}
+    </article>
+    <article class="fin-panel"><h2>Conversation</h2><div class="hd-thread"><div class="hd-message requester"><strong>You</strong><p>{{ ticket.description|linebreaksbr }}</p><time>{{ ticket.created_at|date:'d M Y, H:i' }}</time></div>
+      {% for item in ticket_messages %}<div class="hd-message {% if item.author == ticket.requester %}requester{% else %}staff{% endif %}"><strong>{% if item.author == ticket.requester %}You{% else %}School support{% endif %}</strong><p>{{ item.body|linebreaksbr }}</p>{% if item.attachment %}<a href="{% url 'helpdesk:attachment_download' item.pk %}">Download attachment</a>{% endif %}<time>{{ item.created_at|date:'d M Y, H:i' }}</time></div>{% endfor %}</div>
+      {% if ticket.status != 'CLOSED' and ticket.status != 'REJECTED' %}<form method="post" enctype="multipart/form-data" class="fin-form hd-reply">{% csrf_token %}{{ form.as_p }}<button>Send reply</button></form>{% endif %}
+    </article>
+  </section>
+</main>
+{% endblock %}

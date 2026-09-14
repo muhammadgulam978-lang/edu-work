@@ -1,0 +1,4 @@
+{% extends "admin_panel/bases.html" %}
+{% load static %}
+{% block head %}{{ block.super }}<link rel="stylesheet" href="{% static 'finance/finance.css' %}"><link rel="stylesheet" href="{% static 'helpdesk/helpdesk.css' %}">{% endblock %}
+{% block content %}<main class="fin-page"><header class="fin-hero"><div><p>EduPilot Helpdesk</p><h1>{% block helpdesk_title %}Complaint &amp; Request Center{% endblock %}</h1><span>{% block helpdesk_subtitle %}Secure ticket handling with ownership and SLA controls{% endblock %}</span></div><nav><a href="{% url 'helpdesk:staff_dashboard' %}">Dashboard</a><a href="{% url 'helpdesk:staff_dashboard' %}?status=SUBMITTED">New queue</a><a href="{% url 'helpdesk:staff_dashboard' %}?status=WAITING_USER">Waiting</a></nav></header>{% if messages %}<div class="fin-messages">{% for message in messages %}<p class="{{ message.tags }}">{{ message }}</p>{% endfor %}</div>{% endif %}{% block helpdesk_content %}{% endblock %}</main>{% endblock %}

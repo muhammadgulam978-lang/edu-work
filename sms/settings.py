@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'admin_ai',
     'communication',
     'finance.apps.FinanceConfig',
+    'helpdesk.apps.HelpdeskConfig',
     
 ]
 
